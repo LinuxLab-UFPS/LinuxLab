@@ -114,20 +114,20 @@ function ResourceCard({ resource }: { resource: LessonResource }) {
       href={resource.url}
       target="_blank"
       rel="noreferrer"
-      className="flex items-center gap-4 bg-card border border-border p-4 hover:border-primary/50 transition-colors group"
+      className="group flex items-center gap-4 rounded-lg border border-primary/50 bg-background p-4 shadow-[var(--neon-glow)] transition-all hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.45),0_0_28px_rgba(139,92,246,0.28)]"
     >
-      <div className="w-10 h-10 bg-primary/20 flex items-center justify-center shrink-0">
-        <Icon className="w-5 h-5 text-primary" />
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary transition-colors group-hover:bg-violet-500/15 group-hover:text-violet-400">
+        <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <h3 className="text-foreground font-medium group-hover:text-primary transition-colors">
+        <h3 className="font-medium text-foreground transition-colors group-hover:text-violet-400">
           {resource.title}
         </h3>
         {resource.detail && (
-          <p className="text-xs text-muted-foreground mt-1">{resource.detail}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{resource.detail}</p>
         )}
       </div>
-      <Link2 className="w-4 h-4 text-muted-foreground shrink-0" />
+      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-violet-400" />
     </a>
   )
 }
