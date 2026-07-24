@@ -213,11 +213,11 @@ export function getSimulators(): SimulatorRef[] {
   return out
 }
 
-/** A searchable item: a module (lesson), a subtopic or a simulator. */
+/** A searchable item: a module (lesson), a subtopic, a simulator or an activity. */
 export interface SearchItem {
   title: string
-  kind: "modulo" | "subtema" | "simulador"
-  /** Right-side label: "Módulo" for lessons, or the topic they live in. */
+  kind: "modulo" | "subtema" | "simulador" | "actividad"
+  /** Right-side type label: Módulo, Tema, Simulador or Actividad. */
   context: string
   href: string
 }
@@ -242,7 +242,7 @@ export function getSearchIndex(): SearchItem[] {
       items.push({
         title: sub.title,
         kind: isSim ? "simulador" : "subtema",
-        context: topic.title,
+        context: isSim ? "Simulador" : "Tema",
         href: isSim
           ? `/course?tema=${topic.slug}&sub=${sub.id}&play=1`
           : `/course?tema=${topic.slug}&sub=${sub.id}`,
