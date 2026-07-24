@@ -25,7 +25,8 @@ import {
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 import { DevRoleSwitcher } from "@/components/dev/role-switcher"
-import type { SimulatorRef } from "@/lib/features/shared/lessons"
+import { SearchDialog } from "@/components/student/search-dialog"
+import type { SimulatorRef, SearchItem } from "@/lib/features/shared/lessons"
 
 /** Top-level nav for the student experience. These three still get their real
  *  pages later; for now Terminal is live and the other two are placeholders. */
@@ -47,9 +48,16 @@ const NAV = [
 ]
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */
-export function SiteHeader({ simulators }: { simulators: SimulatorRef[] }) {
+export function SiteHeader({
+  simulators,
+  searchItems,
+}: {
+  simulators: SimulatorRef[]
+  searchItems: SearchItem[]
+}) {
   const pathname = usePathname()
   const { user, signOut } = useAuth()
+  const [searchOpen, setSearchOpen] = useState(false)
 
   return (
     <header className="h-16 shrink-0 border-b border-white/10 bg-[#0a0a0a] text-white">
@@ -83,16 +91,16 @@ export function SiteHeader({ simulators }: { simulators: SimulatorRef[] }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Search: visual only for now, wired to real search later. */}
-          <div className="relative hidden sm:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              aria-label="Buscar"
-              className="h-9 w-48 rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-primary/60 focus:bg-white/[0.07] lg:w-60"
-            />
-          </div>
+          {/* Search opens the modal palette. */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Buscar"
+            className="hidden h-9 w-48 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white/40 outline-none transition hover:bg-white/[0.07] hover:text-white/70 sm:flex lg:w-60"
+          >
+            <Search className="h-4 w-4" />
+            Buscar...
+          </button>
 
           <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />
 
@@ -132,6 +140,12 @@ export function SiteHeader({ simulators }: { simulators: SimulatorRef[] }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        <SearchDialog
+          items={searchItems}
+          open={searchOpen}
+          onOpenChange={setSearchOpen}
+        />
       </div>
     </header>
   )

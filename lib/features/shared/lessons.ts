@@ -211,3 +211,31 @@ export function getSimulators(): SimulatorRef[] {
   }
   return out
 }
+
+/** A searchable item: a simulator or a subtopic, for the header search. */
+export interface SearchItem {
+  title: string
+  kind: "simulador" | "subtema"
+  /** Where it lives, e.g. the topic title. */
+  context: string
+  href: string
+}
+
+/** Everything the header search can find: simulators and subtopics that have
+ *  published content (activities will be added once they exist). */
+export function getSearchIndex(): SearchItem[] {
+  const items: SearchItem[] = []
+  for (const topic of syllabus) {
+    const meta = getTopicContentMeta(topic.number)
+    if (!meta) continue
+    for (const sub of meta.subtopics) {
+      items.push({
+        title: sub.title,
+        kind: sub.type === "simulator" ? "simulador" : "subtema",
+        context: topic.title,
+        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+      })
+    }
+  }
+  return items
+}
