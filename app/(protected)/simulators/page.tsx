@@ -9,7 +9,7 @@ const SIM_META: Record<string, { illustration: ComponentType; description: strin
   simulador: {
     illustration: SimulatorTreeIllustration,
     description:
-      "Navega el árbol de directorios de Linux con cd, ls y pwd. Llega al directorio objetivo con retos y modos de juego.",
+      "Navega el árbol de directorios de Linux con cd y ls. Llega al directorio objetivo con retos y modos de juego.",
   },
 }
 
