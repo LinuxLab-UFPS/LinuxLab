@@ -1,16 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import {
-  CheckCircle2,
-  ChevronDown,
-  ChevronRight,
-  Circle,
-  Home,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react"
+import { CheckCircle2, Circle, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
 import { NeonProgress } from "@/components/shared/neon-progress"
@@ -22,15 +13,16 @@ interface CourseSidebarProps {
   activeSubtopicId?: string
   /** Subtopics of the active topic, when it has published content. */
   contentSubtopics?: LessonSubtopic[]
-  /** Lesson count per topic number, for the progress bars. */
+  /** Lesson count per topic number, for the completion state. */
   lessonCounts: Record<number, number>
   courseName?: string
 }
 
 /**
- * Topic navigation for the content view. URL-driven (links to
-  * `/course?tema=&sub=`); the active topic expands to show its subtopics from the
- * content manifest. Collapsible into a slim rail to give the lesson more room.
+ * Clean course contents panel (devops-daily style): a self-outlined card, the
+ * same color as the background, with a home/title nav on top, the module list
+ * (numbered; done ones get a green check and dimmer text), and overall progress
+ * at the bottom.
  */
 export function CourseSidebar({
   activeTopicSlug,
@@ -39,163 +31,127 @@ export function CourseSidebar({
   lessonCounts,
   courseName,
 }: CourseSidebarProps) {
-  const [open, setOpen] = useState(true)
   const { readCountForTopic, isRead } = useLessonProgress()
 
-  if (!open) {
-    return (
-      <aside className="w-12 shrink-0 border-r border-border bg-sidebar h-full flex flex-col items-center gap-1 py-3">
-        <button
-          onClick={() => setOpen(true)}
-          title="Mostrar contenidos"
-          aria-label="Mostrar contenidos"
-          className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <PanelLeftOpen className="w-4 h-4" />
-        </button>
-        <Link
-          href="/home"
-          title="Back to home"
-          aria-label="Back to home"
-          className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <Home className="w-4 h-4" />
-        </Link>
-      </aside>
-    )
+  const isModuleDone = (topicNumber: number) => {
+    const total = lessonCounts[topicNumber] ?? 0
+    return total > 0 && readCountForTopic(topicNumber) >= total
   }
 
+  const doneCount = syllabus.filter((t) => isModuleDone(t.number)).length
+  const overallPct = Math.round((doneCount / syllabus.length) * 100)
+
   return (
-    <aside className="w-72 shrink-0 border-r border-border bg-sidebar h-full flex flex-col">
-      {/* Course Header. h-16 matches the lesson header so their dividers line up. */}
-      <div className="h-16 shrink-0 px-4 border-b border-border flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
+    <aside className="w-80 shrink-0 p-3">
+      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
+        {/* Nav: home + title */}
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
           <Link
             href="/home"
             title="Volver al inicio"
             aria-label="Volver al inicio"
-            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
-            <Home className="w-4 h-4" />
+            <Home className="h-4 w-4" />
           </Link>
-          <h2 className="font-semibold text-foreground text-sm truncate">
+          <h2 className="truncate text-sm font-semibold text-foreground">
             {courseName ?? "Contenidos del curso"}
           </h2>
         </div>
-        <button
-          onClick={() => setOpen(false)}
-          title="Ocultar contenidos"
-          aria-label="Ocultar contenidos"
-          className="w-8 h-8 shrink-0 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-        >
-          <PanelLeftClose className="w-4 h-4" />
-        </button>
-      </div>
 
-      {/* Topics Navigation */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        <ul className="space-y-1">
-          {syllabus.map((topic) => {
-            const isActive = topic.slug === activeTopicSlug
-            const subs =
-              isActive && contentSubtopics && contentSubtopics.length > 0
-                ? contentSubtopics
-                : null
-            const hasSubs = subs ? subs.length > 0 : topic.subTopics.length > 0
+        {/* Module list */}
+        <nav className="flex-1 overflow-y-auto p-2">
+          <ul className="space-y-0.5">
+            {syllabus.map((topic) => {
+              const isActive = topic.slug === activeTopicSlug
+              const done = isModuleDone(topic.number)
+              const subs =
+                isActive && contentSubtopics && contentSubtopics.length > 0
+                  ? contentSubtopics
+                  : null
 
-            const total = lessonCounts[topic.number] ?? 0
-            const done = total > 0 ? Math.min(readCountForTopic(topic.number), total) : 0
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0
-
-            return (
-              <li key={topic.slug}>
-                <Link
-                  href={`/course?tema=${topic.slug}`}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 text-left transition-all duration-200",
-                    isActive
-                      ? "bg-primary/10 border-l-2 border-primary neon-border"
-                      : "hover:bg-secondary/50 border-l-2 border-transparent"
-                  )}
-                >
-                  <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    {pct === 100 ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                    ) : (
-                      <Circle className="w-3 h-3 text-muted-foreground" />
+              return (
+                <li key={topic.slug}>
+                  <Link
+                    href={`/course?tema=${topic.slug}`}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
+                      isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
                     )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">{topic.number}.</span>
-                      <span
-                        className={cn(
-                          "text-sm truncate",
-                          isActive
-                            ? "text-foreground font-medium"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {topic.title}
-                      </span>
-                    </div>
-                    {total > 0 && (
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <NeonProgress value={pct} className="h-1" />
-                        <span className="shrink-0 w-8 text-right text-[10px] font-mono tabular-nums text-muted-foreground">
-                          {pct}%
-                        </span>
-                      </div>
+                  >
+                    <span
+                      className={cn(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground",
+                      )}
+                    >
+                      {topic.number}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex-1 truncate text-sm",
+                        done
+                          ? "text-muted-foreground"
+                          : isActive
+                            ? "font-medium text-foreground"
+                            : "text-foreground/80",
+                      )}
+                    >
+                      {topic.title}
+                    </span>
+                    {done && (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
                     )}
-                  </div>
-                  {hasSubs &&
-                    (isActive ? (
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    ))}
-                </Link>
+                  </Link>
 
-                {/* Subtopics of the active topic */}
-                {isActive && (
-                  <ul className="ml-8 mt-1 space-y-1">
-                    {subs
-                      ? subs.map((sub) => (
+                  {/* Subtopics of the active module */}
+                  {isActive && subs && (
+                    <ul className="ml-6 mt-0.5 space-y-0.5 border-l border-border pl-3">
+                      {subs.map((sub) => {
+                        const read = isRead(topic.number, sub.id)
+                        const activeSub = sub.id === activeSubtopicId
+                        return (
                           <li key={sub.id}>
                             <Link
                               href={`/course?tema=${topic.slug}&sub=${sub.id}`}
                               className={cn(
-                                "w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors",
-                                sub.id === activeSubtopicId
-                                  ? "text-primary font-medium"
-                                  : "text-muted-foreground hover:text-primary"
+                                "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
+                                activeSub
+                                  ? "font-medium text-primary"
+                                  : "text-muted-foreground hover:text-foreground",
                               )}
                             >
-                              {isRead(topic.number, sub.id) ? (
-                                <CheckCircle2 className="w-3 h-3 shrink-0 text-primary" />
+                              {read ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
                               ) : (
-                                <Circle className="w-3 h-3 shrink-0" />
+                                <Circle className="h-3.5 w-3.5 shrink-0" />
                               )}
                               <span className="truncate">{sub.title}</span>
                             </Link>
                           </li>
-                        ))
-                      : topic.subTopics.map((sub) => (
-                          <li
-                            key={sub.number}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs text-muted-foreground/70"
-                          >
-                            <Circle className="w-3 h-3" />
-                            <span className="truncate">{sub.title}</span>
-                          </li>
-                        ))}
-                  </ul>
-                )}
-              </li>
-            )
-          })}
-        </ul>
-      </nav>
+                        )
+                      })}
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </nav>
+
+        {/* Overall progress */}
+        <div className="shrink-0 border-t border-border px-4 py-3">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Tu progreso</span>
+            <span className="font-mono tabular-nums text-foreground">
+              {doneCount}/{syllabus.length}
+            </span>
+          </div>
+          <NeonProgress value={overallPct} className="h-1" />
+        </div>
+      </div>
     </aside>
   )
 }
