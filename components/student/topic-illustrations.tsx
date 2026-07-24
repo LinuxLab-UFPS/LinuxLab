@@ -277,3 +277,23 @@ const ILLUSTRATIONS: Record<number, ComponentType> = {
 export function topicIllustration(topicNumber: number): ComponentType {
   return ILLUSTRATIONS[topicNumber] ?? TerminalTopic
 }
+
+/**
+ * The tree-navigation simulator: the directory tree with a green "go here"
+ * arrow pointing at the target directory (the simulator's objective).
+ */
+export function SimulatorTreeIllustration() {
+  const GREEN = "#34d399"
+  return (
+    <Svg>
+      <Folder x={88} y={16} color={LINE} />
+      {/* branches to the two side directories */}
+      <path d="M99 32 v8 M52 40 h94 M52 40 v10 M146 40 v10" stroke={BASE} strokeWidth="1.6" />
+      <Folder x={41} y={50} color={LINE} />
+      <Folder x={133} y={50} color={LINE} />
+      {/* green "ir aquí" arrow pointing at the target directory */}
+      <path d="M99 34 v22 M92 48 l7 8 l7 -8" stroke={GREEN} strokeWidth="3" />
+      <Folder x={87} y={62} color={GREEN} />
+    </Svg>
+  )
+}
