@@ -213,28 +213,39 @@ export function getSimulators(): SimulatorRef[] {
   return out
 }
 
-/** A searchable item: a simulator or a subtopic, for the header search. */
+/** A searchable item: a module (lesson), a subtopic or a simulator. */
 export interface SearchItem {
   title: string
-  kind: "simulador" | "subtema"
-  /** Where it lives, e.g. the topic title. */
+  kind: "modulo" | "subtema" | "simulador"
+  /** Right-side label: "Módulo" for lessons, or the topic they live in. */
   context: string
   href: string
 }
 
-/** Everything the header search can find: simulators and subtopics that have
- *  published content (activities will be added once they exist). */
+/** Everything the header search can find: the lessons (modules), and the
+ *  subtopics/simulators of topics with published content (activities later). */
 export function getSearchIndex(): SearchItem[] {
   const items: SearchItem[] = []
   for (const topic of syllabus) {
+    // The lesson (module) itself.
+    items.push({
+      title: topic.title,
+      kind: "modulo",
+      context: "Módulo",
+      href: `/course?tema=${topic.slug}`,
+    })
+
     const meta = getTopicContentMeta(topic.number)
     if (!meta) continue
     for (const sub of meta.subtopics) {
+      const isSim = sub.type === "simulator"
       items.push({
         title: sub.title,
-        kind: sub.type === "simulator" ? "simulador" : "subtema",
+        kind: isSim ? "simulador" : "subtema",
         context: topic.title,
-        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+        href: isSim
+          ? `/course?tema=${topic.slug}&sub=${sub.id}&play=1`
+          : `/course?tema=${topic.slug}&sub=${sub.id}`,
       })
     }
   }

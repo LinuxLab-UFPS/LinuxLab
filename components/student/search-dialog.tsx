@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { MonitorPlay, FileText, SquareTerminal, Target } from "lucide-react"
+import { MonitorPlay, FileText, SquareTerminal, Target, BookOpen } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import {
   Command,
@@ -17,8 +17,9 @@ import type { SearchItem } from "@/lib/features/shared/lessons"
 const MAX_RESULTS = 5
 
 const KIND = {
-  simulador: { icon: MonitorPlay, className: "text-emerald-500" },
+  modulo: { icon: BookOpen, className: "text-primary" },
   subtema: { icon: FileText, className: "text-sky-500" },
+  simulador: { icon: MonitorPlay, className: "text-emerald-500" },
 } as const
 
 /**
