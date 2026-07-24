@@ -21,7 +21,7 @@ export function HomeHero() {
         <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           La forma moderna de aprender Linux: teoría al grano, una{" "}
           <span className="font-semibold text-foreground">terminal real</span> en el
-          navegador y{" "}
+          navegador con{" "}
           <span className="font-semibold text-foreground">actividades y simuladores</span>{" "}
           interactivos para practicar de verdad.
         </p>
