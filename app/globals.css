@@ -156,6 +156,19 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Smooth crossfade when toggling dark/light (AlgoMaster-style). Only color
+     properties animate, so layout, transforms and hover scales stay instant. */
+  *,
+  *::before,
+  *::after {
+    transition:
+      background-color 0.28s ease,
+      border-color 0.28s ease,
+      color 0.28s ease,
+      fill 0.28s ease,
+      stroke 0.28s ease;
+  }
 }
 
 /* Neon / red-halo utilities: values come from the theme variables above */
