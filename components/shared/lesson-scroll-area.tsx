@@ -1,16 +1,16 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { NeonProgress } from "@/components/shared/neon-progress"
+import { useEffect, useRef } from "react"
 import { useLessonProgress } from "@/lib/features/student/progress"
+import { useSetReadingProgress } from "@/components/shared/reading-progress"
 
 /** Below this the lesson counts as read. Reaching an exact 100% is fiddly. */
 const READ_AT = 95
 
 /**
- * The lesson's scroll container, with a reading-progress bar pinned to the
- * bottom of the sticky header. Reaching the end marks the lesson as read, which
- * is what feeds the per-topic progress in the sidebar.
+ * The lesson's scroll container. It reports scroll progress to the reading-bar
+ * under the global header (not to a bar of its own), and marks the lesson read
+ * once you reach the end.
  */
 export function LessonScrollArea({
   topicNumber,
@@ -25,8 +25,8 @@ export function LessonScrollArea({
 }) {
   const scrollRef = useRef<HTMLElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
-  const [pct, setPct] = useState(0)
   const { markRead } = useLessonProgress()
+  const setProgress = useSetReadingProgress()
 
   useEffect(() => {
     const el = scrollRef.current
@@ -41,7 +41,7 @@ export function LessonScrollArea({
         // Nothing to scroll: a short lesson, or a simulator. It counts as read,
         // but only once the layout stops changing — images and video load late
         // and would otherwise mark it read before the content is even there.
-        setPct(100)
+        setProgress(100)
         clearTimeout(settle)
         if (subtopicId) {
           settle = setTimeout(() => markRead(topicNumber, subtopicId), 1200)
@@ -50,7 +50,7 @@ export function LessonScrollArea({
       }
 
       const value = Math.min(100, Math.round((el.scrollTop / max) * 100))
-      setPct(value)
+      setProgress(value)
       if (value >= READ_AT && subtopicId) markRead(topicNumber, subtopicId)
     }
 
@@ -68,25 +68,12 @@ export function LessonScrollArea({
       el.removeEventListener("scroll", update)
       observer.disconnect()
     }
-  }, [topicNumber, subtopicId, markRead])
+  }, [topicNumber, subtopicId, markRead, setProgress])
 
   return (
     <main ref={scrollRef} className="flex-1 overflow-y-auto bg-background flex flex-col">
-      {/* h-16 matches the sidebar header so their dividers align. shrink-0 stops
-          flexbox from collapsing it: this header lives in a scrollable column, so
-          without it the overflow squashes it down to the text height. */}
-      <div className="sticky top-0 z-10 shrink-0 h-16 bg-background/95 backdrop-blur border-b border-border">
-        <div className="h-full px-6 flex items-center justify-between gap-4">
-          {header}
-          <span className="shrink-0 text-xs font-mono tabular-nums text-muted-foreground">
-            {pct}%
-          </span>
-        </div>
-        <NeonProgress
-          value={pct}
-          className="absolute bottom-0 inset-x-0 h-0.5 rounded-none bg-transparent"
-          barClassName="rounded-none"
-        />
+      <div className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b border-border bg-background/95 px-6 backdrop-blur">
+        {header}
       </div>
 
       <div ref={contentRef} className="flex-1">
