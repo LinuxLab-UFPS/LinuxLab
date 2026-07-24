@@ -20,9 +20,27 @@ import { DevRoleSwitcher } from "@/components/dev/role-switcher"
 /** Top-level nav for the student experience. These three still get their real
  *  pages later; for now Terminal is live and the other two are placeholders. */
 const NAV = [
-  { label: "Terminal", href: "/terminal", icon: SquareTerminal },
-  { label: "Actividades", href: "/activities", icon: Target },
-  { label: "Simuladores", href: "/simulators", icon: MonitorPlay },
+  {
+    label: "Terminal",
+    href: "/terminal",
+    icon: SquareTerminal,
+    hover: "hover:bg-primary/15 hover:text-primary",
+    active: "bg-primary/15 text-primary",
+  },
+  {
+    label: "Actividades",
+    href: "/activities",
+    icon: Target,
+    hover: "hover:bg-amber-500/15 hover:text-amber-400",
+    active: "bg-amber-500/15 text-amber-400",
+  },
+  {
+    label: "Simuladores",
+    href: "/simulators",
+    icon: MonitorPlay,
+    hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
+    active: "bg-emerald-500/15 text-emerald-400",
+  },
 ]
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */
@@ -50,9 +68,7 @@ export function SiteHeader() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-white/10 text-white"
-                    : "text-white/60 hover:bg-white/10 hover:text-white",
+                  active ? item.active : cn("text-white/60", item.hover),
                 )}
               >
                 <item.icon className="h-4 w-4" />
