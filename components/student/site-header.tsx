@@ -190,7 +190,7 @@ function SimuladoresNav({
 
       {open && simulators.length > 0 && (
         <div className="absolute left-0 top-full z-50 pt-2">
-          <div className="w-64 rounded-xl border border-white/10 bg-[#0f0f11] p-1.5 shadow-2xl shadow-black/60">
+          <div className="w-64 animate-in fade-in-0 slide-in-from-top-1 rounded-xl border border-white/10 bg-[#0f0f11] p-1.5 shadow-2xl shadow-black/60 duration-150">
             {simulators.slice(0, 5).map((sim) => (
               <Link
                 key={`${sim.topicSlug}/${sim.id}`}
