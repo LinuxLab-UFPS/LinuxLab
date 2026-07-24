@@ -179,3 +179,35 @@ export function getLessonNeighbours(
     next: sequence[i + 1] ?? null,
   }
 }
+
+/** A simulator, wherever it lives in the syllabus. */
+export interface SimulatorRef {
+  id: string
+  title: string
+  topicNumber: number
+  topicSlug: string
+  topicTitle: string
+  /** Link that opens the simulator inside the course view. */
+  href: string
+}
+
+/** Every simulator across the syllabus (subtopics flagged type "simulator"). */
+export function getSimulators(): SimulatorRef[] {
+  const out: SimulatorRef[] = []
+  for (const topic of syllabus) {
+    const meta = getTopicContentMeta(topic.number)
+    if (!meta) continue
+    for (const sub of meta.subtopics) {
+      if (sub.type !== "simulator") continue
+      out.push({
+        id: sub.id,
+        title: sub.title,
+        topicNumber: topic.number,
+        topicSlug: topic.slug,
+        topicTitle: topic.title,
+        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+      })
+    }
+  }
+  return out
+}

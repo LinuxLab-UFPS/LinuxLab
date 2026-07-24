@@ -5,7 +5,7 @@
   "description": "El sistema de archivos de Linux, su estructura jerárquica y cómo navegar y manipular directorios desde la terminal",
   "subtopics": [
     { "id": "filesystem", "title": "El sistema de archivos", "file": "01-filesystem.md" },
-    { "id": "simulador", "title": "Simulador: navega el árbol", "file": "simulador-filesystem.html", "type": "simulator" }
+    { "id": "simulador", "title": "Travesía del Árbol", "file": "simulador-filesystem.html", "type": "simulator" }
   ],
   "resources": [
     {

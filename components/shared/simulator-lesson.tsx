@@ -56,7 +56,7 @@ export function SimulatorLesson({
             Práctica interactiva
           </p>
           <h1 className="text-2xl font-bold text-foreground mb-3">
-            Simulador: navega el árbol
+            Travesía del Árbol
           </h1>
           <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-8">
             Aplica lo que aprendiste. Usa <code className="text-foreground bg-secondary px-1 rounded">cd</code>, <code className="text-foreground bg-secondary px-1 rounded">ls</code> y <code className="text-foreground bg-secondary px-1 rounded">pwd</code> para navegar la jerarquía de Linux con objetivos y modos de juego.
