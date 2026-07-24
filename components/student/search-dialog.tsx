@@ -22,6 +22,10 @@ const KIND = {
   simulador: { icon: MonitorPlay, className: "text-emerald-500" },
 } as const
 
+/** Soft neutral highlight for the active row, instead of the solid red accent
+ *  (which also hid the red Terminal icon). */
+const ITEM_HL = "data-[selected=true]:bg-secondary data-[selected=true]:text-foreground"
+
 /**
  * Header search: a centered modal that lists up to 5 matching simulators and
  * subtopics as you type, and quick links when the field is empty. Filtering is
@@ -74,15 +78,27 @@ export function SearchDialog({
           <CommandList className="max-h-80">
             {q === "" ? (
               <CommandGroup heading="Ir a">
-                <CommandItem value="go-terminal" onSelect={() => go("/terminal")}>
+                <CommandItem
+                  value="go-terminal"
+                  className={ITEM_HL}
+                  onSelect={() => go("/terminal")}
+                >
                   <SquareTerminal className="text-primary" />
                   Terminal
                 </CommandItem>
-                <CommandItem value="go-simulators" onSelect={() => go("/simulators")}>
+                <CommandItem
+                  value="go-simulators"
+                  className={ITEM_HL}
+                  onSelect={() => go("/simulators")}
+                >
                   <MonitorPlay className="text-emerald-500" />
                   Simuladores
                 </CommandItem>
-                <CommandItem value="go-activities" onSelect={() => go("/activities")}>
+                <CommandItem
+                  value="go-activities"
+                  className={ITEM_HL}
+                  onSelect={() => go("/activities")}
+                >
                   <Target className="text-amber-500" />
                   Actividades
                 </CommandItem>
@@ -99,6 +115,7 @@ export function SearchDialog({
                     <CommandItem
                       key={item.href}
                       value={item.href}
+                      className={ITEM_HL}
                       onSelect={() => go(item.href)}
                     >
                       <k.icon className={cn(k.className)} />
