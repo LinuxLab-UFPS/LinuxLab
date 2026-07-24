@@ -30,7 +30,7 @@ export const syllabus: Topic[] = [
     slug: "la-terminal",
     title: "La Terminal",
     description:
-      "La línea de comandos, el shell Bash y los comandos esenciales para moverte por el sistema.",
+      "La línea de comandos, una introducción al shell Bash y los comandos esenciales para moverte por el sistema.",
     subTopics: [
       { number: 1, title: "La línea de comandos" },
       { number: 2, title: "Anatomía de un comando" },
