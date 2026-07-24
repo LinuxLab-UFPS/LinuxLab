@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { X, Play } from "lucide-react"
 import { LessonNav } from "@/components/shared/lesson-nav"
 import { LessonContainer } from "@/components/shared/terminal-ui"
@@ -17,7 +18,10 @@ export function SimulatorLesson({
   next: LessonRef | null
   currentTopicNumber: number
 }) {
-  const [fullscreen, setFullscreen] = useState(false)
+  // Opened straight from a "play" link (e.g. the simulators list), it starts
+  // fullscreen instead of showing the launcher card first.
+  const searchParams = useSearchParams()
+  const [fullscreen, setFullscreen] = useState(() => searchParams.get("play") === "1")
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {

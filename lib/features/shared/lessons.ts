@@ -205,7 +205,8 @@ export function getSimulators(): SimulatorRef[] {
         topicNumber: topic.number,
         topicSlug: topic.slug,
         topicTitle: topic.title,
-        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+        // play=1 makes the simulator open fullscreen right away.
+        href: `/course?tema=${topic.slug}&sub=${sub.id}&play=1`,
       })
     }
   }
