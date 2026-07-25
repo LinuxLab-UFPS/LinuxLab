@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/student/site-header"
-import { getSimulators, getSearchIndex } from "@/lib/features/shared/lessons"
+import { getSearchIndex } from "@/lib/features/shared/lessons"
+import { getSimulators } from "@/lib/features/shared/simulators"
 
 /**
  * Shell for the student experience: a black top header instead of the left

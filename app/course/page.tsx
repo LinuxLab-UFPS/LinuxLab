@@ -9,9 +9,9 @@ import {
   getSubtopicMarkdown,
   getLessonNeighbours,
   getTopicLessonCounts,
-  getSimulators,
   getSearchIndex,
 } from "@/lib/features/shared/lessons"
+import { getSimulators } from "@/lib/features/shared/simulators"
 import { parseLessonBlocks } from "@/lib/features/shared/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { TerminalUIProvider } from "@/components/shared/terminal-ui"

@@ -26,7 +26,8 @@ import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 import { DevRoleSwitcher } from "@/components/dev/role-switcher"
 import { SearchDialog } from "@/components/student/search-dialog"
-import type { SimulatorRef, SearchItem } from "@/lib/features/shared/lessons"
+import type { SearchItem } from "@/lib/features/shared/lessons"
+import type { Simulator } from "@/lib/features/shared/simulators"
 
 /** Top-level nav for the student experience. These three still get their real
  *  pages later; for now Terminal is live and the other two are placeholders. */
@@ -52,7 +53,7 @@ export function SiteHeader({
   simulators,
   searchItems,
 }: {
-  simulators: SimulatorRef[]
+  simulators: Simulator[]
   searchItems: SearchItem[]
 }) {
   const pathname = usePathname()
@@ -160,7 +161,7 @@ function SimuladoresNav({
   simulators,
   pathname,
 }: {
-  simulators: SimulatorRef[]
+  simulators: Simulator[]
   pathname: string
 }) {
   const [open, setOpen] = useState(false)

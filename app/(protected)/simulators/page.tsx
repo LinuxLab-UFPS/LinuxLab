@@ -1,17 +1,5 @@
-import type { ComponentType } from "react"
-import { BookOpen } from "lucide-react"
-import { getSimulators } from "@/lib/features/shared/lessons"
-import { ContentCard } from "@/components/student/content-card"
-import { SimulatorTreeIllustration } from "@/components/student/topic-illustrations"
-
-/** Per-simulator display data (illustration + blurb), keyed by subtopic id. */
-const SIM_META: Record<string, { illustration: ComponentType; description: string }> = {
-  simulador: {
-    illustration: SimulatorTreeIllustration,
-    description:
-      "Navega el árbol de directorios de Linux con cd y ls. Llega al directorio objetivo con retos y modos de juego.",
-  },
-}
+import { getSimulators } from "@/lib/features/shared/simulators"
+import { SimulatorCard } from "@/components/student/simulator-card"
 
 export default function SimulatorsPage() {
   const simulators = getSimulators()
@@ -36,27 +24,9 @@ export default function SimulatorsPage() {
           <p className="text-muted-foreground">Aún no hay simuladores disponibles.</p>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {simulators.map((sim) => {
-              const meta = SIM_META[sim.id]
-              return (
-                <ContentCard
-                  key={`${sim.topicSlug}/${sim.id}`}
-                  href={sim.href}
-                  title={sim.title}
-                  description={meta?.description}
-                  illustration={meta?.illustration ?? SimulatorTreeIllustration}
-                  tags={[
-                    {
-                      icon: BookOpen,
-                      label: sim.topicTitle,
-                      className:
-                        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                    },
-                  ]}
-                  accent="green"
-                />
-              )
-            })}
+            {simulators.map((sim) => (
+              <SimulatorCard key={sim.id} simulator={sim} />
+            ))}
           </div>
         )}
       </section>

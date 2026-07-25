@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { TopicContentMeta } from "@/lib/features/shared/types"
 import { syllabus } from "./temario"
+import { getSimulators } from "./simulators"
 
 /**
  * Content seam (server-only, reads from disk).
@@ -180,39 +181,6 @@ export function getLessonNeighbours(
   }
 }
 
-/** A simulator, wherever it lives in the syllabus. */
-export interface SimulatorRef {
-  id: string
-  title: string
-  topicNumber: number
-  topicSlug: string
-  topicTitle: string
-  /** Link that opens the simulator inside the course view. */
-  href: string
-}
-
-/** Every simulator across the syllabus (subtopics flagged type "simulator"). */
-export function getSimulators(): SimulatorRef[] {
-  const out: SimulatorRef[] = []
-  for (const topic of syllabus) {
-    const meta = getTopicContentMeta(topic.number)
-    if (!meta) continue
-    for (const sub of meta.subtopics) {
-      if (sub.type !== "simulator") continue
-      out.push({
-        id: sub.id,
-        title: sub.title,
-        topicNumber: topic.number,
-        topicSlug: topic.slug,
-        topicTitle: topic.title,
-        // play=1 makes the simulator open fullscreen right away.
-        href: `/course?tema=${topic.slug}&sub=${sub.id}&play=1`,
-      })
-    }
-  }
-  return out
-}
-
 /** A searchable item: a module (lesson), a subtopic, a simulator or an activity. */
 export interface SearchItem {
   title: string
@@ -238,16 +206,24 @@ export function getSearchIndex(): SearchItem[] {
     const meta = getTopicContentMeta(topic.number)
     if (!meta) continue
     for (const sub of meta.subtopics) {
-      const isSim = sub.type === "simulator"
       items.push({
         title: sub.title,
-        kind: isSim ? "simulador" : "subtema",
-        context: isSim ? "Simulador" : "Tema",
-        href: isSim
-          ? `/course?tema=${topic.slug}&sub=${sub.id}&play=1`
-          : `/course?tema=${topic.slug}&sub=${sub.id}`,
+        kind: "subtema",
+        context: "Tema",
+        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
       })
     }
   }
+
+  // Simulators are not course subtopics anymore; add them from the registry.
+  for (const sim of getSimulators()) {
+    items.push({
+      title: sim.title,
+      kind: "simulador",
+      context: "Simulador",
+      href: sim.href,
+    })
+  }
+
   return items
 }
