@@ -7,7 +7,7 @@ import { TerminalEmulator } from "@/components/shared/terminal-emulator"
  *  a title bar) instead of a bare black block. */
 export function TerminalPanel({ onClose }: { onClose: () => void }) {
   return (
-    <aside className="flex w-[38%] min-w-[360px] shrink-0 flex-col bg-background p-3">
+    <aside className="flex w-[38%] min-w-[360px] shrink-0 flex-col bg-background py-4">
       <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0c0c0e] shadow-lg">
         {/* Title bar */}
         <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/10 px-3">

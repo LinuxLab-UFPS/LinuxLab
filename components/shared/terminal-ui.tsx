@@ -45,13 +45,6 @@ const COMPACT_PROSE =
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (
-    <div
-      className={cn(
-        "px-8 py-6 transition-[max-width] duration-300 ease-out",
-        open ? cn("max-w-none", COMPACT_PROSE) : "max-w-2xl",
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn("max-w-none py-8", open && COMPACT_PROSE)}>{children}</div>
   )
 }

@@ -53,7 +53,7 @@ export default async function CoursePage({
           <div className="flex h-screen flex-col bg-background">
             <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
             <ReadingProgressBar />
-            <div className="flex flex-1 overflow-hidden">
+            <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 overflow-hidden px-4 sm:px-6">
               <CourseSidebar
                 activeTopicSlug={topic.slug}
                 activeSubtopicId={activeSubtopic?.id}

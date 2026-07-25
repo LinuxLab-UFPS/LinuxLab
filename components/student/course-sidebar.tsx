@@ -42,7 +42,7 @@ export function CourseSidebar({
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
 
   return (
-    <aside className="w-72 shrink-0 p-4">
+    <aside className="w-80 shrink-0 py-4">
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
