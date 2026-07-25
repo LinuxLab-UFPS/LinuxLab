@@ -43,7 +43,7 @@ export function CourseSidebar({
 
   return (
     <aside className="w-80 shrink-0 py-4">
-      <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
+      <div className="mt-2 flex max-h-full flex-col overflow-hidden rounded-xl border border-border bg-background">
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
           <Link
@@ -60,7 +60,7 @@ export function CourseSidebar({
         </div>
 
         {/* Module list */}
-        <nav className="flex-1 overflow-y-auto p-2">
+        <nav className="min-h-0 overflow-y-auto p-2">
           <ul className="space-y-0.5">
             {syllabus.map((topic) => {
               const isActive = topic.slug === activeTopicSlug
