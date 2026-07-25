@@ -46,14 +46,6 @@ export function ContentArea({
       key={`${topic.slug}/${activeSubtopic?.id ?? ""}`}
       topicNumber={topic.number}
       subtopicId={activeSubtopic?.id ?? null}
-      header={
-        <p className="text-sm text-muted-foreground truncate">
-          {topic.number}. {topic.title}
-          {activeSubtopic && (
-            <span className="text-foreground"> / {activeSubtopic.title}</span>
-          )}
-        </p>
-      }
     >
       {activeSubtopic?.type === "simulator" ? (
         <SimulatorLesson

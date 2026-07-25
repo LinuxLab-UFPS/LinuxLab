@@ -15,12 +15,10 @@ const READ_AT = 95
 export function LessonScrollArea({
   topicNumber,
   subtopicId,
-  header,
   children,
 }: {
   topicNumber: number
   subtopicId: string | null
-  header: React.ReactNode
   children: React.ReactNode
 }) {
   const scrollRef = useRef<HTMLElement>(null)
@@ -72,10 +70,6 @@ export function LessonScrollArea({
 
   return (
     <main ref={scrollRef} className="flex-1 overflow-y-auto bg-background flex flex-col">
-      <div className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b border-border bg-background/95 px-6 backdrop-blur">
-        {header}
-      </div>
-
       <div ref={contentRef} className="flex-1">
         {children}
       </div>
