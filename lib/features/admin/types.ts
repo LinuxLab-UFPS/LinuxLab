@@ -3,4 +3,6 @@ export interface TeacherListItem {
   name: string
   email: string
   active: boolean
+  linuxUsername?: string | null
+  linuxProvisioned?: boolean
 }

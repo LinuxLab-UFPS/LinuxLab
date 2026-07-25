@@ -22,6 +22,9 @@ import {
   Loader2,
   Search,
   X,
+  Terminal,
+  CheckCircle2,
+  CircleDashed,
 } from "lucide-react"
 
 type StatusFilter = "all" | "active" | "inactive"
@@ -129,6 +132,12 @@ export function TeachersTable() {
                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                     Correo electrónico
                   </th>
+                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-40">
+                    Usuario Linux
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">
+                    Provisionado
+                  </th>
                   <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">
                     Estado
                   </th>
@@ -152,6 +161,44 @@ export function TeachersTable() {
                       <span className="text-sm text-muted-foreground font-mono">
                         {teacher.email}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {teacher.linuxUsername ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm font-mono text-foreground">
+                          <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+                          {teacher.linuxUsername}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">
+                          Sin asignar
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {teacher.linuxUsername ? (
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full",
+                            teacher.linuxProvisioned
+                              ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
+                              : "bg-amber-500/10 text-amber-600 border border-amber-500/20",
+                          )}
+                        >
+                          {teacher.linuxProvisioned ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3" />
+                              Listo
+                            </>
+                          ) : (
+                            <>
+                              <CircleDashed className="w-3 h-3" />
+                              Pendiente
+                            </>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
