@@ -79,7 +79,7 @@ export function ContentArea({
               <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-4">
                 Recursos
               </h2>
-              <div className="grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {meta.resources.map((resource) => (
                   <ResourceCard key={resource.url} resource={resource} />
                 ))}
@@ -106,20 +106,20 @@ function ResourceCard({ resource }: { resource: LessonResource }) {
       href={resource.url}
       target="_blank"
       rel="noreferrer"
-      className="group flex items-center gap-4 rounded-lg border border-primary/50 bg-background p-4 shadow-[var(--neon-glow)] transition-all hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.45),0_0_28px_rgba(139,92,246,0.28)]"
+      className="group flex items-center gap-3 rounded-lg border border-border p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.4),0_0_28px_rgba(139,92,246,0.22)]"
     >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary transition-colors group-hover:bg-violet-500/15 group-hover:text-violet-400">
-        <Icon className="h-5 w-5" />
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors group-hover:border-violet-500/40 group-hover:text-violet-400">
+        <Icon className="h-4 w-4" />
       </div>
-      <div className="flex-1 min-w-0">
-        <h3 className="font-medium text-foreground transition-colors group-hover:text-violet-400">
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-violet-400">
           {resource.title}
         </h3>
         {resource.detail && (
-          <p className="mt-1 text-xs text-muted-foreground">{resource.detail}</p>
+          <p className="truncate text-xs text-muted-foreground">{resource.detail}</p>
         )}
       </div>
-      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-violet-400" />
+      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-violet-400" />
     </a>
   )
 }
