@@ -110,8 +110,8 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
             const sim = getSimulator(block.id)
             return sim ? (
               <div key={i} className="mx-auto my-10 max-w-sm">
-                <h2 className="mb-5 text-center text-3xl font-bold text-foreground">
-                  Prueba este{" "}
+                <h2 className="mb-5 text-left text-3xl font-bold text-foreground">
+                  Prueba tus conocimientos con un{" "}
                   <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text font-extrabold text-transparent">
                     Simulador
                   </span>
