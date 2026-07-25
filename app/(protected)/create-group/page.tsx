@@ -1,41 +1,28 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Save, Send, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { TopicSelector } from "@/components/student/topic-selector"
 import { StudentManager } from "@/components/teacher/student-manager"
-import { syllabus } from "@/lib/features/shared/temario"
-import { createCourse } from "@/lib/features/teacher/data"
-import type { Student } from "@/lib/features/auth/types"
+import { createGroup } from "@/lib/features/teacher/data"
+import { parseStudentCsv } from "@/lib/features/shared/parse-csv"
+import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
-export default function CreateCoursePage() {
-  const [courseName, setCourseName] = useState("")
+export default function CreateGroupPage() {
+  const router = useRouter()
+  const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
-  const [selectedTopics, setSelectedTopics] = useState<number[]>([])
-  const [students, setStudents] = useState<Student[]>([])
+  const [students, setStudents] = useState<EnrollmentStudent[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [info, setInfo] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
 
-  const handleToggleTopic = (topicNumber: number) => {
-    setSelectedTopics((prev) =>
-      prev.includes(topicNumber)
-        ? prev.filter((t) => t !== topicNumber)
-        : [...prev, topicNumber]
-    )
-  }
-
-  const handleSelectAllTopics = () => {
-    setSelectedTopics((prev) =>
-      prev.length === syllabus.length ? [] : syllabus.map((t) => t.number)
-    )
-  }
-
-  const handleAddStudent = (student: Omit<Student, "id">) => {
+  const handleAddStudent = (student: Omit<EnrollmentStudent, "id">) => {
     setStudents((prev) => [...prev, { ...student, id: crypto.randomUUID() }])
   }
 
@@ -43,24 +30,48 @@ export default function CreateCoursePage() {
     setStudents((prev) => prev.filter((s) => s.id !== id))
   }
 
-  const handleUploadCSV = (file: File) => {
-    // TODO: parse the CSV client-side, or hand it to students.importStudentsCsv
-    // once the course exists. Roster is held locally until the course is published.
-    console.log("CSV seleccionado:", file.name)
+  const handleUploadCSV = async (file: File) => {
+    setError(null)
+    try {
+      const text = await file.text()
+      const rows = parseStudentCsv(text)
+      if (rows.length === 0) {
+        setError("El archivo CSV está vacío o no tiene el formato esperado (nombre,email,codigo).")
+        return
+      }
+      setStudents((prev) => [
+        ...prev,
+        ...rows.map((r) => ({ ...r, id: crypto.randomUUID() })),
+      ])
+      setInfo(`${rows.length} estudiante(s) agregado(s) desde CSV.`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo leer el archivo CSV.")
+    }
   }
 
   const handlePublish = async () => {
     setError(null)
+    setInfo(null)
+    if (!groupName.trim()) {
+      setError("El nombre del grupo es requerido.")
+      return
+    }
     setPublishing(true)
     try {
-      await createCourse({
-        name: courseName,
+      const response = await createGroup({
+        name: groupName,
         description,
-        enabledTopics: selectedTopics,
+        students: students.map((s) => ({ name: s.name, email: s.email, code: s.code })),
       })
-      // On success the backend returns the course; redirect there.
+      const e = response.enrollment
+      const parts: string[] = []
+      if (e.registered) parts.push(`${e.registered} inscrito(s)`)
+      if (e.skipped) parts.push(`${e.skipped} ya inscrito(s)`)
+      if (e.errors.length) parts.push(`${e.errors.length} con error`)
+      const summary = parts.length ? parts.join(", ") : "sin estudiantes"
+      router.push(`/groups/${response.group.id}?created=1&summary=${encodeURIComponent(summary)}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo publicar el curso.")
+      setError(e instanceof Error ? e.message : "No se pudo publicar el grupo.")
     } finally {
       setPublishing(false)
     }
@@ -79,9 +90,9 @@ export default function CreateCoursePage() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Crear Curso</h1>
+              <h1 className="text-xl font-semibold text-foreground">Crear Grupo</h1>
               <p className="text-sm text-muted-foreground">
-                Configura un nuevo curso para tus estudiantes
+                Configura un nuevo grupo para tus estudiantes
               </p>
             </div>
           </div>
@@ -89,6 +100,7 @@ export default function CreateCoursePage() {
             <Button
               variant="outline"
               className="border-border text-muted-foreground hover:text-foreground"
+              disabled
             >
               <Save className="w-4 h-4 mr-2" />
               Guardar borrador
@@ -99,7 +111,7 @@ export default function CreateCoursePage() {
               className="bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
             >
               <Send className="w-4 h-4 mr-2" />
-              {publishing ? "Publicando…" : "Publicar curso"}
+              {publishing ? "Publicando…" : "Publicar grupo"}
             </Button>
           </div>
         </div>
@@ -112,25 +124,30 @@ export default function CreateCoursePage() {
             {error}
           </div>
         )}
+        {info && !error && (
+          <div className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md px-3 py-2">
+            {info}
+          </div>
+        )}
 
-        {/* Section 1: Course Info */}
+        {/* Section 1: Group Info */}
         <section className="bg-card border border-border p-6">
           <h2 className="text-lg font-medium text-foreground mb-6 flex items-center gap-2">
             <span className="w-6 h-6 bg-primary/20 text-primary text-sm flex items-center justify-center">
               1
             </span>
-            Información del curso
+            Información del grupo
           </h2>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="courseName" className="text-muted-foreground">
-                Nombre del curso
+              <Label htmlFor="groupName" className="text-muted-foreground">
+                Nombre del grupo
               </Label>
               <Input
-                id="courseName"
-                value={courseName}
-                onChange={(e) => setCourseName(e.target.value)}
+                id="groupName"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
                 placeholder="Ej: Sistemas Operativos - 2026-I"
                 className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
               />
@@ -145,34 +162,18 @@ export default function CreateCoursePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                placeholder="Breve descripción del curso…"
+                placeholder="Breve descripción del grupo…"
                 className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20 resize-none"
               />
             </div>
           </div>
         </section>
 
-        {/* Section 2: Topic Selection */}
+        {/* Section 2: Students */}
         <section className="bg-card border border-border p-6">
           <h2 className="text-lg font-medium text-foreground mb-6 flex items-center gap-2">
             <span className="w-6 h-6 bg-primary/20 text-primary text-sm flex items-center justify-center">
               2
-            </span>
-            Selección de temas
-          </h2>
-
-          <TopicSelector
-            selectedTopics={selectedTopics}
-            onToggle={handleToggleTopic}
-            onSelectAll={handleSelectAllTopics}
-          />
-        </section>
-
-        {/* Section 3: Students */}
-        <section className="bg-card border border-border p-6">
-          <h2 className="text-lg font-medium text-foreground mb-6 flex items-center gap-2">
-            <span className="w-6 h-6 bg-primary/20 text-primary text-sm flex items-center justify-center">
-              3
             </span>
             Estudiantes
             <span className="ml-auto text-sm font-normal text-muted-foreground">

@@ -17,7 +17,7 @@ import type { Topic } from "@/lib/features/student/types"
 interface StudentProgressDialogProps {
   student: StudentProgress | null
   topics: Topic[]
-  courseId?: string
+  groupId?: string
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -32,7 +32,7 @@ const statusMeta: Record<ProgressStatus, { label: string; color: string; text: s
 export function StudentProgressDialog({
   student,
   topics,
-  courseId = "",
+  groupId = "",
   open,
   onOpenChange,
 }: StudentProgressDialogProps) {
@@ -143,7 +143,7 @@ export function StudentProgressDialog({
         {/* Footer link */}
         <div className="flex justify-end pt-1">
           <Link
-            href={`/courses/${courseId}/student/${person.id}`}
+            href={`/groups/${groupId}/student/${person.id}`}
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             Ver dashboard completo

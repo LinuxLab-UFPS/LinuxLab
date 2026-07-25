@@ -11,7 +11,7 @@ import { DevRoleSwitcher } from "@/components/dev/role-switcher"
 
 const navItems = [
   {
-    label: "Mis Cursos",
+    label: "Mis Grupos",
     href: "/home",
     icon: BookOpen,
   },
@@ -21,8 +21,8 @@ const navItems = [
     icon: Database,
   },
   {
-    label: "Create Course",
-    href: "/create-course",
+    label: "Crear Grupo",
+    href: "/create-group",
     icon: PlusCircle,
   },
   {

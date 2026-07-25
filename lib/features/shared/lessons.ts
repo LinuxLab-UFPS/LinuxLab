@@ -85,7 +85,7 @@ export function getLessonSequence(): LessonRef[] {
         ...base,
         subtopicId: null,
         subtopicTitle: null,
-        href: `/course?tema=${topic.slug}`,
+        href: `/group?tema=${topic.slug}`,
       })
       continue
     }
@@ -95,7 +95,7 @@ export function getLessonSequence(): LessonRef[] {
         ...base,
         subtopicId: sub.id,
         subtopicTitle: sub.title,
-        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+        href: `/group?tema=${topic.slug}&sub=${sub.id}`,
         isSimulator: sub.type === "simulator",
       })
     }
@@ -206,7 +206,7 @@ export function getSimulators(): SimulatorRef[] {
         topicSlug: topic.slug,
         topicTitle: topic.title,
         // play=1 makes the simulator open fullscreen right away.
-        href: `/course?tema=${topic.slug}&sub=${sub.id}&play=1`,
+        href: `/group?tema=${topic.slug}&sub=${sub.id}&play=1`,
       })
     }
   }
@@ -232,7 +232,7 @@ export function getSearchIndex(): SearchItem[] {
       title: topic.title,
       kind: "modulo",
       context: "Módulo",
-      href: `/course?tema=${topic.slug}`,
+      href: `/group?tema=${topic.slug}`,
     })
 
     const meta = getTopicContentMeta(topic.number)
@@ -244,8 +244,8 @@ export function getSearchIndex(): SearchItem[] {
         kind: isSim ? "simulador" : "subtema",
         context: isSim ? "Simulador" : "Tema",
         href: isSim
-          ? `/course?tema=${topic.slug}&sub=${sub.id}&play=1`
-          : `/course?tema=${topic.slug}&sub=${sub.id}`,
+          ? `/group?tema=${topic.slug}&sub=${sub.id}&play=1`
+          : `/group?tema=${topic.slug}&sub=${sub.id}`,
       })
     }
   }

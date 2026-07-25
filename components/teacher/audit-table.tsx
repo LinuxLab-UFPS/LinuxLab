@@ -158,7 +158,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted-foreground max-w-[180px] truncate">
-                      {entry.course}
+                      {entry.group}
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground">{entry.action}</td>
                   </tr>

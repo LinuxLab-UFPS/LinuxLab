@@ -5,7 +5,7 @@ import { TerminalPanel } from "@/components/shared/terminal-panel"
 import { useTerminalUI } from "@/components/shared/terminal-ui"
 
 /** The floating terminal button + slide-in panel for the content view. */
-export function CourseTerminal() {
+export function GroupTerminal() {
   const { open, setOpen } = useTerminalUI()
 
   return (

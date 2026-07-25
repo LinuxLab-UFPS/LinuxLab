@@ -8,29 +8,29 @@ import { NeonProgress } from "@/components/shared/neon-progress"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import type { LessonSubtopic } from "@/lib/features/shared/types"
 
-interface CourseSidebarProps {
+interface GroupSidebarProps {
   activeTopicSlug: string
   activeSubtopicId?: string
   /** Subtopics of the active topic, when it has published content. */
   contentSubtopics?: LessonSubtopic[]
   /** Lesson count per topic number, for the completion state. */
   lessonCounts: Record<number, number>
-  courseName?: string
+  groupName?: string
 }
 
 /**
- * Clean course contents panel (devops-daily style): a self-outlined card, the
+ * Clean group contents panel (devops-daily style): a self-outlined card, the
  * same color as the background, with a home/title nav on top, the module list
  * (numbered; done ones get a green check and dimmer text), and overall progress
  * at the bottom.
  */
-export function CourseSidebar({
+export function GroupSidebar({
   activeTopicSlug,
   activeSubtopicId,
   contentSubtopics,
   lessonCounts,
-  courseName,
-}: CourseSidebarProps) {
+  groupName,
+}: GroupSidebarProps) {
   const { readCountForTopic, isRead } = useLessonProgress()
 
   const isModuleDone = (topicNumber: number) => {
@@ -55,7 +55,7 @@ export function CourseSidebar({
             <Home className="h-4 w-4" />
           </Link>
           <h2 className="truncate text-sm font-semibold text-foreground">
-            {courseName ?? "Contenidos del curso"}
+            {groupName ?? "Contenidos del grupo"}
           </h2>
         </div>
 
@@ -73,7 +73,7 @@ export function CourseSidebar({
               return (
                 <li key={topic.slug}>
                   <Link
-                    href={`/course?tema=${topic.slug}`}
+                    href={`/group?tema=${topic.slug}`}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
                       isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
@@ -115,7 +115,7 @@ export function CourseSidebar({
                         return (
                           <li key={sub.id}>
                             <Link
-                              href={`/course?tema=${topic.slug}&sub=${sub.id}`}
+                              href={`/group?tema=${topic.slug}&sub=${sub.id}`}
                               className={cn(
                                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
                                 activeSub

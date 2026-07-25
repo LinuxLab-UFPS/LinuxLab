@@ -26,7 +26,7 @@ export function TopicGrid({ lessonCounts, previews }: TopicGridProps) {
         return (
           <ContentCard
             key={topic.slug}
-            href={`/course?tema=${topic.slug}`}
+            href={`/group?tema=${topic.slug}`}
             title={`${topic.number}. ${topic.title}`}
             description={topic.description}
             illustration={topicIllustration(topic.number)}

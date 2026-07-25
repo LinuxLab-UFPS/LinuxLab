@@ -1,41 +1,41 @@
-import { notImplemented } from "@/lib/features/shared/stub"
-import type { Student } from "@/lib/features/auth/types"
+import { teacherApi } from "./api"
 import type {
-  Course,
-  CreateCourseInput,
+  Group,
+  CreateGroupInput,
   Activity,
   CreateActivityInput,
   AuditEntry,
-  CourseProgressSummary,
-  StudentCourseDetail,
+  GroupProgressSummary,
+  StudentGroupDetail,
   Enrollment,
 } from "./types"
+import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
-export async function listCourses(): Promise<Course[]> {
-  return []
+export async function listGroups(): Promise<Group[]> {
+  return teacherApi.listGroups()
 }
 
-export async function getCourse(_id: string): Promise<Course | null> {
-  return null
+export async function getGroup(id: string): Promise<Group | null> {
+  try {
+    return await teacherApi.getGroup(id)
+  } catch {
+    return null
+  }
 }
 
-export async function createCourse(_input: CreateCourseInput): Promise<Course> {
-  return notImplemented("courses.createCourse")
+export async function createGroup(input: CreateGroupInput) {
+  return teacherApi.createGroup(input)
 }
 
-export async function setCourseArchived(_id: string, _archived: boolean): Promise<void> {
-  return notImplemented("courses.setCourseArchived")
-}
-
-export async function deleteCourse(_id: string): Promise<void> {
-  return notImplemented("courses.deleteCourse")
+export async function setGroupArchived(id: string, archived: boolean): Promise<void> {
+  await teacherApi.setGroupArchived(id, archived)
 }
 
 export async function listBankActivities(): Promise<Activity[]> {
   return []
 }
 
-export async function listCourseActivities(_courseId: string): Promise<Activity[]> {
+export async function listGroupActivities(_groupId: string): Promise<Activity[]> {
   return []
 }
 
@@ -44,34 +44,34 @@ export async function getActivity(_id: string): Promise<Activity | null> {
 }
 
 export async function createActivity(_input: CreateActivityInput): Promise<Activity> {
-  return notImplemented("activities.createActivity")
+  throw new Error("Actividades: no implementado todavía")
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {
-  return notImplemented("activities.submitActivity")
+  throw new Error("Actividades: no implementado todavía")
 }
 
 export async function validateActivity(_activityId: string): Promise<never> {
-  return notImplemented("activities.validateActivity")
+  throw new Error("Actividades: no implementado todavía")
 }
 
-export async function listEnrollments(_courseId: string): Promise<Enrollment[]> {
-  return []
+export async function listEnrollments(groupId: string): Promise<Enrollment[]> {
+  return teacherApi.listEnrollments(groupId)
+}
+
+export async function listStudents(groupId: string): Promise<EnrollmentStudent[]> {
+  return teacherApi.listStudents(groupId)
 }
 
 export async function addStudent(
-  _courseId: string,
-  _input: Omit<Student, "id">,
-): Promise<Student> {
-  return notImplemented("students.addStudent")
+  groupId: string,
+  input: Omit<EnrollmentStudent, "id">,
+): Promise<EnrollmentStudent> {
+  return teacherApi.addStudent(groupId, input)
 }
 
-export async function importStudentsCsv(_courseId: string, _file: File): Promise<Student[]> {
-  return notImplemented("students.importStudentsCsv")
-}
-
-export async function removeStudent(_courseId: string, _studentId: string): Promise<void> {
-  return notImplemented("students.removeStudent")
+export async function importStudentsCsv(groupId: string, file: File) {
+  return teacherApi.importStudentsCsv(groupId, file)
 }
 
 export async function listAuditLog(): Promise<AuditEntry[]> {
@@ -79,10 +79,10 @@ export async function listAuditLog(): Promise<AuditEntry[]> {
 }
 
 export async function clearAuditLog(): Promise<void> {
-  return notImplemented("audit.clearAuditLog")
+  throw new Error("Audit log: no implementado todavía")
 }
 
-const EMPTY_SUMMARY: CourseProgressSummary = {
+const EMPTY_SUMMARY: GroupProgressSummary = {
   enrolledCount: 0,
   averageProgress: 0,
   completedToday: 0,
@@ -90,14 +90,14 @@ const EMPTY_SUMMARY: CourseProgressSummary = {
   rows: [],
 }
 
-export async function getCourseProgress(_courseId: string): Promise<CourseProgressSummary> {
+export async function getGroupProgress(_groupId: string): Promise<GroupProgressSummary> {
   return EMPTY_SUMMARY
 }
 
-export async function getStudentCourseDetail(
-  _courseId: string,
+export async function getStudentGroupDetail(
+  _groupId: string,
   _studentId: string,
-): Promise<StudentCourseDetail | null> {
+): Promise<StudentGroupDetail | null> {
   return null
 }
 
@@ -106,5 +106,5 @@ export async function gradeSubmission(
   _score: number,
   _feedback?: string,
 ): Promise<void> {
-  return notImplemented("submissions.gradeSubmission")
+  throw new Error("Submissions: no implementado todavía")
 }
