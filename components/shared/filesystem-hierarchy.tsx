@@ -45,43 +45,47 @@ function Box({ name, className }: { name: string; className: string }) {
   )
 }
 
+const LINE = "bg-muted-foreground/50"
+
 /**
  * The Linux filesystem hierarchy, rendered as a real (theme-aware) element
  * instead of a static screenshot, so it stays sharp and matches light/dark mode.
  */
 export function FilesystemHierarchy() {
   return (
-    <div className="my-8 rounded-xl border border-border bg-secondary/30 px-6 py-10">
-      <p className="mb-8 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        Jerarquía del sistema de archivos
-      </p>
-
+    <div className="my-8 px-2 py-6">
       <div className="flex flex-col items-center">
         <Box name="/" className="border-primary text-primary" />
         <p className="mt-1.5 text-xs text-muted-foreground">raíz del sistema</p>
 
-        <div className="h-6 w-px bg-border" />
+        <div className={`h-6 w-0.5 ${LINE}`} />
 
-        <div className="flex w-full max-w-3xl justify-between border-t border-border">
-          {CHILDREN.map((node) => (
-            <div key={node.name} className="flex flex-col items-center px-2 pt-6">
-              <div className="-mt-6 h-6 w-px bg-border" />
-              <Box name={node.name} className={node.color} />
-              <p className="mt-1.5 max-w-24 text-center text-xs leading-tight text-muted-foreground">
-                {node.detail}
-              </p>
+        {/* The bar spans only from the first child's center to the last child's
+            center (10%-90%, since each of the 5 equal columns is centered on
+            its own 20% slice) — it must not overhang past the outer nodes. */}
+        <div className="relative w-full max-w-3xl">
+          <div className={`absolute inset-x-[10%] top-0 h-0.5 ${LINE}`} />
+          <div className="grid grid-cols-5 pt-6">
+            {CHILDREN.map((node) => (
+              <div key={node.name} className="flex flex-col items-center px-2">
+                <div className={`h-6 w-0.5 ${LINE}`} />
+                <Box name={node.name} className={node.color} />
+                <p className="mt-1.5 max-w-24 text-center text-xs leading-tight text-muted-foreground">
+                  {node.detail}
+                </p>
 
-              {node.child && (
-                <>
-                  <div className="h-5 w-px bg-border" />
-                  <Box name={node.child.name} className={node.color} />
-                  <p className="mt-1.5 text-center text-xs leading-tight text-muted-foreground">
-                    {node.child.detail}
-                  </p>
-                </>
-              )}
-            </div>
-          ))}
+                {node.child && (
+                  <>
+                    <div className={`h-5 w-0.5 ${LINE}`} />
+                    <Box name={node.child.name} className={node.color} />
+                    <p className="mt-1.5 text-center text-xs leading-tight text-muted-foreground">
+                      {node.child.detail}
+                    </p>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
