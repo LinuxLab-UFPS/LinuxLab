@@ -65,7 +65,7 @@ export function FilesystemHierarchy() {
             its own 20% slice) — it must not overhang past the outer nodes. */}
         <div className="relative w-full max-w-3xl">
           <div className={`absolute inset-x-[10%] top-0 h-0.5 ${LINE}`} />
-          <div className="grid grid-cols-5 pt-6">
+          <div className="grid grid-cols-5">
             {CHILDREN.map((node) => (
               <div key={node.name} className="flex flex-col items-center px-2">
                 <div className={`h-6 w-0.5 ${LINE}`} />
