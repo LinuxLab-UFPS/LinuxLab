@@ -34,6 +34,7 @@ export type LessonBlock =
     }
   | { kind: "video"; title: string; src: string; exists: boolean; expectedPath: string }
   | { kind: "simulator"; src: string }
+  | { kind: "simulator-card"; id: string }
 
 interface Directive {
   type: string
@@ -46,7 +47,7 @@ type Token =
   | { kind: "directive"; directive: Directive }
 
 const DIRECTIVE_RE =
-  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO)\s*:\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?-->/g
+  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR)\s*:\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?-->/g
 
 const FENCE_RE = /```([a-zA-Z0-9]*)[ \t]*\r?\n([\s\S]*?)```/g
 
@@ -189,6 +190,11 @@ export function parseLessonBlocks(markdown: string, topicNumber: number): Lesson
     }
 
     const { type, value, label } = token.directive
+
+    if (type === "SIMULATOR") {
+      blocks.push({ kind: "simulator-card", id: value })
+      continue
+    }
 
     if (type === "VIDEO") {
       // The directive may omit the extension: "mi-video" → "mi-video.mp4".

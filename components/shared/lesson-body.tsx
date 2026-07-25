@@ -1,6 +1,8 @@
 import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@/components/shared/markdown"
 import { CodeWindow } from "@/components/shared/code-window"
+import { SimulatorCard } from "@/components/student/simulator-card"
+import { getSimulator } from "@/lib/features/shared/simulators"
 import type { LessonBlock } from "@/lib/features/shared/lesson-blocks"
 
 const IMG_CLASS = "mx-auto my-8 w-full max-w-full rounded-lg"
@@ -99,6 +101,15 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 allow="same-origin"
               />
             )
+
+          case "simulator-card": {
+            const sim = getSimulator(block.id)
+            return sim ? (
+              <div key={i} className="my-10 max-w-sm">
+                <SimulatorCard simulator={sim} />
+              </div>
+            ) : null
+          }
         }
       })}
     </div>
