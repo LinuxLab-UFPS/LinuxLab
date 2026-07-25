@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/student/site-header"
 import { CourseSidebar } from "@/components/student/course-sidebar"
+import { CourseBody } from "@/components/student/course-body"
 import { ContentArea } from "@/components/student/content-area"
 import { CourseTerminal } from "@/components/shared/course-terminal"
 import { syllabus, getTopicBySlug } from "@/lib/features/shared/temario"
@@ -53,7 +54,7 @@ export default async function CoursePage({
           <div className="flex h-screen flex-col bg-background">
             <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
             <ReadingProgressBar />
-            <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 overflow-hidden px-4 sm:px-6">
+            <CourseBody>
               <CourseSidebar
                 activeTopicSlug={topic.slug}
                 activeSubtopicId={activeSubtopic?.id}
@@ -69,7 +70,7 @@ export default async function CoursePage({
                 next={next}
               />
               <CourseTerminal />
-            </div>
+            </CourseBody>
           </div>
         </TerminalUIProvider>
       </ReadingProgressProvider>
