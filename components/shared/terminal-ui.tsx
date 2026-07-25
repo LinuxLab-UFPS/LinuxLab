@@ -40,7 +40,7 @@ export function useTerminalUI(): TerminalUIValue {
 // With the terminal open the lesson fills the remaining width and the text
 // scales down so more fits; closed, it's a narrow reading column on the left.
 const COMPACT_PROSE =
-  "[&_h2]:text-2xl [&_h3]:text-xl [&_p]:text-base [&_ul]:text-base [&_ol]:text-base"
+  "[&_.lesson-prose_h2]:text-2xl [&_.lesson-prose_h3]:text-xl [&_.lesson-prose_p]:text-base [&_.lesson-prose_ul]:text-base [&_.lesson-prose_ol]:text-base"
 
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()

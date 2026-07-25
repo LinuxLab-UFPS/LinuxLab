@@ -11,7 +11,7 @@ const LOGO_CLASS = "mx-auto my-8 max-h-80 w-auto max-w-full rounded-lg"
 export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
   const isSimulator = blocks.some((b) => b.kind === "simulator")
   return (
-    <div className={isSimulator ? "flex-1 flex flex-col overflow-hidden" : undefined}>
+    <div className={isSimulator ? "flex-1 flex flex-col overflow-hidden" : "lesson-prose"}>
       {blocks.map((block, i) => {
         switch (block.kind) {
           case "markdown":
