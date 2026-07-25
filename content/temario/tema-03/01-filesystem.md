@@ -6,7 +6,7 @@ En Linux, todo se representa como un archivo: los programas, los dispositivos de
 
 El sistema de archivos de Linux tiene un único punto de partida llamado directorio raíz, representado por el carácter `/`. A partir de ahí, todos los directorios se ramifican hacia abajo formando una jerarquía. A diferencia de Windows, en Linux no existen letras de unidad como `C:\` o `D:\`. Cada dispositivo físico, incluyendo discos, memorias USB y particiones, se integra dentro de esta misma jerarquía bajo un directorio.
 
-<!-- IMAGE: linux-filesystem-jerarquia.png | Jerarquía del sistema de archivos de Linux -->
+<!-- FS-TREE -->
 
 Para ver qué contiene el directorio raíz:
 

@@ -2,6 +2,7 @@ import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@/components/shared/markdown"
 import { CodeWindow } from "@/components/shared/code-window"
 import { SimulatorCard } from "@/components/student/simulator-card"
+import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
 import { getSimulator } from "@/lib/features/shared/simulators"
 import type { LessonBlock } from "@/lib/features/shared/lesson-blocks"
 
@@ -101,6 +102,9 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 allow="same-origin"
               />
             )
+
+          case "fs-tree":
+            return <FilesystemHierarchy key={i} />
 
           case "simulator-card": {
             const sim = getSimulator(block.id)

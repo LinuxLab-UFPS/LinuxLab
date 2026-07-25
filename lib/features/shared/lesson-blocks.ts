@@ -35,6 +35,7 @@ export type LessonBlock =
   | { kind: "video"; title: string; src: string; exists: boolean; expectedPath: string }
   | { kind: "simulator"; src: string }
   | { kind: "simulator-card"; id: string }
+  | { kind: "fs-tree" }
 
 interface Directive {
   type: string
@@ -47,7 +48,7 @@ type Token =
   | { kind: "directive"; directive: Directive }
 
 const DIRECTIVE_RE =
-  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR)\s*:\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?-->/g
+  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
 
 const FENCE_RE = /```([a-zA-Z0-9]*)[ \t]*\r?\n([\s\S]*?)```/g
 
@@ -169,7 +170,7 @@ export function parseLessonBlocks(markdown: string, topicNumber: number): Lesson
       kind: "directive",
       directive: {
         type: match[1],
-        value: match[2].trim(),
+        value: (match[2] ?? "").trim(),
         label: (match[3] ?? "").trim(),
       },
     })
@@ -193,6 +194,11 @@ export function parseLessonBlocks(markdown: string, topicNumber: number): Lesson
 
     if (type === "SIMULATOR") {
       blocks.push({ kind: "simulator-card", id: value })
+      continue
+    }
+
+    if (type === "FS-TREE") {
+      blocks.push({ kind: "fs-tree" })
       continue
     }
 
