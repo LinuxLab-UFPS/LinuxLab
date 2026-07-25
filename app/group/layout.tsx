@@ -4,15 +4,15 @@ import { getServerSession } from "@/lib/features/auth/session"
 // ############################################################################
 // ## PROHIBIDO CAMBIAR / NO MOVER A (protected).                            ##
 // ##                                                                        ##
-// ## La vista del curso trae su PROPIA barra lateral (la de contenidos del  ##
-// ## curso). Si se mete bajo (protected), el layout de ese grupo pinta la   ##
-// ## barra global ADEMAS de la del curso => doble barra lateral.            ##
+// ## La vista del grupo trae su PROPIA barra lateral (la de contenidos del  ##
+// ## grupo). Si se mete bajo (protected), el layout de ese grupo pinta la   ##
+// ## barra global ADEMAS de la del grupo => doble barra lateral.            ##
 // ##                                                                        ##
-// ## Por eso el curso vive en app/course (fuera de (protected)). Este       ##
+// ## Por eso el grupo vive en app/group (fuera de (protected)). Este        ##
 // ## layout solo hace el chequeo de auth, SIN barra. La URL sigue siendo    ##
-// ## /course porque (protected) es un grupo sin segmento de ruta.           ##
+// ## /group porque (protected) es un grupo sin segmento de ruta.            ##
 // ############################################################################
-export default async function CourseLayout({
+export default async function GroupLayout({
   children,
 }: {
   children: React.ReactNode

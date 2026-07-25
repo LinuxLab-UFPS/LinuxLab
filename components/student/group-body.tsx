@@ -4,12 +4,12 @@ import { useTerminalUI } from "@/components/shared/terminal-ui"
 import { cn } from "@/lib/utils"
 
 /**
- * The course body row. While reading it's constrained to the header width
+ * The group body row. While reading it's constrained to the header width
  * (aligned with the logo/profile); when the terminal opens it expands to fill
  * the screen, so the terminal never looks cramped. The width animates between
  * the two.
  */
-export function CourseBody({ children }: { children: React.ReactNode }) {
+export function GroupBody({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (
     <div

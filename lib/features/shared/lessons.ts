@@ -86,7 +86,7 @@ export function getLessonSequence(): LessonRef[] {
         ...base,
         subtopicId: null,
         subtopicTitle: null,
-        href: `/course?tema=${topic.slug}`,
+        href: `/group?tema=${topic.slug}`,
       })
       continue
     }
@@ -96,7 +96,7 @@ export function getLessonSequence(): LessonRef[] {
         ...base,
         subtopicId: sub.id,
         subtopicTitle: sub.title,
-        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+        href: `/group?tema=${topic.slug}&sub=${sub.id}`,
         isSimulator: sub.type === "simulator",
       })
     }
@@ -200,7 +200,7 @@ export function getSearchIndex(): SearchItem[] {
       title: topic.title,
       kind: "modulo",
       context: "Módulo",
-      href: `/course?tema=${topic.slug}`,
+      href: `/group?tema=${topic.slug}`,
     })
 
     const meta = getTopicContentMeta(topic.number)
@@ -210,7 +210,7 @@ export function getSearchIndex(): SearchItem[] {
         title: sub.title,
         kind: "subtema",
         context: "Tema",
-        href: `/course?tema=${topic.slug}&sub=${sub.id}`,
+        href: `/group?tema=${topic.slug}&sub=${sub.id}`,
       })
     }
   }

@@ -29,7 +29,7 @@ interface TerminalLine {
 
 export default function NewActivityPage() {
   const params = useParams<{ id: string }>()
-  const courseId = params?.id ?? ""
+  const groupId = params?.id ?? ""
 
   const [activityName, setActivityName] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("")
@@ -127,11 +127,11 @@ export default function NewActivityPage() {
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
             <Link href="/home" className="hover:text-foreground transition-colors">
-              Mis Cursos
+              Mis Grupos
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href={`/courses/${courseId}`} className="hover:text-foreground transition-colors">
-              Curso
+            <Link href={`/groups/${groupId}`} className="hover:text-foreground transition-colors">
+              Grupo
             </Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-foreground">Nueva Actividad</span>
@@ -141,7 +141,7 @@ export default function NewActivityPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-foreground">Crear nueva actividad</h1>
             <div className="flex items-center gap-3">
-              <Link href={`/courses/${courseId}`}>
+              <Link href={`/groups/${groupId}`}>
                 <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
                   Cancelar
                 </Button>
@@ -350,7 +350,7 @@ export default function NewActivityPage() {
                     El estudiante podrá enviar su trabajo desde la vista de la actividad.
                     Recibirás el aviso en el{" "}
                     <Link
-                      href={`/courses/${courseId}/tracking`}
+                      href={`/groups/${groupId}/tracking`}
                       className="text-primary hover:underline"
                     >
                       panel de seguimiento

@@ -4,7 +4,7 @@ import { ChevronLeft, User, Calendar, Clock, CheckCircle2, AlertCircle } from "l
 import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/progress-indicators"
 import { cn } from "@/lib/utils"
-import { getStudentCourseDetail } from "@/lib/features/teacher/data"
+import { getStudentGroupDetail } from "@/lib/features/teacher/data"
 
 export default async function StudentDetailPage({
   params,
@@ -12,7 +12,7 @@ export default async function StudentDetailPage({
   params: Promise<{ id: string; studentId: string }>
 }) {
   const { id, studentId } = await params
-  const detail = await getStudentCourseDetail(id, studentId)
+  const detail = await getStudentGroupDetail(id, studentId)
 
   return (
     <div className="min-h-screen">
@@ -20,7 +20,7 @@ export default async function StudentDetailPage({
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
         <div className="px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href={`/courses/${id}/tracking`}>
+            <Link href={`/groups/${id}/tracking`}>
               <Button variant="ghost" size="icon" className="shrink-0">
                 <ChevronLeft className="w-5 h-5" />
               </Button>
@@ -28,10 +28,10 @@ export default async function StudentDetailPage({
             <div className="flex-1">
               <nav className="text-xs text-muted-foreground mb-1">
                 <Link href="/home" className="hover:text-foreground">
-                  Mis Cursos
+                  Mis Grupos
                 </Link>
                 <span className="mx-2">/</span>
-                <Link href={`/courses/${id}/tracking`} className="hover:text-foreground">
+                <Link href={`/groups/${id}/tracking`} className="hover:text-foreground">
                   Seguimiento
                 </Link>
                 <span className="mx-2">/</span>
@@ -52,7 +52,7 @@ export default async function StudentDetailPage({
           <p className="text-sm text-muted-foreground mb-6">
             No hay información de progreso para este estudiante.
           </p>
-          <Link href={`/courses/${id}/tracking`}>
+          <Link href={`/groups/${id}/tracking`}>
             <Button variant="outline">Volver al seguimiento</Button>
           </Link>
         </div>
@@ -82,7 +82,7 @@ export default async function StudentDetailPage({
                   </span>
                 </div>
                 <div className="mt-2">
-                  <span className="text-xs bg-secondary px-2 py-0.5">{detail.courseName}</span>
+                  <span className="text-xs bg-secondary px-2 py-0.5">{detail.groupName}</span>
                 </div>
               </div>
 

@@ -1,29 +1,38 @@
 import { apiFetch } from "@/lib/api/client"
+import { env } from "@/lib/config/env"
 import type {
-  Course,
-  CreateCourseInput,
+  Group,
+  CreateGroupInput,
   Activity,
   CreateActivityInput,
   AuditEntry,
-  CourseProgressSummary,
-  StudentCourseDetail,
+  GroupProgressSummary,
+  StudentGroupDetail,
   Enrollment,
 } from "./types"
-import type { Student } from "@/lib/features/auth/types"
+import type { EnrollmentStudent } from "@/lib/features/auth/types"
+
+export interface CreateGroupResponse {
+  group: Group
+  enrollment: {
+    total: number
+    registered: number
+    skipped: number
+    errors: { row: number; email: string | null; error: string }[]
+  }
+}
 
 export const teacherApi = {
-  listCourses: () => apiFetch<Course[]>("/api/courses"),
-  getCourse: (id: string) => apiFetch<Course>(`/api/courses/${id}`),
-  createCourse: (input: CreateCourseInput) =>
-    apiFetch<Course>("/api/courses", { method: "POST", body: JSON.stringify(input) }),
-  setCourseArchived: (id: string, archived: boolean) =>
-    apiFetch<void>(`/api/courses/${id}`, { method: "PATCH", body: JSON.stringify({ archived }) }),
-  deleteCourse: (id: string) =>
-    apiFetch<void>(`/api/courses/${id}`, { method: "DELETE" }),
+  listGroups: () => apiFetch<Group[]>("/api/groups"),
+  getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
+  createGroup: (input: CreateGroupInput) =>
+    apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
+  setGroupArchived: (id: string, _archived: boolean) =>
+    apiFetch<void>(`/api/groups/${id}/archive`, { method: "PATCH" }),
 
   listBankActivities: () => apiFetch<Activity[]>("/api/activities/bank"),
-  listCourseActivities: (courseId: string) =>
-    apiFetch<Activity[]>(`/api/courses/${courseId}/activities`),
+  listGroupActivities: (groupId: string) =>
+    apiFetch<Activity[]>(`/api/groups/${groupId}/activities`),
   getActivity: (id: string) => apiFetch<Activity>(`/api/activities/${id}`),
   createActivity: (input: CreateActivityInput) =>
     apiFetch<Activity>("/api/activities", { method: "POST", body: JSON.stringify(input) }),
@@ -32,25 +41,42 @@ export const teacherApi = {
   validateActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/validate`, { method: "POST" }),
 
-  listEnrollments: (courseId: string) =>
-    apiFetch<Enrollment[]>(`/api/courses/${courseId}/enrollments`),
-  addStudent: (courseId: string, input: Omit<Student, "id">) =>
-    apiFetch<Student>(`/api/courses/${courseId}/students`, {
+  listEnrollments: (groupId: string) =>
+    apiFetch<Enrollment[]>(`/api/groups/${groupId}/enrollments`),
+  addStudent: (groupId: string, input: Omit<EnrollmentStudent, "id">) =>
+    apiFetch<EnrollmentStudent>(`/api/groups/${groupId}/students`, {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  importStudentsCsv: (courseId: string, _file: File) =>
-    apiFetch<Student[]>(`/api/courses/${courseId}/students/import`, { method: "POST" }),
-  removeStudent: (courseId: string, studentId: string) =>
-    apiFetch<void>(`/api/courses/${courseId}/students/${studentId}`, { method: "DELETE" }),
+  importStudentsCsv: async (groupId: string, file: File) => {
+    const text = await file.text()
+    const res = await fetch(`${env.backendUrl}/api/groups/${groupId}/students/csv`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "text/plain" },
+      body: text,
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error(body.error || `HTTP ${res.status}`)
+    }
+    return res.json() as Promise<{
+      total: number
+      registered: number
+      skipped: number
+      errors: { row: number; email: string | null; error: string }[]
+    }>
+  },
+  listStudents: (groupId: string) =>
+    apiFetch<EnrollmentStudent[]>(`/api/groups/${groupId}/students`),
 
   listAuditLog: () => apiFetch<AuditEntry[]>("/api/audit-log"),
   clearAuditLog: () => apiFetch<void>("/api/audit-log", { method: "DELETE" }),
 
-  getCourseProgress: (courseId: string) =>
-    apiFetch<CourseProgressSummary>(`/api/courses/${courseId}/progress`),
-  getStudentCourseDetail: (courseId: string, studentId: string) =>
-    apiFetch<StudentCourseDetail>(`/api/courses/${courseId}/students/${studentId}`),
+  getGroupProgress: (groupId: string) =>
+    apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),
+  getStudentGroupDetail: (groupId: string, studentId: string) =>
+    apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/students/${studentId}`),
   gradeSubmission: (submissionId: string, score: number, feedback?: string) =>
     apiFetch<void>(`/api/submissions/${submissionId}`, {
       method: "PATCH",

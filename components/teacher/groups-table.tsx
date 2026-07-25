@@ -2,49 +2,39 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Eye, Pencil, Users, Archive, ArchiveRestore, Trash2 } from "lucide-react"
+import { Eye, Pencil, Users, Archive, ArchiveRestore } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Course } from "@/lib/features/teacher/types"
-import { deleteCourse, setCourseArchived } from "@/lib/features/teacher/data"
+import type { Group } from "@/lib/features/teacher/types"
+import { setGroupArchived } from "@/lib/features/teacher/data"
 
 type Tab = "activos" | "archivados"
 
-export function CoursesTable({ initialCourses }: { initialCourses: Course[] }) {
-  const [courses, setCourses] = useState<Course[]>(initialCourses)
+export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
+  const [groups, setGroups] = useState<Group[]>(initialGroups)
   const [tab, setTab] = useState<Tab>("activos")
   const [error, setError] = useState<string | null>(null)
 
   const counts = useMemo(
     () => ({
-      activos: courses.filter((c) => !c.archived).length,
-      archivados: courses.filter((c) => c.archived).length,
+      activos: groups.filter((c) => !c.archived).length,
+      archivados: groups.filter((c) => c.archived).length,
     }),
-    [courses]
+    [groups]
   )
 
-  const visible = courses.filter((c) =>
+  const visible = groups.filter((c) =>
     tab === "activos" ? !c.archived : c.archived
   )
 
-  const toggleArchive = async (course: Course) => {
+  const toggleArchive = async (group: Group) => {
     setError(null)
     try {
-      await setCourseArchived(course.id, !course.archived)
-      setCourses((prev) =>
-        prev.map((c) => (c.id === course.id ? { ...c, archived: !c.archived } : c))
+      await setGroupArchived(group.id, !group.archived)
+      setGroups((prev) =>
+        prev.map((c) => (c.id === group.id ? { ...c, archived: !c.archived } : c))
       )
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo archivar el curso.")
-    }
-  }
-
-  const removeCourse = async (id: string) => {
-    setError(null)
-    try {
-      await deleteCourse(id)
-      setCourses((prev) => prev.filter((c) => c.id !== id))
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo eliminar el curso.")
+      setError(e instanceof Error ? e.message : "No se pudo archivar el grupo.")
     }
   }
 
@@ -85,7 +75,7 @@ export function CoursesTable({ initialCourses }: { initialCourses: Course[] }) {
                   ID
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Curso
+                  Grupo
                 </th>
                 <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">
                   Estudiantes
@@ -102,57 +92,52 @@ export function CoursesTable({ initialCourses }: { initialCourses: Course[] }) {
               </tr>
             </thead>
             <tbody>
-              {visible.map((course) => (
+              {visible.map((group) => (
                 <tr
-                  key={course.id}
+                  key={group.id}
                   className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors"
                 >
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center justify-center min-w-9 px-2 py-0.5 text-xs font-mono rounded-md bg-secondary text-muted-foreground">
-                      #{course.id}
+                      #{group.id}
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/courses/${course.id}`} className="group block">
+                    <Link href={`/groups/${group.id}`} className="group block">
                       <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                        {course.name}
+                        {group.name}
                       </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {course.description}
-                      </span>
+                      {group.description && (
+                        <span className="block text-xs text-muted-foreground">
+                          {group.description}
+                        </span>
+                      )}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-center text-sm font-mono text-foreground">
-                    {course.studentCount}
+                    {group.studentCount}
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-mono text-foreground">
-                    {course.activityCount}
+                  <td className="px-4 py-3 text-center text-sm font-mono text-muted-foreground">
+                    {group.activityCount}
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground font-mono">
-                    {new Date(course.createdAt).toLocaleDateString("es-CO")}
+                    {new Date(group.createdAt).toLocaleDateString("es-CO")}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <IconAction href={`/courses/${course.id}`} label="View" icon={Eye} />
-                      <IconAction href={`/courses/${course.id}`} label="Students" icon={Users} />
-                      <IconAction href={`/create-course`} label="Edit" icon={Pencil} />
+                      <IconAction href={`/groups/${group.id}`} label="Ver" icon={Eye} />
+                      <IconAction href={`/groups/${group.id}`} label="Estudiantes" icon={Users} />
+                      <IconAction href={`/create-group`} label="Editar" icon={Pencil} />
                       <button
-                        onClick={() => toggleArchive(course)}
-                        title={course.archived ? "Desarchivar" : "Archivar"}
+                        onClick={() => toggleArchive(group)}
+                        title={group.archived ? "Desarchivar" : "Archivar"}
                         className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                       >
-                        {course.archived ? (
+                        {group.archived ? (
                           <ArchiveRestore className="w-4 h-4" />
                         ) : (
                           <Archive className="w-4 h-4" />
                         )}
-                      </button>
-                      <button
-                        onClick={() => removeCourse(course.id)}
-                        title="Eliminar"
-                        className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-danger hover:bg-danger/10 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -164,7 +149,7 @@ export function CoursesTable({ initialCourses }: { initialCourses: Course[] }) {
 
         {visible.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-            No tienes cursos {tab === "activos" ? "activos" : "archivados"}.
+            No tienes grupos {tab === "activos" ? "activos" : "archivados"}.
           </div>
         )}
       </div>

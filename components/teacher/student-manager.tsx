@@ -15,11 +15,11 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-import type { Student } from "@/lib/features/auth/types"
+import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
 interface StudentManagerProps {
-  students: Student[]
-  onAddStudent: (student: Omit<Student, "id">) => void
+  students: EnrollmentStudent[]
+  onAddStudent: (student: Omit<EnrollmentStudent, "id">) => void
   onRemoveStudent: (id: string) => void
   onUploadCSV: (file: File) => void
 }

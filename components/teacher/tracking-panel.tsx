@@ -6,17 +6,17 @@ import { Input } from "@/components/ui/input"
 import { MetricCard } from "@/components/shared/metric-card"
 import { StatusIndicator, ProgressBar } from "@/components/shared/progress-indicators"
 import { StudentProgressDialog } from "@/components/teacher/student-progress-dialog"
-import type { CourseProgressSummary, StudentProgress } from "@/lib/features/teacher/types"
+import type { GroupProgressSummary, StudentProgress } from "@/lib/features/teacher/types"
 import type { Topic } from "@/lib/features/student/types"
 
 interface TrackingPanelProps {
-  courseId: string
-  summary: CourseProgressSummary
-  /** Topics enabled for this course (subset of the temario). */
+  groupId: string
+  summary: GroupProgressSummary
+  /** Topics enabled for this group (subset of the temario). */
   topics: Topic[]
 }
 
-export function TrackingPanel({ courseId, summary, topics }: TrackingPanelProps) {
+export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("all")
   const [selectedStudent, setSelectedStudent] = useState<StudentProgress | null>(null)
@@ -151,7 +151,7 @@ export function TrackingPanel({ courseId, summary, topics }: TrackingPanelProps)
 
         {filteredStudents.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-            No hay estudiantes inscritos en este curso.
+            No hay estudiantes inscritos en este grupo.
           </div>
         )}
       </div>
@@ -167,7 +167,7 @@ export function TrackingPanel({ courseId, summary, topics }: TrackingPanelProps)
       <StudentProgressDialog
         student={selectedStudent}
         topics={topics}
-        courseId={courseId}
+        groupId={groupId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
       />

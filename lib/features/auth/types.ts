@@ -7,9 +7,11 @@ export interface User {
   role: Role
   googleId?: string
   active?: boolean
+  linuxUsername?: string | null
+  linuxProvisioned?: boolean
 }
 
-export interface Student {
+export interface EnrollmentStudent {
   id: string
   name: string
   email: string

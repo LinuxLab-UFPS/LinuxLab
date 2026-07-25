@@ -1,6 +1,6 @@
-import type { Role, Student } from "@/lib/features/auth/types"
+import type { Role, EnrollmentStudent } from "@/lib/features/auth/types"
 
-export interface Course {
+export interface Group {
   id: string
   name: string
   description: string
@@ -13,15 +13,15 @@ export interface Course {
 
 export interface Enrollment {
   id: string
-  courseId: string
-  student: Student
+  groupId: string
+  student: EnrollmentStudent
   enrolledAt: string
 }
 
-export type CreateCourseInput = {
+export type CreateGroupInput = {
   name: string
   description: string
-  enabledTopics: number[]
+  students: { name: string; email: string; code: string }[]
 }
 
 export type ActivitySource = "bank" | "teacher"
@@ -60,20 +60,20 @@ export interface AuditEntry {
   userName: string
   email: string
   role: Role
-  course: string
+  group: string
   action: string
 }
 
 export type ProgressStatus = "completed" | "in-progress" | "not-started" | "overdue"
 
 export interface StudentProgress {
-  student: Student
+  student: EnrollmentStudent
   topicStatus: Record<number, ProgressStatus>
   progress: number
   lastActivity: string
 }
 
-export interface CourseProgressSummary {
+export interface GroupProgressSummary {
   enrolledCount: number
   averageProgress: number
   completedToday: number
@@ -103,9 +103,9 @@ export interface Grade {
   evaluation?: "auto" | "manual"
 }
 
-export interface StudentCourseDetail {
-  student: Student
-  courseName: string
+export interface StudentGroupDetail {
+  student: EnrollmentStudent
+  groupName: string
   enrolledAt: string
   lastActive: string
   overallProgress: number

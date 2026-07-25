@@ -1,8 +1,8 @@
 import { SiteHeader } from "@/components/student/site-header"
-import { CourseSidebar } from "@/components/student/course-sidebar"
-import { CourseBody } from "@/components/student/course-body"
+import { GroupSidebar } from "@/components/student/group-sidebar"
+import { GroupBody } from "@/components/student/group-body"
 import { ContentArea } from "@/components/student/content-area"
-import { CourseTerminal } from "@/components/shared/course-terminal"
+import { GroupTerminal } from "@/components/shared/group-terminal"
 import { syllabus, getTopicBySlug } from "@/lib/features/shared/temario"
 import {
   getTopicContentMeta,
@@ -20,7 +20,7 @@ import {
   ReadingProgressBar,
 } from "@/components/shared/reading-progress"
 
-export default async function CoursePage({
+export default async function GroupPage({
   searchParams,
 }: {
   searchParams: Promise<{ tema?: string; sub?: string }>
@@ -54,8 +54,8 @@ export default async function CoursePage({
           <div className="flex h-screen flex-col bg-background">
             <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
             <ReadingProgressBar />
-            <CourseBody>
-              <CourseSidebar
+            <GroupBody>
+              <GroupSidebar
                 activeTopicSlug={topic.slug}
                 activeSubtopicId={activeSubtopic?.id}
                 contentSubtopics={meta?.subtopics}
@@ -69,8 +69,8 @@ export default async function CoursePage({
                 prev={prev}
                 next={next}
               />
-              <CourseTerminal />
-            </CourseBody>
+              <GroupTerminal />
+            </GroupBody>
           </div>
         </TerminalUIProvider>
       </ReadingProgressProvider>
