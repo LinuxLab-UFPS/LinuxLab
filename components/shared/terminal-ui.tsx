@@ -37,18 +37,18 @@ export function useTerminalUI(): TerminalUIValue {
  * ensancha y se centra para aprovechar el espacio; con la terminal ABIERTA (que
  * ocupa la derecha) vuelve al ancho normal, a la izquierda.
  */
-// With the terminal open the lesson fills the remaining width (left-aligned, not
-// squeezed into a narrow column) and the text scales down so more fits.
+// With the terminal open the lesson fills the remaining width and the text
+// scales down so more fits; closed, it's a narrow reading column on the left.
 const COMPACT_PROSE =
-  "[&_h2]:text-xl [&_h3]:text-lg [&_p]:text-sm [&_ul]:text-sm [&_ol]:text-sm"
+  "[&_h2]:text-2xl [&_h3]:text-xl [&_p]:text-base [&_ul]:text-base [&_ol]:text-base"
 
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (
     <div
       className={cn(
-        "p-6 transition-[max-width] duration-300 ease-out",
-        open ? cn("max-w-none", COMPACT_PROSE) : "mx-auto max-w-6xl",
+        "px-8 py-6 transition-[max-width] duration-300 ease-out",
+        open ? cn("max-w-none", COMPACT_PROSE) : "max-w-2xl",
       )}
     >
       {children}
