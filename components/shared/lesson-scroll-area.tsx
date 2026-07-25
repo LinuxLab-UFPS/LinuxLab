@@ -69,7 +69,7 @@ export function LessonScrollArea({
   }, [topicNumber, subtopicId, markRead, setProgress])
 
   return (
-    <main ref={scrollRef} className="flex-1 overflow-y-auto bg-background flex flex-col">
+    <main ref={scrollRef} className="no-scrollbar flex flex-1 flex-col overflow-y-auto bg-background">
       <div ref={contentRef} className="flex-1">
         {children}
       </div>

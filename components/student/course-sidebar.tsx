@@ -60,7 +60,7 @@ export function CourseSidebar({
         </div>
 
         {/* Module list */}
-        <nav className="min-h-0 overflow-y-auto p-2">
+        <nav className="no-scrollbar min-h-0 overflow-y-auto p-2">
           <ul className="space-y-0.5">
             {syllabus.map((topic) => {
               const isActive = topic.slug === activeTopicSlug

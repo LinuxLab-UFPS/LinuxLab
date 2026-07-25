@@ -216,6 +216,14 @@
   background: var(--muted-foreground);
 }
 
+/* Hidden scrollbar (content still scrolls) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Terminal styling */
 .terminal-body {
   font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
