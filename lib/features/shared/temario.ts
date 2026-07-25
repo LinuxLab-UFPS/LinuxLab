@@ -34,17 +34,17 @@ export const syllabus: Topic[] = [
     subTopics: [
       { number: 1, title: "La línea de comandos" },
       { number: 2, title: "Anatomía de un comando" },
-      { number: 3, title: "Navegación esencial" },
+      { number: 3, title: "Variables en Bash" },
     ],
   },
   {
     number: 3,
     slug: "directorios",
     title: "Directorios",
-    description: "Tipos de directorios, la jerarquía del sistema y creación de directorios (mkdir).",
+    description: "Tipos de directorios, la jerarquía del sistema y navegación esencial.",
     subTopics: [
       { number: 1, title: "El sistema de archivos" },
-      { number: 2, title: "Simulador: navega el árbol" },
+      { number: 2, title: "Navegación esencial" },
     ],
   },
   {

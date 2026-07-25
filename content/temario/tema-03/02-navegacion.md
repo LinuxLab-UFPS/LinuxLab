@@ -123,6 +123,8 @@ proyectos
 
 Si no tienes `tree` instalado puedes conseguirlo con el gestor de paquetes de tu distribución. En LinuxLab ya está disponible.
 
+<!-- SIMULATOR: travesia-del-arbol -->
+
 ---
 
 **Fuentes**

@@ -83,8 +83,6 @@ cd ../otro-usuario
 
 La diferencia clave: las rutas absolutas siempre funcionan desde cualquier lugar, las relativas dependen de dónde estés parado.
 
-<!-- SIMULATOR: travesia-del-arbol -->
-
 **Fuentes**
 
 - NDG Linux Essentials. Cisco Networking Academy, 2024.

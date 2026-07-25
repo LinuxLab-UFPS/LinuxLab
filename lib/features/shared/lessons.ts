@@ -127,6 +127,7 @@ export interface TopicPreview {
 }
 
 const VIDEO_DIRECTIVE = /<!--\s*VIDEO\s*:/gi
+const SIMULATOR_DIRECTIVE = /<!--\s*SIMULATOR\s*:/gi
 const WORDS_PER_MINUTE = 200
 
 /**
@@ -145,14 +146,11 @@ export function getTopicPreviews(): Record<number, TopicPreview> {
     let videos = 0
     let simulators = 0
     for (const sub of meta.subtopics) {
-      if (sub.type === "simulator") {
-        simulators++
-        continue
-      }
       const md = getSubtopicMarkdown(topic.number, sub.file)
       if (!md) continue
       words += md.split(/\s+/).filter(Boolean).length
       videos += (md.match(VIDEO_DIRECTIVE) ?? []).length
+      simulators += (md.match(SIMULATOR_DIRECTIVE) ?? []).length
     }
 
     previews[topic.number] = {
