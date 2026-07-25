@@ -106,7 +106,7 @@ function ResourceCard({ resource }: { resource: LessonResource }) {
       href={resource.url}
       target="_blank"
       rel="noreferrer"
-      className="group flex items-center gap-3 rounded-lg border border-border p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.4),0_0_28px_rgba(139,92,246,0.22)]"
+      className="group flex items-center gap-3 rounded-lg border border-black/15 p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.4),0_0_28px_rgba(139,92,246,0.22)] dark:border-border"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors group-hover:border-violet-500/40 group-hover:text-violet-400">
         <Icon className="h-4 w-4" />

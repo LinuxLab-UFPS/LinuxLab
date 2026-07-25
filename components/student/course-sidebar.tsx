@@ -43,7 +43,7 @@ export function CourseSidebar({
 
   return (
     <aside className="w-80 shrink-0 py-4">
-      <div className="mt-2 flex max-h-full flex-col overflow-hidden rounded-xl border border-border bg-background shadow-md dark:shadow-none">
+      <div className="mt-2 flex max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
           <Link
