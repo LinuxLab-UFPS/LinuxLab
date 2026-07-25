@@ -105,7 +105,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "simulator-card": {
             const sim = getSimulator(block.id)
             return sim ? (
-              <div key={i} className="my-10 max-w-sm">
+              <div key={i} className="mx-auto my-10 max-w-sm">
                 <SimulatorCard simulator={sim} />
               </div>
             ) : null

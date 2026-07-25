@@ -45,6 +45,6 @@ const COMPACT_PROSE =
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (
-    <div className={cn("max-w-none pb-16 pt-6", open && COMPACT_PROSE)}>{children}</div>
+    <div className={cn("max-w-none px-8 pb-16 pt-6", open && COMPACT_PROSE)}>{children}</div>
   )
 }
