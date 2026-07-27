@@ -18,6 +18,12 @@ export const env = {
   authSecret: process.env.AUTH_SECRET ?? "",
   /** Backend API URL */
   backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000",
+  /**
+   * Public base URL of the video CDN (Cloudflare R2). Videos are too heavy for
+   * the repo, so they are not committed (see .gitignore); unset in local dev,
+   * lesson videos fall back to the local public/temario files if present.
+   */
+  videoBaseUrl: (process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? "").replace(/\/$/, ""),
   /** JWT secret for token verification (middleware). */
   jwtSecret: process.env.JWT_SECRET ?? "linuxlab-jwt-secret-2026",
   nodeEnv: process.env.NODE_ENV ?? "development",

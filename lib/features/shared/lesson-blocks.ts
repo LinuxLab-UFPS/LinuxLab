@@ -1,4 +1,4 @@
-import { lessonAssetExists, lessonAssetUrl } from "./lessons"
+import { lessonAssetExists, lessonAssetUrl, lessonVideoExists, lessonVideoUrl } from "./lessons"
 
 /**
  * Media directives inside lesson markdown, written as HTML comments so the raw
@@ -208,8 +208,8 @@ export function parseLessonBlocks(markdown: string, topicNumber: number): Lesson
       blocks.push({
         kind: "video",
         title: label,
-        src: lessonAssetUrl(topicNumber, file),
-        exists: lessonAssetExists(topicNumber, file),
+        src: lessonVideoUrl(topicNumber, file),
+        exists: lessonVideoExists(topicNumber, file),
         expectedPath: `public${lessonAssetUrl(topicNumber, file)}`,
       })
       continue

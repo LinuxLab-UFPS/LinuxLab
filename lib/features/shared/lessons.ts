@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import type { TopicContentMeta } from "@/lib/features/shared/types"
+import { env } from "@/lib/config/env"
 import { syllabus } from "./temario"
 import { getSimulators } from "./simulators"
 
@@ -52,6 +53,27 @@ export function lessonAssetUrl(topicNumber: number, file: string): string {
 /** Whether the image file has actually been added to public/temario/tema-NN/. */
 export function lessonAssetExists(topicNumber: number, file: string): boolean {
   return existsSync(join(ASSET_ROOT, topicDir(topicNumber), file))
+}
+
+/**
+ * Public URL of a lesson video. Videos are hosted on Cloudflare R2 (they are too
+ * heavy for the repo, see .gitignore) under the same tema-NN/file layout as
+ * local assets. Falls back to the local public/temario path when the CDN base
+ * isn't configured, so videos dropped locally still work in dev.
+ */
+export function lessonVideoUrl(topicNumber: number, file: string): string {
+  if (env.videoBaseUrl) return `${env.videoBaseUrl}/${topicDir(topicNumber)}/${file}`
+  return lessonAssetUrl(topicNumber, file)
+}
+
+/**
+ * Whether the video is available: trusts the CDN when configured (no cheap way
+ * to check a remote file's existence at request time), otherwise checks the
+ * local file like other assets.
+ */
+export function lessonVideoExists(topicNumber: number, file: string): boolean {
+  if (env.videoBaseUrl) return true
+  return lessonAssetExists(topicNumber, file)
 }
 
 /** One step of the course in reading order: a subtopic, or a whole topic if it has no content yet. */
