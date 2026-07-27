@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { Plus } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -57,24 +58,34 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
   return (
     <div>
-      <Tabs
-        value={tab}
-        onValueChange={(v) => {
-          setTab(v as Tab)
-          setPage(1)
-        }}
-        className="mb-4"
-      >
-        <TabsList>
-          <TabsTrigger value="activos">
-            Activos <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
-          </TabsTrigger>
-          <TabsTrigger value="archivados">
-            Archivados{" "}
-            <span className="ml-1.5 text-xs text-muted-foreground">{counts.archivados}</span>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <Tabs
+          value={tab}
+          onValueChange={(v) => {
+            setTab(v as Tab)
+            setPage(1)
+          }}
+        >
+          <TabsList>
+            <TabsTrigger value="activos">
+              Activos{" "}
+              <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
+            </TabsTrigger>
+            <TabsTrigger value="archivados">
+              Archivados{" "}
+              <span className="ml-1.5 text-xs text-muted-foreground">{counts.archivados}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <Link
+          href="/create-group"
+          className="flex shrink-0 items-center gap-2 rounded-md bg-sky-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(14,165,233,0.4)] transition-colors hover:bg-sky-400"
+        >
+          <Plus className="h-4 w-4" />
+          Crear nuevo curso
+        </Link>
+      </div>
 
       {error && (
         <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
