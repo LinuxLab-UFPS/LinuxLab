@@ -1,5 +1,3 @@
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { listBankActivities } from "@/lib/features/teacher/data"
 import { BankTable } from "@/components/teacher/bank-table"
 
@@ -7,21 +5,17 @@ export default async function BankPage() {
   const activities = await listBankActivities()
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground mb-1">
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-8">
+        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
+          <span className="bg-gradient-to-r from-fuchsia-400 to-fuchsia-600 bg-clip-text text-transparent">
             Banco de Actividades
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona y crea actividades para tus cursos
-          </p>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground neon-glow">
-          <Plus className="w-4 h-4 mr-2" />
-          Nueva actividad
-        </Button>
+          </span>
+        </h1>
+        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-fuchsia-400 to-fuchsia-600" />
+        <p className="mt-4 max-w-xl text-muted-foreground">
+          Busca y filtra las actividades disponibles para tus cursos.
+        </p>
       </div>
 
       <BankTable activities={activities} />

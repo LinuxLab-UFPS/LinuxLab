@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Edit, Trash2, Eye, FileCode } from "lucide-react"
+import { useMemo, useState } from "react"
+import { Search, Plus, FileCode } from "lucide-react"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -18,52 +19,72 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import type { Activity } from "@/lib/features/teacher/types"
+import { TablePanel, TableEmptyState, TablePagination } from "@/components/shared/data-table"
+import { cn } from "@/lib/utils"
+import type { Activity, Difficulty } from "@/lib/features/teacher/types"
 import { syllabus, getTopic } from "@/lib/features/shared/temario"
 
-const difficultyClass: Record<string, string> = {
-  basic: "text-success",
-  intermediate: "text-warning",
-  advanced: "text-primary",
+const DIFFICULTY: Record<Difficulty, { label: string; className: string }> = {
+  basic: { label: "Fácil", className: "bg-success/10 text-success border-success/30" },
+  intermediate: {
+    label: "Intermedio",
+    className: "bg-warning/10 text-warning border-warning/30",
+  },
+  advanced: { label: "Difícil", className: "bg-danger/10 text-danger border-danger/30" },
 }
 
-export function BankTable({ activities }: { activities: Activity[] }) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTopic, setSelectedTopic] = useState("all")
-  const [selectedDifficulty, setSelectedDifficulty] = useState("all")
+const PAGE_SIZE = 8
 
-  const filtered = activities.filter((activity) => {
-    const matchesSearch = activity.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
-    const matchesTopic =
-      selectedTopic === "all" || activity.topicNumber === Number(selectedTopic)
-    const matchesDifficulty =
-      selectedDifficulty === "all" || activity.difficulty === selectedDifficulty
-    return matchesSearch && matchesTopic && matchesDifficulty
-  })
+export function BankTable({ activities }: { activities: Activity[] }) {
+  const [query, setQuery] = useState("")
+  const [topicFilter, setTopicFilter] = useState("all")
+  const [difficultyFilter, setDifficultyFilter] = useState("all")
+  const [page, setPage] = useState(1)
+
+  const filtered = useMemo(() => {
+    return activities.filter((activity) => {
+      const matchesQuery = activity.title.toLowerCase().includes(query.toLowerCase())
+      const matchesTopic =
+        topicFilter === "all" || activity.topicNumber === Number(topicFilter)
+      const matchesDifficulty =
+        difficultyFilter === "all" || activity.difficulty === difficultyFilter
+      return matchesQuery && matchesTopic && matchesDifficulty
+    })
+  }, [activities, query, topicFilter, difficultyFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const page_ = Math.min(page, totalPages)
+  const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   return (
-    <>
-      {/* Filters */}
-      <div className="bg-card border border-border p-4 mb-6">
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search activities..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-secondary/30 border-border focus:border-primary"
+              placeholder="Buscar actividades..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setPage(1)
+              }}
+              className="border-black/15 pl-9 dark:border-border"
             />
           </div>
 
-          <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-            <SelectTrigger className="w-56 bg-secondary/30 border-border">
-              <SelectValue placeholder="Topic" />
+          <Select
+            value={topicFilter}
+            onValueChange={(v) => {
+              setTopicFilter(v)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-full border-black/15 sm:w-56 dark:border-border">
+              <SelectValue placeholder="Tema" />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="all">All topics</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todos los temas</SelectItem>
               {syllabus.map((topic) => (
                 <SelectItem key={topic.number} value={String(topic.number)}>
                   {topic.number}. {topic.title}
@@ -72,40 +93,66 @@ export function BankTable({ activities }: { activities: Activity[] }) {
             </SelectContent>
           </Select>
 
-          <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-            <SelectTrigger className="w-36 bg-secondary/30 border-border">
-              <SelectValue placeholder="Difficulty" />
+          <Select
+            value={difficultyFilter}
+            onValueChange={(v) => {
+              setDifficultyFilter(v)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-full border-black/15 sm:w-40 dark:border-border">
+              <SelectValue placeholder="Dificultad" />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="basic">Basic</SelectItem>
-              <SelectItem value="intermediate">Intermediate</SelectItem>
-              <SelectItem value="advanced">Advanced</SelectItem>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="basic">Fácil</SelectItem>
+              <SelectItem value="intermediate">Intermedio</SelectItem>
+              <SelectItem value="advanced">Difícil</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        <button
+          type="button"
+          onClick={() => toast.info("Crear actividad: aún no implementado")}
+          className="flex shrink-0 items-center gap-2 rounded-md bg-fuchsia-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(217,70,239,0.4)] transition-colors hover:bg-fuchsia-400"
+        >
+          <Plus className="h-4 w-4" />
+          Crear actividad
+        </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-card border border-border">
+      <TablePanel>
         <Table>
           <TableHeader>
-            <TableRow className="border-border hover:bg-transparent">
-              <TableHead className="text-muted-foreground">Activity</TableHead>
-              <TableHead className="text-muted-foreground">Topic</TableHead>
-              <TableHead className="text-muted-foreground">Difficulty</TableHead>
-              <TableHead className="text-muted-foreground">Type</TableHead>
-              <TableHead className="text-muted-foreground text-right">Uses</TableHead>
-              <TableHead className="text-muted-foreground w-32"></TableHead>
+            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Actividad
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Tema
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Dificultad
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Tipo
+              </TableHead>
+              <TableHead className="text-right uppercase tracking-wide text-muted-foreground">
+                Usos
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map((activity) => (
-              <TableRow key={activity.id} className="border-border hover:bg-secondary/30">
+            {pageRows.map((activity) => (
+              <TableRow
+                key={activity.id}
+                className="border-black/15 hover:bg-secondary/40 dark:border-border"
+              >
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <FileCode className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-foreground font-medium">{activity.title}</span>
+                  <div className="flex items-center gap-2.5">
+                    <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="font-medium text-foreground">{activity.title}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-muted-foreground">
@@ -114,35 +161,22 @@ export function BankTable({ activities }: { activities: Activity[] }) {
                 <TableCell>
                   {activity.difficulty ? (
                     <span
-                      className={`inline-flex items-center gap-1.5 text-xs ${
-                        difficultyClass[activity.difficulty] ?? "text-muted-foreground"
-                      }`}
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+                        DIFFICULTY[activity.difficulty].className,
+                      )}
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      {activity.difficulty}
+                      {DIFFICULTY[activity.difficulty].label}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground text-xs">—</span>
+                    <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {activity.evaluationType === "manual" ? "Manual review" : "Self-assessment"}
+                  {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-right">
+                <TableCell className="text-right font-mono text-sm text-muted-foreground">
                   {activity.uses ?? 0}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -150,16 +184,17 @@ export function BankTable({ activities }: { activities: Activity[] }) {
         </Table>
 
         {filtered.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-            No activities in the bank.
-          </div>
+          <TableEmptyState>
+            {activities.length === 0
+              ? "Aún no hay actividades en el banco."
+              : "Ninguna actividad coincide con la búsqueda."}
+          </TableEmptyState>
         )}
-      </div>
+      </TablePanel>
 
-      {/* Summary */}
-      <div className="mt-4 text-sm text-muted-foreground">
-        Showing {filtered.length} of {activities.length} activities
-      </div>
-    </>
+      {filtered.length > 0 && (
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+      )}
+    </div>
   )
 }
