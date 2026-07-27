@@ -2,177 +2,170 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Eye, Pencil, Users, Archive, ArchiveRestore } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  TablePanel,
+  TableEmptyState,
+  TableActionButton,
+  TablePagination,
+} from "@/components/shared/data-table"
 import type { Group } from "@/lib/features/teacher/types"
 import { setGroupArchived } from "@/lib/features/teacher/data"
 
 type Tab = "activos" | "archivados"
 
+const PAGE_SIZE = 8
+
 export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [groups, setGroups] = useState<Group[]>(initialGroups)
   const [tab, setTab] = useState<Tab>("activos")
+  const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
 
   const counts = useMemo(
     () => ({
-      activos: groups.filter((c) => !c.archived).length,
-      archivados: groups.filter((c) => c.archived).length,
+      activos: groups.filter((g) => !g.archived).length,
+      archivados: groups.filter((g) => g.archived).length,
     }),
-    [groups]
+    [groups],
   )
 
-  const visible = groups.filter((c) =>
-    tab === "activos" ? !c.archived : c.archived
-  )
+  const visible = groups.filter((g) => (tab === "activos" ? !g.archived : g.archived))
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const page_ = Math.min(page, totalPages)
+  const pageRows = visible.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   const toggleArchive = async (group: Group) => {
     setError(null)
     try {
       await setGroupArchived(group.id, !group.archived)
       setGroups((prev) =>
-        prev.map((c) => (c.id === group.id ? { ...c, archived: !c.archived } : c))
+        prev.map((g) => (g.id === group.id ? { ...g, archived: !g.archived } : g)),
       )
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo archivar el grupo.")
+      setError(e instanceof Error ? e.message : "No se pudo archivar el curso.")
     }
   }
 
   return (
-    <>
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-border mb-4">
-        {(["activos", "archivados"] as Tab[]).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={cn(
-              "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors capitalize",
-              tab === t
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t === "activos" ? "Activos" : "Archivados"}
-            <span className="ml-2 text-xs text-muted-foreground">{counts[t]}</span>
-          </button>
-        ))}
-      </div>
+    <div>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v as Tab)
+          setPage(1)
+        }}
+        className="mb-4"
+      >
+        <TabsList>
+          <TabsTrigger value="activos">
+            Activos <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
+          </TabsTrigger>
+          <TabsTrigger value="archivados">
+            Archivados{" "}
+            <span className="ml-1.5 text-xs text-muted-foreground">{counts.archivados}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {error && (
-        <div className="mb-4 text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
+        <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-16">
-                  ID
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Grupo
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">
-                  Estudiantes
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">
-                  Actividades
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">
-                  Creado
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-44">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((group) => (
-                <tr
-                  key={group.id}
-                  className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors"
-                >
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center justify-center min-w-9 px-2 py-0.5 text-xs font-mono rounded-md bg-secondary text-muted-foreground">
-                      #{group.id}
+      <TablePanel>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
+              <TableHead className="w-16 uppercase tracking-wide text-muted-foreground">
+                ID
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Curso
+              </TableHead>
+              <TableHead className="w-28 text-center uppercase tracking-wide text-muted-foreground">
+                Estudiantes
+              </TableHead>
+              <TableHead className="w-28 text-center uppercase tracking-wide text-muted-foreground">
+                Actividades
+              </TableHead>
+              <TableHead className="w-32 uppercase tracking-wide text-muted-foreground">
+                Creado
+              </TableHead>
+              <TableHead className="w-32 text-right uppercase tracking-wide text-muted-foreground">
+                Acciones
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pageRows.map((group) => (
+              <TableRow
+                key={group.id}
+                className="border-black/15 hover:bg-secondary/40 dark:border-border"
+              >
+                <TableCell>
+                  <span className="inline-flex min-w-9 items-center justify-center rounded-md bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground">
+                    #{group.id}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Link href={`/groups/${group.id}`} className="group block whitespace-normal">
+                    <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
+                      {group.name}
                     </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/groups/${group.id}`} className="group block">
-                      <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                        {group.name}
+                    {group.description && (
+                      <span className="block text-xs text-muted-foreground">
+                        {group.description}
                       </span>
-                      {group.description && (
-                        <span className="block text-xs text-muted-foreground">
-                          {group.description}
-                        </span>
-                      )}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-center text-sm font-mono text-foreground">
-                    {group.studentCount}
-                  </td>
-                  <td className="px-4 py-3 text-center text-sm font-mono text-muted-foreground">
-                    {group.activityCount}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground font-mono">
-                    {new Date(group.createdAt).toLocaleDateString("es-CO")}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <IconAction href={`/groups/${group.id}`} label="Ver" icon={Eye} />
-                      <IconAction href={`/groups/${group.id}`} label="Estudiantes" icon={Users} />
-                      <IconAction href={`/create-group`} label="Editar" icon={Pencil} />
-                      <button
-                        onClick={() => toggleArchive(group)}
-                        title={group.archived ? "Desarchivar" : "Archivar"}
-                        className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-                      >
-                        {group.archived ? (
-                          <ArchiveRestore className="w-4 h-4" />
-                        ) : (
-                          <Archive className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-center font-mono text-sm text-foreground">
+                  {group.studentCount}
+                </TableCell>
+                <TableCell className="text-center font-mono text-sm text-muted-foreground">
+                  {group.activityCount}
+                </TableCell>
+                <TableCell className="font-mono text-sm text-muted-foreground">
+                  {new Date(group.createdAt).toLocaleDateString("es-CO")}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
+                      Ver
+                    </TableActionButton>
+                    <TableActionButton
+                      tone={group.archived ? "emerald" : "amber"}
+                      onClick={() => toggleArchive(group)}
+                    >
+                      {group.archived ? "Restaurar" : "Archivar"}
+                    </TableActionButton>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
 
         {visible.length === 0 && (
-          <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-            No tienes grupos {tab === "activos" ? "activos" : "archivados"}.
-          </div>
+          <TableEmptyState>
+            No tienes cursos {tab === "activos" ? "activos" : "archivados"}.
+          </TableEmptyState>
         )}
-      </div>
-    </>
-  )
-}
+      </TablePanel>
 
-function IconAction({
-  href,
-  label,
-  icon: Icon,
-}: {
-  href: string
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-}) {
-  return (
-    <Link
-      href={href}
-      title={label}
-      className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-    >
-      <Icon className="w-4 h-4" />
-    </Link>
+      {visible.length > 0 && (
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+      )}
+    </div>
   )
 }
