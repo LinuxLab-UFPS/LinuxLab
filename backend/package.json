@@ -1,0 +1,37 @@
+{
+  "name": "linux-lab-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anderssonccg/linux-lab-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/anderssonccg/linux-lab-backend/issues"
+  },
+  "homepage": "https://github.com/anderssonccg/linux-lab-backend#readme",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "csv-parse": "^7.0.1",
+    "express": "^5.2.1",
+    "firebase-admin": "^14.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.22.0",
+    "ssh2": "^1.17.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "prisma": "^7.8.0"
+  }
+}

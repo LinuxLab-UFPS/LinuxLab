@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  admin
+  teacher
+  student
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  email      String   @unique @db.VarChar(255)
+  name       String   @db.VarChar(255)
+  role       Role
+  google_id  String?  @unique @db.VarChar(255)
+  active     Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  linuxAccount LinuxAccount?
+  student      Student?
+  teacher      Teacher?
+}
+
+model LinuxAccount {
+  user_id           String   @id @db.Uuid @map("user_id")
+  user              User     @relation(fields: [user_id], references: [id])
+  linux_username    String   @unique @db.VarChar(32) @map("linux_username")
+  linux_provisioned Boolean  @default(false) @map("linux_provisioned")
+
+  @@map("linux_accounts")
+}
+
+model Student {
+  user_id     String       @id @db.Uuid @map("user_id")
+  user        User         @relation(fields: [user_id], references: [id])
+  code        String?      @db.VarChar(20) @map("code")
+  enrollments Enrollment[]
+
+  @@map("students")
+}
+
+model Teacher {
+  user_id      String   @id @db.Uuid @map("user_id")
+  user         User     @relation(fields: [user_id], references: [id])
+  taughtGroups Group[]
+
+  @@map("teachers")
+}
+
+model Group {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @db.VarChar(255)
+  description String?      @db.Text @map("description")
+  teacher_id  String       @db.Uuid @map("teacher_id")
+  teacher     Teacher      @relation(fields: [teacher_id], references: [user_id])
+  archived    Boolean      @default(false)
+  created_at  DateTime     @default(now()) @map("created_at")
+  updated_at  DateTime     @updatedAt @map("updated_at")
+  enrollments Enrollment[]
+
+  @@map("groups")
+}
+
+model Enrollment {
+  id          String   @id @default(uuid()) @db.Uuid
+  student_id  String   @db.Uuid @map("student_id")
+  student     Student  @relation(fields: [student_id], references: [user_id])
+  group_id    String   @db.Uuid @map("group_id")
+  group       Group    @relation(fields: [group_id], references: [id])
+  enrolled_at DateTime @default(now()) @map("enrolled_at")
+
+  @@unique([student_id, group_id])
+  @@map("enrollments")
+}

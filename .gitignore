@@ -1,6 +1,10 @@
 # Dependencias
 node_modules
 
+# Logs
+logs
+*.log
+
 # Next.js
 .next/
 out/
@@ -9,14 +13,27 @@ out/
 *.tsbuildinfo
 
 # Variables de entorno
+.env
+.env.*
+!.env.example
 .env*.local
 
-# Videos de las lecciones: pesan mucho y git guarda cada versión para siempre.
-# Se dejan en local (funcionan al correr el proyecto) y se alojan fuera del repo.
-# Las imágenes SÍ se versionan: son livianas y son parte del contenido.
-public/temario/**/*.mp4
-public/temario/**/*.webm
-public/temario/**/*.mov
+# Videos (frontend)
+frontend/public/temario/**/*.mp4
+frontend/public/temario/**/*.webm
+frontend/public/temario/**/*.mov
+
+# Prisma generated
+/generated/prisma
+backend/generated/prisma
+
+# Docker
+.env.production
+.env.staging
 
 # Sistema
 .DS_Store
+
+# IDE
+.idea/
+.vscode/
