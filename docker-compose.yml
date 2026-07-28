@@ -43,7 +43,6 @@ services:
       - "3000:3000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      DATABASE_URL: postgres://linuxlab:${DB_PASSWORD:-linuxlab}@postgres:5432/linuxlab
       SSH_HOST: entorno
       SSH_USER: root
       SSH_KEY_PATH: /ssh/ssh_key
