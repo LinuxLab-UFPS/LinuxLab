@@ -115,7 +115,7 @@ export function BankTable({ activities }: { activities: Activity[] }) {
         <button
           type="button"
           onClick={() => toast.info("Crear actividad: aún no implementado")}
-          className="flex shrink-0 items-center gap-2 rounded-md bg-fuchsia-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(217,70,239,0.4)] transition-colors hover:bg-fuchsia-400"
+          className="flex shrink-0 items-center gap-2 rounded-md bg-sky-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(14,165,233,0.4)] transition-colors hover:bg-sky-400"
         >
           <Plus className="h-4 w-4" />
           Crear actividad

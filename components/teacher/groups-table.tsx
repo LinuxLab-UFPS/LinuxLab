@@ -80,7 +80,7 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
         <Link
           href="/create-group"
-          className="flex shrink-0 items-center gap-2 rounded-md bg-sky-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(14,165,233,0.4)] transition-colors hover:bg-sky-400"
+          className="neon-glow flex shrink-0 items-center gap-2 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <Plus className="h-4 w-4" />
           Crear nuevo curso
