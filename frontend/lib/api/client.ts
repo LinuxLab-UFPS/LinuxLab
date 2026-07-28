@@ -9,11 +9,18 @@ export class ApiError extends Error {
   }
 }
 
+function baseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "http://localhost:3000"
+  }
+  return env.backendUrl
+}
+
 export async function apiFetch<T = unknown>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(`${env.backendUrl}${path}`, {
+  const res = await fetch(`${baseUrl()}${path}`, {
     ...options,
     credentials: "include",
     headers: {
