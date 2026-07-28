@@ -13,10 +13,17 @@ function setupGateway(server) {
       return
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: auth.user.id },
-      include: { linuxAccount: true },
-    })
+    let user
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: auth.user.id },
+        include: { linuxAccount: true },
+      })
+    } catch (err) {
+      ws.close(1011, `Database error: ${err.message}`)
+      return
+    }
+
     if (!user || !user.linuxAccount?.linux_username) {
       ws.close(4001, "No linux account configured")
       return
