@@ -1,4 +1,5 @@
 const sshClient = require("./sshClient")
+const prisma = require("../../prisma/client")
 
 class ContainerServiceError extends Error {
   constructor(message, code) {
@@ -32,10 +33,22 @@ function closePtySession(stream) {
   }
 }
 
+async function provisionLinuxAccount(linuxAccountId, username) {
+  const exists = await userExists(username)
+  if (!exists) {
+    await createUser(username)
+  }
+  await prisma.linuxAccount.update({
+    where: { user_id: linuxAccountId },
+    data: { linux_provisioned: true },
+  })
+}
+
 module.exports = {
   createUser,
   userExists,
   openPtySession,
   closePtySession,
+  provisionLinuxAccount,
   ContainerServiceError,
 }

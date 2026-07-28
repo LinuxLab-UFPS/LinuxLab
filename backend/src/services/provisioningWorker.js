@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { provisionLinuxAccount } = require("./enrollmentService")
+const { provisionLinuxAccount } = require("./linuxContainerService")
 
 const POLL_INTERVAL = 5000
 const BATCH_SIZE = 5

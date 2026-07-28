@@ -2,7 +2,6 @@ const { Role } = require("@prisma/client")
 const { parse } = require("csv-parse/sync")
 const prisma = require("../../prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
-const linuxContainerService = require("./linuxContainerService")
 const provisioningWorker = require("./provisioningWorker")
 
 class ServiceError extends Error {
@@ -106,24 +105,6 @@ async function ensureStudentExists({ email, name, code }) {
   }
 
   return user
-}
-
-async function provisionLinuxAccount(linuxAccountId, username) {
-  let provisioningError = null
-  try {
-    const exists = await linuxContainerService.userExists(username)
-    if (!exists) {
-      await linuxContainerService.createUser(username)
-    }
-    await prisma.linuxAccount.update({
-      where: { user_id: linuxAccountId },
-      data: { linux_provisioned: true },
-    })
-  } catch (err) {
-    provisioningError = err?.message || String(err)
-    console.error("Linux provisioning failed for", username, ":", provisioningError)
-  }
-  return provisioningError
 }
 
 function serializeStudent(user) {
@@ -260,7 +241,6 @@ module.exports = {
   registerStudent,
   enrollOne,
   ensureStudentExists,
-  provisionLinuxAccount,
   importCsv,
   listByGroup,
   serializeStudent,
