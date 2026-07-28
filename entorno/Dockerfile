@@ -41,6 +41,6 @@ RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /u
 # Permisos seguros en /home
 RUN chmod 755 /home
 
-COPY scripts/entrypoint-entorno.sh /entrypoint.sh
+COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]
