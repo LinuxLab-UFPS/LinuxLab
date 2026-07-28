@@ -4,7 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-COPY tsconfig.json next.config.mjs postcss.config.mjs ./
+COPY tsconfig.json next.config.mjs postcss.config.mjs .env.local ./
+
 COPY app/ app/
 COPY components/ components/
 COPY lib/ lib/
