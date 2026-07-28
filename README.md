@@ -3,72 +3,111 @@
 Laboratorio virtual de Linux para la asignatura de Sistemas Operativos de la
 Universidad Francisco de Paula Santander. La plataforma reúne en un mismo lugar el
 material teórico del temario, una terminal Linux accesible desde el navegador y
-actividades prácticas con evaluación automática. Maneja dos roles: el docente, que
-crea cursos, arma actividades y hace seguimiento; y el estudiante, que estudia los
-temas, practica en la terminal y resuelve las actividades de su curso.
+actividades prácticas con evaluación automática.
+
+## Estructura del proyecto
+
+```
+LinuxLab/
+├── backend/                  # API REST (Express + Prisma + PostgreSQL)
+│   ├── src/
+│   │   ├── controllers/      # Handlers de rutas
+│   │   ├── middleware/        # Auth, roles (admin, teacher)
+│   │   ├── routes/           # auth, admin, groups
+│   │   ├── services/         # Lógica de negocio (groups, enrollment, ssh)
+│   │   ├── gateway.js        # WebSocket gateway (terminal Xterm.js)
+│   │   └── index.js          # Punto de entrada
+│   ├── prisma/               # Schema + migraciones
+│   ├── Dockerfile.backend
+│   └── Dockerfile.entorno    # Contenedor Linux para estudiantes
+├── frontend/                 # Interfaz (Next.js 16 + shadcn/ui)
+│   ├── app/                  # App Router
+│   ├── components/           # Componentes React
+│   ├── lib/                  # Lógica de frontend
+│   │   ├── api/              # Cliente HTTP (apiFetch)
+│   │   ├── features/         # Módulos por dominio (auth, teacher, student, admin)
+│   │   └── config/           # Variables de entorno
+│   ├── content/temario/      # Lecciones en Markdown
+│   └── Dockerfile.frontend
+├── scripts/docker/           # Scripts de infraestructura
+├── docker-compose.yml        # 5 servicios
+└── .gitignore
+```
 
 ## Requisitos
 
-- [Bun](https://bun.sh) (recomendado) o Node.js 20+
-- Git
+- Docker + Docker Compose v2
+- Node.js 22+ (para desarrollo local sin Docker)
+- Bun o npm
 
-## Ejecución
+## Desarrollo local
+
+### Con Docker (todo incluido)
 
 ```bash
-git clone https://github.com/MauricioDDS/LinuxLab.git
-cd LinuxLab
-bun install
-bun run dev
+docker compose up -d
 ```
 
-La aplicación queda en http://localhost:3000.
+| Servicio | Puerto | Acceso |
+|----------|--------|--------|
+| Frontend | 3001 | http://localhost:3001 |
+| Backend  | 3000 | http://localhost:3000 |
+| RabbitMQ | 15672 | — (futuro) |
 
-El inicio de sesión todavía no está implementado. Para entrar directo a la aplicación:
+### Sin Docker (solo frontend)
 
-- Vista de estudiante: http://localhost:3000/inicio
-- Vista de docente: http://localhost:3000/docente
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:3001
+```
 
-(Las barras laterales tienen un enlace para cambiar entre ambas vistas.)
+## Arquitectura
+
+```
+Navegador (Xterm.js)
+    ↕ WebSocket :3000/terminal
+Gateway (Express + ws)
+    ↕ SSH (red Docker interna)
+Contenedor Entorno (Ubuntu 22.04 + OpenSSH)
+    ↕ bash por estudiante
+```
+
+La comunicación entre backend y el contenedor del entorno Linux se hace vía
+**SSH interno** (librería `ssh2`), sin exponer el socket de Docker. Las claves
+se generan automáticamente con un sidecar al hacer `docker compose up`.
+
+## Funcionalidades implementadas
+
+- Autenticación con Google Firebase + JWT (httpOnly cookie)
+- Roles: admin, teacher, student
+- CRUD de grupos (docente)
+- Registro de estudiantes individual y por CSV
+- Terminal Linux interactiva en el navegador (Xterm.js + SSH)
+- Dashboard de docente con seguimiento
+
+## Temario y contenido
+
+El temario son 14 temas fijos definidos en `frontend/lib/features/shared/temario.ts`.
+El contenido de cada tema vive como archivos Markdown dentro de
+`frontend/content/temario/tema-NN/`, descritos por un `meta.json`.
 
 ## Scripts
 
 ```bash
-bun run dev        # entorno de desarrollo
-bun run build      # compilación de producción
-bun run start      # sirve la compilación de producción
-bun run typecheck  # revisa los tipos con tsc
+# Frontend
+cd frontend
+npm run dev        # Desarrollo
+npm run build      # Producción
+npm run typecheck  # TypeScript check
+
+# Backend
+cd backend
+npm run dev        # Desarrollo (nodemon)
 ```
-
-## Estructura
-
-```
-app/                    Rutas (App Router de Next.js)
-components/             Componentes de UI (components/ui son de shadcn)
-content/temario/       Contenido de las lecciones en Markdown
-lib/
-  domain/              Modelos y tipos del dominio
-  content/             Temario (14 temas) y lector de contenido
-  data/                Capa de acceso a datos (pendiente de backend)
-  auth/                Sesión y autenticación (correo + contraseña)
-  config/              Variables de entorno
-```
-
-## Temario y contenido
-
-El temario son 14 temas fijos definidos en `lib/content/temario.ts`. El contenido
-de cada tema (texto, ejemplos, enlaces) vive como archivos Markdown dentro de
-`content/temario/tema-NN/`, descritos por un `meta.json` con los subtemas y los
-recursos. Para publicar un tema basta con agregar su carpeta; no hay que tocar
-código. El Tema 1 (Introducción a Linux) ya está completo y sirve de referencia.
 
 ## Tecnologías
 
-Next.js 16, React 19, TypeScript, Tailwind CSS 4 y shadcn/ui.
-
-## Pendientes
-
-- Backend y base de datos (persistencia de cursos, estudiantes y calificaciones)
-- Autenticación real con correo y contraseña
-- Terminal Linux funcional (Xterm.js + WebSocket contra el servidor del laboratorio)
-- Evaluación automática de las actividades
-- Resto del contenido del temario
+- **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui
+- **Backend:** Express 5, Prisma ORM, PostgreSQL, ssh2, ws
+- **Infra:** Docker Compose, 5 contenedores, SSH interno
