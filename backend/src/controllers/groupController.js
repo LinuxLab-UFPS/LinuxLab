@@ -115,12 +115,13 @@ async function listStudents(req, res) {
 async function listProvisioningJobs(req, res) {
   try {
     const { id } = req.params
+    const enrollments = await prisma.enrollment.findMany({
+      where: { group_id: id },
+      select: { student: { select: { user_id: true } } },
+    })
+    const userIds = enrollments.map((e) => e.student.user_id)
     const jobs = await prisma.provisioningJob.findMany({
-      where: {
-        user: {
-          enrollments: { some: { group_id: id } },
-        },
-      },
+      where: { user_id: { in: userIds } },
       include: {
         user: {
           select: {
