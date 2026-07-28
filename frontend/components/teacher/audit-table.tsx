@@ -4,16 +4,60 @@ import { useState } from "react"
 import { Search, Download, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  TablePanel,
+  TableEmptyState,
+  TableActionButton,
+  TablePagination,
+} from "@/components/shared/data-table"
 import type { AuditEntry } from "@/lib/features/teacher/types"
 import type { Role } from "@/lib/features/auth/types"
 import { clearAuditLog } from "@/lib/features/teacher/data"
 
 const PAGE_SIZE = 8
 
-const roleLabel: Record<Role, string> = {
-  student: "Estudiante",
-  teacher: "Docente",
-  admin: "Administrador",
+const ROLE: Record<Role, { label: string; className: string }> = {
+  student: { label: "Estudiante", className: "bg-success/10 text-success border-success/30" },
+  teacher: { label: "Docente", className: "bg-amber-500/10 text-amber-500 border-amber-500/30" },
+  admin: {
+    label: "Administrador",
+    className: "bg-violet-500/10 text-violet-400 border-violet-500/30",
+  },
+}
+
+/** Exports the given rows as a CSV, honoring whatever search/date filter is active. */
+function exportCsv(rows: AuditEntry[]) {
+  const header = ["Fecha", "Hora", "Usuario", "Email", "Rol", "Curso", "Acción"]
+  const lines = rows.map((e) => {
+    const date = new Date(e.timestamp)
+    return [
+      date.toLocaleDateString("es-CO"),
+      date.toLocaleTimeString("es-CO"),
+      e.userName,
+      e.email,
+      ROLE[e.role].label,
+      e.group,
+      e.action,
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(",")
+  })
+  const csv = [header.join(","), ...lines].join("\n")
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `bitacora-${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export function AuditTable({ entries }: { entries: AuditEntry[] }) {
@@ -34,7 +78,8 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   })
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const page_ = Math.min(page, totalPages)
+  const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   const handleClear = async () => {
     setError(null)
@@ -46,157 +91,150 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   }
 
   return (
-    <>
-      {/* Summary card */}
-      <div className="bg-card border border-border rounded-lg p-5 max-w-md">
-        <div className="flex items-start justify-between mb-4">
-          <h2 className="font-medium text-foreground">Bitácora de Accesos</h2>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
-            {entries.length} registros
-          </span>
+    <div>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nombre o email..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(1)
+              }}
+              className="border-black/15 pl-9 dark:border-border"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Desde</span>
+            <input
+              type="date"
+              value={desde}
+              onChange={(e) => {
+                setDesde(e.target.value)
+                setPage(1)
+              }}
+              className="h-9 rounded-md border border-black/15 bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-border [color-scheme:light] dark:[color-scheme:dark]"
+            />
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Hasta</span>
+            <input
+              type="date"
+              value={hasta}
+              onChange={(e) => {
+                setHasta(e.target.value)
+                setPage(1)
+              }}
+              className="h-9 rounded-md border border-black/15 bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-border [color-scheme:light] dark:[color-scheme:dark]"
+            />
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-md text-foreground hover:bg-secondary/50 transition-colors">
-            <Download className="w-3.5 h-3.5" />
-            Descargar
-          </button>
-          <button
-            onClick={handleClear}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md bg-danger text-white hover:bg-danger/90 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            Borrar bitácora
-          </button>
+
+        <div className="flex shrink-0 gap-2">
+          <TableActionButton tone="neutral" onClick={() => exportCsv(filtered)}>
+            <span className="inline-flex items-center gap-1.5">
+              <Download className="h-3.5 w-3.5" />
+              Descargar
+            </span>
+          </TableActionButton>
+          <TableActionButton tone="danger" onClick={handleClear}>
+            <span className="inline-flex items-center gap-1.5">
+              <Trash2 className="h-3.5 w-3.5" />
+              Borrar bitácora
+            </span>
+          </TableActionButton>
         </div>
       </div>
 
       {error && (
-        <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
+        <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       )}
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre o email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Desde:</span>
-          <input
-            type="date"
-            value={desde}
-            onChange={(e) => setDesde(e.target.value)}
-            className="h-9 rounded-md border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
-          />
-        </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Hasta:</span>
-          <input
-            type="date"
-            value={hasta}
-            onChange={(e) => setHasta(e.target.value)}
-            className="h-9 rounded-md border border-border bg-card px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
-          />
-        </div>
-      </div>
+      <TablePanel>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
+              <TableHead className="w-14 uppercase tracking-wide text-muted-foreground">
+                N°
+              </TableHead>
+              <TableHead className="w-36 uppercase tracking-wide text-muted-foreground">
+                Entrada
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Usuario
+              </TableHead>
+              <TableHead className="w-32 uppercase tracking-wide text-muted-foreground">
+                Rol
+              </TableHead>
+              <TableHead className="uppercase tracking-wide text-muted-foreground">
+                Curso
+              </TableHead>
+              <TableHead className="w-36 uppercase tracking-wide text-muted-foreground">
+                Acción
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pageRows.map((entry) => {
+              const date = new Date(entry.timestamp)
+              return (
+                <TableRow
+                  key={entry.id}
+                  className="border-black/15 hover:bg-secondary/40 dark:border-border"
+                >
+                  <TableCell className="font-mono text-sm text-muted-foreground">
+                    {entry.id}
+                  </TableCell>
+                  <TableCell>
+                    <span className="block text-sm text-foreground">
+                      {date.toLocaleDateString("es-CO")}
+                    </span>
+                    <span className="block font-mono text-xs text-muted-foreground">
+                      {date.toLocaleTimeString("es-CO")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="block text-sm font-medium text-foreground">
+                      {entry.userName}
+                    </span>
+                    <span className="block text-xs text-muted-foreground">{entry.email}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+                        ROLE[entry.role].className,
+                      )}
+                    >
+                      {ROLE[entry.role].label}
+                    </span>
+                  </TableCell>
+                  <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                    {entry.group}
+                  </TableCell>
+                  <TableCell className="text-sm text-foreground">{entry.action}</TableCell>
+                </TableRow>
+              )
+            })}
+          </TableBody>
+        </Table>
 
-      {/* Table */}
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-12">N°</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-40">Entrada</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Usuario</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">Rol</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Cursos</th>
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-36">Acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map((entry) => {
-                const date = new Date(entry.timestamp)
-                return (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-border/50 last:border-0 hover:bg-secondary/20 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground">{entry.id}</td>
-                    <td className="px-4 py-3">
-                      <span className="block text-sm text-foreground">
-                        {date.toLocaleDateString("es-CO")}
-                      </span>
-                      <span className="block text-xs font-mono text-muted-foreground">
-                        Hora: {date.toLocaleTimeString("es-CO")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="block text-sm font-medium text-foreground">{entry.userName}</span>
-                      <span className="block text-xs text-muted-foreground">{entry.email}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                          entry.role === "student"
-                            ? "bg-success/15 text-success"
-                            : "bg-primary/15 text-primary"
-                        )}
-                      >
-                        {roleLabel[entry.role]}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-[180px] truncate">
-                      {entry.group}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-foreground">{entry.action}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {paginated.length === 0 && (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            No se encontraron registros.
-          </div>
+        {filtered.length === 0 && (
+          <TableEmptyState>
+            {entries.length === 0
+              ? "Aún no hay registros en la bitácora."
+              : "Ningún registro coincide con la búsqueda."}
+          </TableEmptyState>
         )}
-      </div>
+      </TablePanel>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Página {page} de {totalPages}
-        </span>
-        <div className="flex gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1.5 rounded-md border border-border text-foreground hover:bg-secondary/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1.5 rounded-md border border-border text-foreground hover:bg-secondary/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Siguiente
-          </button>
-        </div>
-      </div>
-    </>
+      {filtered.length > 0 && (
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+      )}
+    </div>
   )
 }

@@ -30,12 +30,13 @@ export function TableEmptyState({ children }: { children: React.ReactNode }) {
   return <div className="px-4 py-16 text-center text-sm text-muted-foreground">{children}</div>
 }
 
-type ActionTone = "neutral" | "amber" | "emerald"
+type ActionTone = "neutral" | "amber" | "emerald" | "danger"
 
 const TONE: Record<ActionTone, string> = {
   neutral: "border-border text-muted-foreground hover:border-primary/40 hover:text-primary",
   amber: "border-amber-500/40 text-amber-500 hover:bg-amber-500/10",
   emerald: "border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10",
+  danger: "border-danger/40 text-danger hover:bg-danger/10",
 }
 
 /** Small outlined pill action used in admin/teacher table rows (Ver, Archivar...). */
