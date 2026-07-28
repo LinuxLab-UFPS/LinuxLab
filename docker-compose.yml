@@ -22,8 +22,7 @@ services:
 
   entorno:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.entorno
+      context: ./entorno
     depends_on:
       keygen:
         condition: service_completed_successfully
@@ -35,7 +34,6 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.backend
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,7 +55,6 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.frontend
     depends_on:
       - backend
     ports:
