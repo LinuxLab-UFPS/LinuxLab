@@ -9,6 +9,7 @@ import type {
   GroupProgressSummary,
   StudentGroupDetail,
   Enrollment,
+  ProvisioningJobSummary,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -69,6 +70,8 @@ export const teacherApi = {
   },
   listStudents: (groupId: string) =>
     apiFetch<EnrollmentStudent[]>(`/api/groups/${groupId}/students`),
+  listProvisioningJobs: (groupId: string) =>
+    apiFetch<ProvisioningJobSummary[]>(`/api/groups/${groupId}/provisioning-jobs`),
 
   listAuditLog: () => apiFetch<AuditEntry[]>("/api/audit-log"),
   clearAuditLog: () => apiFetch<void>("/api/audit-log", { method: "DELETE" }),

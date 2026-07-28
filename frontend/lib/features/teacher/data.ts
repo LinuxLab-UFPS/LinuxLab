@@ -8,6 +8,7 @@ import type {
   GroupProgressSummary,
   StudentGroupDetail,
   Enrollment,
+  ProvisioningJobSummary,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -72,6 +73,10 @@ export async function addStudent(
 
 export async function importStudentsCsv(groupId: string, file: File) {
   return teacherApi.importStudentsCsv(groupId, file)
+}
+
+export async function listProvisioningJobs(groupId: string): Promise<ProvisioningJobSummary[]> {
+  return teacherApi.listProvisioningJobs(groupId)
 }
 
 export async function listAuditLog(): Promise<AuditEntry[]> {

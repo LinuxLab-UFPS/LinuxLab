@@ -113,3 +113,15 @@ export interface StudentGroupDetail {
   recentGrades: Grade[]
   grades: Grade[]
 }
+
+export type ProvisioningStatus = "pending" | "processing" | "completed" | "failed"
+
+export interface ProvisioningJobSummary {
+  id: string
+  username: string | null
+  status: ProvisioningStatus
+  retries: number
+  error: string | null
+  student: { name: string; email: string; code: string | null }
+  createdAt: string
+}

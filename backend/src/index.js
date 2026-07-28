@@ -9,6 +9,7 @@ const adminRoutes = require('./routes/admin');
 const groupRoutes = require('./routes/groups');
 
 const setupGateway = require('./gateway');
+const { startWorker } = require('./services/provisioningWorker');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,7 @@ const server = app.listen(PORT, () => {
 });
 
 setupGateway(server);
+startWorker();
 
 process.on('SIGINT', async () => {
     await prisma.$disconnect();

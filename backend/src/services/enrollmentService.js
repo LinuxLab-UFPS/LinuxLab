@@ -3,6 +3,7 @@ const { parse } = require("csv-parse/sync")
 const prisma = require("../../prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
 const linuxContainerService = require("./linuxContainerService")
+const provisioningWorker = require("./provisioningWorker")
 
 class ServiceError extends Error {
   constructor(message, status) {
@@ -154,12 +155,14 @@ async function enrollOne({ groupId, name, email, code }) {
     }
   }
 
-  let provisioningError = null
   if (user.linuxAccount && !user.linuxAccount.linux_provisioned) {
-    provisioningError = await provisionLinuxAccount(
-      user.linuxAccount.user_id,
-      user.linuxAccount.linux_username,
-    )
+    await prisma.provisioningJob.create({
+      data: {
+        user_id: user.linuxAccount.user_id,
+        username: user.linuxAccount.linux_username,
+      },
+    })
+    provisioningWorker.processPendingJobs()
   }
 
   await prisma.enrollment.create({
@@ -178,7 +181,6 @@ async function enrollOne({ groupId, name, email, code }) {
     enrolled: true,
     student: serializeStudent(finalUser),
     linuxProvisioned: finalUser.linuxAccount?.linux_provisioned ?? false,
-    provisioningError,
   }
 }
 

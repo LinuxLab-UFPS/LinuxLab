@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Trash2, Upload, UserPlus } from "lucide-react"
+import { useState, useMemo } from "react"
+import { Trash2, Upload, UserPlus, CheckCircle2, Clock, AlertCircle, CircleDashed, RefreshCw } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,16 +17,37 @@ import {
 } from "@/components/ui/table"
 
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
+import type { ProvisioningJobSummary, ProvisioningStatus } from "@/lib/features/teacher/types"
 
 interface StudentManagerProps {
   students: EnrollmentStudent[]
+  provisioningJobs?: ProvisioningJobSummary[]
   onAddStudent: (student: Omit<EnrollmentStudent, "id">) => void
   onRemoveStudent: (id: string) => void
   onUploadCSV: (file: File) => void
 }
 
+const STATUS_CONFIG: Record<ProvisioningStatus, { label: string; icon: React.ComponentType<{ className?: string }>; style: string }> = {
+  completed: { label: "Listo", icon: CheckCircle2, style: "text-green-600 bg-green-500/10 border-green-500/20" },
+  processing: { label: "Creando...", icon: Clock, style: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
+  pending: { label: "En cola", icon: CircleDashed, style: "text-muted-foreground bg-secondary border-border" },
+  failed: { label: "Error", icon: AlertCircle, style: "text-red-600 bg-red-500/10 border-red-500/20" },
+}
+
+function StatusBadge({ status }: { status: ProvisioningStatus }) {
+  const cfg = STATUS_CONFIG[status]
+  const Icon = cfg.icon
+  return (
+    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border", cfg.style)}>
+      <Icon className="w-3 h-3" />
+      {cfg.label}
+    </span>
+  )
+}
+
 export function StudentManager({
   students,
+  provisioningJobs = [],
   onAddStudent,
   onRemoveStudent,
   onUploadCSV,
@@ -34,6 +56,15 @@ export function StudentManager({
   const [email, setEmail] = useState("")
   const [codigo, setCodigo] = useState("")
   const [dragActive, setDragActive] = useState(false)
+
+  const jobByEmail = useMemo(() => {
+    const map = new Map<string, ProvisioningJobSummary>()
+    for (const job of provisioningJobs) {
+      const key = job.student.email.toLowerCase()
+      if (!map.has(key)) map.set(key, job)
+    }
+    return map
+  }, [provisioningJobs])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -189,36 +220,56 @@ export function StudentManager({
                 <TableHead className="text-muted-foreground">Nombre</TableHead>
                 <TableHead className="text-muted-foreground">Email</TableHead>
                 <TableHead className="text-muted-foreground">Código</TableHead>
+                <TableHead className="text-muted-foreground">Cuenta Linux</TableHead>
+                <TableHead className="text-muted-foreground">Estado</TableHead>
                 <TableHead className="text-muted-foreground w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students.map((student) => (
-                <TableRow
-                  key={student.id}
-                  className="border-border hover:bg-secondary/30"
-                >
-                  <TableCell className="text-foreground">
-                    {student.name}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {student.email}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono">
-                    {student.code}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onRemoveStudent(student.id)}
-                      className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {students.map((student) => {
+                const job = jobByEmail.get(student.email.toLowerCase())
+                const status = job?.status
+                return (
+                  <TableRow
+                    key={student.id}
+                    className="border-border hover:bg-secondary/30"
+                  >
+                    <TableCell className="text-foreground">
+                      {student.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {student.email}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-mono">
+                      {student.code}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm">
+                      {job?.username ? (
+                        <span className="text-foreground">{job.username}</span>
+                      ) : (
+                        <span className="text-muted-foreground italic">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {status ? (
+                        <StatusBadge status={status} />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onRemoveStudent(student.id)}
+                        className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>

@@ -1,5 +1,6 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
+const prisma = require("../../prisma/client")
 
 function handleError(res, err) {
   if (err instanceof groupService.ServiceError || err instanceof enrollmentService.ServiceError) {
@@ -11,8 +12,13 @@ function handleError(res, err) {
 
 async function createGroup(req, res) {
   try {
-    const { name } = req.body
-    const group = await groupService.createGroup({ name, teacherUserId: req.user.id })
+    const { name, description, students } = req.body
+    const group = await groupService.createGroup({
+      name,
+      description,
+      students: Array.isArray(students) ? students : [],
+      teacherUserId: req.user.id,
+    })
     res.status(201).json(group)
   } catch (err) {
     handleError(res, err)
@@ -106,6 +112,46 @@ async function listStudents(req, res) {
   }
 }
 
+async function listProvisioningJobs(req, res) {
+  try {
+    const { id } = req.params
+    const jobs = await prisma.provisioningJob.findMany({
+      where: {
+        user: {
+          enrollments: { some: { group_id: id } },
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            student: { select: { code: true } },
+          },
+        },
+      },
+      orderBy: { created_at: "desc" },
+    })
+    res.json(
+      jobs.map((j) => ({
+        id: j.id,
+        username: j.username,
+        status: j.status,
+        retries: j.retries,
+        error: j.error,
+        student: {
+          name: j.user.name,
+          email: j.user.email,
+          code: j.user.student?.code ?? null,
+        },
+        createdAt: j.created_at,
+      })),
+    )
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
 module.exports = {
   createGroup,
   listGroups,
@@ -114,4 +160,5 @@ module.exports = {
   registerStudent,
   importCsv,
   listStudents,
+  listProvisioningJobs,
 }
