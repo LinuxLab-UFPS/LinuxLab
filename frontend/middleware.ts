@@ -23,33 +23,26 @@ function matchesRoute(pathname: string, rule: RouteRule): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  // ##########################################################################
-  // ## AUTH DESACTIVADA PARA DESARROLLO. NO TOCAR HASTA TERMINAR EL         ##
-  // ## PROYECTO. Deja navegar sin iniciar sesion. Se reactiva sola en       ##
-  // ## produccion; para reactivarla en local, borra este bloque.           ##
-  // ##########################################################################
-  if (process.env.NODE_ENV !== "production") {
-    return NextResponse.next()
-  }
-
   const { pathname } = request.nextUrl
 
-  if (pathname === "/") {
-    const token = request.cookies.get("token")?.value
-    if (!token) return NextResponse.next()
+  const token = request.cookies.get("token")?.value
 
-    try {
-      const { payload } = await jwtVerify(token, JWT_SECRET)
-      return NextResponse.redirect(new URL("/home", request.url))
-    } catch {
-      return NextResponse.next()
+  // Root redirect for authed users
+  if (pathname === "/") {
+    if (token) {
+      try {
+        await jwtVerify(token, JWT_SECRET)
+        return NextResponse.redirect(new URL("/home", request.url))
+      } catch {
+        return NextResponse.next()
+      }
     }
+    return NextResponse.next()
   }
 
   const rule = ROUTE_RULES.find((r) => matchesRoute(pathname, r))
   if (!rule) return NextResponse.next()
 
-  const token = request.cookies.get("token")?.value
   if (!token) {
     return NextResponse.redirect(new URL("/", request.url))
   }

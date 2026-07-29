@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button"
 import { CircularProgress } from "@/components/shared/progress-indicators"
 import { cn } from "@/lib/utils"
 import { getStudentGroupDetail } from "@/lib/features/teacher/data"
+import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function StudentDetailPage({
   params,
 }: {
   params: Promise<{ id: string; studentId: string }>
 }) {
+  await requireServerRole(["teacher", "admin"])
   const { id, studentId } = await params
   const detail = await getStudentGroupDetail(id, studentId)
 

@@ -14,6 +14,7 @@ import {
 import { getSimulators } from "@/lib/features/shared/simulators"
 import { parseLessonBlocks } from "@/lib/features/shared/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
+import { requireServerRole } from "@/lib/features/auth/session"
 import { TerminalUIProvider } from "@/components/shared/terminal-ui"
 import {
   ReadingProgressProvider,
@@ -25,6 +26,7 @@ export default async function GroupPage({
 }: {
   searchParams: Promise<{ tema?: string; sub?: string }>
 }) {
+  await requireServerRole(["student", "teacher", "admin"])
   const { tema, sub } = await searchParams
   const topic = (tema ? getTopicBySlug(tema) : undefined) ?? syllabus[0]
 

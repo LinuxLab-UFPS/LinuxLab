@@ -16,7 +16,7 @@ import {
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { RoleTag } from "@/components/shared/role-tag"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
-import { DevRoleSwitcher } from "@/components/dev/role-switcher"
+
 
 const NAV = [
   {
@@ -99,9 +99,6 @@ export function AdminHeader() {
                 <LogOut className="mr-2 h-4 w-4" />
                 Cerrar sesión
               </DropdownMenuItem>
-              <div className="px-1 pt-1">
-                <DevRoleSwitcher />
-              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

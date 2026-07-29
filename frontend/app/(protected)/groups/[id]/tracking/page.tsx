@@ -6,12 +6,14 @@ import { getGroup } from "@/lib/features/teacher/data"
 import { getGroupProgress } from "@/lib/features/teacher/data"
 import { getTopic } from "@/lib/features/shared/temario"
 import type { Topic } from "@/lib/features/student/types"
+import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function TrackingPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
+  await requireServerRole(["teacher", "admin"])
   const { id } = await params
   const [group, summary] = await Promise.all([getGroup(id), getGroupProgress(id)])
   const topics: Topic[] = (group?.enabledTopics ?? [])
