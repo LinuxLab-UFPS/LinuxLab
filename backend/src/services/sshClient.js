@@ -7,7 +7,7 @@ let _ready = false
 const SSH_CONFIG = {
   host: process.env.SSH_HOST || "entorno",
   port: parseInt(process.env.SSH_PORT || "22"),
-  username: process.env.SSH_USER || "root",
+  username: process.env.SSH_USER || "labadmin",
   privateKey: fs.readFileSync(process.env.SSH_KEY_PATH || "/ssh/ssh_key"),
   readyTimeout: 10000,
   keepaliveInterval: 30000,

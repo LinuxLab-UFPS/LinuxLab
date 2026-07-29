@@ -1,5 +1,6 @@
 const prisma = require("../../prisma/client")
 const enrollmentService = require("./enrollmentService")
+const provisioningWorker = require("./provisioningWorker")
 
 class ServiceError extends Error {
   constructor(message, status) {
@@ -7,6 +8,17 @@ class ServiceError extends Error {
     this.name = "ServiceError"
     this.status = status
   }
+}
+
+function generateGroupDir(name, groupId) {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9_\u00f1]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "")
+    .substring(0, 20)
+  const shortId = groupId.replace(/-/g, "").substring(0, 8)
+  return `grp_${slug}_${shortId}`
 }
 
 function serializeGroup(group, studentCount) {
@@ -57,9 +69,39 @@ async function createGroup({ name, description, students, teacherUserId }) {
     },
   })
 
+  const groupDir = generateGroupDir(name, group.id)
+  const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
+
+  await prisma.group.update({
+    where: { id: group.id },
+    data: { group_dir: groupDir },
+  })
+
+  const teacherAccount = await prisma.linuxAccount.findUnique({
+    where: { user_id: teacherUserId },
+  })
+
+  if (teacherAccount?.linux_provisioned) {
+    await prisma.groupProvisioningJob.create({
+      data: {
+        group_id: group.id,
+        group_dir: groupDir,
+        group_name: groupName,
+        teacher_username: teacherAccount.linux_username,
+      },
+    })
+    provisioningWorker.processPendingJobs()
+  } else {
+    console.warn(
+      `[GROUP] Teacher ${teacherUserId} not provisioned yet, group dir will be created after teacher provisioning`,
+    )
+  }
+
   const enrollment = await enrollStudentsInGroup({
     groupId: group.id,
     students: Array.isArray(students) ? students : [],
+    groupDir,
+    groupName,
   })
 
   const withCount = await prisma.group.findUnique({
@@ -72,7 +114,7 @@ async function createGroup({ name, description, students, teacherUserId }) {
   }
 }
 
-async function enrollStudentsInGroup({ groupId, students }) {
+async function enrollStudentsInGroup({ groupId, students, groupDir, groupName }) {
   const result = {
     total: students.length,
     registered: 0,
@@ -87,6 +129,8 @@ async function enrollStudentsInGroup({ groupId, students }) {
         name: s.name,
         email: s.email,
         code: s.code,
+        groupDir,
+        groupName,
       })
       if (outcome.enrolled) {
         result.registered += 1

@@ -28,18 +28,22 @@ RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   
     && chmod +x /usr/local/bin/systemctl
 
 # Configuracion global de bash para todos los usuarios
-RUN printf '\n# Limites de seguridad por usuario\nulimit -u 50\nulimit -f 102400\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+RUN printf '\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Usuario intermedio para operaciones del backend
 RUN useradd -m -s /bin/bash labadmin
 
 # Configurar sudoers para labadmin
-RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod' \
+RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd *, /usr/sbin/userdel *, /usr/sbin/usermod *, /usr/sbin/groupadd *, /usr/bin/passwd *, /bin/mkdir /home/*, /bin/chown * /home/*, /bin/chmod * /home/*, /bin/chgrp * /home/*, /usr/bin/su *' \
     > /etc/sudoers.d/labadmin \
     && chmod 440 /etc/sudoers.d/labadmin
 
 # Permisos seguros en /home
 RUN chmod 755 /home
+
+# Quitar systemd de nsswitch (no hay systemd en el contenedor, cuelga NSS lookup)
+RUN sed -i 's/^passwd:.*/passwd: files/' /etc/nsswitch.conf && \
+    sed -i 's/^group:.*/group: files/' /etc/nsswitch.conf
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

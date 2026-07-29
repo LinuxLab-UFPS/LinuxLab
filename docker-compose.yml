@@ -1,10 +1,11 @@
 services:
-  keygen:
+  init:
     image: alpine:3
     volumes:
       - ./scripts/docker:/scripts:ro
       - ssh_keys:/ssh
-    entrypoint: ["/scripts/generate-keys.sh"]
+      - ./data/auth:/auth
+    entrypoint: ["/scripts/init-env.sh"]
 
   postgres:
     image: postgres:16-alpine
@@ -24,12 +25,16 @@ services:
     build:
       context: ./entorno
     depends_on:
-      keygen:
+      init:
         condition: service_completed_successfully
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
       - entorno_ssh_host:/etc/ssh
+      - ./data/auth/passwd:/etc/passwd:rw
+      - ./data/auth/shadow:/etc/shadow:rw
+      - ./data/auth/group:/etc/group:rw
+      - ./data/auth/gshadow:/etc/gshadow:rw
 
   backend:
     build:
@@ -37,14 +42,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      keygen:
+      init:
         condition: service_completed_successfully
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       SSH_HOST: entorno
-      SSH_USER: root
+      SSH_USER: labadmin
       SSH_KEY_PATH: /ssh/ssh_key
       JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       FRONTEND_URL: http://frontend:3000

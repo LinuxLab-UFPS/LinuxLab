@@ -37,3 +37,6 @@ backend/generated/prisma
 # IDE
 .idea/
 .vscode/
+
+# Auth data (bind mounts)
+data/auth/

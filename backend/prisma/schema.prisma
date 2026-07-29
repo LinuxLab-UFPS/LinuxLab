@@ -22,10 +22,11 @@ model User {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  linuxAccount    LinuxAccount?
-  student         Student?
-  teacher         Teacher?
-  provisioningJobs ProvisioningJob[]
+  linuxAccount          LinuxAccount?
+  student               Student?
+  teacher               Teacher?
+  provisioningJobs      ProvisioningJob[]
+  userProvisioningJobs  UserProvisioningJob[]
 }
 
 model LinuxAccount {
@@ -64,6 +65,10 @@ model Group {
   created_at  DateTime     @default(now()) @map("created_at")
   updated_at  DateTime     @updatedAt @map("updated_at")
   enrollments Enrollment[]
+  group_dir   String?      @db.VarChar(64) @map("group_dir")
+
+  groupProvisioningJobs GroupProvisioningJob[]
+  userProvisioningJobs  UserProvisioningJob[]
 
   @@map("groups")
 }
@@ -94,4 +99,43 @@ model ProvisioningJob {
 
   @@index([status, retries])
   @@map("provisioning_jobs")
+}
+
+model UserProvisioningJob {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  username   String   @db.VarChar(64)
+  group_id   String?  @db.Uuid
+  group_name String?  @db.VarChar(32)
+  status     String   @default("pending")
+  retries    Int      @default(0)
+  maxRetries Int      @default(3)
+  error      String?  @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User   @relation(fields: [user_id], references: [id])
+  group Group? @relation(fields: [group_id], references: [id])
+
+  @@index([status, retries])
+  @@map("user_provisioning_jobs")
+}
+
+model GroupProvisioningJob {
+  id               String   @id @default(uuid()) @db.Uuid
+  group_id         String   @db.Uuid
+  group_dir        String   @db.VarChar(64)
+  group_name       String   @db.VarChar(32)
+  teacher_username String   @db.VarChar(32)
+  status           String   @default("pending")
+  retries          Int      @default(0)
+  maxRetries       Int      @default(3)
+  error            String?  @db.Text
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  group Group @relation(fields: [group_id], references: [id])
+
+  @@index([status, retries])
+  @@map("group_provisioning_jobs")
 }
