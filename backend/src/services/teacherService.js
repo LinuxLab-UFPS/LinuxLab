@@ -1,6 +1,7 @@
 const { Role } = require("@prisma/client")
 const prisma = require("../../prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
+const provisioningWorker = require("./provisioningWorker")
 
 class ServiceError extends Error {
   constructor(message, status) {
@@ -101,6 +102,14 @@ async function register({ name, email }) {
     },
     select: TEACHER_SELECT,
   })
+
+  await prisma.userProvisioningJob.create({
+    data: {
+      user_id: user.id,
+      username: linuxUsername,
+    },
+  })
+  provisioningWorker.processPendingJobs()
 
   return serializeTeacher(user)
 }
