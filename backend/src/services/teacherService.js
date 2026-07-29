@@ -10,7 +10,7 @@ class ServiceError extends Error {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
+// const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
 
 const TEACHER_SELECT = {
   id: true,
@@ -74,9 +74,9 @@ async function register({ name, email }) {
     throw new ServiceError("El formato del correo electrónico no es válido", 400)
   }
 
-  if (!normalizedEmail.endsWith(INSTITUTIONAL_DOMAIN)) {
-    throw new ServiceError("Solo se permiten correos institucionales @ufps.edu.co", 400)
-  }
+  // if (!normalizedEmail.endsWith(INSTITUTIONAL_DOMAIN)) {
+  //   throw new ServiceError("Solo se permiten correos institucionales @ufps.edu.co", 400)
+  // }
 
   const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
   if (existing) {

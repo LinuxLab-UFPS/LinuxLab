@@ -32,10 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const result = await signInWithPopup(auth, googleProvider)
     const idToken = await result.user.getIdToken()
 
-    const userEmail = result.user.email
-    if (!userEmail?.endsWith("@ufps.edu.co")) {
-      throw new Error("Solo se permiten correos institucionales @ufps.edu.co")
-    }
+    // const userEmail = result.user.email
+    // if (!userEmail?.endsWith("@ufps.edu.co")) {
+    //   throw new Error("Solo se permiten correos institucionales @ufps.edu.co")
+    // }
 
     const data = await apiFetch<{ user: User }>("/api/auth/firebase", {
       method: "POST",

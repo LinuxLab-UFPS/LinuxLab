@@ -13,7 +13,7 @@ class ServiceError extends Error {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
+// const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
 
 function validateEmail(email) {
   if (!email?.trim()) {
@@ -23,12 +23,12 @@ function validateEmail(email) {
   if (!EMAIL_REGEX.test(normalized)) {
     throw new ServiceError(`El formato del correo electrónico no es válido: ${email}`, 400)
   }
-  if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
-    throw new ServiceError(
-      `Solo se permiten correos institucionales ${INSTITUTIONAL_DOMAIN}: ${email}`,
-      400,
-    )
-  }
+  // if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
+  //   throw new ServiceError(
+  //     `Solo se permiten correos institucionales ${INSTITUTIONAL_DOMAIN}: ${email}`,
+  //     400,
+  //   )
+  // }
   return normalized
 }
 

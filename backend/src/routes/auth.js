@@ -59,9 +59,9 @@ router.post("/firebase", async (req, res) => {
       return res.status(400).json({ error: "Email is required" })
     }
 
-    if (!email.endsWith("@ufps.edu.co")) {
-      return res.status(403).json({ error: "Solo se permiten correos institucionales @ufps.edu.co" })
-    }
+    // if (!email.endsWith("@ufps.edu.co")) {
+    //   return res.status(403).json({ error: "Solo se permiten correos institucionales @ufps.edu.co" })
+    // }
 
     let user = await prisma.user.findUnique({
       where: { email },
