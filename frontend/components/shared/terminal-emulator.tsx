@@ -20,7 +20,7 @@ export function TerminalEmulator({ className }: { className?: string }) {
       fontSize: 14,
       fontFamily: "Menlo, Monaco, 'Courier New', monospace",
       theme: {
-        background: "#0a0a0a",
+        background: "#1a1d24",
         foreground: "#e0e0e0",
         cursor: "#e0e0e0",
       },

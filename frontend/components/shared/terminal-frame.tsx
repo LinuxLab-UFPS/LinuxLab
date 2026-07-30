@@ -20,11 +20,11 @@ export function TerminalFrame({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-[#0c0c0e] shadow-lg",
+        "flex flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#1a1d24] shadow-lg",
         className,
       )}
     >
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/10 px-3">
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b border-white/10 bg-white/5 px-3">
         <span className="flex gap-1.5">
           <span className="h-3 w-3 rounded-full bg-[#ff5f56]" />
           <span className="h-3 w-3 rounded-full bg-[#ffbd2e]" />

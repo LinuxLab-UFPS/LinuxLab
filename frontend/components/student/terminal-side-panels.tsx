@@ -1,9 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { ArrowLeft, Target } from "lucide-react"
 import { EssentialCommands } from "@/components/student/essential-commands"
 import { getSuggestedActivities } from "@/lib/features/student/activities"
+
+/** The list shows this many; the rest live behind "Ver más". Keeping it fixed is
+ *  what lets both panels fit the column without scrolling. */
+const VISIBLE = 2
+
+const AMBER_BUTTON =
+  "rounded-md bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
+
+const PANEL =
+  "rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none"
 
 /**
  * The two panels next to the terminal: the essential-commands cheat sheet and
@@ -20,23 +31,23 @@ export function TerminalSidePanels() {
     const hasNext = selectedIndex < activities.length - 1
 
     return (
-      <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
+      <div className={`${PANEL} flex h-full flex-col`}>
         <button
           type="button"
           onClick={() => setSelectedIndex(null)}
-          className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-500 transition-colors hover:text-amber-400"
+          className="mb-3 flex items-center gap-2 text-left text-sm font-semibold text-foreground transition-colors hover:text-amber-500"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 shrink-0 text-amber-500" />
           {activity.title}
         </button>
         <p className="text-sm leading-relaxed text-muted-foreground">{activity.description}</p>
 
         {hasNext && (
-          <div className="mt-4 flex justify-end">
+          <div className="mt-auto flex justify-end pt-4">
             <button
               type="button"
               onClick={() => setSelectedIndex(selectedIndex + 1)}
-              className="rounded-md bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
+              className={AMBER_BUTTON}
             >
               Siguiente Actividad
             </button>
@@ -48,15 +59,20 @@ export function TerminalSidePanels() {
 
   return (
     <>
-      <EssentialCommands />
+      <EssentialCommands className="flex-1" />
 
-      <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
-        <h2 className="mb-3 text-sm font-bold text-amber-500">Actividades sugeridas</h2>
+      <div className={`${PANEL} flex flex-1 flex-col`}>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-amber-500">Actividades sugeridas</h2>
+          <Link href="/activities" className={`${AMBER_BUTTON} px-3 py-1 text-xs`}>
+            Ver más
+          </Link>
+        </div>
         {activities.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay actividades sugeridas.</p>
         ) : (
           <div className="space-y-2">
-            {activities.map((activity, i) => (
+            {activities.slice(0, VISIBLE).map((activity, i) => (
               <button
                 key={activity.id}
                 type="button"

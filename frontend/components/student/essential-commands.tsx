@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils"
+
 interface Command {
   name: string
   args?: string
@@ -16,9 +18,14 @@ const COMMANDS: Command[] = [
 ]
 
 /** Static cheat-sheet of the basic commands, always visible next to the terminal. */
-export function EssentialCommands() {
+export function EssentialCommands({ className }: { className?: string }) {
   return (
-    <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
+    <div
+      className={cn(
+        "rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none",
+        className,
+      )}
+    >
       <h2 className="mb-3 text-sm font-bold text-primary [text-shadow:var(--neon-text-shadow)]">
         Comandos esenciales
       </h2>
