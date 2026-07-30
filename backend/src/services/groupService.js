@@ -97,11 +97,17 @@ async function createGroup({ name, description, students, teacherUserId }) {
     )
   }
 
+  const teacherAccount2 = await prisma.linuxAccount.findUnique({
+    where: { user_id: teacherUserId },
+  })
+  const teacherUsername = teacherAccount2?.linux_username
+
   const enrollment = await enrollStudentsInGroup({
     groupId: group.id,
     students: Array.isArray(students) ? students : [],
     groupDir,
     groupName,
+    teacherUsername,
   })
 
   const withCount = await prisma.group.findUnique({
@@ -114,7 +120,7 @@ async function createGroup({ name, description, students, teacherUserId }) {
   }
 }
 
-async function enrollStudentsInGroup({ groupId, students, groupDir, groupName }) {
+async function enrollStudentsInGroup({ groupId, students, groupDir, groupName, teacherUsername }) {
   const result = {
     total: students.length,
     registered: 0,
@@ -131,6 +137,7 @@ async function enrollStudentsInGroup({ groupId, students, groupDir, groupName })
         code: s.code,
         groupDir,
         groupName,
+        teacherUsername,
       })
       if (outcome.enrolled) {
         result.registered += 1

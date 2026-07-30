@@ -120,10 +120,11 @@ async function registerStudent({ groupId, name, email, code, teacherUserId, role
   const group = await ensureGroupAccess({ groupId, teacherUserId, role })
   const groupDir = group.group_dir || undefined
   const groupName = groupDir ? `grp_${groupId.replace(/-/g, "").substring(0, 8)}` : undefined
-  return enrollOne({ groupId, name, email, code, groupDir, groupName })
+  const teacherAccount = await prisma.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
+  return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username })
 }
 
-async function enrollOne({ groupId, name, email, code, groupDir, groupName }) {
+async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername }) {
   const user = await ensureStudentExists({ email, name, code })
 
   const existing = await prisma.enrollment.findUnique({
@@ -144,7 +145,9 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName }) {
         user_id: user.linuxAccount.user_id,
         username: user.linuxAccount.linux_username,
         group_id: groupDir ? groupId : null,
+        group_dir: groupDir || null,
         group_name: groupName || null,
+        teacher_username: teacherUsername || null,
       },
     })
     provisioningWorker.processPendingJobs()

@@ -1,10 +1,18 @@
 services:
+  migrate:
+    build:
+      context: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["npx", "prisma", "migrate", "deploy"]
+    env_file: ./backend/.env
+
   init:
     image: alpine:3
     volumes:
       - ./scripts/docker:/scripts:ro
       - ssh_keys:/ssh
-      - ./data/auth:/auth
     entrypoint: ["/scripts/init-env.sh"]
 
   postgres:
@@ -30,11 +38,6 @@ services:
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
-      - entorno_ssh_host:/etc/ssh
-      - ./data/auth/passwd:/etc/passwd:rw
-      - ./data/auth/shadow:/etc/shadow:rw
-      - ./data/auth/group:/etc/group:rw
-      - ./data/auth/gshadow:/etc/gshadow:rw
 
   backend:
     build:
@@ -42,10 +45,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       init:
         condition: service_completed_successfully
     ports:
       - "3000:3000"
+    env_file: ./backend/.env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       SSH_HOST: entorno
@@ -65,14 +71,9 @@ services:
       - "3001:3000"
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://backend:3000
-      # Docker auto-sets HOSTNAME to the container ID; Next's standalone
-      # server.js reads that var to decide what address to bind/listen on and
-      # tries to resolve it as a real hostname, which fails. Force it to bind
-      # on all interfaces instead.
       HOSTNAME: "0.0.0.0"
 
 volumes:
   pgdata:
   ssh_keys:
   entorno_home:
-  entorno_ssh_host:

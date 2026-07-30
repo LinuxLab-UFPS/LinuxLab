@@ -65,4 +65,16 @@ async function createShellStream() {
   })
 }
 
-module.exports = { execCommand, createShellStream, getConnection }
+async function createExecStream(command) {
+  const conn = await getConnection()
+  return new Promise((resolve, reject) => {
+    conn.exec(command, {
+      pty: { cols: 180, rows: 40, term: "xterm-256color" },
+    }, (err, stream) => {
+      if (err) return reject(err)
+      resolve(stream)
+    })
+  })
+}
+
+module.exports = { execCommand, createShellStream, createExecStream, getConnection }

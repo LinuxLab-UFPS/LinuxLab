@@ -9,13 +9,6 @@ class ContainerServiceError extends Error {
   }
 }
 
-async function createUser(username) {
-  const { code, stdout, stderr } = await sshClient.execCommand(
-    `sudo id -u ${username} >/dev/null 2>&1 && exit 0 || sudo useradd -m -s /bin/bash ${username}`,
-  )
-  return { username, output: stdout || stderr || "" }
-}
-
 async function userExists(username) {
   const { code } = await sshClient.execCommand(`id -u ${username} >/dev/null 2>&1`)
   return code === 0
@@ -26,33 +19,63 @@ async function groupExists(groupName) {
   return code === 0
 }
 
-async function createGroupDir(groupDir, groupName, teacherUsername) {
-  const path = `/home/groups/${groupDir}`
-  await sshClient.execCommand(`sudo mkdir -p ${path}`)
-  const exists = await groupExists(groupName)
-  if (!exists) {
-    await sshClient.execCommand(`sudo groupadd ${groupName}`)
+async function createTeacher(teacherUsername) {
+  const root = `/home/${teacherUsername}`
+  const home = `${root}/home`
+  await sshClient.execCommand(
+    `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
+    `sudo mkdir -p ${home} ${root}/grupos && ` +
+    `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
+    `sudo chmod 751 ${root} ${root}/grupos && ` +
+    `sudo chmod 755 ${home}`,
+  )
+}
+
+async function createGroup(teacherUsername, groupDir, groupName) {
+  const path = `/home/${teacherUsername}/grupos/${groupDir}`
+  await sshClient.execCommand(
+    `sudo groupadd ${groupName} && ` +
+    `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
+    `sudo mkdir -p ${path} && ` +
+    `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
+    `sudo chmod 2751 ${path}`,
+  )
+}
+
+async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
+  const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
+  await sshClient.execCommand(
+    `sudo mkdir -p ${home} && ` +
+    `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
+    `sudo chown ${studentUsername}:${groupName} ${home} && ` +
+    `sudo chmod 2750 ${home}`,
+  )
+}
+
+async function archiveGroup(teacherUsername, groupDir, groupName) {
+  const path = `/home/${teacherUsername}/grupos/${groupDir}`
+  const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
+  for (const student of stdout.split("\n").filter(Boolean)) {
+    await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
   }
-  await sshClient.execCommand(`sudo usermod -aG ${groupName} ${teacherUsername}`)
-  await sshClient.execCommand(`sudo chown ${teacherUsername}:${groupName} ${path}`)
-  await sshClient.execCommand(`sudo chmod 2775 ${path}`)
+  await sshClient.execCommand(
+    `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
+  )
 }
 
-async function provisionGroupDir(groupDir, groupName, teacherUsername) {
-  await createGroupDir(groupDir, groupName, teacherUsername)
+async function provisionTeacherAccount(linuxAccountId, username) {
+  if (!await userExists(username)) {
+    await createTeacher(username)
+  }
+  await prisma.linuxAccount.update({
+    where: { user_id: linuxAccountId },
+    data: { linux_provisioned: true },
+  })
 }
 
-async function provisionLinuxAccount(linuxAccountId, username, groupDir, groupName) {
-  const exists = await userExists(username)
-  if (!exists) {
-    if (groupDir && groupName) {
-      const homePath = `/home/groups/${groupDir}/${username}`
-      await sshClient.execCommand(`sudo useradd -m -d ${homePath} -s /bin/bash ${username}`)
-      await sshClient.execCommand(`sudo chgrp ${groupName} ${homePath}`)
-      await sshClient.execCommand(`sudo chmod 2770 ${homePath}`)
-    } else {
-      await createUser(username)
-    }
+async function provisionStudentAccount(linuxAccountId, username, teacherUsername, groupDir, groupName) {
+  if (!await userExists(username)) {
+    await createStudent(teacherUsername, groupDir, groupName, username)
   }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
@@ -61,9 +84,7 @@ async function provisionLinuxAccount(linuxAccountId, username, groupDir, groupNa
 }
 
 async function openPtySession(username) {
-  const stream = await sshClient.createShellStream()
-  stream.write(`sudo su - ${username}\n`)
-  return stream
+  return sshClient.createExecStream(`sudo su - ${username}`)
 }
 
 function closePtySession(stream) {
@@ -73,13 +94,15 @@ function closePtySession(stream) {
 }
 
 module.exports = {
-  createUser,
   userExists,
   groupExists,
-  createGroupDir,
-  provisionGroupDir,
+  createTeacher,
+  createGroup,
+  createStudent,
+  archiveGroup,
+  provisionTeacherAccount,
+  provisionStudentAccount,
   openPtySession,
   closePtySession,
-  provisionLinuxAccount,
   ContainerServiceError,
 }

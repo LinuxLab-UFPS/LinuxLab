@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { provisionLinuxAccount, provisionGroupDir } = require("./linuxContainerService")
+const { createGroup, provisionStudentAccount, provisionTeacherAccount } = require("./linuxContainerService")
 
 const POLL_INTERVAL = 5000
 const BATCH_SIZE = 5
@@ -25,12 +25,12 @@ async function processGroupJobs() {
     })
 
     try {
-      await provisionGroupDir(job.group_dir, job.group_name, job.teacher_username)
+      await createGroup(job.teacher_username, job.group_dir, job.group_name)
       await prisma.groupProvisioningJob.update({
         where: { id: job.id },
         data: { status: "completed" },
       })
-      console.log(`[PROVISIONING] Group ${job.group_dir} completed`)
+      console.log(`[PROVISIONING] Group ${job.group_dir} created`)
     } catch (err) {
       const newRetries = job.retries + 1
       const newStatus = newRetries >= MAX_RETRIES ? "failed" : "pending"
@@ -65,7 +65,17 @@ async function processUserJobs() {
     })
 
     try {
-      await provisionLinuxAccount(job.user_id, job.username, job.group_dir || null, job.group_name || null)
+      if (job.group_id) {
+        await provisionStudentAccount(
+          job.user_id,
+          job.username,
+          job.teacher_username,
+          job.group_dir,
+          job.group_name,
+        )
+      } else {
+        await provisionTeacherAccount(job.user_id, job.username)
+      }
       await prisma.userProvisioningJob.update({
         where: { id: job.id },
         data: { status: "completed" },

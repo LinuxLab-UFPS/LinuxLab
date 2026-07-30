@@ -102,17 +102,19 @@ model ProvisioningJob {
 }
 
 model UserProvisioningJob {
-  id         String   @id @default(uuid()) @db.Uuid
-  user_id    String   @db.Uuid
-  username   String   @db.VarChar(64)
-  group_id   String?  @db.Uuid
-  group_name String?  @db.VarChar(32)
-  status     String   @default("pending")
-  retries    Int      @default(0)
-  maxRetries Int      @default(3)
-  error      String?  @db.Text
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  username         String   @db.VarChar(64)
+  group_id         String?  @db.Uuid
+  group_dir        String?  @db.VarChar(64)
+  group_name       String?  @db.VarChar(32)
+  teacher_username String?  @db.VarChar(32)
+  status           String   @default("pending")
+  retries          Int      @default(0)
+  maxRetries       Int      @default(3)
+  error            String?  @db.Text
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
   user  User   @relation(fields: [user_id], references: [id])
   group Group? @relation(fields: [group_id], references: [id])
