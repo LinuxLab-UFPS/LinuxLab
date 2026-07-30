@@ -70,6 +70,9 @@ for teacher_dir in /home/*/; do
   done
 done
 
+echo "[entrypoint] Configurando aislamiento de procesos..."
+mount -o remount,hidepid=2 /proc 2>/dev/null || true
+
 echo "[entrypoint] Iniciando SSH..."
 mkdir -p /run/sshd
 exec /usr/sbin/sshd -D

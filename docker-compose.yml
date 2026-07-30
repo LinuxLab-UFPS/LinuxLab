@@ -2,6 +2,8 @@ services:
   migrate:
     build:
       context: ./backend
+    networks:
+      - external
     depends_on:
       postgres:
         condition: service_healthy
@@ -19,6 +21,8 @@ services:
     image: postgres:16-alpine
     mem_limit: 256m
     cpu_shares: 1024
+    networks:
+      - external
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
@@ -41,12 +45,18 @@ services:
       context: ./entorno
     mem_limit: 256m
     cpu_shares: 512
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor=unconfined
     depends_on:
       init:
         condition: service_completed_successfully
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
+    networks:
+      - internal
     logging:
       driver: json-file
       options:
@@ -77,6 +87,9 @@ services:
       FRONTEND_URL: http://frontend:3000
     volumes:
       - ssh_keys:/ssh:ro
+    networks:
+      - internal
+      - external
     logging:
       driver: json-file
       options:
@@ -95,11 +108,19 @@ services:
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://backend:3000
       HOSTNAME: "0.0.0.0"
+    networks:
+      - external
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  internal:
+    internal: true
+  external:
+    internal: false
 
 volumes:
   pgdata:
