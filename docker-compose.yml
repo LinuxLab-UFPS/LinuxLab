@@ -17,6 +17,8 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    mem_limit: 256m
+    cpu_shares: 1024
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
@@ -28,20 +30,34 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   entorno:
     build:
       context: ./entorno
+    mem_limit: 256m
+    cpu_shares: 512
     depends_on:
       init:
         condition: service_completed_successfully
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build:
       context: ./backend
+    mem_limit: 256m
+    cpu_shares: 1024
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,10 +77,17 @@ services:
       FRONTEND_URL: http://frontend:3000
     volumes:
       - ssh_keys:/ssh:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
       context: ./frontend
+    mem_limit: 128m
+    cpu_shares: 256
     depends_on:
       - backend
     ports:
@@ -72,6 +95,11 @@ services:
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://backend:3000
       HOSTNAME: "0.0.0.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   pgdata:
