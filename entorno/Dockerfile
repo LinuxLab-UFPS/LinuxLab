@@ -18,21 +18,21 @@ RUN apt-get update && apt-get install -y \
     procps \
     passwd \
     sudo \
-    curl \
-    wget \
     openssh-server \
+    && apt-get remove -y wget curl 2>/dev/null || true \
     && rm -rf /var/lib/apt/lists/*
 
 # Script simulado de systemctl
 RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   echo "Started $SERVICE"  ;;\n  stop)    echo "Stopped $SERVICE"  ;;\n  status)  echo "$SERVICE is active (simulated)" ;;\n  enable)  echo "Enabled $SERVICE"  ;;\n  disable) echo "Disabled $SERVICE" ;;\n  restart) echo "Restarted $SERVICE" ;;\n  *)       echo "Usage: systemctl {start|stop|status|enable|disable|restart} service" ;;\nesac' > /usr/local/bin/systemctl \
     && chmod +x /usr/local/bin/systemctl
 
-# Cierre por inactividad: 15 minutos
-RUN printf '\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+# Limites de recursos por usuario
+RUN printf '\nulimit -u 512\nulimit -f 102400\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Configurar SSH: solo clave publica, sin password
 RUN echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config \
-    && echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config
+    && echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config \
+    && chmod 600 /etc/ssh/sshd_config
 
 # Quitar systemd de nsswitch (no hay systemd, cuelga NSS lookup)
 RUN sed -i 's/^passwd:.*/passwd: files/' /etc/nsswitch.conf && \
