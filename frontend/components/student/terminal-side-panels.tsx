@@ -20,7 +20,7 @@ export function TerminalSidePanels() {
     const hasNext = selectedIndex < activities.length - 1
 
     return (
-      <div className="rounded-xl border border-black/15 bg-background p-4 dark:border-border">
+      <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
         <button
           type="button"
           onClick={() => setSelectedIndex(null)}
@@ -50,7 +50,7 @@ export function TerminalSidePanels() {
     <>
       <EssentialCommands />
 
-      <div className="rounded-xl border border-black/15 bg-background p-4 dark:border-border">
+      <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
         <h2 className="mb-3 text-sm font-bold text-amber-500">Actividades sugeridas</h2>
         {activities.length === 0 ? (
           <p className="text-sm text-muted-foreground">Aún no hay actividades sugeridas.</p>

@@ -18,7 +18,7 @@ const COMMANDS: Command[] = [
 /** Static cheat-sheet of the basic commands, always visible next to the terminal. */
 export function EssentialCommands() {
   return (
-    <div className="rounded-xl border border-black/15 bg-background p-4 dark:border-border">
+    <div className="rounded-xl border border-black/15 bg-background p-4 shadow-md dark:border-border dark:shadow-none">
       <h2 className="mb-3 text-sm font-bold text-primary [text-shadow:var(--neon-text-shadow)]">
         Comandos esenciales
       </h2>
