@@ -27,6 +27,7 @@ model User {
   teacher               Teacher?
   provisioningJobs      ProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
+  preferences           UserPreference?
 }
 
 model LinuxAccount {
@@ -121,6 +122,19 @@ model UserProvisioningJob {
 
   @@index([status, retries])
   @@map("user_provisioning_jobs")
+}
+
+model UserPreference {
+  id                  String   @id @default(uuid()) @db.Uuid
+  user_id             String   @db.Uuid  @unique
+  terminal_font_size  Int      @default(16)
+  terminal_font_family String  @default("Menlo, Monaco, 'Courier New', monospace")
+  theme               String   @default("system")
+  updated_at          DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("user_preferences")
 }
 
 model GroupProvisioningJob {

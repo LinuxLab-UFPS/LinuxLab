@@ -26,6 +26,7 @@ const USER_INCLUDE = {
   },
   teacher: { select: { user_id: true } },
   student: { select: { user_id: true } },
+  preferences: true,
 }
 
 function serializeUser(user) {
@@ -38,6 +39,13 @@ function serializeUser(user) {
     active: user.active,
     linuxUsername: user.linuxAccount?.linux_username ?? null,
     linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
+    preferences: user.preferences
+      ? {
+          terminalFontSize: user.preferences.terminal_font_size,
+          terminalFontFamily: user.preferences.terminal_font_family,
+          theme: user.preferences.theme,
+        }
+      : null,
   }
 }
 
