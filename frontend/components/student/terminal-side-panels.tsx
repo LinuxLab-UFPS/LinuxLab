@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowLeft, ArrowRight, Target } from "lucide-react"
+import { ArrowLeft, Target } from "lucide-react"
 import { EssentialCommands } from "@/components/student/essential-commands"
 import { getSuggestedActivities } from "@/lib/features/student/activities"
 
@@ -17,7 +17,7 @@ export function TerminalSidePanels() {
 
   if (selectedIndex !== null) {
     const activity = activities[selectedIndex]
-    const next = activities[selectedIndex + 1] as typeof activity | undefined
+    const hasNext = selectedIndex < activities.length - 1
 
     return (
       <div className="rounded-xl border border-black/15 bg-background p-4 dark:border-border">
@@ -31,20 +31,14 @@ export function TerminalSidePanels() {
         </button>
         <p className="text-sm leading-relaxed text-muted-foreground">{activity.description}</p>
 
-        {next && (
+        {hasNext && (
           <div className="mt-4 flex justify-end">
             <button
               type="button"
               onClick={() => setSelectedIndex(selectedIndex + 1)}
-              className="group flex items-center gap-3 rounded-md bg-amber-500 px-5 py-3 text-right shadow-[0_0_18px_rgba(245,158,11,0.45)] transition-all duration-300 hover:bg-amber-400 hover:shadow-[0_0_28px_rgba(245,158,11,0.7)]"
+              className="rounded-md bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
             >
-              <span className="min-w-0">
-                <span className="block text-xs text-white/80">Siguiente actividad</span>
-                <span className="block truncate text-sm font-semibold text-white">
-                  {next.title}
-                </span>
-              </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-white transition-transform group-hover:translate-x-0.5" />
+              Siguiente Actividad
             </button>
           </div>
         )}
