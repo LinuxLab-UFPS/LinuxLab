@@ -8,7 +8,7 @@ import { getSuggestedActivities } from "@/lib/features/student/activities"
 
 /** The list shows this many; the rest live behind "Ver más". Keeping it fixed is
  *  what lets both panels fit the column without scrolling. */
-const VISIBLE = 2
+const VISIBLE = 3
 
 const AMBER_BUTTON =
   "rounded-md bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"

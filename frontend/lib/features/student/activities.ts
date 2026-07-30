@@ -29,6 +29,11 @@ const PLACEHOLDER_ACTIVITIES: SuggestedActivity[] = [
     title: "Actividad de ejemplo 2",
     description: "Descripción de la actividad - Lorem ipsum Lorem ipsum Lorem ipsum ipsum.",
   },
+  {
+    id: "demo-3",
+    title: "Actividad de ejemplo 3",
+    description: "Descripción de la actividad - Lorem ipsum Lorem ipsum Lorem ipsum ipsum.",
+  },
 ]
 
 export function getSuggestedActivities(): SuggestedActivity[] {
