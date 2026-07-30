@@ -27,7 +27,7 @@ RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   
     && chmod +x /usr/local/bin/systemctl
 
 # Limites de recursos por usuario
-RUN printf '\nulimit -u 512\nulimit -f 102400\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+RUN printf '\nulimit -u 512\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Configurar SSH: solo clave publica, sin password
 RUN echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config \
