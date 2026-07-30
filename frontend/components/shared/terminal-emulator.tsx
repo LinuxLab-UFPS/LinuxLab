@@ -105,14 +105,14 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
   // Actualizar fontSize en vivo
   useEffect(() => {
     if (termRef.current) {
-      (termRef.current as any).options = { ...(termRef.current as any).options, fontSize }
+      (termRef.current as any).options.fontSize = fontSize
     }
   }, [fontSize])
 
   // Actualizar fontFamily en vivo
   useEffect(() => {
     if (termRef.current) {
-      (termRef.current as any).options = { ...(termRef.current as any).options, fontFamily }
+      (termRef.current as any).options.fontFamily = fontFamily
     }
   }, [fontFamily])
 
