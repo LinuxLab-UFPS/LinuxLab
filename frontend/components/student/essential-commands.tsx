@@ -19,7 +19,9 @@ const COMMANDS: Command[] = [
 export function EssentialCommands() {
   return (
     <div className="rounded-xl border border-black/15 bg-background p-4 dark:border-border">
-      <h2 className="mb-3 text-sm font-semibold text-foreground">Comandos esenciales</h2>
+      <h2 className="mb-3 text-sm font-bold text-primary [text-shadow:var(--neon-text-shadow)]">
+        Comandos esenciales
+      </h2>
       <div className="grid grid-cols-2 gap-2.5">
         {COMMANDS.map((cmd) => (
           <div
