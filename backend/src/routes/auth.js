@@ -4,6 +4,7 @@ const { getAuth } = require("firebase-admin/auth")
 const firebaseApp = require("../config/firebase-admin")
 const prisma = require("../../prisma/client")
 const authMiddleware = require("../middleware/auth")
+const logger = require("../lib/logger")
 
 const router = express.Router()
 const JWT_SECRET = process.env.JWT_SECRET
@@ -100,7 +101,7 @@ router.post("/firebase", async (req, res) => {
     if (error.code === "auth/argument-error") {
       return res.status(400).json({ error: "Invalid token" })
     }
-    console.error("Firebase auth error:", error?.message || error)
+    logger.error({ err: error }, "Firebase auth error")
     res.status(500).json({ error: error?.message || "Authentication error" })
   }
 })
@@ -121,7 +122,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     }
     res.json({ user: serializeUser(user) })
   } catch (error) {
-    console.error("Auth me error:", error)
+    logger.error({ err: error }, "Auth me error")
     res.status(500).json({ error: "Error getting session" })
   }
 })

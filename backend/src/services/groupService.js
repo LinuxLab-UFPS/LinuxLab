@@ -1,6 +1,7 @@
 const prisma = require("../../prisma/client")
 const enrollmentService = require("./enrollmentService")
 const provisioningWorker = require("./provisioningWorker")
+const logger = require("../lib/logger")
 
 class ServiceError extends Error {
   constructor(message, status) {
@@ -92,9 +93,7 @@ async function createGroup({ name, description, students, teacherUserId }) {
     })
     provisioningWorker.processPendingJobs()
   } else {
-    console.warn(
-      `[GROUP] Teacher ${teacherUserId} not provisioned yet, group dir will be created after teacher provisioning`,
-    )
+    logger.warn({ teacherUserId }, "Teacher not provisioned yet, group dir will be created after teacher provisioning")
   }
 
   const teacherAccount2 = await prisma.linuxAccount.findUnique({

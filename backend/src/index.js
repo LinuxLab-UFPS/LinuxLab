@@ -3,10 +3,12 @@ require('dotenv/config');
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const morgan = require('morgan');
 const prisma = require('../prisma/client');
 const authRoutes = require('./routes/auth');
 const adminRoutes = require('./routes/admin');
 const groupRoutes = require('./routes/groups');
+const logger = require('./lib/logger');
 
 const setupGateway = require('./gateway');
 const { startWorker } = require('./services/provisioningWorker');
@@ -17,6 +19,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors({
     origin: true,
     credentials: true,
+}));
+
+app.use(morgan('[:date[clf]] [:method] :url :status :res[content-length] - :response-time ms', {
+    skip: (req) => req.url === "/" || req.url === "/api/health" || req.url.startsWith("/terminal"),
 }));
 
 app.use(express.json());
@@ -32,7 +38,7 @@ app.get('/', (_req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    logger.info(`Server running at http://localhost:${PORT}`);
 });
 
 setupGateway(server);

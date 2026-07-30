@@ -1,5 +1,6 @@
 const prisma = require("../../prisma/client")
 const { createGroup, provisionStudentAccount, provisionTeacherAccount } = require("./linuxContainerService")
+const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
 const BATCH_SIZE = 5
@@ -30,7 +31,7 @@ async function processGroupJobs() {
         where: { id: job.id },
         data: { status: "completed" },
       })
-      console.log(`[PROVISIONING] Group ${job.group_dir} created`)
+      logger.info({ groupDir: job.group_dir }, "Group directory created")
     } catch (err) {
       const newRetries = job.retries + 1
       const newStatus = newRetries >= MAX_RETRIES ? "failed" : "pending"
@@ -42,7 +43,7 @@ async function processGroupJobs() {
           error: err?.message || String(err),
         },
       })
-      console.error(`[PROVISIONING] Group ${job.group_dir} failed (${newRetries}/${MAX_RETRIES}): ${err?.message || err}`)
+      logger.error({ err, groupDir: job.group_dir, retries: newRetries }, "Group provisioning failed")
     }
   }
 }
@@ -80,7 +81,7 @@ async function processUserJobs() {
         where: { id: job.id },
         data: { status: "completed" },
       })
-      console.log(`[PROVISIONING] User ${job.username} completed`)
+      logger.info({ username: job.username }, "User provisioning completed")
     } catch (err) {
       const newRetries = job.retries + 1
       const newStatus = newRetries >= MAX_RETRIES ? "failed" : "pending"
@@ -92,7 +93,7 @@ async function processUserJobs() {
           error: err?.message || String(err),
         },
       })
-      console.error(`[PROVISIONING] User ${job.username} failed (${newRetries}/${MAX_RETRIES}): ${err?.message || err}`)
+      logger.error({ err, username: job.username, retries: newRetries }, "User provisioning failed")
     }
   }
 }
@@ -102,7 +103,7 @@ async function processPendingJobs() {
     await processGroupJobs()
     await processUserJobs()
   } catch (err) {
-    console.error("[PROVISIONING] Worker error:", err?.message || err)
+    logger.error({ err }, "Provisioning worker error")
   }
 }
 
@@ -110,7 +111,7 @@ function startWorker() {
   if (intervalHandle) return
   processPendingJobs()
   intervalHandle = setInterval(processPendingJobs, POLL_INTERVAL)
-  console.log(`[PROVISIONING] Worker started (poll every ${POLL_INTERVAL / 1000}s)`)
+  logger.info(`Worker started (poll every ${POLL_INTERVAL / 1000}s)`)
 }
 
 function stopWorker() {
