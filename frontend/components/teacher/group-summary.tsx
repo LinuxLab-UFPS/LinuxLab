@@ -19,8 +19,12 @@ import { NeonProgress } from "@/components/shared/neon-progress"
 import { cn } from "@/lib/utils"
 import type { AuditEntry, Group, GroupProgressSummary } from "@/lib/features/teacher/types"
 
-/** Cuántas filas caben en el resumen antes de mandar al usuario a "Ver más". */
-const PREVIEW_ROWS = 5
+/** La actividad reciente se corta en 3 para quedar a la misma altura que el
+ *  panel de información general, que tiene tres métricas. */
+const ACTIVITY_ROWS = 3
+
+/** Cuántos estudiantes se listan antes de mandar al usuario a "Ver más". */
+const TRACKING_ROWS = 5
 
 type Tone = "primary" | "amber" | "sky"
 
@@ -87,7 +91,9 @@ export function GeneralInfoPanel({ group }: { group: Group }) {
   return (
     <section>
       <TableSectionHeader title="Información general" />
-      <div className="space-y-1.5 rounded-xl border border-table-line bg-table-surface p-3">
+      {/* Sin fondo: solo el marco, para que las tres métricas se lean sobre el
+          mismo lienzo de la página y no como otra tabla más. */}
+      <div className="space-y-1.5 rounded-xl border border-table-line p-3">
         <StatButton
           tone="primary"
           icon={Users}
@@ -129,7 +135,7 @@ export function RecentCourseActivity({ entries }: { entries: AuditEntry[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {entries.slice(0, PREVIEW_ROWS).map((entry) => {
+            {entries.slice(0, ACTIVITY_ROWS).map((entry) => {
               const date = new Date(entry.timestamp)
               return (
                 <TableRow key={entry.id}>
@@ -195,7 +201,7 @@ export function TrackingSummary({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {summary.rows.slice(0, PREVIEW_ROWS).map((row) => (
+            {summary.rows.slice(0, TRACKING_ROWS).map((row) => (
               <TableRow key={row.student.id}>
                 <TableCell>
                   <span className="block text-sm font-medium text-foreground">
