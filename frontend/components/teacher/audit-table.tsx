@@ -35,7 +35,7 @@ const ROLE: Record<Role, { label: string; className: string }> = {
 
 /** Exports the given rows as a CSV, honoring whatever search/date filter is active. */
 function exportCsv(rows: AuditEntry[]) {
-  const header = ["Fecha", "Hora", "Usuario", "Email", "Rol", "Curso", "Acción"]
+  const header = ["Fecha", "Hora", "Usuario", "Email", "Rol", "Acción", "Curso"]
   const lines = rows.map((e) => {
     const date = new Date(e.timestamp)
     return [
@@ -44,8 +44,8 @@ function exportCsv(rows: AuditEntry[]) {
       e.userName,
       e.email,
       ROLE[e.role].label,
+      e.target ? `${e.action}: ${e.target}` : e.action,
       e.group,
-      e.action,
     ]
       .map((v) => `"${String(v).replace(/"/g, '""')}"`)
       .join(",")
@@ -103,7 +103,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="border-black/15 pl-9 dark:border-border"
+              className="border-table-line pl-9"
             />
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -115,7 +115,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                 setDesde(e.target.value)
                 setPage(1)
               }}
-              className="h-9 rounded-md border border-black/15 bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-border [color-scheme:light] dark:[color-scheme:dark]"
+              className="h-9 rounded-md border border-table-line bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
             />
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -127,7 +127,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                 setHasta(e.target.value)
                 setPage(1)
               }}
-              className="h-9 rounded-md border border-black/15 bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary dark:border-border [color-scheme:light] dark:[color-scheme:dark]"
+              className="h-9 rounded-md border border-table-line bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary [color-scheme:light] dark:[color-scheme:dark]"
             />
           </div>
         </div>
@@ -157,38 +157,19 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
       <TablePanel>
         <Table>
           <TableHeader>
-            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
-              <TableHead className="w-14 uppercase tracking-wide text-muted-foreground">
-                N°
-              </TableHead>
-              <TableHead className="w-36 uppercase tracking-wide text-muted-foreground">
-                Entrada
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Usuario
-              </TableHead>
-              <TableHead className="w-32 uppercase tracking-wide text-muted-foreground">
-                Rol
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Curso
-              </TableHead>
-              <TableHead className="w-36 uppercase tracking-wide text-muted-foreground">
-                Acción
-              </TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-36">Entrada</TableHead>
+              <TableHead>Usuario</TableHead>
+              <TableHead className="w-36">Rol</TableHead>
+              <TableHead className="w-56">Acción</TableHead>
+              <TableHead>Curso</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageRows.map((entry) => {
               const date = new Date(entry.timestamp)
               return (
-                <TableRow
-                  key={entry.id}
-                  className="border-black/15 hover:bg-secondary/40 dark:border-border"
-                >
-                  <TableCell className="font-mono text-sm text-muted-foreground">
-                    {entry.id}
-                  </TableCell>
+                <TableRow key={entry.id}>
                   <TableCell>
                     <span className="block text-sm text-foreground">
                       {date.toLocaleDateString("es-CO")}
@@ -213,10 +194,17 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                       {ROLE[entry.role].label}
                     </span>
                   </TableCell>
+                  <TableCell>
+                    <span className="block text-sm text-foreground">{entry.action}</span>
+                    {entry.target && (
+                      <span className="block text-xs font-medium text-amber-500">
+                        {entry.target}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                     {entry.group}
                   </TableCell>
-                  <TableCell className="text-sm text-foreground">{entry.action}</TableCell>
                 </TableRow>
               )
             })}

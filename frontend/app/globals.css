@@ -48,6 +48,12 @@
   --warning: #ca8a04;
   --danger: #dc2626;
 
+  /* Tablas estilo GitHub: la fila de atributos va sobre esta superficie y el
+     marco y los separadores usan la linea. En claro la superficie va bastante
+     mas oscura que el fondo para que el encabezado se lea de una. */
+  --table-surface: #e3e7ed;
+  --table-line: #d8dde4;
+
   /* Soft red halo: light-mode translation of the neon glow */
   --neon-glow: 0 1px 2px rgba(196, 30, 58, 0.16), 0 6px 16px -4px rgba(196, 30, 58, 0.26);
   --neon-glow-strong: 0 2px 4px rgba(196, 30, 58, 0.2), 0 12px 28px -6px rgba(196, 30, 58, 0.4);
@@ -98,6 +104,11 @@
   --warning: #e3b341;
   --danger: #f85149;
 
+  /* Tablas estilo GitHub (ver :root). La linea va mas clara que la superficie
+     para que los separadores se vean sobre el fondo oscuro. */
+  --table-surface: #191d24;
+  --table-line: #2c333c;
+
   /* Literal neon glow */
   --neon-glow: 0 0 10px rgba(196, 30, 58, 0.5), 0 0 20px rgba(196, 30, 58, 0.3);
   --neon-glow-strong: 0 0 10px rgba(196, 30, 58, 0.7), 0 0 30px rgba(196, 30, 58, 0.5), 0 0 50px rgba(196, 30, 58, 0.3);
@@ -135,6 +146,9 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-table-surface: var(--table-surface);
+  --color-table-line: var(--table-line);
+  --color-section: var(--section);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -169,6 +183,25 @@
       fill 0.28s ease,
       stroke 0.28s ease;
   }
+}
+
+/* ============================================================
+   ACENTO POR SECCION DE DOCENTE
+   Cada pestaña del header tiene su color y los controles de esa
+   pantalla (pestañas, paginación, items de dropdown) lo siguen en
+   vez de usar siempre el rojo. Se declara con `data-section` en el
+   contenedor de la página; por defecto es el rojo de la marca.
+   ============================================================ */
+[data-section] {
+  --section: var(--primary);
+}
+
+[data-section='banco'] {
+  --section: #0ea5e9;
+}
+
+[data-section='bitacora'] {
+  --section: #8b5cf6;
 }
 
 /* Neon / red-halo utilities: values come from the theme variables above */

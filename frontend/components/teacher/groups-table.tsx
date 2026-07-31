@@ -25,6 +25,10 @@ type Tab = "activos" | "archivados"
 
 const PAGE_SIZE = 8
 
+/** La pestaña activa toma el color de la sección (ver `data-section`). */
+const TAB =
+  "data-[state=active]:border-section/30 data-[state=active]:bg-section/10 data-[state=active]:text-section dark:data-[state=active]:border-section/30 dark:data-[state=active]:bg-section/10 dark:data-[state=active]:text-section"
+
 export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [groups, setGroups] = useState<Group[]>(initialGroups)
   const [tab, setTab] = useState<Tab>("activos")
@@ -67,11 +71,11 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
           }}
         >
           <TabsList>
-            <TabsTrigger value="activos">
+            <TabsTrigger value="activos" className={TAB}>
               Activos{" "}
               <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
             </TabsTrigger>
-            <TabsTrigger value="archivados">
+            <TabsTrigger value="archivados" className={TAB}>
               Archivados{" "}
               <span className="ml-1.5 text-xs text-muted-foreground">{counts.archivados}</span>
             </TabsTrigger>
@@ -96,33 +100,18 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
       <TablePanel>
         <Table>
           <TableHeader>
-            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
-              <TableHead className="w-16 uppercase tracking-wide text-muted-foreground">
-                ID
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Curso
-              </TableHead>
-              <TableHead className="w-28 text-center uppercase tracking-wide text-muted-foreground">
-                Estudiantes
-              </TableHead>
-              <TableHead className="w-28 text-center uppercase tracking-wide text-muted-foreground">
-                Actividades
-              </TableHead>
-              <TableHead className="w-32 uppercase tracking-wide text-muted-foreground">
-                Creado
-              </TableHead>
-              <TableHead className="w-32 text-right uppercase tracking-wide text-muted-foreground">
-                Acciones
-              </TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-16">ID</TableHead>
+              <TableHead>Curso</TableHead>
+              <TableHead className="w-28">Estudiantes</TableHead>
+              <TableHead className="w-28">Actividades</TableHead>
+              <TableHead className="w-32">Creado</TableHead>
+              <TableHead className="w-40">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageRows.map((group) => (
-              <TableRow
-                key={group.id}
-                className="border-black/15 hover:bg-secondary/40 dark:border-border"
-              >
+              <TableRow key={group.id}>
                 <TableCell>
                   <span className="inline-flex min-w-9 items-center justify-center rounded-md bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground">
                     #{group.id}
@@ -140,17 +129,17 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                     )}
                   </Link>
                 </TableCell>
-                <TableCell className="text-center font-mono text-sm text-foreground">
+                <TableCell className="font-mono text-sm text-foreground">
                   {group.studentCount}
                 </TableCell>
-                <TableCell className="text-center font-mono text-sm text-muted-foreground">
+                <TableCell className="font-mono text-sm text-muted-foreground">
                   {group.activityCount}
                 </TableCell>
                 <TableCell className="font-mono text-sm text-muted-foreground">
                   {new Date(group.createdAt).toLocaleDateString("es-CO")}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center justify-end gap-1.5">
+                  <div className="flex items-center gap-1.5">
                     <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
                       Ver
                     </TableActionButton>

@@ -33,6 +33,11 @@ const DIFFICULTY: Record<Difficulty, { label: string; className: string }> = {
   advanced: { label: "Difícil", className: "bg-danger/10 text-danger border-danger/30" },
 }
 
+/** El banco es la sección azul: el item resaltado del dropdown la sigue.
+ *  Va explícito porque Radix monta el menú en un portal, fuera del
+ *  contenedor que define `data-section`. */
+const SELECT_ITEM = "focus:bg-sky-500/10 focus:text-sky-500"
+
 const PAGE_SIZE = 8
 
 export function BankTable({ activities }: { activities: Activity[] }) {
@@ -69,7 +74,7 @@ export function BankTable({ activities }: { activities: Activity[] }) {
                 setQuery(e.target.value)
                 setPage(1)
               }}
-              className="border-black/15 pl-9 dark:border-border"
+              className="border-table-line pl-9"
             />
           </div>
 
@@ -80,13 +85,19 @@ export function BankTable({ activities }: { activities: Activity[] }) {
               setPage(1)
             }}
           >
-            <SelectTrigger className="w-full border-black/15 sm:w-56 dark:border-border">
+            <SelectTrigger className="w-full border-table-line sm:w-56">
               <SelectValue placeholder="Tema" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los temas</SelectItem>
+              <SelectItem value="all" className={SELECT_ITEM}>
+                Todos los temas
+              </SelectItem>
               {syllabus.map((topic) => (
-                <SelectItem key={topic.number} value={String(topic.number)}>
+                <SelectItem
+                  key={topic.number}
+                  value={String(topic.number)}
+                  className={SELECT_ITEM}
+                >
                   {topic.number}. {topic.title}
                 </SelectItem>
               ))}
@@ -100,14 +111,22 @@ export function BankTable({ activities }: { activities: Activity[] }) {
               setPage(1)
             }}
           >
-            <SelectTrigger className="w-full border-black/15 sm:w-40 dark:border-border">
+            <SelectTrigger className="w-full border-table-line sm:w-40">
               <SelectValue placeholder="Dificultad" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="basic">Fácil</SelectItem>
-              <SelectItem value="intermediate">Intermedio</SelectItem>
-              <SelectItem value="advanced">Difícil</SelectItem>
+              <SelectItem value="all" className={SELECT_ITEM}>
+                Todas
+              </SelectItem>
+              <SelectItem value="basic" className={SELECT_ITEM}>
+                Fácil
+              </SelectItem>
+              <SelectItem value="intermediate" className={SELECT_ITEM}>
+                Intermedio
+              </SelectItem>
+              <SelectItem value="advanced" className={SELECT_ITEM}>
+                Difícil
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -125,30 +144,16 @@ export function BankTable({ activities }: { activities: Activity[] }) {
       <TablePanel>
         <Table>
           <TableHeader>
-            <TableRow className="border-black/15 hover:bg-transparent dark:border-border">
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Actividad
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Tema
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Dificultad
-              </TableHead>
-              <TableHead className="uppercase tracking-wide text-muted-foreground">
-                Tipo
-              </TableHead>
-              <TableHead className="text-right uppercase tracking-wide text-muted-foreground">
-                Usos
-              </TableHead>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>Actividad</TableHead>
+              <TableHead>Tema</TableHead>
+              <TableHead className="w-32">Dificultad</TableHead>
+              <TableHead className="w-44">Tipo</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageRows.map((activity) => (
-              <TableRow
-                key={activity.id}
-                className="border-black/15 hover:bg-secondary/40 dark:border-border"
-              >
+              <TableRow key={activity.id}>
                 <TableCell>
                   <div className="flex items-center gap-2.5">
                     <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -174,9 +179,6 @@ export function BankTable({ activities }: { activities: Activity[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
-                </TableCell>
-                <TableCell className="text-right font-mono text-sm text-muted-foreground">
-                  {activity.uses ?? 0}
                 </TableCell>
               </TableRow>
             ))}

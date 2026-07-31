@@ -62,6 +62,8 @@ export interface AuditEntry {
   role: Role
   group: string
   action: string
+  /** Objeto sobre el que se actuó (actividad, tema...). Se resalta aparte. */
+  target?: string
 }
 
 export type ProgressStatus = "completed" | "in-progress" | "not-started" | "overdue"
@@ -71,6 +73,11 @@ export interface StudentProgress {
   topicStatus: Record<number, ProgressStatus>
   progress: number
   lastActivity: string
+  /** Actividades entregadas sobre las habilitadas en el curso. */
+  activitiesDone?: number
+  activitiesTotal?: number
+  /** Promedio de puntuación de las entregas, en escala 0-5. */
+  averageScore?: number
 }
 
 export interface GroupProgressSummary {
