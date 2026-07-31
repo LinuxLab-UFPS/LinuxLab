@@ -23,7 +23,12 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     <Button
       variant="ghost"
       size="icon"
-      aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
+      // The label depends on the resolved theme, which only exists on the client:
+      // it has to wait for `mounted` just like the icon does, or the server and
+      // client render different labels and React reports a hydration mismatch.
+      aria-label={
+        mounted ? (isDark ? "Activar modo claro" : "Activar modo oscuro") : "Cambiar tema"
+      }
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
         "text-muted-foreground hover:text-foreground transition-colors",
