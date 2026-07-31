@@ -5,15 +5,19 @@ import { cn } from "@/lib/utils"
  * The terminal window chrome shared across the app: traffic-light dots and a
  * title bar around whatever's inside (the live xterm.js emulator). onClose is
  * optional — omit it for a permanent terminal view (no way to dismiss it).
+ * `toolbar` renders between the title bar and the body, for the terminal
+ * settings (font size/family, reset).
  */
 export function TerminalFrame({
   title = "student@linuxlab: ~",
   onClose,
+  toolbar,
   className,
   children,
 }: {
   title?: string
   onClose?: () => void
+  toolbar?: React.ReactNode
   className?: string
   children: React.ReactNode
 }) {
@@ -42,6 +46,11 @@ export function TerminalFrame({
           </button>
         )}
       </div>
+      {toolbar && (
+        <div className="shrink-0 border-b border-white/10 bg-white/[0.02] px-2 py-1.5">
+          {toolbar}
+        </div>
+      )}
       <div className="flex-1 overflow-hidden p-2">{children}</div>
     </div>
   )

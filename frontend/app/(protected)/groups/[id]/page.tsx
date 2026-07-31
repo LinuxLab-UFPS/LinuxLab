@@ -19,12 +19,13 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { RoleGuard } from "@/components/shared/role-guard"
 import { getGroup, listGroupActivities, listProvisioningJobs } from "@/lib/features/teacher/data"
 import { getTopic } from "@/lib/features/shared/temario"
 import type { Group, ProvisioningJobSummary } from "@/lib/features/teacher/types"
 import type { Activity } from "@/lib/features/teacher/types"
 
-export default function GroupDetailPage() {
+function GroupDetailContent() {
   const params = useParams<{ id: string }>()
   const id = params?.id ?? ""
 
@@ -306,5 +307,13 @@ function QuickAction({
         </div>
       </div>
     </Link>
+  )
+}
+
+export default function GroupDetailPage() {
+  return (
+    <RoleGuard roles={["teacher", "admin"]}>
+      <GroupDetailContent />
+    </RoleGuard>
   )
 }

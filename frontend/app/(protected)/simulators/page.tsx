@@ -1,7 +1,9 @@
 import { getSimulators } from "@/lib/features/shared/simulators"
 import { SimulatorCard } from "@/components/student/simulator-card"
+import { requireServerRole } from "@/lib/features/auth/session"
 
-export default function SimulatorsPage() {
+export default async function SimulatorsPage() {
+  await requireServerRole(["student", "admin"])
   const simulators = getSimulators()
 
   return (

@@ -55,7 +55,11 @@ function setupGateway(server) {
     ws.on("message", (raw) => {
       try {
         const msg = JSON.parse(raw.toString())
-        if (msg.type === "input") stream.write(msg.data)
+        if (msg.type === "input") {
+          stream.write(msg.data)
+        } else if (msg.type === "resize") {
+          stream.setWindow(msg.rows, msg.cols, 0, 0)
+        }
       } catch {
         // skip invalid messages
       }

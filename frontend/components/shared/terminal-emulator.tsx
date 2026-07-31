@@ -8,8 +8,17 @@ import { env } from "@/lib/config/env"
 
 const WS_BASE = env.backendUrl.replace(/^http/, "ws")
 
-export function TerminalEmulator({ className }: { className?: string }) {
+interface Props {
+  className?: string
+  fontSize?: number
+  fontFamily?: string
+}
+
+export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo, Monaco, 'Courier New', monospace" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const termRef = useRef<Terminal | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+  const fitAddonRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -17,21 +26,24 @@ export function TerminalEmulator({ className }: { className?: string }) {
     const term = new Terminal({
       cursorBlink: true,
       cursorStyle: "block",
-      fontSize: 14,
-      fontFamily: "Menlo, Monaco, 'Courier New', monospace",
+      fontSize,
+      fontFamily,
       theme: {
         background: "#1a1d24",
         foreground: "#e0e0e0",
         cursor: "#e0e0e0",
       },
     })
+    termRef.current = term
 
     const fitAddon = new FitAddon()
+    fitAddonRef.current = fitAddon
     term.loadAddon(fitAddon)
     term.open(containerRef.current)
     fitAddon.fit()
 
     const ws = new WebSocket(`${WS_BASE}/terminal`)
+    wsRef.current = ws
 
     ws.onopen = () => {
       const { cols, rows } = term
@@ -46,7 +58,7 @@ export function TerminalEmulator({ className }: { className?: string }) {
           term.write(`\r\n[Process exited with code ${msg.code}]\r\n`)
         }
       } catch {
-        // ignore invalid messages
+        /**/
       }
     }
 
@@ -85,8 +97,24 @@ export function TerminalEmulator({ className }: { className?: string }) {
       ws.close()
       term.dispose()
       observer.disconnect()
+      termRef.current = null
+      wsRef.current = null
     }
   }, [])
+
+  // Actualizar fontSize en vivo
+  useEffect(() => {
+    if (termRef.current) {
+      (termRef.current as any).options.fontSize = fontSize
+    }
+  }, [fontSize])
+
+  // Actualizar fontFamily en vivo
+  useEffect(() => {
+    if (termRef.current) {
+      (termRef.current as any).options.fontFamily = fontFamily
+    }
+  }, [fontFamily])
 
   return (
     <div

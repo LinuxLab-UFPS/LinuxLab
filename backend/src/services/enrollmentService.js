@@ -13,7 +13,7 @@ class ServiceError extends Error {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
+// const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
 
 function validateEmail(email) {
   if (!email?.trim()) {
@@ -23,12 +23,12 @@ function validateEmail(email) {
   if (!EMAIL_REGEX.test(normalized)) {
     throw new ServiceError(`El formato del correo electrónico no es válido: ${email}`, 400)
   }
-  if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
-    throw new ServiceError(
-      `Solo se permiten correos institucionales ${INSTITUTIONAL_DOMAIN}: ${email}`,
-      400,
-    )
-  }
+  // if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
+  //   throw new ServiceError(
+  //     `Solo se permiten correos institucionales ${INSTITUTIONAL_DOMAIN}: ${email}`,
+  //     400,
+  //   )
+  // }
   return normalized
 }
 
@@ -117,11 +117,14 @@ function serializeStudent(user) {
 }
 
 async function registerStudent({ groupId, name, email, code, teacherUserId, role }) {
-  await ensureGroupAccess({ groupId, teacherUserId, role })
-  return enrollOne({ groupId, name, email, code })
+  const group = await ensureGroupAccess({ groupId, teacherUserId, role })
+  const groupDir = group.group_dir || undefined
+  const groupName = groupDir ? `grp_${groupId.replace(/-/g, "").substring(0, 8)}` : undefined
+  const teacherAccount = await prisma.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
+  return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username })
 }
 
-async function enrollOne({ groupId, name, email, code }) {
+async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername }) {
   const user = await ensureStudentExists({ email, name, code })
 
   const existing = await prisma.enrollment.findUnique({
@@ -137,10 +140,14 @@ async function enrollOne({ groupId, name, email, code }) {
   }
 
   if (user.linuxAccount && !user.linuxAccount.linux_provisioned) {
-    await prisma.provisioningJob.create({
+    await prisma.userProvisioningJob.create({
       data: {
         user_id: user.linuxAccount.user_id,
         username: user.linuxAccount.linux_username,
+        group_id: groupDir ? groupId : null,
+        group_dir: groupDir || null,
+        group_name: groupName || null,
+        teacher_username: teacherUsername || null,
       },
     })
     provisioningWorker.processPendingJobs()

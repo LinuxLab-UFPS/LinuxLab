@@ -1,12 +1,13 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
 const prisma = require("../../prisma/client")
+const logger = require("../lib/logger")
 
 function handleError(res, err) {
   if (err instanceof groupService.ServiceError || err instanceof enrollmentService.ServiceError) {
     return res.status(err.status).json({ error: err.message })
   }
-  console.error("Unexpected error:", err)
+  logger.error({ err }, "Unexpected error")
   return res.status(500).json({ error: "Error interno del servidor" })
 }
 
@@ -120,7 +121,7 @@ async function listProvisioningJobs(req, res) {
       select: { student: { select: { user_id: true } } },
     })
     const userIds = enrollments.map((e) => e.student.user_id)
-    const jobs = await prisma.provisioningJob.findMany({
+    const jobs = await prisma.userProvisioningJob.findMany({
       where: { user_id: { in: userIds } },
       include: {
         user: {

@@ -26,28 +26,31 @@ export async function requireRole(role: Role): Promise<Session> {
 }
 
 /**
+ * Server-side role guard for server components.
+ * Call at the top of page/layout server components.
+ * Redirects if not authenticated or role doesn't match.
+ */
+export async function requireServerRole(allowedRoles: Role[]): Promise<Session> {
+  const session = await getServerSession()
+  if (!session) {
+    const { redirect } = await import("next/navigation")
+    redirect("/")
+    throw new Error("unreachable")
+  }
+  if (!allowedRoles.includes(session.user.role)) {
+    const { redirect } = await import("next/navigation")
+    redirect("/unauthorized")
+    throw new Error("unreachable")
+  }
+  return session
+}
+
+/**
  * Server-side session check.
  * Reads the JWT cookie directly from the request — no fetch to backend.
  * Use in server components / layouts.
  */
 export async function getServerSession(): Promise<Session | null> {
-  // ##########################################################################
-  // ## AUTH DESACTIVADA PARA DESARROLLO. NO TOCAR HASTA TERMINAR EL         ##
-  // ## PROYECTO. Sesion falsa para no exigir login. Se apaga sola en        ##
-  // ## produccion. Cambia role a "teacher"/"admin" si necesitas esas        ##
-  // ## vistas; para reactivar auth en local, borra este bloque.             ##
-  // ##########################################################################
-  if (process.env.NODE_ENV !== "production") {
-    // El rol lo controla el switcher de dev (cookie "dev-role"). Default: student.
-    const { cookies } = await import("next/headers")
-    const devRole = (await cookies()).get("dev-role")?.value
-    const role: Role =
-      devRole === "teacher" || devRole === "admin" ? devRole : "student"
-    return {
-      user: { id: "dev", email: "dev@ufps.edu.co", name: "Modo Dev", role },
-    }
-  }
-
   const { cookies } = await import("next/headers")
   const token = (await cookies()).get("token")?.value
   if (!token) return null

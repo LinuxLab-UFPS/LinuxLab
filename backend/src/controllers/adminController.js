@@ -1,4 +1,5 @@
 const teacherService = require("../services/teacherService")
+const logger = require("../lib/logger")
 
 const { ServiceError } = teacherService
 
@@ -8,7 +9,7 @@ async function listTeachers(req, res) {
     const teachers = await teacherService.findAll({ search, status })
     res.json(teachers)
   } catch (error) {
-    console.error("Error listing teachers:", error)
+    logger.error({ err: error }, "Error listing teachers")
     res.status(500).json({ error: "Error interno del servidor" })
   }
 }
@@ -22,7 +23,7 @@ async function registerTeacher(req, res) {
     if (error instanceof ServiceError) {
       return res.status(error.status).json({ error: error.message })
     }
-    console.error("Error registering teacher:", error)
+    logger.error({ err: error }, "Error registering teacher")
     res.status(500).json({ error: "Error interno del servidor" })
   }
 }
@@ -36,7 +37,7 @@ async function toggleTeacherStatus(req, res) {
     if (error instanceof ServiceError) {
       return res.status(error.status).json({ error: error.message })
     }
-    console.error("Error toggling teacher status:", error)
+    logger.error({ err: error }, "Error toggling teacher status")
     res.status(500).json({ error: "Error interno del servidor" })
   }
 }

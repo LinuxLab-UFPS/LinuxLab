@@ -7,7 +7,7 @@ let _ready = false
 const SSH_CONFIG = {
   host: process.env.SSH_HOST || "entorno",
   port: parseInt(process.env.SSH_PORT || "22"),
-  username: process.env.SSH_USER || "root",
+  username: process.env.SSH_USER || "labadmin",
   privateKey: fs.readFileSync(process.env.SSH_KEY_PATH || "/ssh/ssh_key"),
   readyTimeout: 10000,
   keepaliveInterval: 30000,
@@ -65,4 +65,16 @@ async function createShellStream() {
   })
 }
 
-module.exports = { execCommand, createShellStream, getConnection }
+async function createExecStream(command) {
+  const conn = await getConnection()
+  return new Promise((resolve, reject) => {
+    conn.exec(command, {
+      pty: { cols: 180, rows: 40, term: "xterm-256color" },
+    }, (err, stream) => {
+      if (err) return reject(err)
+      resolve(stream)
+    })
+  })
+}
+
+module.exports = { execCommand, createShellStream, createExecStream, getConnection }

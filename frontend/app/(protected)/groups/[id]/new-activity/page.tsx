@@ -21,13 +21,14 @@ import { syllabus } from "@/lib/features/shared/temario"
 import { createTerminalSession } from "@/lib/features/student/data"
 import { createActivity } from "@/lib/features/teacher/data"
 import type { EvaluationType } from "@/lib/features/teacher/types"
+import { RoleGuard } from "@/components/shared/role-guard"
 
 interface TerminalLine {
   type: "prompt" | "output"
   content: string
 }
 
-export default function NewActivityPage() {
+function NewActivityPage() {
   const params = useParams<{ id: string }>()
   const groupId = params?.id ?? ""
 
@@ -459,5 +460,13 @@ export default function NewActivityPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NewActivityPageWrapper() {
+  return (
+    <RoleGuard roles={["teacher", "admin"]}>
+      <NewActivityPage />
+    </RoleGuard>
   )
 }

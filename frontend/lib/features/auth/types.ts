@@ -1,5 +1,11 @@
 export type Role = "admin" | "teacher" | "student"
 
+export interface UserPreferences {
+  terminalFontSize: number
+  terminalFontFamily: string
+  theme: string
+}
+
 export interface User {
   id: string
   name: string
@@ -9,6 +15,7 @@ export interface User {
   active?: boolean
   linuxUsername?: string | null
   linuxProvisioned?: boolean
+  preferences?: UserPreferences | null
 }
 
 export interface EnrollmentStudent {

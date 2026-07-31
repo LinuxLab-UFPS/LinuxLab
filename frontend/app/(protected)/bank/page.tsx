@@ -1,7 +1,9 @@
 import { listBankActivities } from "@/lib/features/teacher/data"
 import { BankTable } from "@/components/teacher/bank-table"
+import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function BankPage() {
+  await requireServerRole(["teacher", "admin"])
   const activities = await listBankActivities()
 
   return (

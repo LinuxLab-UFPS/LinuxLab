@@ -12,11 +12,12 @@ import { StudentManager } from "@/components/teacher/student-manager"
 import { createGroup } from "@/lib/features/teacher/data"
 import { parseStudentCsv } from "@/lib/features/shared/parse-csv"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
+import { RoleGuard } from "@/components/shared/role-guard"
 
 const PANEL =
   "rounded-xl border border-black/15 bg-card p-6 shadow-md dark:border-border dark:shadow-none"
 
-export default function CreateGroupPage() {
+function CreateGroupContent() {
   const router = useRouter()
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
@@ -161,5 +162,13 @@ export default function CreateGroupPage() {
         </Button>
       </div>
     </div>
+  )
+}
+
+export default function CreateGroupPage() {
+  return (
+    <RoleGuard roles={["teacher", "admin"]}>
+      <CreateGroupContent />
+    </RoleGuard>
   )
 }

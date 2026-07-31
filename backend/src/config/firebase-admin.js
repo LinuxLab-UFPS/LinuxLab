@@ -1,4 +1,5 @@
 const admin = require("firebase-admin")
+const logger = require("../lib/logger")
 
 const serviceAccount = {
   type: "service_account",
@@ -19,12 +20,12 @@ try {
   app = admin.initializeApp({
     credential: admin.cert(serviceAccount),
   })
-  console.log("Firebase Admin initialized successfully")
+  logger.info("Firebase Admin initialized successfully")
 } catch (error) {
   if (error.message && error.message.includes("already exists")) {
     app = admin.app()
   } else {
-    console.error("Firebase Admin initialization failed:", error?.message)
+    logger.error({ err: error }, "Firebase Admin initialization failed")
     app = null
   }
 }

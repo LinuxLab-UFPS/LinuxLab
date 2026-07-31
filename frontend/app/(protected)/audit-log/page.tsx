@@ -1,7 +1,9 @@
 import { listAuditLog } from "@/lib/features/teacher/data"
 import { AuditTable } from "@/components/teacher/audit-table"
+import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function AuditLogPage() {
+  await requireServerRole(["teacher", "admin"])
   const entries = await listAuditLog()
 
   return (

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
-import { DevRoleSwitcher } from "@/components/dev/role-switcher"
+
 import { SearchDialog } from "@/components/student/search-dialog"
 import type { SearchItem } from "@/lib/features/shared/lessons"
 import type { Simulator } from "@/lib/features/shared/simulators"
@@ -135,9 +135,6 @@ export function SiteHeader({
                 <LogOut className="mr-2 h-4 w-4" />
                 Cerrar sesión
               </DropdownMenuItem>
-              <div className="px-1 pt-1">
-                <DevRoleSwitcher />
-              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
