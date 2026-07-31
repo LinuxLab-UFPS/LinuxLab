@@ -47,8 +47,9 @@ export function TablePanel({
 }
 
 /**
- * Encabezado de una seccion con tabla: titulo discreto a la izquierda y una
- * accion opcional ("Ver mas") a la derecha. Se usa en el resumen del curso.
+ * Encabezado de una seccion con tabla: titulo discreto y, pegada a el, una
+ * accion opcional ("Ver mas"). Van juntos a proposito para que el boton se lea
+ * como parte del titulo y no flotando al otro extremo de la fila.
  */
 export function TableSectionHeader({
   title,
@@ -58,7 +59,7 @@ export function TableSectionHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="mb-2.5 flex min-h-8 items-center justify-between gap-4">
+    <div className="mb-2.5 flex min-h-8 items-center gap-3">
       <h2 className="text-sm font-medium text-muted-foreground">{title}</h2>
       {action}
     </div>
@@ -71,14 +72,19 @@ export function TableEmptyState({ children }: { children: React.ReactNode }) {
 
 type ActionTone = "neutral" | "amber" | "emerald" | "danger"
 
+/**
+ * Fichas de color con relleno de baja opacidad: el mismo color se tinta sobre
+ * el fondo, asi que en claro queda pastel y en oscuro queda profundo sin
+ * definir dos paletas. El texto siempre va en el color pleno.
+ */
 const TONE: Record<ActionTone, string> = {
-  neutral: "border-border text-muted-foreground hover:border-primary/40 hover:text-primary",
-  amber: "border-amber-500/40 text-amber-500 hover:bg-amber-500/10",
-  emerald: "border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10",
-  danger: "border-danger/40 text-danger hover:bg-danger/10",
+  neutral: "border-foreground/15 bg-foreground/5 text-foreground hover:bg-foreground/10",
+  amber: "border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20",
+  emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20",
+  danger: "border-danger/30 bg-danger/10 text-danger hover:bg-danger/20",
 }
 
-/** Small outlined pill action used in admin/teacher table rows (Ver, Archivar...). */
+/** Small pill action used in admin/teacher table rows (Ver, Archivar...). */
 export function TableActionButton({
   tone,
   onClick,
@@ -109,15 +115,14 @@ export function TableActionButton({
 }
 
 /**
- * Boton compacto que lleva a la vista completa de una seccion ("Ver mas").
- * Va en el mismo gris del encabezado de la tabla: es navegacion secundaria, no
- * la accion principal de la pantalla.
+ * Boton compacto que lleva a la vista completa de una seccion ("Ver mas"), en
+ * el rojo de la marca igual que el boton Volver.
  */
 export function TableSectionLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}
-      className="shrink-0 rounded-md border border-table-line bg-table-surface px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+      className="neon-glow shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
     >
       {children}
     </Link>
