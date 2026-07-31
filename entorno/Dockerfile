@@ -29,6 +29,10 @@ RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   
 # Limites de recursos por usuario
 RUN printf '\nulimit -u 512\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
+# Identidad LinuxLab en la terminal (prompt rojo + saludo ambar).
+COPY scripts/linuxlab-shell.sh /etc/linuxlab-shell.sh
+RUN printf '\n. /etc/linuxlab-shell.sh\n' >> /etc/bash.bashrc
+
 # Configurar SSH: solo clave publica, sin password
 RUN echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config \
     && echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config \
