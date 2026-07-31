@@ -76,10 +76,22 @@ export async function importStudentsCsv(groupId: string, file: File) {
 }
 
 export async function listProvisioningJobs(groupId: string): Promise<ProvisioningJobSummary[]> {
-  return teacherApi.listProvisioningJobs(groupId)
+  try {
+    return await teacherApi.listProvisioningJobs(groupId)
+  } catch {
+    // El aprovisionamiento es un panel accesorio del resumen del curso: si no
+    // se puede consultar se omite, en vez de tumbar toda la pantalla.
+    return []
+  }
 }
 
 export async function listAuditLog(): Promise<AuditEntry[]> {
+  return []
+}
+
+/** Bitácora acotada a un curso, para "Actividad reciente" en su resumen. */
+export async function listGroupAuditLog(_groupId: string): Promise<AuditEntry[]> {
+  // El backend todavía no expone la bitácora por curso.
   return []
 }
 
