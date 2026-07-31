@@ -18,6 +18,7 @@ import {
   TableActionButton,
   TablePagination,
 } from "@/components/shared/data-table"
+import { ArchiveCourseDialog } from "@/components/teacher/archive-course-dialog"
 import type { Group } from "@/lib/features/teacher/types"
 import { setGroupArchived } from "@/lib/features/teacher/data"
 
@@ -34,6 +35,9 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [tab, setTab] = useState<Tab>("activos")
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  /** Curso esperando confirmación para archivarse. */
+  const [confirming, setConfirming] = useState<Group | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const counts = useMemo(
     () => ({
@@ -50,13 +54,18 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
   const toggleArchive = async (group: Group) => {
     setError(null)
+    setBusy(true)
     try {
       await setGroupArchived(group.id, !group.archived)
       setGroups((prev) =>
         prev.map((g) => (g.id === group.id ? { ...g, archived: !g.archived } : g)),
       )
+      setConfirming(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo archivar el curso.")
+      setConfirming(null)
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -143,9 +152,13 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                     <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
                       Ver
                     </TableActionButton>
+                    {/* Restaurar es reversible y va directo; archivar borra el
+                        entorno y el progreso, así que pasa por confirmación. */}
                     <TableActionButton
                       tone={group.archived ? "emerald" : "amber"}
-                      onClick={() => toggleArchive(group)}
+                      onClick={() =>
+                        group.archived ? toggleArchive(group) : setConfirming(group)
+                      }
                     >
                       {group.archived ? "Restaurar" : "Archivar"}
                     </TableActionButton>
@@ -166,6 +179,13 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
       {visible.length > 0 && (
         <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
       )}
+
+      <ArchiveCourseDialog
+        group={confirming}
+        archiving={busy}
+        onConfirm={() => confirming && toggleArchive(confirming)}
+        onCancel={() => !busy && setConfirming(null)}
+      />
     </div>
   )
 }
