@@ -151,7 +151,7 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
 
         {filteredStudents.length === 0 && (
           <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-            No hay estudiantes inscritos en este grupo.
+            No hay estudiantes inscritos en este curso.
           </div>
         )}
       </div>

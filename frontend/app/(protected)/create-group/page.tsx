@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Save, Send, ArrowLeft } from "lucide-react"
+import { Send, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import type { EnrollmentStudent } from "@/lib/features/auth/types"
 import { RoleGuard } from "@/components/shared/role-guard"
 
 function CreateGroupContent() {
+  const PANEL = "rounded-xl border border-black/15 bg-card p-6 shadow-md dark:border-border dark:shadow-none"
   const router = useRouter()
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
@@ -54,7 +55,7 @@ function CreateGroupContent() {
     setError(null)
     setInfo(null)
     if (!groupName.trim()) {
-      setError("El nombre del grupo es requerido.")
+      setError("El nombre del curso es requerido.")
       return
     }
     setPublishing(true)
@@ -72,123 +73,91 @@ function CreateGroupContent() {
       const summary = parts.length ? parts.join(", ") : "sin estudiantes"
       router.push(`/groups/${response.group.id}?created=1&summary=${encodeURIComponent(summary)}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo publicar el grupo.")
+      setError(e instanceof Error ? e.message : "No se pudo publicar el curso.")
     } finally {
       setPublishing(false)
     }
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="flex items-center justify-between px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/home"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">Crear Grupo</h1>
-              <p className="text-sm text-muted-foreground">
-                Configura un nuevo grupo para tus estudiantes
-              </p>
-            </div>
+    <div className="mx-auto max-w-4xl space-y-8 p-8">
+      <Link
+        href="/home"
+        className="neon-glow inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Volver
+      </Link>
+
+      {error && (
+        <div className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
+          {error}
+        </div>
+      )}
+      {info && !error && (
+        <div className="rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-sm text-primary">
+          {info}
+        </div>
+      )}
+
+      <section className={PANEL}>
+        <h2 className="mb-6 text-lg font-medium text-foreground">Información del curso</h2>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="groupName" className="text-muted-foreground">
+              Nombre del curso
+            </Label>
+            <Input
+              id="groupName"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Ej: Sistemas Operativos - 2026-I"
+              className="border-border bg-secondary/30 focus:border-primary focus:ring-primary/20"
+            />
           </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              className="border-border text-muted-foreground hover:text-foreground"
-              disabled
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Guardar borrador
-            </Button>
-            <Button
-              onClick={handlePublish}
-              disabled={publishing}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              {publishing ? "Publicando…" : "Publicar grupo"}
-            </Button>
+
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-muted-foreground">
+              Descripción
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              placeholder="Breve descripción del curso…"
+              className="resize-none border-border bg-secondary/30 focus:border-primary focus:ring-primary/20"
+            />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto p-8 space-y-8">
-        {error && (
-          <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
-            {error}
-          </div>
-        )}
-        {info && !error && (
-          <div className="text-sm text-primary bg-primary/10 border border-primary/20 rounded-md px-3 py-2">
-            {info}
-          </div>
-        )}
+      <section className={PANEL}>
+        <h2 className="mb-6 flex items-center text-lg font-medium text-foreground">
+          Estudiantes
+          <span className="ml-auto text-sm font-normal text-muted-foreground">
+            {students.length} estudiantes agregados
+          </span>
+        </h2>
 
-        {/* Section 1: Group Info */}
-        <section className="bg-card border border-border p-6">
-          <h2 className="text-lg font-medium text-foreground mb-6 flex items-center gap-2">
-            <span className="w-6 h-6 bg-primary/20 text-primary text-sm flex items-center justify-center">
-              1
-            </span>
-            Información del grupo
-          </h2>
+        <StudentManager
+          students={students}
+          onAddStudent={handleAddStudent}
+          onRemoveStudent={handleRemoveStudent}
+          onUploadCSV={handleUploadCSV}
+        />
+      </section>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="groupName" className="text-muted-foreground">
-                Nombre del grupo
-              </Label>
-              <Input
-                id="groupName"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Ej: Sistemas Operativos - 2026-I"
-                className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-muted-foreground">
-                Descripción
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="Breve descripción del grupo…"
-                className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20 resize-none"
-              />
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Students */}
-        <section className="bg-card border border-border p-6">
-          <h2 className="text-lg font-medium text-foreground mb-6 flex items-center gap-2">
-            <span className="w-6 h-6 bg-primary/20 text-primary text-sm flex items-center justify-center">
-              2
-            </span>
-            Estudiantes
-            <span className="ml-auto text-sm font-normal text-muted-foreground">
-              {students.length} estudiantes agregados
-            </span>
-          </h2>
-
-          <StudentManager
-            students={students}
-            onAddStudent={handleAddStudent}
-            onRemoveStudent={handleRemoveStudent}
-            onUploadCSV={handleUploadCSV}
-          />
-        </section>
+      <div className="flex justify-end">
+        <Button
+          onClick={handlePublish}
+          disabled={publishing}
+          className="neon-glow bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <Send className="mr-2 h-4 w-4" />
+          {publishing ? "Publicando…" : "Publicar curso"}
+        </Button>
       </div>
     </div>
   )

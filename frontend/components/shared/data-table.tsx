@@ -3,9 +3,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /**
- * Outlined panel wrapping an admin/teacher table: same background as the page,
- * a subtle outline (darker in light mode so it stays visible, like the course
- * contents panel and resource cards), rounded corners.
+ * Outlined panel wrapping an admin/teacher table: raised surface, a subtle
+ * outline (darker in light mode so it stays visible) and rounded corners, same
+ * treatment as the create-course panels. The cell padding is applied here so
+ * every table gets the same breathing room and no column touches the edge.
  */
 export function TablePanel({
   children,
@@ -17,7 +18,8 @@ export function TablePanel({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-black/15 bg-background dark:border-border",
+        "overflow-hidden rounded-xl border border-black/15 bg-card shadow-md dark:border-border dark:shadow-none",
+        "[&_td]:px-5 [&_td]:py-3.5 [&_th]:px-5 [&_th]:py-3.5",
         className,
       )}
     >

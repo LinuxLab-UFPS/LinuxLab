@@ -29,7 +29,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       fontSize,
       fontFamily,
       theme: {
-        background: "#0a0a0a",
+        background: "#1a1d24",
         foreground: "#e0e0e0",
         cursor: "#e0e0e0",
       },

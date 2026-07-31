@@ -6,6 +6,8 @@ import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
 import { RoleGuard } from "@/components/shared/role-guard"
 import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
+import { TerminalFrame } from "@/components/shared/terminal-frame"
+import { TerminalSidePanels } from "@/components/student/terminal-side-panels"
 
 export default function TerminalPage() {
   const { user } = useAuth()
@@ -36,27 +38,18 @@ export default function TerminalPage() {
   }, [])
 
   return (
-    <RoleGuard roles={["student", "admin"]}>
-      <div className="h-screen flex flex-col p-6">
-        <div className="mb-4 shrink-0 space-y-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground mb-1">Mi Terminal</h1>
-            <p className="text-muted-foreground">
-              Tu sesión Linux personal y persistente. Lo que crees aquí se conserva entre clases.
-            </p>
-          </div>
-          <TerminalSettingsBar
-            fontSize={fontSize}
-            fontFamily={fontFamily}
-            onFontSizeChange={handleFontSize}
-            onFontFamilyChange={handleFontFamily}
-            onReset={handleReset}
-          />
-        </div>
-        <div className="flex-1 min-h-0">
-          <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
+    <div className="flex h-full items-center justify-center px-6">
+      {/* Fixed height row: the side panels always add up to this height (two
+          boxes, no scroll), so switching to the activity detail never shifts
+          the terminal. */}
+      <div className="flex h-[38rem] w-full max-w-7xl gap-6">
+        <TerminalFrame className="h-full flex-1">
+          <TerminalEmulator />
+        </TerminalFrame>
+        <div className="flex h-full w-[26rem] shrink-0 flex-col gap-4">
+          <TerminalSidePanels />
         </div>
       </div>
-    </RoleGuard>
+    </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Database, ScrollText, Search, LogOut } from "lucide-react"
+import { BookOpen, Database, ScrollText, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -82,17 +82,6 @@ export function TeacherHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Search: visual only for now, wired to real search later. */}
-          <div className="relative hidden sm:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              aria-label="Buscar"
-              className="h-9 w-48 rounded-lg border border-white/10 bg-white/5 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-primary/60 focus:bg-white/[0.07] lg:w-60"
-            />
-          </div>
-
           <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />
 
           <DropdownMenu>
