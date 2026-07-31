@@ -42,7 +42,7 @@ export default function GroupDetailPage() {
         setActivities(acts)
         setProvisioningJobs(jobs)
       })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar el grupo"))
+      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar el curso"))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -80,12 +80,12 @@ export default function GroupDetailPage() {
           <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-secondary/60 flex items-center justify-center">
             <BookOpen className="w-6 h-6 text-muted-foreground" />
           </div>
-          <h2 className="text-base font-medium text-foreground mb-1">Grupo no encontrado</h2>
+          <h2 className="text-base font-medium text-foreground mb-1">Curso no encontrado</h2>
           <p className="text-sm text-muted-foreground mb-6">
-            {error || "Este grupo no existe o aún no tiene datos."}
+            {error || "Este curso no existe o aún no tiene datos."}
           </p>
           <Link href="/home">
-            <Button variant="outline">Volver a Mis Grupos</Button>
+            <Button variant="outline">Volver a Cursos</Button>
           </Link>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function GroupDetailPage() {
 
         {/* Group Description */}
         <div className="bg-card border border-border p-4">
-          <h2 className="font-medium mb-2">Descripción del grupo</h2>
+          <h2 className="font-medium mb-2">Descripción del curso</h2>
           <p className="text-sm text-muted-foreground">{group.description}</p>
         </div>
       </div>

@@ -55,7 +55,7 @@ export function GroupSidebar({
             <Home className="h-4 w-4" />
           </Link>
           <h2 className="truncate text-sm font-semibold text-foreground">
-            {groupName ?? "Contenidos del grupo"}
+            {groupName ?? "Contenidos del curso"}
           </h2>
         </div>
 
