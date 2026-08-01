@@ -18,11 +18,14 @@ import {
   TableActionButton,
   TablePagination,
 } from "@/components/shared/data-table"
-import { ArchiveCourseDialog } from "@/components/teacher/archive-course-dialog"
+import {
+  ConfirmCourseDialog,
+  type CourseAction,
+} from "@/components/teacher/confirm-course-dialog"
 import type { Group } from "@/lib/features/teacher/types"
-import { setGroupArchived } from "@/lib/features/teacher/data"
+import { deactivateGroup, deleteGroup } from "@/lib/features/teacher/data"
 
-type Tab = "activos" | "archivados"
+type Tab = "activos" | "desactivados"
 
 const PAGE_SIZE = 8
 
@@ -35,14 +38,16 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [tab, setTab] = useState<Tab>("activos")
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
-  /** Curso esperando confirmación para archivarse. */
-  const [confirming, setConfirming] = useState<Group | null>(null)
+  /** Curso y acción destructiva esperando confirmación. */
+  const [confirming, setConfirming] = useState<{ group: Group; action: CourseAction } | null>(
+    null,
+  )
   const [busy, setBusy] = useState(false)
 
   const counts = useMemo(
     () => ({
       activos: groups.filter((g) => !g.archived).length,
-      archivados: groups.filter((g) => g.archived).length,
+      desactivados: groups.filter((g) => g.archived).length,
     }),
     [groups],
   )
@@ -52,17 +57,28 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const page_ = Math.min(page, totalPages)
   const pageRows = visible.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
-  const toggleArchive = async (group: Group) => {
+  const runConfirmed = async () => {
+    if (!confirming) return
+    const { group, action } = confirming
     setError(null)
     setBusy(true)
     try {
-      await setGroupArchived(group.id, !group.archived)
-      setGroups((prev) =>
-        prev.map((g) => (g.id === group.id ? { ...g, archived: !g.archived } : g)),
-      )
+      if (action === "deactivate") {
+        await deactivateGroup(group.id)
+        setGroups((prev) =>
+          prev.map((g) => (g.id === group.id ? { ...g, archived: true } : g)),
+        )
+      } else {
+        await deleteGroup(group.id)
+        setGroups((prev) => prev.filter((g) => g.id !== group.id))
+      }
       setConfirming(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo archivar el curso.")
+      const fallback =
+        action === "deactivate"
+          ? "No se pudo desactivar el curso."
+          : "No se pudo eliminar el curso."
+      setError(e instanceof Error ? e.message : fallback)
       setConfirming(null)
     } finally {
       setBusy(false)
@@ -84,9 +100,11 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
               Activos{" "}
               <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
             </TabsTrigger>
-            <TabsTrigger value="archivados" className={TAB}>
-              Archivados{" "}
-              <span className="ml-1.5 text-xs text-muted-foreground">{counts.archivados}</span>
+            <TabsTrigger value="desactivados" className={TAB}>
+              Desactivados{" "}
+              <span className="ml-1.5 text-xs text-muted-foreground">
+                {counts.desactivados}
+              </span>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -152,15 +170,19 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                     <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
                       Ver
                     </TableActionButton>
-                    {/* Restaurar es reversible y va directo; archivar borra el
-                        entorno y el progreso, así que pasa por confirmación. */}
+                    {/* Desactivar es de una sola vía (el backend no reactiva),
+                        así que un curso desactivado solo se consulta o se
+                        elimina. Ambas son destructivas y piden confirmación. */}
                     <TableActionButton
-                      tone={group.archived ? "emerald" : "amber"}
+                      tone={group.archived ? "danger" : "amber"}
                       onClick={() =>
-                        group.archived ? toggleArchive(group) : setConfirming(group)
+                        setConfirming({
+                          group,
+                          action: group.archived ? "delete" : "deactivate",
+                        })
                       }
                     >
-                      {group.archived ? "Restaurar" : "Archivar"}
+                      {group.archived ? "Eliminar" : "Desactivar"}
                     </TableActionButton>
                   </div>
                 </TableCell>
@@ -171,7 +193,7 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
         {visible.length === 0 && (
           <TableEmptyState>
-            No tienes cursos {tab === "activos" ? "activos" : "archivados"}.
+            No tienes cursos {tab === "activos" ? "activos" : "desactivados"}.
           </TableEmptyState>
         )}
       </TablePanel>
@@ -180,10 +202,11 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
         <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
       )}
 
-      <ArchiveCourseDialog
-        group={confirming}
-        archiving={busy}
-        onConfirm={() => confirming && toggleArchive(confirming)}
+      <ConfirmCourseDialog
+        group={confirming?.group ?? null}
+        action={confirming?.action ?? "deactivate"}
+        busy={busy}
+        onConfirm={runConfirmed}
         onCancel={() => !busy && setConfirming(null)}
       />
     </div>

@@ -28,8 +28,12 @@ export const teacherApi = {
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
   createGroup: (input: CreateGroupInput) =>
     apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
-  setGroupArchived: (id: string, _archived: boolean) =>
+  // El backend solo desactiva: PATCH /archive fija archived=true y responde 409
+  // si ya lo estaba. No hay forma de reactivar, por eso la UI no la ofrece.
+  deactivateGroup: (id: string) =>
     apiFetch<void>(`/api/groups/${id}/archive`, { method: "PATCH" }),
+
+  deleteGroup: (id: string) => apiFetch<void>(`/api/groups/${id}`, { method: "DELETE" }),
 
   listBankActivities: () => apiFetch<Activity[]>("/api/activities/bank"),
   listGroupActivities: (groupId: string) =>
