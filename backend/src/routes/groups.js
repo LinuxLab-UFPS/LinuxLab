@@ -10,6 +10,7 @@ router.post("/", groupController.createGroup)
 router.get("/", groupController.listGroups)
 router.get("/:id", groupController.getGroup)
 router.patch("/:id/archive", groupController.archiveGroup)
+router.delete("/:id", groupController.deleteGroup)
 
 router.post("/:id/students", groupController.registerStudent)
 router.post("/:id/students/csv", groupController.importCsv)

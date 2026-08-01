@@ -66,6 +66,20 @@ async function archiveGroup(req, res) {
   }
 }
 
+async function deleteGroup(req, res) {
+  try {
+    const { id } = req.params
+    await groupService.deleteGroup({
+      groupId: id,
+      role: req.user.role,
+      teacherUserId: req.user.id,
+    })
+    res.status(204).end()
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
 async function registerStudent(req, res) {
   try {
     const { id } = req.params
@@ -159,6 +173,7 @@ module.exports = {
   listGroups,
   getGroup,
   archiveGroup,
+  deleteGroup,
   registerStudent,
   importCsv,
   listStudents,
