@@ -221,6 +221,13 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
   })
   const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
 
+  // Se anotan antes del teardown porque despues de borrar las matriculas ya no
+  // hay forma de saber a quien se le elimino la cuenta.
+  const enrolled = await prisma.enrollment.findMany({
+    where: { group_id: groupId },
+    select: { student_id: true },
+  })
+
   if (teacherAccount?.linux_username && group.group_dir) {
     try {
       await linuxContainerService.archiveGroup(
@@ -237,6 +244,14 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
   }
 
   await prisma.$transaction([
+    // El teardown hizo userdel de cada estudiante, asi que su cuenta Linux ya
+    // no existe. Sin bajar esta marca la matricula en un grupo nuevo no encola
+    // aprovisionamiento (ver enrollmentService) y el estudiante se queda para
+    // siempre sin cuenta con la que abrir la terminal.
+    prisma.linuxAccount.updateMany({
+      where: { user_id: { in: enrolled.map((e) => e.student_id) } },
+      data: { linux_provisioned: false },
+    }),
     prisma.enrollment.deleteMany({ where: { group_id: groupId } }),
     prisma.groupProvisioningJob.deleteMany({ where: { group_id: groupId } }),
     // El group_id es opcional aqui: se desliga en vez de borrarse para no
