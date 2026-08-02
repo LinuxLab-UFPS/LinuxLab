@@ -43,7 +43,8 @@ RUN sed -i 's/^passwd:.*/passwd: files/' /etc/nsswitch.conf && \
     sed -i 's/^group:.*/group: files/' /etc/nsswitch.conf
 
 # Usuario intermedio para operaciones del backend
-RUN useradd -m -s /bin/bash labadmin
+RUN useradd -m -s /bin/bash labadmin \
+    && chmod 700 /home/labadmin
 
 # Configurar sudoers para labadmin
 RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/rm, /usr/bin/su' \

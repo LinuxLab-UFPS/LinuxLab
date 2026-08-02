@@ -3,6 +3,10 @@ set -e
 
 echo "[entrypoint] Configurando clave SSH de labadmin..."
 
+# Aislamiento: /home no listable por otros; labadmin solo para si mismo.
+chmod 711 /home 2>/dev/null || true
+chmod 700 /home/labadmin 2>/dev/null || true
+
 if [ -f /ssh/ssh_key.pub ]; then
   mkdir -p /home/labadmin/.ssh
   cp /ssh/ssh_key.pub /home/labadmin/.ssh/authorized_keys
@@ -32,7 +36,7 @@ for teacher_dir in /home/*/; do
     mkdir -p "$teacher_dir/home" "$teacher_dir/grupos"
     chown "$teacher:$teacher" "$teacher_dir" "$teacher_dir/grupos" "$teacher_dir/home"
     chmod 751 "$teacher_dir" "$teacher_dir/grupos"
-    chmod 755 "$teacher_dir/home"
+    chmod 750 "$teacher_dir/home"
   fi
 
   # Procesar grupos del docente
