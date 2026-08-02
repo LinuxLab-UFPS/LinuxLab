@@ -1,14 +1,6 @@
 const sshClient = require("./sshClient")
 const prisma = require("../../prisma/client")
 
-class ContainerServiceError extends Error {
-  constructor(message, code) {
-    super(message)
-    this.name = "ContainerServiceError"
-    this.code = code
-  }
-}
-
 async function userExists(username) {
   const { code } = await sshClient.execCommand(`id -u ${username} >/dev/null 2>&1`)
   return code === 0
@@ -19,36 +11,49 @@ async function groupExists(groupName) {
   return code === 0
 }
 
+async function execChecked(command, description) {
+  const result = await sshClient.execCommand(command)
+  if (result.code !== 0) {
+    throw new Error(`${description}: ${result.stderr || `exit code ${result.code}`}`)
+  }
+  return result
+}
+
 async function createTeacher(teacherUsername) {
   const root = `/home/${teacherUsername}`
   const home = `${root}/home`
-  await sshClient.execCommand(
+  await execChecked(
     `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
     `sudo mkdir -p ${home} ${root}/grupos && ` +
     `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
     `sudo chmod 751 ${root} ${root}/grupos && ` +
-    `sudo chmod 755 ${home}`,
+    `sudo chmod 750 ${home}`,
+    `createTeacher(${teacherUsername})`,
   )
 }
 
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
-  await sshClient.execCommand(
-    `sudo groupadd ${groupName} && ` +
+  if (!(await groupExists(groupName))) {
+    await execChecked(`sudo groupadd ${groupName}`, `groupadd(${groupName})`)
+  }
+  await execChecked(
     `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
     `sudo mkdir -p ${path} && ` +
     `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
     `sudo chmod 2751 ${path}`,
+    `createGroup(${groupName})`,
   )
 }
 
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
-  await sshClient.execCommand(
+  await execChecked(
     `sudo mkdir -p ${home} && ` +
     `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
     `sudo chown ${studentUsername}:${groupName} ${home} && ` +
     `sudo chmod 2750 ${home}`,
+    `createStudent(${studentUsername})`,
   )
 }
 
@@ -67,6 +72,9 @@ async function provisionTeacherAccount(linuxAccountId, username) {
   if (!await userExists(username)) {
     await createTeacher(username)
   }
+  if (!(await userExists(username))) {
+    throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
+  }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
     data: { linux_provisioned: true },
@@ -76,6 +84,9 @@ async function provisionTeacherAccount(linuxAccountId, username) {
 async function provisionStudentAccount(linuxAccountId, username, teacherUsername, groupDir, groupName) {
   if (!await userExists(username)) {
     await createStudent(teacherUsername, groupDir, groupName, username)
+  }
+  if (!(await userExists(username))) {
+    throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
   }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
@@ -104,5 +115,4 @@ module.exports = {
   provisionStudentAccount,
   openPtySession,
   closePtySession,
-  ContainerServiceError,
 }

@@ -4,27 +4,47 @@ const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
 const BATCH_SIZE = 5
-const MAX_RETRIES = 3
+const POOL_SIZE = 3
+const CYCLE_TIMEOUT = 90000
 
 let intervalHandle = null
+let isRunning = false
 
-async function processGroupJobs() {
-  const jobs = await prisma.$queryRawUnsafe(
-    `SELECT * FROM group_provisioning_jobs
-     WHERE status = 'pending' AND retries < $1
-     ORDER BY created_at ASC
-     LIMIT $2
-     FOR UPDATE SKIP LOCKED`,
-    MAX_RETRIES,
+async function claimJobs(tableName) {
+  return prisma.$queryRawUnsafe(
+    `UPDATE ${tableName}
+     SET status = 'processing', updated_at = NOW()
+     WHERE id IN (
+       SELECT id FROM (
+         SELECT id FROM ${tableName}
+         WHERE status = 'pending' AND retries < max_retries
+         ORDER BY created_at ASC
+         LIMIT $1
+         FOR UPDATE SKIP LOCKED
+       ) AS picked
+     )
+     RETURNING *`,
     BATCH_SIZE,
   )
+}
 
-  for (const job of jobs) {
-    await prisma.groupProvisioningJob.update({
-      where: { id: job.id },
-      data: { status: "processing" },
-    })
+async function runPool(items, worker) {
+  let index = 0
+  const size = Math.min(POOL_SIZE, items.length)
+  const runners = Array.from({ length: size }, async () => {
+    while (index < items.length) {
+      const item = items[index]
+      index += 1
+      await worker(item)
+    }
+  })
+  await Promise.all(runners)
+}
 
+async function processGroupJobs() {
+  const jobs = await claimJobs("group_provisioning_jobs")
+
+  await runPool(jobs, async (job) => {
     try {
       await createGroup(job.teacher_username, job.group_dir, job.group_name)
       await prisma.groupProvisioningJob.update({
@@ -34,7 +54,7 @@ async function processGroupJobs() {
       logger.info({ groupDir: job.group_dir }, "Group directory created")
     } catch (err) {
       const newRetries = job.retries + 1
-      const newStatus = newRetries >= MAX_RETRIES ? "failed" : "pending"
+      const newStatus = newRetries >= job.max_retries ? "failed" : "pending"
       await prisma.groupProvisioningJob.update({
         where: { id: job.id },
         data: {
@@ -45,26 +65,13 @@ async function processGroupJobs() {
       })
       logger.error({ err, groupDir: job.group_dir, retries: newRetries }, "Group provisioning failed")
     }
-  }
+  })
 }
 
 async function processUserJobs() {
-  const jobs = await prisma.$queryRawUnsafe(
-    `SELECT * FROM user_provisioning_jobs
-     WHERE status = 'pending' AND retries < $1
-     ORDER BY created_at ASC
-     LIMIT $2
-     FOR UPDATE SKIP LOCKED`,
-    MAX_RETRIES,
-    BATCH_SIZE,
-  )
+  const jobs = await claimJobs("user_provisioning_jobs")
 
-  for (const job of jobs) {
-    await prisma.userProvisioningJob.update({
-      where: { id: job.id },
-      data: { status: "processing" },
-    })
-
+  await runPool(jobs, async (job) => {
     try {
       if (job.group_id) {
         await provisionStudentAccount(
@@ -84,7 +91,7 @@ async function processUserJobs() {
       logger.info({ username: job.username }, "User provisioning completed")
     } catch (err) {
       const newRetries = job.retries + 1
-      const newStatus = newRetries >= MAX_RETRIES ? "failed" : "pending"
+      const newStatus = newRetries >= job.max_retries ? "failed" : "pending"
       await prisma.userProvisioningJob.update({
         where: { id: job.id },
         data: {
@@ -95,15 +102,24 @@ async function processUserJobs() {
       })
       logger.error({ err, username: job.username, retries: newRetries }, "User provisioning failed")
     }
-  }
+  })
 }
 
 async function processPendingJobs() {
+  if (isRunning) return
+  isRunning = true
+  const watchdog = setTimeout(() => {
+    logger.error("Provisioning cycle watchdog fired; releasing worker lock")
+    isRunning = false
+  }, CYCLE_TIMEOUT)
   try {
     await processGroupJobs()
     await processUserJobs()
   } catch (err) {
     logger.error({ err }, "Provisioning worker error")
+  } finally {
+    clearTimeout(watchdog)
+    isRunning = false
   }
 }
 

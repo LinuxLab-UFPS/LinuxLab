@@ -3,6 +3,8 @@ const fs = require("fs")
 
 let _conn = null
 let _ready = false
+let _connecting = null
+const _activeAborts = new Set()
 
 const SSH_CONFIG = {
   host: process.env.SSH_HOST || "entorno",
@@ -14,43 +16,118 @@ const SSH_CONFIG = {
   keepaliveCountMax: 3,
 }
 
-function applyReadyHandlers(resolve, reject) {
-  _conn.on("ready", () => {
-    _ready = true
-    resolve(_conn)
-  })
-  _conn.on("error", (err) => {
-    _ready = false
-    if (!resolve) return
-    reject(err)
-    resolve = null
-  })
-  _conn.on("close", () => {
-    _ready = false
-    _conn = null
-  })
+const CONNECT_TIMEOUT = 15000
+const CONNECT_RETRIES = 3
+const EXEC_TIMEOUT = 15000
+
+function abortActiveCommands(err) {
+  for (const abort of _activeAborts) {
+    try {
+      abort(err)
+    } catch {
+      // ignore per-command abort failures
+    }
+  }
+  _activeAborts.clear()
+}
+
+async function connectWithRetries() {
+  let lastErr = null
+  for (let attempt = 1; attempt <= CONNECT_RETRIES; attempt++) {
+    if (attempt > 1) {
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt - 1)))
+    }
+    const conn = new Client()
+    _conn = conn
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          reject(new Error(`SSH connection timed out after ${CONNECT_TIMEOUT}ms`))
+        }, CONNECT_TIMEOUT)
+        conn.on("ready", () => {
+          clearTimeout(timer)
+          _ready = true
+          resolve()
+        })
+        conn.on("error", (err) => {
+          clearTimeout(timer)
+          _ready = false
+          reject(err)
+        })
+        conn.on("close", () => {
+          _ready = false
+          if (_conn === conn) _conn = null
+          abortActiveCommands(new Error("SSH connection closed"))
+        })
+        conn.connect(SSH_CONFIG)
+      })
+      return conn
+    } catch (err) {
+      lastErr = err
+      _ready = false
+      _conn = null
+      try {
+        conn.end()
+      } catch {
+        // ignore teardown errors
+      }
+    }
+  }
+  throw lastErr || new Error("Unable to connect to SSH host")
 }
 
 async function getConnection() {
   if (_ready && _conn) return _conn
-  _conn = new Client()
-  _ready = false
-  return new Promise((resolve, reject) => {
-    applyReadyHandlers(resolve, reject)
-    _conn.connect(SSH_CONFIG)
+  if (_connecting) return _connecting
+  _connecting = connectWithRetries().finally(() => {
+    _connecting = null
   })
+  return _connecting
 }
 
-async function execCommand(command) {
+async function execCommand(command, options = {}) {
   const conn = await getConnection()
+  const timeoutMs = options.timeoutMs ?? EXEC_TIMEOUT
   return new Promise((resolve, reject) => {
+    let settled = false
+    let timer = null
+    let streamRef = null
+
+    const finish = (err, result) => {
+      if (settled) return
+      settled = true
+      if (timer) clearTimeout(timer)
+      _activeAborts.delete(abort)
+      if (err) reject(err)
+      else resolve(result)
+    }
+
+    const abort = (err) => {
+      try {
+        streamRef?.destroy()
+      } catch {
+        // ignore destroy errors
+      }
+      finish(err)
+    }
+
     conn.exec(command, (err, stream) => {
-      if (err) return reject(err)
+      if (err) return finish(err)
+      streamRef = stream
       let stdout = ""
       let stderr = ""
-      stream.on("data", (d) => { stdout += d.toString() })
-      stream.stderr.on("data", (d) => { stderr += d.toString() })
-      stream.on("close", (code) => resolve({ code, stdout: stdout.trim(), stderr: stderr.trim() }))
+      stream.on("data", (d) => {
+        stdout += d.toString()
+      })
+      stream.stderr.on("data", (d) => {
+        stderr += d.toString()
+      })
+      stream.on("close", (code) => finish(null, { code, stdout: stdout.trim(), stderr: stderr.trim() }))
+      stream.on("error", (e) => finish(e))
+      _activeAborts.add(abort)
+      timer = setTimeout(() => {
+        abort(new Error(`SSH command timed out after ${timeoutMs}ms: ${command.slice(0, 120)}`))
+      }, timeoutMs)
     })
   })
 }
