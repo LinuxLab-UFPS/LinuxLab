@@ -1,27 +1,20 @@
 const { Role } = require("@prisma/client")
 const { parse } = require("csv-parse/sync")
 const prisma = require("../../prisma/client")
-const { sanitizeUsername } = require("../utils/sanitizeUsername")
-const provisioningWorker = require("./provisioningWorker")
-
-class ServiceError extends Error {
-  constructor(message, status) {
-    super(message)
-    this.name = "ServiceError"
-    this.status = status
-  }
-}
+const { createLinuxAccountWithUniqueUsername } = require("../utils/linuxUsername")
+const { AppError } = require("../lib/errors")
+const { runInTransaction } = require("../lib/transaction")
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
 
 function validateEmail(email) {
   if (!email?.trim()) {
-    throw new ServiceError("El correo electrónico es requerido", 400)
+    throw new AppError("El correo electrónico es requerido", 400)
   }
   const normalized = email.toLowerCase().trim()
   if (!EMAIL_REGEX.test(normalized)) {
-    throw new ServiceError(`El formato del correo electrónico no es válido: ${email}`, 400)
+    throw new AppError(`El formato del correo electrónico no es válido: ${email}`, 400)
   }
   // if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
   //   throw new ServiceError(
@@ -32,75 +25,63 @@ function validateEmail(email) {
   return normalized
 }
 
-async function ensureGroupAccess({ groupId, teacherUserId, role }) {
-  const group = await prisma.group.findUnique({ where: { id: groupId } })
+async function ensureGroupAccess({ groupId, teacherUserId, role, tx = prisma }) {
+  const group = await tx.group.findUnique({ where: { id: groupId } })
   if (!group) {
-    throw new ServiceError("Grupo no encontrado", 404)
+    throw new AppError("Grupo no encontrado", 404)
   }
   if (role !== "admin" && group.teacher_id !== teacherUserId) {
-    throw new ServiceError("No tienes permiso sobre este grupo", 403)
+    throw new AppError("No tienes permiso sobre este grupo", 403)
   }
   return group
 }
 
-async function ensureStudentExists({ email, name, code }) {
+async function ensureStudentExists({ email, name, code, tx = prisma }) {
   const normalizedEmail = validateEmail(email)
-  let user = await prisma.user.findUnique({
+  let user = await tx.user.findUnique({
     where: { email: normalizedEmail },
-    include: { student: true, linuxAccount: true },
+    include: { linuxAccount: true },
   })
 
   if (user && user.role !== Role.student) {
-    throw new ServiceError(
+    throw new AppError(
       `El correo ${normalizedEmail} pertenece a un usuario con rol ${user.role}, no se puede inscribir como estudiante`,
       409,
     )
   }
 
   if (!user) {
-    const linuxUsername = sanitizeUsername(normalizedEmail)
-    user = await prisma.user.create({
+    user = await tx.user.create({
       data: {
         name: name?.trim() || normalizedEmail.split("@")[0],
         email: normalizedEmail,
         role: Role.student,
+        code: code?.trim() || null,
         active: true,
-        student: { create: { code: code?.trim() || null } },
-        linuxAccount: {
-          create: {
-            linux_username: linuxUsername,
-            linux_provisioned: false,
-          },
-        },
       },
-      include: { student: true, linuxAccount: true },
     })
+    const linuxUsername = await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
+    user.linuxAccount = {
+      user_id: user.id,
+      linux_username: linuxUsername,
+      linux_provisioned: false,
+    }
     return user
   }
 
-  if (!user.student) {
-    await prisma.student.create({
-      data: { user_id: user.id, code: code?.trim() || null },
-    })
-  } else if (code?.trim() && !user.student.code) {
-    await prisma.student.update({
-      where: { user_id: user.id },
+  if (code?.trim() && !user.code) {
+    await tx.user.update({
+      where: { id: user.id },
       data: { code: code.trim() },
     })
+    user.code = code.trim()
   }
 
   if (!user.linuxAccount) {
-    const linuxUsername = sanitizeUsername(normalizedEmail)
-    await prisma.linuxAccount.create({
-      data: {
-        user_id: user.id,
-        linux_username: linuxUsername,
-        linux_provisioned: false,
-      },
-    })
-    user = await prisma.user.findUnique({
+    await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
+    user = await tx.user.findUnique({
       where: { id: user.id },
-      include: { student: true, linuxAccount: true },
+      include: { linuxAccount: true },
     })
   }
 
@@ -112,23 +93,26 @@ function serializeStudent(user) {
     id: user.id,
     name: user.name,
     email: user.email,
-    code: user.student?.code ?? null,
+    code: user.code ?? null,
   }
 }
 
-async function registerStudent({ groupId, name, email, code, teacherUserId, role }) {
-  const group = await ensureGroupAccess({ groupId, teacherUserId, role })
+async function registerStudent(args) {
+  if (!args.tx) return runInTransaction((tx) => registerStudent({ ...args, tx }))
+
+  const { groupId, name, email, code, teacherUserId, role, tx } = args
+  const group = await ensureGroupAccess({ groupId, teacherUserId, role, tx })
   const groupDir = group.group_dir || undefined
   const groupName = groupDir ? `grp_${groupId.replace(/-/g, "").substring(0, 8)}` : undefined
-  const teacherAccount = await prisma.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
-  return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username })
+  const teacherAccount = await tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
+  return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
 }
 
-async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername }) {
-  const user = await ensureStudentExists({ email, name, code })
+async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername, tx = prisma }) {
+  const user = await ensureStudentExists({ email, name, code, tx })
 
-  const existing = await prisma.enrollment.findUnique({
-    where: { student_id_group_id: { student_id: user.student.user_id, group_id: groupId } },
+  const existing = await tx.enrollment.findUnique({
+    where: { student_id_group_id: { student_id: user.id, group_id: groupId } },
   })
   if (existing) {
     return {
@@ -139,8 +123,27 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
     }
   }
 
+  try {
+    await tx.enrollment.create({
+      data: {
+        student_id: user.id,
+        group_id: groupId,
+      },
+    })
+  } catch (err) {
+    if (err?.code === "P2002") {
+      return {
+        enrolled: false,
+        reason: "already_enrolled",
+        student: serializeStudent(user),
+        linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
+      }
+    }
+    throw err
+  }
+
   if (user.linuxAccount && !user.linuxAccount.linux_provisioned) {
-    await prisma.userProvisioningJob.create({
+    await tx.userProvisioningJob.create({
       data: {
         user_id: user.linuxAccount.user_id,
         username: user.linuxAccount.linux_username,
@@ -150,19 +153,11 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
         teacher_username: teacherUsername || null,
       },
     })
-    provisioningWorker.processPendingJobs()
   }
 
-  await prisma.enrollment.create({
-    data: {
-      student_id: user.student.user_id,
-      group_id: groupId,
-    },
-  })
-
-  const finalUser = await prisma.user.findUnique({
+  const finalUser = await tx.user.findUnique({
     where: { id: user.id },
-    include: { student: true, linuxAccount: true },
+    include: { linuxAccount: true },
   })
 
   return {
@@ -177,19 +172,15 @@ async function listByGroup({ groupId, teacherUserId, role }) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    include: {
-      student: {
-        include: { user: { select: { id: true, name: true, email: true } } },
-      },
-    },
+    include: { student: { select: { id: true, name: true, email: true, code: true } } },
     orderBy: { enrolled_at: "asc" },
   })
 
   return enrollments.map((e) => ({
     enrollmentId: e.id,
-    id: e.student.user.id,
-    name: e.student.user.name,
-    email: e.student.user.email,
+    id: e.student.id,
+    name: e.student.name,
+    email: e.student.email,
     code: e.student.code,
     enrolledAt: e.enrolled_at,
   }))
@@ -197,7 +188,7 @@ async function listByGroup({ groupId, teacherUserId, role }) {
 
 function parseCsvRows(csvText) {
   if (!csvText?.trim()) {
-    throw new ServiceError("El contenido CSV está vacío", 400)
+    throw new AppError("El contenido CSV está vacío", 400)
   }
   return parse(csvText, {
     columns: ["nombre", "email", "codigo"],
@@ -236,7 +227,7 @@ async function importCsv({ groupId, csvText, teacherUserId, role }) {
       result.errors.push({
         row: rowNum,
         email: row.email ?? null,
-        error: err instanceof ServiceError ? err.message : err?.message || String(err),
+        error: err instanceof AppError ? err.message : err?.message || String(err),
       })
     }
   }
@@ -251,5 +242,4 @@ module.exports = {
   importCsv,
   listByGroup,
   serializeStudent,
-  ServiceError,
 }
