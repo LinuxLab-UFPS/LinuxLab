@@ -15,5 +15,6 @@ router.post("/:id/students", groupController.registerStudent)
 router.post("/:id/students/csv", groupController.importCsv)
 router.get("/:id/students", groupController.listStudents)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
+router.post("/:id/reconcile", groupController.reconcileGroup)
 
 module.exports = router
