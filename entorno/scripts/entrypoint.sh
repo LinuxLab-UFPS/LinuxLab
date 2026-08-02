@@ -26,6 +26,7 @@ echo "[entrypoint] Reprovisionando usuarios..."
 
 # Recrear docentes y sus grupos
 for teacher_dir in /home/*/; do
+  teacher_dir=${teacher_dir%/}
   teacher=$(basename "$teacher_dir")
   [ "$teacher" = "labadmin" ] && continue
   [ ! -d "$teacher_dir" ] && continue
@@ -41,6 +42,7 @@ for teacher_dir in /home/*/; do
 
   # Procesar grupos del docente
   for group_dir in "$teacher_dir/grupos/"*/; do
+    group_dir=${group_dir%/}
     [ -d "$group_dir" ] || continue
 
     group_id=$(basename "$group_dir")
@@ -60,6 +62,7 @@ for teacher_dir in /home/*/; do
 
     # Recrear estudiantes
     for student_dir in "$group_dir"*/; do
+      student_dir=${student_dir%/}
       [ -d "$student_dir" ] || continue
       username=$(basename "$student_dir")
 
