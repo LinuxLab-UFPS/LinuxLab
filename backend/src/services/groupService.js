@@ -4,7 +4,7 @@ const prisma = require("../../prisma/client")
 const logger = require("../lib/logger")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
-const { createLinuxAccountWithUniqueUsername } = require("../utils/linuxUsername")
+const { createLinuxAccountsUnique } = require("../utils/linuxUsername")
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -193,7 +193,6 @@ async function enrollStudentsInGroup({ groupId, students, groupDir, groupName, t
     include: { linuxAccount: true },
   })
   const acceptedUsersByEmail = new Map(acceptedUsers.map((user) => [user.email, user]))
-  const rowNumberByEmail = new Map(acceptedRows.map((row) => [row.email, row.rowNumber]))
 
   const codeUpdates = acceptedRows
     .map((row) => ({ row, user: acceptedUsersByEmail.get(row.email) }))
@@ -204,14 +203,14 @@ async function enrollStudentsInGroup({ groupId, students, groupDir, groupName, t
   }
 
   const missingLinuxAccounts = acceptedUsers.filter((user) => !user.linuxAccount)
-  for (const user of missingLinuxAccounts) {
+  if (missingLinuxAccounts.length > 0) {
     try {
-      await createLinuxAccountWithUniqueUsername(db, user.id, user.email)
+      await createLinuxAccountsUnique(db, missingLinuxAccounts)
     } catch (err) {
       result.errors.push({
-        row: rowNumberByEmail.get(user.email) ?? null,
-        email: user.email,
-        error: `No se pudo crear la cuenta Linux: ${err?.message || String(err)}`,
+        row: null,
+        email: null,
+        error: `No se pudieron crear las cuentas Linux: ${err?.message || String(err)}`,
       })
     }
   }
