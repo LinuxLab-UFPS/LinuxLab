@@ -116,9 +116,18 @@ function GroupDetailContent() {
       </Link>
 
       <div className="mb-7 mt-9">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          {group.name}
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {group.name}
+          </h1>
+          {/* Desactivar no tiene vuelta atrás, así que el resumen de un curso
+              desactivado es solo el histórico de lo que alcanzó a pasar. */}
+          {group.archived && (
+            <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
+              Desactivado
+            </span>
+          )}
+        </div>
         {group.description && (
           // Una sola linea: si la descripcion es larga se recorta con puntos
           // suspensivos en vez de empujar el resto del resumen hacia abajo.

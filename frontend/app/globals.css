@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* La consola es oscura en los dos temas, asi que su superficie no vive en las
+   paletas de abajo. Debe seguir igual al `theme.background` de xterm en
+   terminal-emulator.tsx: los bloques de codigo de las lecciones usan este mismo
+   color para que material y terminal se lean como la misma superficie. */
+:root {
+  --terminal-surface: #1a1d24;
+}
+
 /* ============================================================
    LIGHT THEME (default)
    Soft off-white canvas, true-white cards, UFPS red accent.
@@ -149,6 +157,7 @@
   --color-table-surface: var(--table-surface);
   --color-table-line: var(--table-line);
   --color-section: var(--section);
+  --color-terminal-surface: var(--terminal-surface);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -228,6 +237,94 @@
 .lesson-highlight,
 .lesson-highlight * {
   color: var(--primary) !important;
+}
+
+/* Teclas del teclado dentro de una leccion: <kbd>F12</kbd>, <kbd>Ctrl + Alt + T</kbd>.
+   El chip toma el rojo de la marca; la caja (radio, padding, tipografia) la pone
+   el componente kbd en markdown.tsx. */
+.lesson-kbd {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  box-shadow: var(--neon-border-shadow);
+}
+
+/* Sobre el fondo oscuro el rojo de marca se apaga, asi que la tecla usa el mismo
+   rojo brillante del prompt de la terminal. */
+.dark .lesson-kbd {
+  border-color: rgba(255, 84, 112, 0.45);
+  background: rgba(255, 84, 112, 0.12);
+  color: #ff5470;
+}
+
+/* ============================================================
+   PARTES DE UN COMANDO
+   Un color por papel — nombre, opciones, argumentos — igual en el
+   esquema `comando [opciones] [argumentos]` que en cada ejemplo de
+   la terminal (ver shell-command.tsx). Viven siempre sobre la
+   superficie oscura de la terminal, por eso no cambian con el tema.
+   ============================================================ */
+.cmd-name {
+  color: #7dd3fc;
+}
+
+.cmd-opt {
+  color: #fbbf24;
+}
+
+.cmd-arg {
+  color: #86efac;
+}
+
+.cmd-punct {
+  color: #a1a1aa;
+}
+
+.cmd-comment {
+  color: #6e7681;
+}
+
+/* Tarjeta con el esquema de un comando y su leyenda, escrita como HTML dentro
+   de la leccion. Usa la superficie de la terminal para leerse como una consola
+   y no como una tabla mas del texto. */
+.cmd-anatomy {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: var(--terminal-surface);
+  padding: 1rem;
+  font-family: var(--font-geist-mono), ui-monospace, 'SF Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.cmd-anatomy-legend {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.cmd-anatomy-legend > div {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: baseline;
+}
+
+.cmd-anatomy-legend > div > span:last-child {
+  font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  color: #a1a1aa;
+}
+
+@media (max-width: 640px) {
+  .cmd-anatomy-legend > div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
 }
 
 /* Scrollbar styling (theme-aware) */

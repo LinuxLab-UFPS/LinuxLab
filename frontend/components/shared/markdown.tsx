@@ -4,6 +4,13 @@ import rehypeRaw from "rehype-raw"
 import type { Components } from "react-markdown"
 import { CodeWindow } from "@/components/shared/code-window"
 
+/** Texto plano de un nodo, para poder inspeccionar el contenido de una marca. */
+function textOf(node: React.ReactNode): string {
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  if (Array.isArray(node)) return node.map(textOf).join("")
+  return ""
+}
+
 /** Renders lesson markdown with the LinuxLab theme. */
 const components: Components = {
   h1: ({ children }) => (
@@ -15,19 +22,25 @@ const components: Components = {
   h3: ({ children }) => (
     <h3 className="text-2xl font-semibold text-foreground mt-8 mb-3">{children}</h3>
   ),
-  p: ({ children }) => (
-    <p className="text-lg text-muted-foreground leading-8 my-5">{children}</p>
-  ),
+  // El cuerpo va en el color de texto pleno. En gris quedaba lavado y hacia
+  // ver la leccion como una nota al pie en vez del contenido principal.
+  p: ({ children }) => <p className="text-lg text-foreground leading-8 my-5">{children}</p>,
   ul: ({ children }) => (
-    <ul className="list-disc pl-6 space-y-2.5 my-5 text-lg leading-8 text-muted-foreground">{children}</ul>
+    <ul className="list-disc pl-6 space-y-2.5 my-5 text-lg leading-8 text-foreground">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal pl-6 space-y-2.5 my-5 text-lg leading-8 text-muted-foreground">{children}</ol>
+    <ol className="list-decimal pl-6 space-y-2.5 my-5 text-lg leading-8 text-foreground">{children}</ol>
   ),
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  strong: ({ children }) => (
-    <strong className="font-semibold text-foreground">{children}</strong>
-  ),
+  // La negrita queda reservada a etiquetas del tipo "**Nombre:** descripcion".
+  // El enfasis suelto a mitad de frase se pinta como texto normal: repartir
+  // palabras resaltadas por el parrafo distrae y le roba peso a las etiquetas,
+  // que son las que si marcan estructura.
+  strong: ({ children }) => {
+    const isLabel = textOf(children).trimEnd().endsWith(":")
+    if (!isLabel) return <>{children}</>
+    return <strong className="font-semibold text-foreground">{children}</strong>
+  },
   a: ({ href, children }) => (
     <a
       href={href}
@@ -38,8 +51,10 @@ const components: Components = {
       {children}
     </a>
   ),
+  // La cita se lee, no se susurra: el texto va en el color pleno y lo que la
+  // separa del cuerpo es la barra de acento y la cursiva, no el gris.
   blockquote: ({ children }) => (
-    <blockquote className="border-l-2 border-primary/50 pl-4 my-4 text-muted-foreground italic">
+    <blockquote className="my-6 border-l-2 border-primary/50 pl-5 italic text-foreground [&_p]:my-2 [&_p]:text-base">
       {children}
     </blockquote>
   ),
@@ -59,6 +74,14 @@ const components: Components = {
     }
     return <code className="block text-zinc-100 font-mono whitespace-pre">{children}</code>
   },
+  // Teclas del teclado: <kbd>F12</kbd>, <kbd>Ctrl + Alt + T</kbd>. El chip lleva
+  // el rojo de la plataforma; los colores y el halo viven en `.lesson-kbd`
+  // porque cambian entre tema claro y oscuro.
+  kbd: ({ children }) => (
+    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
+      {children}
+    </kbd>
+  ),
   hr: () => <hr className="my-6 border-border" />,
   table: ({ children }) => (
     <div className="overflow-x-auto my-4">
@@ -71,7 +94,7 @@ const components: Components = {
     </th>
   ),
   td: ({ children }) => (
-    <td className="px-3 py-2 border border-border text-muted-foreground">{children}</td>
+    <td className="px-3 py-2 border border-border text-foreground">{children}</td>
   ),
 }
 

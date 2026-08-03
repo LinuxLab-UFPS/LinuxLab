@@ -34,5 +34,12 @@ export async function apiFetch<T = unknown>(
     throw new ApiError(body.error || `HTTP ${res.status}`, res.status)
   }
 
-  return res.json()
+  // Un 204, o cualquier respuesta sin cuerpo, no trae JSON que parsear. Se lee
+  // como texto primero porque res.json() sobre un cuerpo vacío lanza
+  // "unexpected end of data" y convierte una operación exitosa en un error.
+  if (res.status === 204) {
+    return undefined as T
+  }
+  const text = await res.text()
+  return (text ? JSON.parse(text) : undefined) as T
 }

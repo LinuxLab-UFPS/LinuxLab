@@ -4,11 +4,16 @@ Un comando es un programa que, al ejecutarse en la terminal, realiza una acción
 
 La estructura general de un comando es siempre la misma:
 
-```
-comando [opciones] [argumentos]
-```
+<div class="cmd-anatomy">
+  <div class="cmd-anatomy-schema"><span class="cmd-name">comando</span> <span class="cmd-opt">[opciones]</span> <span class="cmd-arg">[argumentos]</span></div>
+  <div class="cmd-anatomy-legend">
+    <div><span class="cmd-name">comando</span><span>El programa que se ejecuta. Es la única parte obligatoria.</span></div>
+    <div><span class="cmd-opt">[opciones]</span><span>Modifican su comportamiento. Empiezan por uno o dos guiones.</span></div>
+    <div><span class="cmd-arg">[argumentos]</span><span>Aquello sobre lo que actúa: archivos, directorios, rutas, texto.</span></div>
+  </div>
+</div>
 
-Las partes entre corchetes son opcionales. Hay comandos que funcionan solo con su nombre, sin nada más. Entender esta estructura es clave porque aplica a prácticamente todo lo que vas a escribir en la terminal.
+Las partes entre corchetes son opcionales: hay comandos que funcionan solo con su nombre. Esos tres colores se mantienen en todos los ejemplos del curso, así que puedes reconocer las partes de cualquier comando que veas en la terminal.
 
 ## Argumentos
 

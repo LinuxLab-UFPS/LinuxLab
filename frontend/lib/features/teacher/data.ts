@@ -28,8 +28,13 @@ export async function createGroup(input: CreateGroupInput) {
   return teacherApi.createGroup(input)
 }
 
-export async function setGroupArchived(id: string, archived: boolean): Promise<void> {
-  await teacherApi.setGroupArchived(id, archived)
+/** Desactiva un curso. Es de una sola vía: el backend no sabe reactivar. */
+export async function deactivateGroup(id: string): Promise<void> {
+  await teacherApi.deactivateGroup(id)
+}
+
+export async function deleteGroup(id: string): Promise<void> {
+  await teacherApi.deleteGroup(id)
 }
 
 export async function listBankActivities(): Promise<Activity[]> {

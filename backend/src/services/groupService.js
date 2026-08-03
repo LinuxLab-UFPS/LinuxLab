@@ -1,6 +1,9 @@
 const { randomUUID } = require("crypto")
 const { Role } = require("@prisma/client")
 const prisma = require("../../prisma/client")
+const enrollmentService = require("./enrollmentService")
+const provisioningWorker = require("./provisioningWorker")
+const linuxContainerService = require("./linuxContainerService")
 const logger = require("../lib/logger")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
@@ -297,11 +300,81 @@ async function archiveGroup(args) {
   return serializeGroup(updated, 0)
 }
 
+/**
+ * Borra un grupo desactivado y todo lo que cuelga de el.
+ *
+ * Solo se permite sobre grupos ya archivados: eliminar es irreversible y esto
+ * evita que un curso vivo se borre de un click. Primero se desmonta el entorno
+ * Linux (usuarios, grupo y directorio) y despues se borran las filas, porque si
+ * el registro desapareciera antes quedariamos sin los datos necesarios para
+ * encontrar lo que hay que limpiar en el contenedor.
+ *
+ * Ninguna relacion del schema declara onDelete: Cascade, asi que las
+ * dependientes se borran a mano y en orden dentro de una transaccion.
+ */
+async function deleteGroup({ groupId, role, teacherUserId }) {
+  const group = await getGroupAccess({ groupId, teacherUserId, role })
+  if (!group.archived) {
+    throw new ServiceError("Primero debes desactivar el grupo", 409)
+  }
+
+  const teacherAccount = await prisma.linuxAccount.findUnique({
+    where: { user_id: group.teacher_id },
+  })
+  const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
+
+  // Se anotan antes del teardown porque despues de borrar las matriculas ya no
+  // hay forma de saber a quien se le elimino la cuenta.
+  const enrolled = await prisma.enrollment.findMany({
+    where: { group_id: groupId },
+    select: { student_id: true },
+  })
+
+  if (teacherAccount?.linux_username && group.group_dir) {
+    try {
+      await linuxContainerService.archiveGroup(
+        teacherAccount.linux_username,
+        group.group_dir,
+        groupName,
+      )
+    } catch (err) {
+      // El contenedor puede estar caido o el directorio ya no existir. Se
+      // registra y se sigue: dejar la fila viva obligaria a repetir el borrado
+      // y el docente no tiene forma de resolverlo desde la interfaz.
+      logger.error({ err, groupId }, "Linux teardown failed, deleting group anyway")
+    }
+  }
+
+  await prisma.$transaction([
+    // El teardown hizo userdel de cada estudiante, asi que su cuenta Linux ya
+    // no existe. Sin bajar esta marca la matricula en un grupo nuevo no encola
+    // aprovisionamiento (ver enrollmentService) y el estudiante se queda para
+    // siempre sin cuenta con la que abrir la terminal.
+    prisma.linuxAccount.updateMany({
+      where: { user_id: { in: enrolled.map((e) => e.student_id) } },
+      data: { linux_provisioned: false },
+    }),
+    prisma.enrollment.deleteMany({ where: { group_id: groupId } }),
+    prisma.groupProvisioningJob.deleteMany({ where: { group_id: groupId } }),
+    // El group_id es opcional aqui: se desliga en vez de borrarse para no
+    // perder el rastro de las cuentas que si se llegaron a crear.
+    prisma.userProvisioningJob.updateMany({
+      where: { group_id: groupId },
+      data: { group_id: null },
+    }),
+    prisma.group.delete({ where: { id: groupId } }),
+  ])
+
+  logger.info({ groupId, teacherUserId }, "Group deleted")
+}
+
 module.exports = {
   createGroup,
   listGroups,
   getGroup,
   getGroupAccess,
   archiveGroup,
+  deleteGroup,
+  ServiceError,
   serializeGroup,
 }
