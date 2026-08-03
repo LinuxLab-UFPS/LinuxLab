@@ -284,6 +284,49 @@
   color: #6e7681;
 }
 
+/* Tarjeta con el esquema de un comando y su leyenda, escrita como HTML dentro
+   de la leccion. Usa la superficie de la terminal para leerse como una consola
+   y no como una tabla mas del texto. */
+.cmd-anatomy {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: var(--terminal-surface);
+  padding: 1rem;
+  font-family: var(--font-geist-mono), ui-monospace, 'SF Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.cmd-anatomy-legend {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.9rem;
+  font-size: 0.85rem;
+}
+
+.cmd-anatomy-legend > div {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: baseline;
+}
+
+.cmd-anatomy-legend > div > span:last-child {
+  font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  color: #a1a1aa;
+}
+
+@media (max-width: 640px) {
+  .cmd-anatomy-legend > div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
 /* Scrollbar styling (theme-aware) */
 ::-webkit-scrollbar {
   width: 8px;
