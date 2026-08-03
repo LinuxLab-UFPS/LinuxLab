@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, LogOut } from "lucide-react"
+import { LogOut, ScrollText, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -25,6 +25,13 @@ const NAV = [
     icon: Users,
     hover: "hover:bg-violet-500/15 hover:text-violet-400",
     active: "bg-violet-500/15 text-violet-400",
+  },
+  {
+    label: "Bitácora",
+    href: "/audit-log",
+    icon: ScrollText,
+    hover: "hover:bg-sky-500/15 hover:text-sky-400",
+    active: "bg-sky-500/15 text-sky-400",
   },
 ]
 

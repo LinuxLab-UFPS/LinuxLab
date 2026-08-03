@@ -221,7 +221,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
       </TablePanel>
 
       {filtered.length > 0 && (
-        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="sky" />
       )}
     </div>
   )
