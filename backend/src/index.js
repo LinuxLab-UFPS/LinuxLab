@@ -11,6 +11,7 @@ const groupRoutes = require('./routes/groups');
 const preferencesRoutes = require('./routes/preferences');
 const terminalRoutes = require('./routes/terminal');
 const logger = require('./lib/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 const setupGateway = require('./gateway');
 const { startWorker } = require('./services/provisioningWorker');
@@ -36,6 +37,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/terminal', terminalRoutes);
+
+app.use(errorHandler);
 
 app.get('/', (_req, res) => {
     res.json({ message: 'LinuxLab API' });
