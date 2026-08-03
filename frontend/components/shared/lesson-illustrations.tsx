@@ -12,6 +12,14 @@
  * lesson-blocks.ts), donde id es una de las claves de LESSON_ILLUSTRATIONS.
  */
 
+import {
+  KernelArchivosIllustration,
+  KernelDispositivosIllustration,
+  KernelMemoriaIllustration,
+  KernelProcesosIllustration,
+  KernelRedIllustration,
+} from "@/components/shared/kernel-illustrations"
+
 const TERMINAL_W = 660
 const TERMINAL_H = 380
 const DESKTOP_W = 630
@@ -493,4 +501,9 @@ export const LESSON_ILLUSTRATIONS: Record<string, () => React.JSX.Element> = {
   "gui-cli": GuiCliIllustration,
   terminal: TerminalIllustration,
   "gnome-kde": GnomeKdeIllustration,
+  "kernel-procesos": KernelProcesosIllustration,
+  "kernel-memoria": KernelMemoriaIllustration,
+  "kernel-archivos": KernelArchivosIllustration,
+  "kernel-dispositivos": KernelDispositivosIllustration,
+  "kernel-red": KernelRedIllustration,
 }
