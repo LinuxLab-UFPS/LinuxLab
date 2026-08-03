@@ -239,6 +239,33 @@
   color: var(--primary) !important;
 }
 
+/* ============================================================
+   PARTES DE UN COMANDO
+   Un color por papel — nombre, opciones, argumentos — igual en el
+   esquema `comando [opciones] [argumentos]` que en cada ejemplo de
+   la terminal (ver shell-command.tsx). Viven siempre sobre la
+   superficie oscura de la terminal, por eso no cambian con el tema.
+   ============================================================ */
+.cmd-name {
+  color: #7dd3fc;
+}
+
+.cmd-opt {
+  color: #fbbf24;
+}
+
+.cmd-arg {
+  color: #86efac;
+}
+
+.cmd-punct {
+  color: #a1a1aa;
+}
+
+.cmd-comment {
+  color: #6e7681;
+}
+
 /* Scrollbar styling (theme-aware) */
 ::-webkit-scrollbar {
   width: 8px;

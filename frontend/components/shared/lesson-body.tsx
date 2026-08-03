@@ -1,5 +1,6 @@
 import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@/components/shared/markdown"
+import { ShellCommand } from "@/components/shared/shell-command"
 import { SimulatorCard } from "@/components/student/simulator-card"
 import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
 import { getSimulator } from "@/lib/features/shared/simulators"
@@ -143,7 +144,9 @@ function TerminalBlock({ command, output }: { command: string; output?: string }
           <div key={i} className="flex gap-2 whitespace-pre">
             {/* El mismo rojo del prompt de la terminal del curso. */}
             <span className="shrink-0 select-none text-[#ff5470]">$</span>
-            <span className="text-zinc-100">{line}</span>
+            <span className="text-zinc-100">
+              <ShellCommand line={line} />
+            </span>
           </div>
         ))}
       </div>
