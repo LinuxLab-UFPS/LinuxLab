@@ -19,6 +19,7 @@ import {
   KernelProcesosIllustration,
   KernelRedIllustration,
 } from "@/components/shared/kernel-illustrations"
+import { KernelSpaceDiagram } from "@/components/shared/kernel-space-diagram"
 
 const TERMINAL_W = 660
 const TERMINAL_H = 380
@@ -506,4 +507,5 @@ export const LESSON_ILLUSTRATIONS: Record<string, () => React.JSX.Element> = {
   "kernel-archivos": KernelArchivosIllustration,
   "kernel-dispositivos": KernelDispositivosIllustration,
   "kernel-red": KernelRedIllustration,
+  "kernel-espacios": KernelSpaceDiagram,
 }

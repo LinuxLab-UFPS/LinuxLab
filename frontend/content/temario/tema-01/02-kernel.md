@@ -56,24 +56,7 @@ Linux divide la memoria en dos zonas claramente separadas:
 
 **Espacio de usuario (user space):** donde se ejecutan las aplicaciones. No pueden acceder al hardware por su cuenta: para cualquier operación deben pedírsela al kernel mediante **llamadas al sistema** (system calls).
 
-```
-+-------------------------------------+
-|           ESPACIO DE USUARIO        |
-|        Aplicaciones del usuario     |
-|     (bash, firefox, ls, grep...)    |
-+-------------------------------------+
-|          Llamadas al sistema        |
-|     (open, read, write, fork...)    |
-+-------------------------------------+
-|           ESPACIO DE KERNEL         |
-|  Gestión de procesos | Memoria      |
-|  Sistema de archivos | Drivers      |
-|  Red | Seguridad                    |
-+-------------------------------------+
-|              HARDWARE               |
-|   CPU | RAM | Disco | Red | USB     |
-+-------------------------------------+
-```
+<!-- ILLUSTRATION: kernel-espacios -->
 
 Esa separación es la que mantiene el sistema estable y seguro: si una aplicación falla, no puede corromper el kernel ni arrastrar consigo a los demás procesos.
 
