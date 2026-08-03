@@ -17,7 +17,7 @@ async function claimJobs(tableName) {
      WHERE id IN (
        SELECT id FROM (
          SELECT id FROM ${tableName}
-         WHERE status = 'pending' AND retries < max_retries
+         WHERE status = 'pending' AND retries < "maxRetries"
          ORDER BY created_at ASC
          LIMIT $1
          FOR UPDATE SKIP LOCKED
@@ -54,7 +54,7 @@ async function processGroupJobs() {
       logger.info({ groupDir: job.group_dir }, "Group directory created")
     } catch (err) {
       const newRetries = job.retries + 1
-      const newStatus = newRetries >= job.max_retries ? "failed" : "pending"
+      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
       await prisma.groupProvisioningJob.update({
         where: { id: job.id },
         data: {
@@ -91,7 +91,7 @@ async function processUserJobs() {
       logger.info({ username: job.username }, "User provisioning completed")
     } catch (err) {
       const newRetries = job.retries + 1
-      const newStatus = newRetries >= job.max_retries ? "failed" : "pending"
+      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
       await prisma.userProvisioningJob.update({
         where: { id: job.id },
         data: {
