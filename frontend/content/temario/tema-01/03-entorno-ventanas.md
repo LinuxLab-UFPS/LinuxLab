@@ -6,7 +6,7 @@ La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema respon
 
 La **interfaz de línea de comandos (CLI)** es texto puro: escribes lo que quieres hacer y el sistema lo ejecuta. La diferencia de fondo está ahí: cuando haces clic en un ícono, es el computador el que te está diciendo qué puedes hacer; cuando escribes un comando, eres tú quien le dice al computador qué tiene que hacer.
 
-<!-- GUI-CLI -->
+<!-- ILLUSTRATION: gui-cli -->
 
 ## Linux no es solo una pantalla negra
 
@@ -14,7 +14,7 @@ Persiste el cliché de que Linux es una terminal negra con texto verde y que usa
 
 Un **entorno de escritorio** es esa capa visual del sistema: las ventanas, el panel, los íconos del escritorio, el menú de aplicaciones. No es parte del kernel, sino software independiente que se instala encima, y en Linux eliges cuál usar o lo cambias después. Esa flexibilidad no existe en Windows ni en macOS, donde la interfaz la define la empresa y no se toca.
 
-<!-- IMAGE: kde-gnome-comparacion.webp | Comparación entre GNOME y KDE Plasma en Linux -->
+<!-- ILLUSTRATION: desktop -->
 
 Lo importante no es qué entornos existen, sino que **en Linux la interfaz gráfica y el sistema operativo son cosas separadas**. El sistema funciona aunque no haya pantalla: en servidores, Linux corre sin entorno gráfico porque no lo necesita, y eso lo hace más eficiente, más seguro y más flexible.
 

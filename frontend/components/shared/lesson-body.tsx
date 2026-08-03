@@ -3,7 +3,7 @@ import { Markdown } from "@/components/shared/markdown"
 import { ShellCommand } from "@/components/shared/shell-command"
 import { SimulatorCard } from "@/components/student/simulator-card"
 import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
-import { GuiCliIllustration } from "@/components/shared/gui-cli-illustration"
+import { LESSON_ILLUSTRATIONS } from "@/components/shared/lesson-illustrations"
 import { getSimulator } from "@/lib/features/shared/simulators"
 import type { LessonBlock } from "@/lib/features/shared/lesson-blocks"
 
@@ -107,8 +107,22 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
 
-          case "gui-cli":
-            return <GuiCliIllustration key={i} />
+          case "illustration": {
+            // Una directiva con un id que no existe se ve, igual que una imagen
+            // que aun no esta puesta, en vez de desaparecer sin dejar rastro.
+            const Illustration = LESSON_ILLUSTRATIONS[block.id]
+            return Illustration ? (
+              <Illustration key={i} />
+            ) : (
+              <Pending
+                key={i}
+                icon={ImageIcon}
+                title="Ilustración desconocida"
+                detail={block.id}
+                paths={Object.keys(LESSON_ILLUSTRATIONS)}
+              />
+            )
+          }
 
           case "simulator-card": {
             const sim = getSimulator(block.id)
