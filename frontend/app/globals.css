@@ -3,6 +3,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* La consola es oscura en los dos temas, asi que su superficie no vive en las
+   paletas de abajo. Debe seguir igual al `theme.background` de xterm en
+   terminal-emulator.tsx: los bloques de codigo de las lecciones usan este mismo
+   color para que material y terminal se lean como la misma superficie. */
+:root {
+  --terminal-surface: #1a1d24;
+}
+
 /* ============================================================
    LIGHT THEME (default)
    Soft off-white canvas, true-white cards, UFPS red accent.
@@ -149,6 +157,7 @@
   --color-table-surface: var(--table-surface);
   --color-table-line: var(--table-line);
   --color-section: var(--section);
+  --color-terminal-surface: var(--terminal-surface);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);

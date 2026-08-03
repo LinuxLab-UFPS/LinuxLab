@@ -1,6 +1,5 @@
 import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@/components/shared/markdown"
-import { CodeWindow } from "@/components/shared/code-window"
 import { SimulatorCard } from "@/components/student/simulator-card"
 import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
 import { getSimulator } from "@/lib/features/shared/simulators"
@@ -127,20 +126,34 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
 }
 
 /**
- * A terminal window inside a lesson. Same chrome as the app's live terminal, so
- * a command in the material and a command in the real terminal look alike.
- * Command and its output share one window: they are one session.
+ * Una sesion de shell dentro de una leccion, sobre la misma superficie de la
+ * terminal real. El corte entre entrada y salida es horizontal, como en una
+ * consola: primero el comando y debajo lo que responde. Partirlo en dos
+ * columnas repartia mal el ancho — el lado corto quedaba vacio y el largo con
+ * scroll — y rompia la lectura de arriba hacia abajo.
+ *
+ * Cada mitad desborda en horizontal por su cuenta, asi una salida ancha no
+ * estira la caja ni obliga a la pagina a moverse de lado.
  */
 function TerminalBlock({ command, output }: { command: string; output?: string }) {
   return (
-    <CodeWindow label="bash — student@linuxlab">
-      <pre className="text-zinc-100 whitespace-pre">{command}</pre>
+    <div className="my-6 overflow-hidden rounded-lg border border-white/10 bg-terminal-surface font-mono text-sm leading-6">
+      <div className="overflow-x-auto px-4 py-3">
+        {command.split("\n").map((line, i) => (
+          <div key={i} className="flex gap-2 whitespace-pre">
+            {/* El mismo rojo del prompt de la terminal del curso. */}
+            <span className="shrink-0 select-none text-[#ff5470]">$</span>
+            <span className="text-zinc-100">{line}</span>
+          </div>
+        ))}
+      </div>
+
       {output && (
-        <pre className="text-zinc-400 whitespace-pre mt-2 pt-2 border-t border-zinc-800">
-          {output}
-        </pre>
+        <div className="overflow-x-auto border-t border-white/10 px-4 py-3">
+          <pre className="whitespace-pre text-zinc-400">{output}</pre>
+        </div>
       )}
-    </CodeWindow>
+    </div>
   )
 }
 
