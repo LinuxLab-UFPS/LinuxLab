@@ -154,7 +154,7 @@ function NewActivityPage() {
               <Button
                 onClick={handlePublish}
                 disabled={publishing}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground neon-glow"
+                className="border border-primary/40 bg-primary/15 text-primary shadow-none hover:bg-primary/25"
               >
                 <Send className="w-4 h-4 mr-2" />
                 {publishing ? "Publicando…" : "Publicar actividad"}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Search, Plus, FileCode } from "lucide-react"
+import { Search, Plus, FileCode, Library } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import {
@@ -20,6 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TablePanel, TableEmptyState, TablePagination } from "@/components/shared/data-table"
+import { StatTabs } from "@/components/shared/stat-tabs"
+import { ActionButton } from "@/components/shared/action-button"
 import { cn } from "@/lib/utils"
 import type { Activity, Difficulty } from "@/lib/features/teacher/types"
 import { syllabus, getTopic } from "@/lib/features/shared/temario"
@@ -33,10 +35,10 @@ const DIFFICULTY: Record<Difficulty, { label: string; className: string }> = {
   advanced: { label: "Difícil", className: "bg-danger/10 text-danger border-danger/30" },
 }
 
-/** El banco es la sección azul: el item resaltado del dropdown la sigue.
- *  Va explícito porque Radix monta el menú en un portal, fuera del
- *  contenedor que define `data-section`. */
-const SELECT_ITEM = "focus:bg-sky-500/10 focus:text-sky-500"
+/** El item resaltado del dropdown sigue el ámbar de la sección. Va explícito
+ *  porque Radix monta el menú en un portal, fuera del contenedor que define
+ *  `data-section`. */
+const SELECT_ITEM = "focus:bg-amber-500/10 focus:text-amber-500"
 
 const PAGE_SIZE = 8
 
@@ -63,6 +65,21 @@ export function BankTable({ activities }: { activities: Activity[] }) {
 
   return (
     <div>
+      <StatTabs
+        className="mb-4"
+        value="banco"
+        tabs={[
+          {
+            value: "banco",
+            label: "Actividades",
+            statLabel: "Actividades en el banco",
+            count: activities.length,
+            icon: Library,
+            tone: "amber",
+          },
+        ]}
+      />
+
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row">
           <div className="relative max-w-sm flex-1">
@@ -131,14 +148,13 @@ export function BankTable({ activities }: { activities: Activity[] }) {
           </Select>
         </div>
 
-        <button
-          type="button"
+        <ActionButton
+          tone="amber"
           onClick={() => toast.info("Crear actividad: aún no implementado")}
-          className="flex shrink-0 items-center gap-2 rounded-md bg-sky-500 px-3.5 py-2 text-sm font-medium text-white shadow-[0_0_10px_rgba(14,165,233,0.4)] transition-colors hover:bg-sky-400"
         >
           <Plus className="h-4 w-4" />
           Crear actividad
-        </button>
+        </ActionButton>
       </div>
 
       <TablePanel>
@@ -195,7 +211,7 @@ export function BankTable({ activities }: { activities: Activity[] }) {
       </TablePanel>
 
       {filtered.length > 0 && (
-        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="amber" />
       )}
     </div>
   )

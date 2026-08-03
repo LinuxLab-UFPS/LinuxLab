@@ -206,10 +206,18 @@
 }
 
 [data-section='banco'] {
-  --section: #0ea5e9;
+  --section: #f59e0b;
+}
+
+[data-section='actividades'] {
+  --section: #f59e0b;
 }
 
 [data-section='bitacora'] {
+  --section: #0ea5e9;
+}
+
+[data-section='admin'] {
   --section: #8b5cf6;
 }
 

@@ -30,8 +30,8 @@ const NAV = [
     label: "Banco de Actividades",
     href: "/bank",
     icon: Database,
-    hover: "hover:bg-sky-500/15 hover:text-sky-400",
-    active: "bg-sky-500/15 text-sky-400",
+    hover: "hover:bg-amber-500/15 hover:text-amber-400",
+    active: "bg-amber-500/15 text-amber-400",
   },
 ]
 
