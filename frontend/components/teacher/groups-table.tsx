@@ -2,8 +2,10 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { Plus } from "lucide-react"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BookOpen, Plus, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ActionButton } from "@/components/shared/action-button"
+import { StatTabs } from "@/components/shared/stat-tabs"
 import {
   Table,
   TableBody,
@@ -29,13 +31,10 @@ type Tab = "activos" | "desactivados"
 
 const PAGE_SIZE = 8
 
-/** La pestaña activa toma el color de la sección (ver `data-section`). */
-const TAB =
-  "data-[state=active]:border-section/30 data-[state=active]:bg-section/10 data-[state=active]:text-section dark:data-[state=active]:border-section/30 dark:data-[state=active]:bg-section/10 dark:data-[state=active]:text-section"
-
 export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [groups, setGroups] = useState<Group[]>(initialGroups)
   const [tab, setTab] = useState<Tab>("activos")
+  const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   /** Curso y acción destructiva esperando confirmación. */
@@ -52,7 +51,10 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
     [groups],
   )
 
-  const visible = groups.filter((g) => (tab === "activos" ? !g.archived : g.archived))
+  const q = query.trim().toLowerCase()
+  const visible = groups
+    .filter((g) => (tab === "activos" ? !g.archived : g.archived))
+    .filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
   const pageRows = visible.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
@@ -87,35 +89,51 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <Tabs
-          value={tab}
-          onValueChange={(v) => {
-            setTab(v as Tab)
-            setPage(1)
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="activos" className={TAB}>
-              Activos{" "}
-              <span className="ml-1.5 text-xs text-muted-foreground">{counts.activos}</span>
-            </TabsTrigger>
-            <TabsTrigger value="desactivados" className={TAB}>
-              Desactivados{" "}
-              <span className="ml-1.5 text-xs text-muted-foreground">
-                {counts.desactivados}
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <StatTabs
+        className="mb-4"
+        value={tab}
+        onChange={(v) => {
+          setTab(v as Tab)
+          setPage(1)
+        }}
+        tabs={[
+          {
+            value: "activos",
+            label: "Activos",
+            statLabel: "Cursos activos",
+            count: counts.activos,
+            icon: BookOpen,
+            tone: "primary",
+          },
+          {
+            value: "desactivados",
+            label: "Inactivos",
+            statLabel: "Cursos inactivos",
+            count: counts.desactivados,
+            icon: BookOpen,
+            tone: "neutral",
+          },
+        ]}
+      />
 
-        <Link
-          href="/create-group"
-          className="neon-glow flex shrink-0 items-center gap-2 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative max-w-sm flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar curso por nombre..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setPage(1)
+            }}
+            className="border-table-line pl-9"
+          />
+        </div>
+
+        <ActionButton tone="primary" href="/create-group">
           <Plus className="h-4 w-4" />
           Crear nuevo curso
-        </Link>
+        </ActionButton>
       </div>
 
       {error && (
@@ -170,20 +188,15 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                     <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
                       Ver
                     </TableActionButton>
-                    {/* Desactivar es de una sola vía (el backend no reactiva),
-                        así que un curso desactivado solo se consulta o se
-                        elimina. Ambas son destructivas y piden confirmación. */}
-                    <TableActionButton
-                      tone={group.archived ? "danger" : "amber"}
-                      onClick={() =>
-                        setConfirming({
-                          group,
-                          action: group.archived ? "delete" : "deactivate",
-                        })
-                      }
-                    >
-                      {group.archived ? "Eliminar" : "Desactivar"}
-                    </TableActionButton>
+                    {/* Un curso desactivado ya solo se consulta. */}
+                    {!group.archived && (
+                      <TableActionButton
+                        tone="amber"
+                        onClick={() => setConfirming({ group, action: "deactivate" })}
+                      >
+                        Desactivar
+                      </TableActionButton>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
