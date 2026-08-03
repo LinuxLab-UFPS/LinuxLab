@@ -43,6 +43,7 @@ services:
   entorno:
     build:
       context: ./entorno
+    hostname: linuxlab
     mem_limit: 256m
     cpu_shares: 512
     cap_add:
