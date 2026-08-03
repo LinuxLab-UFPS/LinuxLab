@@ -5,4 +5,5 @@ export interface TeacherListItem {
   active: boolean
   linuxUsername?: string | null
   linuxProvisioned?: boolean
+  createdAt?: string
 }

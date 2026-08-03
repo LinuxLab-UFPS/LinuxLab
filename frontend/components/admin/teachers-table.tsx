@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { Loader2, Search, Terminal, Users, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
@@ -16,24 +17,35 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import {
-  UserCheck,
-  UserX,
-  RotateCcw,
-  Loader2,
-  Search,
-  X,
-  Terminal,
-  CheckCircle2,
-  CircleDashed,
-} from "lucide-react"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  TablePanel,
+  TableEmptyState,
+  TableActionButton,
+  TablePagination,
+} from "@/components/shared/data-table"
+import { StatTabs } from "@/components/shared/stat-tabs"
 
 type StatusFilter = "all" | "active" | "inactive"
+
+const PAGE_SIZE = 8
+
+/** El item resaltado del dropdown sigue el morado del admin. Va explícito
+ *  porque Radix monta el menú en un portal, fuera de `data-section`. */
+const SELECT_ITEM = "focus:bg-violet-500/10 focus:text-violet-400"
 
 export function TeachersTable() {
   const [searchInput, setSearchInput] = useState("")
   const [debouncedSearch, setDebouncedSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
   const [confirmTarget, setConfirmTarget] = useState<TeacherListItem | null>(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchInput), 300)
@@ -48,8 +60,11 @@ export function TeachersTable() {
     [debouncedSearch, statusFilter],
   )
 
-  const { teachers, loading, submitting, register, toggleStatus } =
-    useTeachers(filters)
+  const { teachers, loading, submitting, register, toggleStatus } = useTeachers(filters)
+
+  const totalPages = Math.max(1, Math.ceil(teachers.length / PAGE_SIZE))
+  const page_ = Math.min(page, totalPages)
+  const pageRows = teachers.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   const handleToggle = (teacher: TeacherListItem) => {
     if (teacher.active) {
@@ -68,198 +83,157 @@ export function TeachersTable() {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground mb-1">
-            Gestión de Docentes
-          </h1>
-          <p className="text-muted-foreground">
-            Administra los docentes registrados en la plataforma
-          </p>
+      {/* Una sola vista, así que la pestaña se queda siempre abierta con su cifra. */}
+      <StatTabs
+        className="mb-4"
+        value="docentes"
+        tabs={[
+          {
+            value: "docentes",
+            label: "Docentes",
+            statLabel: "Docentes totales",
+            count: teachers.length,
+            icon: Users,
+            tone: "violet",
+          },
+        ]}
+      />
+
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+          <div className="relative max-w-sm flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={searchInput}
+              onChange={(e) => {
+                setSearchInput(e.target.value)
+                setPage(1)
+              }}
+              placeholder="Buscar docente por nombre o correo..."
+              className="border-table-line pl-9 pr-8"
+            />
+            {searchInput && (
+              <button
+                type="button"
+                onClick={() => setSearchInput("")}
+                aria-label="Limpiar búsqueda"
+                className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v as StatusFilter)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-full border-table-line sm:w-40">
+              <SelectValue placeholder="Filtrar estado" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all" className={SELECT_ITEM}>
+                Todos
+              </SelectItem>
+              <SelectItem value="active" className={SELECT_ITEM}>
+                Activos
+              </SelectItem>
+              <SelectItem value="inactive" className={SELECT_ITEM}>
+                Inactivos
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
         <RegisterTeacherDialog onRegister={register} submitting={submitting} />
       </div>
 
-      {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar docente por nombre o correo…"
-            className="pl-9 pr-8 bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
-          />
-          {searchInput && (
-            <button
-              onClick={() => setSearchInput("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
-        >
-          <SelectTrigger className="w-40 bg-secondary/30 border-border">
-            <SelectValue placeholder="Filtrar estado" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="active">Activos</SelectItem>
-            <SelectItem value="inactive">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Loading */}
       {loading ? (
-        <div className="bg-card border border-border rounded-lg flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Nombre
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Correo electrónico
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-40">
-                    Usuario Linux
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">
-                    Provisionado
-                  </th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">
-                    Estado
-                  </th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-44">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {teachers.map((teacher) => (
-                  <tr
-                    key={teacher.id}
-                    className="border-b border-border/50 last:border-0 hover:bg-secondary/30 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-foreground">
+        <>
+          <TablePanel>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Docente</TableHead>
+                  <TableHead className="w-48">Cuenta Linux</TableHead>
+                  <TableHead className="w-36">Creado</TableHead>
+                  <TableHead className="w-32">Estado</TableHead>
+                  <TableHead className="w-36">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pageRows.map((teacher) => (
+                  <TableRow key={teacher.id}>
+                    <TableCell>
+                      <span className="block text-sm font-medium text-foreground">
                         {teacher.name}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground font-mono">
+                      <span className="block text-xs text-muted-foreground">
                         {teacher.email}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       {teacher.linuxUsername ? (
-                        <span className="inline-flex items-center gap-1.5 text-sm font-mono text-foreground">
-                          <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="inline-flex items-center gap-1.5 font-mono text-sm text-sky-500">
+                          <Terminal className="h-3.5 w-3.5 shrink-0" />
                           {teacher.linuxUsername}
                         </span>
                       ) : (
-                        <span className="text-sm text-muted-foreground italic">
-                          Sin asignar
-                        </span>
+                        <span className="text-sm text-muted-foreground">Sin cuenta</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {teacher.linuxUsername ? (
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full",
-                            teacher.linuxProvisioned
-                              ? "bg-blue-500/10 text-blue-600 border border-blue-500/20"
-                              : "bg-amber-500/10 text-amber-600 border border-amber-500/20",
-                          )}
-                        >
-                          {teacher.linuxProvisioned ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3" />
-                              Listo
-                            </>
-                          ) : (
-                            <>
-                              <CircleDashed className="w-3 h-3" />
-                              Pendiente
-                            </>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-muted-foreground">
+                      {teacher.createdAt
+                        ? new Date(teacher.createdAt).toLocaleDateString("es-CO")
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-medium rounded-full",
+                          "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
                           teacher.active
-                            ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                            : "bg-muted text-muted-foreground border border-border",
+                            ? "border-success/30 bg-success/10 text-success"
+                            : "border-table-line bg-secondary text-muted-foreground",
                         )}
                       >
-                        {teacher.active ? (
-                          <>
-                            <UserCheck className="w-3 h-3" />
-                            Activo
-                          </>
-                        ) : (
-                          <>
-                            <UserX className="w-3 h-3" />
-                            Inactivo
-                          </>
-                        )}
+                        {teacher.active ? "Activo" : "Inactivo"}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        {teacher.active ? (
-                          <button
-                            onClick={() => handleToggle(teacher)}
-                            title="Dar de baja"
-                            className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          >
-                            <UserX className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleToggle(teacher)}
-                            title="Reactivar"
-                            className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-green-600 hover:bg-green-500/10 transition-colors"
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell>
+                      <TableActionButton
+                        tone={teacher.active ? "amber" : "emerald"}
+                        onClick={() => handleToggle(teacher)}
+                      >
+                        {teacher.active ? "Desactivar" : "Activar"}
+                      </TableActionButton>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
 
-          {teachers.length === 0 && (
-            <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-              {debouncedSearch || statusFilter !== "all"
-                ? "No se encontraron docentes con los filtros actuales."
-                : "No hay docentes registrados."}
-            </div>
+            {teachers.length === 0 && (
+              <TableEmptyState>
+                {debouncedSearch || statusFilter !== "all"
+                  ? "Ningún docente coincide con los filtros actuales."
+                  : "Todavía no hay docentes registrados."}
+              </TableEmptyState>
+            )}
+          </TablePanel>
+
+          {teachers.length > 0 && (
+            <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="violet" />
           )}
-        </div>
+        </>
       )}
 
-      {/* Confirmación de baja */}
       <ConfirmDialog
         open={confirmTarget !== null}
         onOpenChange={(open) => {
