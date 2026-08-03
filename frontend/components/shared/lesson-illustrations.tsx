@@ -4,9 +4,9 @@
  * plataforma en vez de arrastrar el escritorio, el tema y la distro de la
  * captura de otra persona.
  *
- * Hay dos piezas, la ventana de terminal y la pantalla de escritorio, y tres
- * ilustraciones que las combinan. Cada pieza se dibuja en su propio origen y
- * quien la usa la coloca con un translate.
+ * Cada pieza — la ventana de terminal, la pantalla de escritorio, cada uno de
+ * los dos entornos comparados — se dibuja en su propio origen, y quien la usa
+ * la coloca con un translate.
  *
  * Se insertan en el material con `<!-- ILLUSTRATION: id -->` (ver
  * lesson-blocks.ts), donde id es una de las claves de LESSON_ILLUSTRATIONS.
@@ -16,6 +16,9 @@ const TERMINAL_W = 660
 const TERMINAL_H = 380
 const DESKTOP_W = 630
 const DESKTOP_H = 366
+// Las dos pantallas de la comparacion GNOME / KDE, mas chicas por ir en pareja.
+const SCREEN_W = 520
+const SCREEN_H = 300
 
 /**
  * Una ventana de terminal. Las lineas son barras y no texto a proposito:
@@ -279,24 +282,209 @@ export function TerminalIllustration() {
   )
 }
 
-/** Solo el escritorio, para la leccion de entornos de ventanas. */
-export function DesktopIllustration() {
+/**
+ * Los dos entornos de escritorio mas usados, lado a lado. Lo que se compara es
+ * la forma, no el color: los dos van sobre la misma paleta para que salte a la
+ * vista lo unico que de verdad los separa a primera vista — donde ponen el
+ * panel, si hay iconos en el escritorio y donde vive el menu.
+ */
+export function GnomeKdeIllustration() {
   return (
     <svg
-      viewBox={`0 0 ${DESKTOP_W + 4} ${DESKTOP_H + 4}`}
+      viewBox="0 0 1120 400"
       role="img"
-      aria-labelledby="ilu-desktop"
-      className="mx-auto my-8 block w-full max-w-2xl"
+      aria-labelledby="ilu-gnome-kde"
+      className="mx-auto my-8 block w-full text-foreground"
     >
-      <title id="ilu-desktop">
-        Un escritorio grafico con su panel, una ventana abierta y la barra de
-        aplicaciones
+      <title id="ilu-gnome-kde">
+        Comparacion entre GNOME, con barra superior y escritorio limpio, y KDE
+        Plasma, con barra de tareas abajo, menu de aplicaciones e iconos en el
+        escritorio
       </title>
-      <DesktopDefs id="ilu-desktop" />
-      <g transform="translate(2, 2)">
-        <DesktopScreen id="ilu-desktop" />
+
+      <defs>
+        <linearGradient id="ilu-gnome-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#151a24" />
+          <stop offset="0.55" stopColor="#4f1b32" />
+          <stop offset="1" stopColor="#c41e3a" />
+        </linearGradient>
+        <linearGradient id="ilu-kde-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#151a24" />
+          <stop offset="1" stopColor="#1d2233" />
+        </linearGradient>
+        <linearGradient id="ilu-kde-band-1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#241a2b" />
+          <stop offset="1" stopColor="#3d1d34" />
+        </linearGradient>
+        <linearGradient id="ilu-kde-band-2" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#4f1b32" />
+          <stop offset="1" stopColor="#7d1e39" />
+        </linearGradient>
+        <linearGradient id="ilu-kde-band-3" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#a01d36" />
+          <stop offset="1" stopColor="#c41e3a" />
+        </linearGradient>
+        <clipPath id="ilu-gnome-screen">
+          <rect width={SCREEN_W} height={SCREEN_H} rx="14" />
+        </clipPath>
+        <clipPath id="ilu-kde-screen">
+          <rect width={SCREEN_W} height={SCREEN_H} rx="14" />
+        </clipPath>
+      </defs>
+
+      <g transform="translate(20, 20)">
+        <GnomeScreen />
+        <ScreenLabel name="GNOME" detail="Barra arriba, escritorio limpio" />
+      </g>
+      <g transform="translate(580, 20)">
+        <PlasmaScreen />
+        <ScreenLabel name="KDE Plasma" detail="Barra abajo, menú de aplicaciones" />
       </g>
     </svg>
+  )
+}
+
+/** El nombre del entorno debajo de su pantalla. */
+function ScreenLabel({ name, detail }: { name: string; detail: string }) {
+  return (
+    <g fill="currentColor" fontFamily="var(--font-onest), ui-sans-serif, sans-serif">
+      <text x="0" y={SCREEN_H + 34} fontSize="21" fontWeight="600">
+        {name}
+      </text>
+      <text x="0" y={SCREEN_H + 60} fontSize="16" opacity="0.6">
+        {detail}
+      </text>
+    </g>
+  )
+}
+
+/** Marco comun de las dos pantallas comparadas. */
+function ScreenFrame() {
+  return (
+    <rect
+      width={SCREEN_W}
+      height={SCREEN_H}
+      rx="14"
+      fill="none"
+      stroke="rgba(255,255,255,0.30)"
+      strokeWidth="1.8"
+    />
+  )
+}
+
+/** Barras de contenido dentro de una ventana. */
+function WindowLines({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x}, ${y})`}>
+      <rect width="140" height="9" rx="3" fill="rgba(255,255,255,0.28)" />
+      <rect y="18" width="186" height="9" rx="3" fill="rgba(255,255,255,0.18)" />
+      <rect y="36" width="110" height="9" rx="3" fill="rgba(255,255,255,0.18)" />
+      <rect y="54" width="160" height="9" rx="3" fill="rgba(255,255,255,0.18)" />
+    </g>
+  )
+}
+
+function GnomeScreen() {
+  return (
+    <g>
+      <g clipPath="url(#ilu-gnome-screen)">
+        <rect width={SCREEN_W} height={SCREEN_H} fill="url(#ilu-gnome-bg)" />
+
+        {/* Barra superior: actividades a la izquierda, reloj al centro */}
+        <rect width={SCREEN_W} height="24" fill="#0d1117" opacity="0.62" />
+        <rect x="14" y="8" width="54" height="8" rx="4" fill="rgba(255,255,255,0.55)" />
+        <rect x="232" y="8" width="56" height="8" rx="4" fill="rgba(255,255,255,0.45)" />
+        <rect x="468" y="8" width="16" height="8" rx="4" fill="rgba(255,255,255,0.35)" />
+        <rect x="490" y="8" width="16" height="8" rx="4" fill="rgba(255,255,255,0.35)" />
+
+        {/* Una ventana centrada. Un solo boton a la derecha: GNOME decora sus
+            ventanas con lo minimo. */}
+        <rect
+          x="120"
+          y="72"
+          width="280"
+          height="168"
+          rx="12"
+          fill="#161b22"
+          opacity="0.94"
+          stroke="rgba(255,255,255,0.24)"
+        />
+        <path d="M120 104 H400" stroke="rgba(255,255,255,0.18)" />
+        <circle cx="384" cy="88" r="5" fill="rgba(255,255,255,0.4)" />
+        <rect x="138" y="83" width="70" height="9" rx="3" fill="rgba(255,255,255,0.3)" />
+        <WindowLines x={138} y={124} />
+      </g>
+      <ScreenFrame />
+    </g>
+  )
+}
+
+function PlasmaScreen() {
+  return (
+    <g>
+      <g clipPath="url(#ilu-kde-screen)">
+        <rect width={SCREEN_W} height={SCREEN_H} fill="url(#ilu-kde-bg)" />
+        <path d="M0 115 L260 64 L520 121 L520 300 L0 300 Z" fill="url(#ilu-kde-band-1)" />
+        <path d="M0 175 L260 124 L520 181 L520 300 L0 300 Z" fill="url(#ilu-kde-band-2)" />
+        <path d="M0 236 L260 185 L520 242 L520 300 L0 300 Z" fill="url(#ilu-kde-band-3)" />
+
+        {/* Iconos sobre el escritorio, que GNOME no pone */}
+        <g fill="rgba(255,255,255,0.22)" stroke="rgba(255,255,255,0.28)">
+          <rect x="18" y="20" width="28" height="28" rx="7" />
+          <rect x="18" y="76" width="28" height="28" rx="7" />
+        </g>
+        <g fill="rgba(255,255,255,0.35)" stroke="none">
+          <rect x="17" y="54" width="30" height="6" rx="3" />
+          <rect x="17" y="110" width="30" height="6" rx="3" />
+        </g>
+
+        {/* Una ventana con sus tres botones a la derecha */}
+        <rect
+          x="150"
+          y="60"
+          width="280"
+          height="164"
+          rx="8"
+          fill="#161b22"
+          opacity="0.94"
+          stroke="rgba(255,255,255,0.24)"
+        />
+        <path d="M150 92 H430" stroke="rgba(255,255,255,0.18)" />
+        <g fill="rgba(255,255,255,0.4)">
+          <rect x="378" y="72" width="9" height="9" rx="2" />
+          <rect x="392" y="72" width="9" height="9" rx="2" />
+          <rect x="406" y="72" width="9" height="9" rx="2" />
+        </g>
+        <rect x="166" y="71" width="70" height="9" rx="3" fill="rgba(255,255,255,0.3)" />
+        <WindowLines x={166} y={112} />
+
+        {/* Barra de tareas: menu de aplicaciones, ventanas abiertas y bandeja */}
+        <rect y={SCREEN_H - 26} width={SCREEN_W} height="26" fill="#0d1117" opacity="0.78" />
+        <rect x="8" y={SCREEN_H - 20} width="14" height="14" rx="3" fill="#c41e3a" />
+        <rect
+          x="32"
+          y={SCREEN_H - 19}
+          width="72"
+          height="12"
+          rx="3"
+          fill="rgba(255,255,255,0.24)"
+        />
+        <rect
+          x="112"
+          y={SCREEN_H - 19}
+          width="72"
+          height="12"
+          rx="3"
+          fill="rgba(255,255,255,0.14)"
+        />
+        <g fill="rgba(255,255,255,0.35)">
+          <rect x="422" y={SCREEN_H - 17} width="9" height="9" rx="2" />
+          <rect x="436" y={SCREEN_H - 17} width="9" height="9" rx="2" />
+          <rect x="456" y={SCREEN_H - 17} width="46" height="9" rx="4" />
+        </g>
+      </g>
+      <ScreenFrame />
+    </g>
   )
 }
 
@@ -304,5 +492,5 @@ export function DesktopIllustration() {
 export const LESSON_ILLUSTRATIONS: Record<string, () => React.JSX.Element> = {
   "gui-cli": GuiCliIllustration,
   terminal: TerminalIllustration,
-  desktop: DesktopIllustration,
+  "gnome-kde": GnomeKdeIllustration,
 }
