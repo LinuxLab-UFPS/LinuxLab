@@ -11,25 +11,26 @@ import {
   Clock,
   AlertCircle,
   CircleDashed,
+  Target,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { RoleGuard } from "@/components/shared/role-guard"
-import {
-  GeneralInfoPanel,
-  RecentCourseActivity,
-  TrackingSummary,
-} from "@/components/teacher/group-summary"
+import { StatTabs } from "@/components/shared/stat-tabs"
+import { ActionButton } from "@/components/shared/action-button"
+import { GroupStudents } from "@/components/teacher/group-students"
+import { GroupActivities } from "@/components/teacher/group-activities"
 import {
   getGroup,
   getGroupProgress,
-  listGroupAuditLog,
+  listGroupActivities,
   listProvisioningJobs,
 } from "@/lib/features/teacher/data"
 import type {
+  Activity,
   Group,
   GroupProgressSummary,
-  AuditEntry,
   ProvisioningJobSummary,
 } from "@/lib/features/teacher/types"
 
@@ -41,13 +42,16 @@ const EMPTY_PROGRESS: GroupProgressSummary = {
   rows: [],
 }
 
+type Tab = "estudiantes" | "actividades"
+
 function GroupDetailContent() {
   const params = useParams<{ id: string }>()
   const id = params?.id ?? ""
+  const [tab, setTab] = useState<Tab>("estudiantes")
 
   const [group, setGroup] = useState<Group | null>(null)
   const [progress, setProgress] = useState<GroupProgressSummary>(EMPTY_PROGRESS)
-  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
   const [provisioningJobs, setProvisioningJobs] = useState<ProvisioningJobSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,13 +61,13 @@ function GroupDetailContent() {
     Promise.all([
       getGroup(id),
       getGroupProgress(id),
-      listGroupAuditLog(id),
+      listGroupActivities(id),
       listProvisioningJobs(id),
     ])
-      .then(([g, prog, entries, jobs]) => {
+      .then(([g, prog, acts, jobs]) => {
         setGroup(g)
         setProgress(prog)
-        setAuditEntries(entries)
+        setActivities(acts)
         setProvisioningJobs(jobs)
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar el curso"))
@@ -107,13 +111,10 @@ function GroupDetailContent() {
 
   return (
     <div data-section="cursos" className="mx-auto max-w-6xl px-6 py-8">
-      <Link
-        href="/home"
-        className="neon-glow inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-      >
+      <ActionButton tone="neutral" href="/home">
         <ArrowLeft className="h-4 w-4" />
         Volver
-      </Link>
+      </ActionButton>
 
       <div className="mb-7 mt-9">
         <div className="flex flex-wrap items-center gap-3">
@@ -135,20 +136,40 @@ function GroupDetailContent() {
         )}
       </div>
 
-      {/* La info general va estrecha a la izquierda y la bitácora del curso se
-          queda con el resto del ancho, que es la que tiene columnas largas. */}
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
-        <GeneralInfoPanel group={group} />
-        <RecentCourseActivity entries={auditEntries} />
-      </div>
+      <StatTabs
+        value={tab}
+        onChange={(v) => setTab(v as Tab)}
+        tabs={[
+          {
+            value: "estudiantes",
+            label: "Estudiantes",
+            statLabel: "Estudiantes totales",
+            count: group.studentCount,
+            icon: Users,
+            tone: "primary",
+          },
+          {
+            value: "actividades",
+            label: "Actividades",
+            statLabel: "Actividades totales",
+            count: group.activityCount,
+            icon: Target,
+            tone: "amber",
+          },
+        ]}
+      />
 
-      <div className="mt-6">
-        <TrackingSummary groupId={id} summary={progress} />
-      </div>
+      {tab === "estudiantes" && (
+        <div className="mt-6 space-y-6">
+          <GroupStudents groupId={id} summary={progress} archived={group.archived} />
+          {provisioningJobs.length > 0 && <ProvisioningPanel jobs={provisioningJobs} />}
+        </div>
+      )}
 
-      {provisioningJobs.length > 0 && (
-        <div className="mt-6">
-          <ProvisioningPanel jobs={provisioningJobs} />
+      {/* La sección de actividades va en ámbar: paginación y controles la siguen. */}
+      {tab === "actividades" && (
+        <div data-section="actividades" className="mt-6">
+          <GroupActivities activities={activities} archived={group.archived} />
         </div>
       )}
     </div>

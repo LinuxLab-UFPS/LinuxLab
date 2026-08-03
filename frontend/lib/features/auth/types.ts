@@ -23,6 +23,8 @@ export interface EnrollmentStudent {
   name: string
   email: string
   code: string
+  /** Cuenta del sistema creada al aprovisionar; null mientras no exista. */
+  linuxUsername?: string | null
 }
 
 export interface Session {
