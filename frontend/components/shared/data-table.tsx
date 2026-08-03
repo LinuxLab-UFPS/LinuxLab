@@ -122,11 +122,20 @@ export function TableSectionLink({ href, children }: { href: string; children: R
   return (
     <Link
       href={href}
-      className="neon-glow shrink-0 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      className="shrink-0 rounded-md border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/25"
     >
       {children}
     </Link>
   )
+}
+
+/** Color de la página actual. Va explícito y no por `--section` para que no
+ *  dependa de dónde esté montada la tabla. */
+const PAGE_TONE = {
+  primary: "border-primary/50 bg-primary/10 text-primary",
+  amber: "border-amber-500/50 bg-amber-500/10 text-amber-500",
+  violet: "border-violet-500/50 bg-violet-500/10 text-violet-400",
+  sky: "border-sky-500/50 bg-sky-500/10 text-sky-500",
 }
 
 /** Minimal prev / current-page / next pager, for tables with many rows. */
@@ -134,10 +143,12 @@ export function TablePagination({
   page,
   totalPages,
   onChange,
+  tone = "primary",
 }: {
   page: number
   totalPages: number
   onChange: (page: number) => void
+  tone?: keyof typeof PAGE_TONE
 }) {
   return (
     <div className="flex items-center justify-center gap-2 pt-6">
@@ -150,7 +161,12 @@ export function TablePagination({
       >
         <ChevronLeft className="h-4 w-4" />
       </button>
-      <span className="flex h-8 w-8 items-center justify-center rounded-md border border-section/50 bg-section/10 text-sm font-medium text-section">
+      <span
+        className={cn(
+          "flex h-8 w-8 items-center justify-center rounded-md border text-sm font-medium",
+          PAGE_TONE[tone],
+        )}
+      >
         {page}
       </span>
       <button
