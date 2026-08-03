@@ -5,7 +5,7 @@ const enrollmentService = require("./enrollmentService")
 const provisioningWorker = require("./provisioningWorker")
 const linuxContainerService = require("./linuxContainerService")
 const logger = require("../lib/logger")
-const { AppError } = require("../lib/errors")
+const { AppError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { createLinuxAccountsUnique } = require("../utils/linuxUsername")
 
@@ -315,7 +315,7 @@ async function archiveGroup(args) {
 async function deleteGroup({ groupId, role, teacherUserId }) {
   const group = await getGroupAccess({ groupId, teacherUserId, role })
   if (!group.archived) {
-    throw new ServiceError("Primero debes desactivar el grupo", 409)
+    throw new ConflictError("Primero debes desactivar el grupo")
   }
 
   const teacherAccount = await prisma.linuxAccount.findUnique({
@@ -375,6 +375,5 @@ module.exports = {
   getGroupAccess,
   archiveGroup,
   deleteGroup,
-  ServiceError,
   serializeGroup,
 }

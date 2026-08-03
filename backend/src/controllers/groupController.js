@@ -54,37 +54,24 @@ const registerStudent = asyncHandler(async (req, res) => {
   res.status(outcome.enrolled ? 201 : 200).json(outcome)
 })
 
-async function deleteGroup(req, res) {
-  try {
-    const { id } = req.params
-    await groupService.deleteGroup({
-      groupId: id,
-      role: req.user.role,
-      teacherUserId: req.user.id,
-    })
-    res.status(204).end()
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const deleteGroup = asyncHandler(async (req, res) => {
+  await groupService.deleteGroup({
+    groupId: req.params.id,
+    role: req.user.role,
+    teacherUserId: req.user.id,
+  })
+  res.status(204).end()
+})
 
-async function registerStudent(req, res) {
-  try {
-    const { id } = req.params
-    const { name, email, code } = req.body
-    const outcome = await enrollmentService.registerStudent({
-      groupId: id,
-      name,
-      email,
-      code,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    })
-    res.status(outcome.enrolled ? 201 : 200).json(outcome)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const importCsv = asyncHandler(async (req, res) => {
+  const summary = await enrollmentService.importCsv({
+    groupId: req.params.id,
+    csvText: typeof req.body === "string" ? req.body : "",
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.json(summary)
+})
 
 const listStudents = asyncHandler(async (req, res) => {
   const students = await enrollmentService.listByGroup({
