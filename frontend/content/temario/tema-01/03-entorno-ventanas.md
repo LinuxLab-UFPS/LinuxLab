@@ -6,7 +6,7 @@ La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema respon
 
 La **interfaz de línea de comandos (CLI)** es texto puro: escribes lo que quieres hacer y el sistema lo ejecuta. La diferencia de fondo está ahí: cuando haces clic en un ícono, es el computador el que te está diciendo qué puedes hacer; cuando escribes un comando, eres tú quien le dice al computador qué tiene que hacer.
 
-<!-- IMAGE: desktop-linux-ejemplo.JPEG | Escritorio Linux con entorno gráfico -->
+<!-- GUI-CLI -->
 
 ## Linux no es solo una pantalla negra
 

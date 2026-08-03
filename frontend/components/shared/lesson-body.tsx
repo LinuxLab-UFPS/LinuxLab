@@ -3,6 +3,7 @@ import { Markdown } from "@/components/shared/markdown"
 import { ShellCommand } from "@/components/shared/shell-command"
 import { SimulatorCard } from "@/components/student/simulator-card"
 import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
+import { GuiCliIllustration } from "@/components/shared/gui-cli-illustration"
 import { getSimulator } from "@/lib/features/shared/simulators"
 import type { LessonBlock } from "@/lib/features/shared/lesson-blocks"
 
@@ -105,6 +106,9 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
 
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
+
+          case "gui-cli":
+            return <GuiCliIllustration key={i} />
 
           case "simulator-card": {
             const sim = getSimulator(block.id)
