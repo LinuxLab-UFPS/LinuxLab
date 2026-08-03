@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { CheckCircle2, Circle, Home } from "lucide-react"
+import { CheckCircle2, ChevronRight, Circle, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
 import { NeonProgress } from "@/components/shared/neon-progress"
@@ -79,12 +79,18 @@ export function GroupSidebar({
                       isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
                     )}
                   >
+                    {/* Tres estados con lectura propia: el activo en el rojo de
+                        la marca, lo terminado en verde y tachado, y lo pendiente
+                        neutro y en el color de texto pleno, que es lo que queda
+                        por hacer. */}
                     <span
                       className={cn(
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
                         isActive
                           ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-muted-foreground",
+                          : done
+                            ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
+                            : "bg-secondary text-muted-foreground",
                       )}
                     >
                       {topic.number}
@@ -92,17 +98,20 @@ export function GroupSidebar({
                     <span
                       className={cn(
                         "flex-1 truncate text-sm",
-                        done
-                          ? "text-muted-foreground"
+                        done && !isActive
+                          ? "text-emerald-500/80 line-through"
                           : isActive
                             ? "font-medium text-foreground"
-                            : "text-foreground/80",
+                            : "text-foreground",
                       )}
                     >
                       {topic.title}
                     </span>
                     {done && (
                       <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    )}
+                    {isActive && (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
                     )}
                   </Link>
 
@@ -120,7 +129,9 @@ export function GroupSidebar({
                                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
                                 activeSub
                                   ? "font-medium text-primary"
-                                  : "text-muted-foreground hover:text-foreground",
+                                  : read
+                                    ? "text-muted-foreground hover:text-foreground"
+                                    : "text-foreground hover:text-primary",
                               )}
                             >
                               {read ? (
