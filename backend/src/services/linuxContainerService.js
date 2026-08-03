@@ -1,5 +1,22 @@
 const sshClient = require("./sshClient")
 const prisma = require("../../prisma/client")
+const logger = require("../lib/logger")
+
+const ACCOUNT_STORE = "/var/lib/linuxlab"
+
+let snapshotQueue = Promise.resolve()
+
+async function snapshotAccounts() {
+  snapshotQueue = snapshotQueue.catch(() => {}).then(async () => {
+    const { code, stderr } = await sshClient.execCommand(
+      `sudo cp -p /etc/passwd /etc/group /etc/shadow /etc/gshadow ${ACCOUNT_STORE}/`,
+    )
+    if (code !== 0) {
+      logger.warn({ stderr, code }, "Account snapshot to volume failed")
+    }
+  })
+  return snapshotQueue
+}
 
 async function userExists(username) {
   const { code } = await sshClient.execCommand(`id -u ${username} >/dev/null 2>&1`)
@@ -22,50 +39,66 @@ async function execChecked(command, description) {
 async function createTeacher(teacherUsername) {
   const root = `/home/${teacherUsername}`
   const home = `${root}/home`
-  await execChecked(
-    `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
-    `sudo mkdir -p ${home} ${root}/grupos && ` +
-    `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
-    `sudo chmod 751 ${root} ${root}/grupos && ` +
-    `sudo chmod 750 ${home}`,
-    `createTeacher(${teacherUsername})`,
-  )
+  try {
+    await execChecked(
+      `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
+      `sudo mkdir -p ${home} ${root}/grupos && ` +
+      `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
+      `sudo chmod 751 ${root} ${root}/grupos && ` +
+      `sudo chmod 750 ${home}`,
+      `createTeacher(${teacherUsername})`,
+    )
+  } finally {
+    await snapshotAccounts()
+  }
 }
 
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
-  if (!(await groupExists(groupName))) {
-    await execChecked(`sudo groupadd ${groupName}`, `groupadd(${groupName})`)
+  try {
+    if (!(await groupExists(groupName))) {
+      await execChecked(`sudo groupadd ${groupName}`, `groupadd(${groupName})`)
+    }
+    await execChecked(
+      `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
+      `sudo mkdir -p ${path} && ` +
+      `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
+      `sudo chmod 2751 ${path}`,
+      `createGroup(${groupName})`,
+    )
+  } finally {
+    await snapshotAccounts()
   }
-  await execChecked(
-    `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
-    `sudo mkdir -p ${path} && ` +
-    `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
-    `sudo chmod 2751 ${path}`,
-    `createGroup(${groupName})`,
-  )
 }
 
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
-  await execChecked(
-    `sudo mkdir -p ${home} && ` +
-    `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
-    `sudo chown ${studentUsername}:${groupName} ${home} && ` +
-    `sudo chmod 2750 ${home}`,
-    `createStudent(${studentUsername})`,
-  )
+  try {
+    await execChecked(
+      `sudo mkdir -p ${home} && ` +
+      `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
+      `sudo chown ${studentUsername}:${groupName} ${home} && ` +
+      `sudo chmod 2750 ${home}`,
+      `createStudent(${studentUsername})`,
+    )
+  } finally {
+    await snapshotAccounts()
+  }
 }
 
 async function archiveGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
-  const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
-  for (const student of stdout.split("\n").filter(Boolean)) {
-    await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
+  try {
+    const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
+    for (const student of stdout.split("\n").filter(Boolean)) {
+      await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
+    }
+    await sshClient.execCommand(
+      `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
+    )
+  } finally {
+    await snapshotAccounts()
   }
-  await sshClient.execCommand(
-    `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
-  )
 }
 
 async function provisionTeacherAccount(linuxAccountId, username) {

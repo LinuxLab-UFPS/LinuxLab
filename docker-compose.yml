@@ -55,6 +55,7 @@ services:
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
+      - entorno_etc:/var/lib/linuxlab
     networks:
       - internal
     logging:
@@ -126,3 +127,4 @@ volumes:
   pgdata:
   ssh_keys:
   entorno_home:
+  entorno_etc:

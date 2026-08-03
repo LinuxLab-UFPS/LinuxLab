@@ -47,7 +47,7 @@ RUN useradd -m -s /bin/bash labadmin \
     && chmod 700 /home/labadmin
 
 # Configurar sudoers para labadmin
-RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/rm, /usr/bin/su' \
+RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su' \
     > /etc/sudoers.d/labadmin \
     && chmod 440 /etc/sudoers.d/labadmin
 
