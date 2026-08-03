@@ -2,55 +2,96 @@
 
 ## ¿Qué es el kernel?
 
-El kernel es el núcleo del sistema operativo. Es el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones del usuario y los recursos físicos del computador: el procesador, la memoria RAM, los discos de almacenamiento, las interfaces de red y los dispositivos periféricos.
-
-Cuando ejecutas un comando en la terminal, abres un archivo o te conectas a internet, es el kernel quien gestiona cada una de esas operaciones a nivel de hardware. Las aplicaciones nunca interactúan directamente con los componentes físicos; siempre pasan por el kernel.
+El kernel es el núcleo del sistema operativo: el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador — procesador, memoria RAM, discos, interfaces de red y periféricos. Cuando ejecutas un comando, abres un archivo o te conectas a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos: siempre pasan por él.
 
 ## Funciones principales del kernel
 
-### Gestión de procesos
+El kernel tiene cinco responsabilidades. Todo lo demás que hace se desprende de estas:
 
-El kernel es responsable de crear, planificar y terminar procesos. Un proceso es una instancia de un programa en ejecución. En un sistema Linux típico hay cientos de procesos corriendo simultáneamente, y el kernel decide cuánto tiempo de CPU recibe cada uno, cuándo se ejecuta y cuándo se pausa.
+| # | Función | De qué se encarga | Lo ves con |
+|---|---|---|---|
+| 1 | Gestión de procesos | Crear, planificar y terminar los programas en ejecución | `ps`, `top` |
+| 2 | Gestión de memoria | Repartir la RAM entre los procesos y usar swap cuando falta | `free` |
+| 3 | Sistema de archivos | Almacenar, organizar y recuperar los datos del disco | `df`, `lsblk` |
+| 4 | Gestión de dispositivos | Hablar con el hardware a través de controladores | `lsmod`, `lspci` |
+| 5 | Comunicación de red | Implementar TCP/IP y administrar las conexiones | `ip` |
 
-Las aplicaciones no tienen acceso directo a los recursos del sistema. En cambio, le hacen solicitudes al kernel: memoria, tiempo de CPU, espacio en disco. Cuando dos aplicaciones piden el mismo recurso al mismo tiempo, el kernel decide cuál lo obtiene. En casos extremos, puede terminar un proceso para evitar que el sistema colapse por completo.
+### 1. Gestión de procesos
 
-El kernel también maneja el cambio entre procesos, lo que se conoce como **multitarea**. Un computador tiene un número limitado de núcleos de CPU. Cuando hay más procesos activos que núcleos disponibles, el kernel pausa unos y ejecuta otros en turnos tan rápidos que da la impresión de que todo corre en paralelo. Eso es lo que sucede cuando tienes abierto el navegador, la terminal y el reproductor de música al mismo tiempo.
+Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos: eso es la **multitarea**, y es lo que ocurre cuando tienes abiertos el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
 
 ```bash
-# Ver los procesos en ejecución
-ps aux
-
-# Ver los procesos en tiempo real
-top
+ps -e --no-headers | wc -l
 ```
 
-### Gestión de memoria
+```
+243
+```
 
-El kernel administra la memoria RAM del sistema, asignando bloques de memoria a los procesos que lo solicitan y liberándolos cuando ya no se necesitan. También implementa la memoria virtual, que permite que los procesos utilicen más memoria de la que está físicamente disponible mediante el uso del espacio de intercambio (swap) en disco.
+Ese número son los procesos activos en este instante. Con `top` los ves en tiempo real, ordenados por consumo de CPU.
 
-Desde la perspectiva de cada proceso, parece que tiene un gran bloque de memoria solo para él. Esa ilusión la mantiene el kernel: reasigna bloques físicos más pequeños según la demanda, comparte memoria entre procesos cuando es posible, y mueve al disco los bloques que llevan tiempo sin usarse. El proceso no sabe nada de todo eso; simplemente ve memoria disponible.
+### 2. Gestión de memoria
 
-### Sistema de archivos
+El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cuando dejan de usarse. Desde dentro, cada proceso cree tener un bloque grande y continuo solo para él; esa ilusión la sostiene el kernel, que reparte bloques físicos más pequeños, comparte memoria entre procesos cuando puede y manda al disco — al espacio de intercambio o **swap** — lo que lleva tiempo sin usarse. El proceso no se entera de nada de eso: solo ve memoria disponible.
 
-El kernel gestiona cómo se almacenan, organizan y recuperan los datos en los dispositivos de almacenamiento. Linux soporta múltiples sistemas de archivos: ext4 (el más común), XFS, Btrfs, NTFS (para compatibilidad con Windows), entre otros. Para el kernel, todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan como archivos dentro de una estructura jerárquica.
+```bash
+free -h
+```
 
-Una de las decisiones de diseño más importantes del kernel es la abstracción. Cuando una aplicación necesita leer un archivo, no sabe si ese dato está en un SSD, en un disco mecánico o en un recurso compartido de red. No tiene por qué saberlo. El kernel expone una interfaz de programación (API) uniforme y se encarga de las diferencias del hardware por debajo. Por eso el mismo programa funciona igual sin importar en qué tipo de almacenamiento estén los datos.
+```
+               total        used        free      shared  buff/cache   available
+Mem:           7,7Gi       2,1Gi       3,4Gi       312Mi       2,2Gi       5,1Gi
+Swap:          2,0Gi          0B       2,0Gi
+```
 
-### Gestión de dispositivos
+### 3. Sistema de archivos
 
-El kernel se comunica con el hardware a través de controladores (drivers). Cada dispositivo conectado al computador necesita un controlador que le indique al kernel cómo interactuar con él. Linux incluye controladores para una enorme cantidad de hardware directamente en el kernel, lo que permite que la mayoría de dispositivos funcionen sin instalar software adicional.
+Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos — ext4 (el más común), XFS, Btrfs, NTFS para compatibilidad con Windows — y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo: el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
 
-### Comunicación de red
+```bash
+df -h /
+```
 
-El kernel implementa los protocolos de red (TCP/IP, UDP, ICMP) que permiten al sistema comunicarse con otros computadores. Gestiona las interfaces de red, las tablas de enrutamiento, los sockets y las conexiones activas.
+```
+S.ficheros     Tamaño Usados  Disp Uso% Montado en
+/dev/sda2         48G    12G   34G  27% /
+```
+
+### 4. Gestión de dispositivos
+
+El kernel se comunica con el hardware a través de **controladores** (drivers): cada dispositivo conectado necesita uno que le indique al kernel cómo interactuar con él. Linux incluye controladores para una enorme cantidad de hardware dentro del propio kernel, y por eso la mayoría de dispositivos funcionan sin instalar software adicional.
+
+```bash
+lsmod | head -n 4
+```
+
+```
+Module                  Size  Used by
+xhci_pci               24576  0
+snd_hda_intel          57344  3
+i915                 3403776  9
+```
+
+### 5. Comunicación de red
+
+El kernel implementa los protocolos de red — TCP/IP, UDP, ICMP — que permiten al sistema comunicarse con otros computadores, y administra las interfaces, las tablas de enrutamiento, los sockets y las conexiones activas.
+
+```bash
+ip -brief address
+```
+
+```
+lo         UNKNOWN    127.0.0.1/8
+enp3s0     UP         192.168.1.42/24
+```
 
 ## Espacio de kernel vs. espacio de usuario
 
 Linux divide la memoria en dos zonas claramente separadas:
 
-**Espacio de kernel (kernel space):** Donde se ejecuta el kernel con acceso total al hardware. El código que corre aquí tiene privilegios completos sobre el sistema.
+**Espacio de kernel (kernel space):** donde se ejecuta el kernel, con acceso total al hardware y privilegios completos sobre el sistema.
 
-**Espacio de usuario (user space):** Donde se ejecutan las aplicaciones del usuario. Los programas en este espacio no pueden acceder al hardware directamente; deben solicitar al kernel que realice las operaciones mediante llamadas al sistema (system calls).
+**Espacio de usuario (user space):** donde se ejecutan las aplicaciones. No pueden acceder al hardware por su cuenta: para cualquier operación deben pedírsela al kernel mediante **llamadas al sistema** (system calls).
 
 ```
 +-------------------------------------+
@@ -71,22 +112,27 @@ Linux divide la memoria en dos zonas claramente separadas:
 +-------------------------------------+
 ```
 
-Esta separación es fundamental para la seguridad y estabilidad del sistema: si una aplicación falla, no puede corromper el kernel ni afectar a otros procesos.
+Esa separación es la que mantiene el sistema estable y seguro: si una aplicación falla, no puede corromper el kernel ni arrastrar consigo a los demás procesos.
 
 ## Versión del kernel
 
-Puedes verificar qué versión del kernel está ejecutando tu sistema con el comando:
+Para saber qué versión del kernel ejecuta tu sistema:
 
 ```bash
 uname -r
 ```
 
-La salida mostrará algo como `6.1.0-18-amd64`, donde:
-- `6` es la versión principal (major)
-- `1` es la versión secundaria (minor)
-- `0` es la revisión (patch)
-- `18` es la revisión específica de la distribución
-- `amd64` indica la arquitectura del procesador
+```
+6.1.0-18-amd64
+```
+
+Cada parte de ese número significa algo:
+
+- `6` — versión principal (major)
+- `1` — versión secundaria (minor)
+- `0` — revisión (patch)
+- `18` — revisión específica de la distribución
+- `amd64` — arquitectura del procesador
 
 ---
 
