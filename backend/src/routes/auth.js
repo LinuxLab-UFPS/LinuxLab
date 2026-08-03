@@ -24,8 +24,6 @@ const USER_INCLUDE = {
       linux_provisioned: true,
     },
   },
-  teacher: { select: { user_id: true } },
-  student: { select: { user_id: true } },
   preferences: true,
 }
 

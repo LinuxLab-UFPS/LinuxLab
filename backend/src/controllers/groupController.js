@@ -1,70 +1,58 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
+const reconcileService = require("../services/reconcileService")
 const prisma = require("../../prisma/client")
-const logger = require("../lib/logger")
+const asyncHandler = require("../utils/asyncHandler")
 
-function handleError(res, err) {
-  if (err instanceof groupService.ServiceError || err instanceof enrollmentService.ServiceError) {
-    return res.status(err.status).json({ error: err.message })
-  }
-  logger.error({ err }, "Unexpected error")
-  return res.status(500).json({ error: "Error interno del servidor" })
-}
+const createGroup = asyncHandler(async (req, res) => {
+  const { name, description, students } = req.body
+  const group = await groupService.createGroup({
+    name,
+    description,
+    students: Array.isArray(students) ? students : [],
+    teacherUserId: req.user.id,
+  })
+  res.status(201).json(group)
+})
 
-async function createGroup(req, res) {
-  try {
-    const { name, description, students } = req.body
-    const group = await groupService.createGroup({
-      name,
-      description,
-      students: Array.isArray(students) ? students : [],
-      teacherUserId: req.user.id,
-    })
-    res.status(201).json(group)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const listGroups = asyncHandler(async (req, res) => {
+  const groups = await groupService.listGroups({
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.json(groups)
+})
 
-async function listGroups(req, res) {
-  try {
-    const groups = await groupService.listGroups({
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    })
-    res.json(groups)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const getGroup = asyncHandler(async (req, res) => {
+  const group = await groupService.getGroup({
+    groupId: req.params.id,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.json(group)
+})
 
-async function getGroup(req, res) {
-  try {
-    const { id } = req.params
-    const group = await groupService.getGroup({
-      groupId: id,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    })
-    res.json(group)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const archiveGroup = asyncHandler(async (req, res) => {
+  const group = await groupService.archiveGroup({
+    groupId: req.params.id,
+    role: req.user.role,
+    teacherUserId: req.user.id,
+  })
+  res.json(group)
+})
 
-async function archiveGroup(req, res) {
-  try {
-    const { id } = req.params
-    const group = await groupService.archiveGroup({
-      groupId: id,
-      role: req.user.role,
-      teacherUserId: req.user.id,
-    })
-    res.json(group)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const registerStudent = asyncHandler(async (req, res) => {
+  const { name, email, code } = req.body
+  const outcome = await enrollmentService.registerStudent({
+    groupId: req.params.id,
+    name,
+    email,
+    code,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.status(outcome.enrolled ? 201 : 200).json(outcome)
+})
 
 async function deleteGroup(req, res) {
   try {
@@ -98,75 +86,54 @@ async function registerStudent(req, res) {
   }
 }
 
-async function importCsv(req, res) {
-  try {
-    const { id } = req.params
-    const summary = await enrollmentService.importCsv({
-      groupId: id,
-      csvText: typeof req.body === "string" ? req.body : "",
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    })
-    res.json(summary)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+const listStudents = asyncHandler(async (req, res) => {
+  const students = await enrollmentService.listByGroup({
+    groupId: req.params.id,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.json(students)
+})
 
-async function listStudents(req, res) {
-  try {
-    const { id } = req.params
-    const students = await enrollmentService.listByGroup({
-      groupId: id,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    })
-    res.json(students)
-  } catch (err) {
-    handleError(res, err)
-  }
-}
-
-async function listProvisioningJobs(req, res) {
-  try {
-    const { id } = req.params
-    const enrollments = await prisma.enrollment.findMany({
-      where: { group_id: id },
-      select: { student: { select: { user_id: true } } },
-    })
-    const userIds = enrollments.map((e) => e.student.user_id)
-    const jobs = await prisma.userProvisioningJob.findMany({
-      where: { user_id: { in: userIds } },
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            student: { select: { code: true } },
-          },
-        },
+const listProvisioningJobs = asyncHandler(async (req, res) => {
+  const enrollments = await prisma.enrollment.findMany({
+    where: { group_id: req.params.id },
+    select: { student: { select: { id: true } } },
+  })
+  const userIds = enrollments.map((enrollment) => enrollment.student.id)
+  const jobs = await prisma.userProvisioningJob.findMany({
+    where: { user_id: { in: userIds } },
+    include: {
+      user: {
+        select: { name: true, email: true, code: true },
       },
-      orderBy: { created_at: "desc" },
-    })
-    res.json(
-      jobs.map((j) => ({
-        id: j.id,
-        username: j.username,
-        status: j.status,
-        retries: j.retries,
-        error: j.error,
-        student: {
-          name: j.user.name,
-          email: j.user.email,
-          code: j.user.student?.code ?? null,
-        },
-        createdAt: j.created_at,
-      })),
-    )
-  } catch (err) {
-    handleError(res, err)
-  }
-}
+    },
+    orderBy: { created_at: "desc" },
+  })
+  res.json(jobs.map((job) => ({
+    id: job.id,
+    username: job.username,
+    status: job.status,
+    retries: job.retries,
+    error: job.error,
+    student: {
+      name: job.user.name,
+      email: job.user.email,
+      code: job.user.code ?? null,
+    },
+    createdAt: job.created_at,
+  })))
+})
+
+const reconcileGroup = asyncHandler(async (req, res) => {
+  await groupService.getGroupAccess({
+    groupId: req.params.id,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  const outcome = await reconcileService.reconcileGroup({ groupId: req.params.id })
+  res.json(outcome)
+})
 
 module.exports = {
   createGroup,
@@ -178,4 +145,5 @@ module.exports = {
   importCsv,
   listStudents,
   listProvisioningJobs,
+  reconcileGroup,
 }

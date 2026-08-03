@@ -43,6 +43,7 @@ services:
   entorno:
     build:
       context: ./entorno
+    hostname: linuxlab
     mem_limit: 256m
     cpu_shares: 512
     cap_add:
@@ -55,6 +56,7 @@ services:
     volumes:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
+      - entorno_etc:/var/lib/linuxlab
     networks:
       - internal
     logging:
@@ -126,3 +128,4 @@ volumes:
   pgdata:
   ssh_keys:
   entorno_home:
+  entorno_etc:

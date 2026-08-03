@@ -1,12 +1,21 @@
 const sshClient = require("./sshClient")
 const prisma = require("../../prisma/client")
+const logger = require("../lib/logger")
 
-class ContainerServiceError extends Error {
-  constructor(message, code) {
-    super(message)
-    this.name = "ContainerServiceError"
-    this.code = code
-  }
+const ACCOUNT_STORE = "/var/lib/linuxlab"
+
+let snapshotQueue = Promise.resolve()
+
+async function snapshotAccounts() {
+  snapshotQueue = snapshotQueue.catch(() => {}).then(async () => {
+    const { code, stderr } = await sshClient.execCommand(
+      `sudo cp -p /etc/passwd /etc/group /etc/shadow /etc/gshadow ${ACCOUNT_STORE}/`,
+    )
+    if (code !== 0) {
+      logger.warn({ stderr, code }, "Account snapshot to volume failed")
+    }
+  })
+  return snapshotQueue
 }
 
 async function userExists(username) {
@@ -19,53 +28,85 @@ async function groupExists(groupName) {
   return code === 0
 }
 
+async function execChecked(command, description) {
+  const result = await sshClient.execCommand(command)
+  if (result.code !== 0) {
+    throw new Error(`${description}: ${result.stderr || `exit code ${result.code}`}`)
+  }
+  return result
+}
+
 async function createTeacher(teacherUsername) {
   const root = `/home/${teacherUsername}`
   const home = `${root}/home`
-  await sshClient.execCommand(
-    `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
-    `sudo mkdir -p ${home} ${root}/grupos && ` +
-    `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
-    `sudo chmod 751 ${root} ${root}/grupos && ` +
-    `sudo chmod 755 ${home}`,
-  )
+  try {
+    await execChecked(
+      `sudo useradd -M -d ${home} -s /bin/bash ${teacherUsername} && ` +
+      `sudo mkdir -p ${home} ${root}/grupos && ` +
+      `sudo chown ${teacherUsername}:${teacherUsername} ${root} ${root}/grupos ${home} && ` +
+      `sudo chmod 751 ${root} ${root}/grupos && ` +
+      `sudo chmod 750 ${home}`,
+      `createTeacher(${teacherUsername})`,
+    )
+  } finally {
+    await snapshotAccounts()
+  }
 }
 
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
-  await sshClient.execCommand(
-    `sudo groupadd ${groupName} && ` +
-    `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
-    `sudo mkdir -p ${path} && ` +
-    `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
-    `sudo chmod 2751 ${path}`,
-  )
+  try {
+    if (!(await groupExists(groupName))) {
+      await execChecked(`sudo groupadd ${groupName}`, `groupadd(${groupName})`)
+    }
+    await execChecked(
+      `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
+      `sudo mkdir -p ${path} && ` +
+      `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
+      `sudo chmod 2751 ${path}`,
+      `createGroup(${groupName})`,
+    )
+  } finally {
+    await snapshotAccounts()
+  }
 }
 
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
-  await sshClient.execCommand(
-    `sudo mkdir -p ${home} && ` +
-    `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
-    `sudo chown ${studentUsername}:${groupName} ${home} && ` +
-    `sudo chmod 2750 ${home}`,
-  )
+  try {
+    await execChecked(
+      `sudo mkdir -p ${home} && ` +
+      `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
+      `sudo chown ${studentUsername}:${groupName} ${home} && ` +
+      `sudo chmod 2750 ${home}`,
+      `createStudent(${studentUsername})`,
+    )
+  } finally {
+    await snapshotAccounts()
+  }
 }
 
 async function archiveGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
-  const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
-  for (const student of stdout.split("\n").filter(Boolean)) {
-    await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
+  try {
+    const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
+    for (const student of stdout.split("\n").filter(Boolean)) {
+      await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
+    }
+    await sshClient.execCommand(
+      `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
+    )
+  } finally {
+    await snapshotAccounts()
   }
-  await sshClient.execCommand(
-    `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
-  )
 }
 
 async function provisionTeacherAccount(linuxAccountId, username) {
   if (!await userExists(username)) {
     await createTeacher(username)
+  }
+  if (!(await userExists(username))) {
+    throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
   }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
@@ -76,6 +117,9 @@ async function provisionTeacherAccount(linuxAccountId, username) {
 async function provisionStudentAccount(linuxAccountId, username, teacherUsername, groupDir, groupName) {
   if (!await userExists(username)) {
     await createStudent(teacherUsername, groupDir, groupName, username)
+  }
+  if (!(await userExists(username))) {
+    throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
   }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
@@ -104,5 +148,4 @@ module.exports = {
   provisionStudentAccount,
   openPtySession,
   closePtySession,
-  ContainerServiceError,
 }

@@ -1,14 +1,8 @@
 const { Role } = require("@prisma/client")
 const prisma = require("../../prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
-const provisioningWorker = require("./provisioningWorker")
-
-class ServiceError extends Error {
-  constructor(message, status) {
-    super(message)
-    this.status = status
-  }
-}
+const { AppError } = require("../lib/errors")
+const { runInTransaction } = require("../lib/transaction")
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
@@ -24,9 +18,6 @@ const TEACHER_SELECT = {
       linux_provisioned: true,
     },
   },
-  teacher: {
-    select: { user_id: true },
-  },
 }
 
 function serializeTeacher(user) {
@@ -41,7 +32,7 @@ function serializeTeacher(user) {
 }
 
 async function findAll(filters = {}) {
-  const where = { role: Role.teacher, teacher: { isNot: null } }
+  const where = { role: Role.teacher }
 
   if (filters.search) {
     where.OR = [
@@ -61,38 +52,41 @@ async function findAll(filters = {}) {
   return users.map(serializeTeacher)
 }
 
-async function register({ name, email }) {
+async function register(args) {
+  if (!args.tx) return runInTransaction((tx) => register({ ...args, tx }))
+
+  const { name, email, tx } = args
+  const db = tx
   if (!name?.trim()) {
-    throw new ServiceError("El nombre del docente es requerido", 400)
+    throw new AppError("El nombre del docente es requerido", 400)
   }
   if (!email?.trim()) {
-    throw new ServiceError("El correo electrónico es requerido", 400)
+    throw new AppError("El correo electrónico es requerido", 400)
   }
 
   const normalizedEmail = email.toLowerCase().trim()
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
-    throw new ServiceError("El formato del correo electrónico no es válido", 400)
+    throw new AppError("El formato del correo electrónico no es válido", 400)
   }
 
   // if (!normalizedEmail.endsWith(INSTITUTIONAL_DOMAIN)) {
   //   throw new ServiceError("Solo se permiten correos institucionales @ufps.edu.co", 400)
   // }
 
-  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
+  const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
   if (existing) {
-    throw new ServiceError("El correo electrónico ya está registrado en la plataforma", 409)
+    throw new AppError("El correo electrónico ya está registrado en la plataforma", 409)
   }
 
   const linuxUsername = sanitizeUsername(normalizedEmail)
 
-  const user = await prisma.user.create({
+  const user = await db.user.create({
     data: {
       name: name.trim(),
       email: normalizedEmail,
       role: Role.teacher,
       active: true,
-      teacher: { create: {} },
       linuxAccount: {
         create: {
           linux_username: linuxUsername,
@@ -103,28 +97,28 @@ async function register({ name, email }) {
     select: TEACHER_SELECT,
   })
 
-  await prisma.userProvisioningJob.create({
+  await db.userProvisioningJob.create({
     data: {
       user_id: user.id,
       username: linuxUsername,
     },
   })
-  provisioningWorker.processPendingJobs()
-
   return serializeTeacher(user)
 }
 
-async function toggleActive(id) {
-  const user = await prisma.user.findUnique({
+async function toggleActive(id, tx) {
+  if (!tx) return runInTransaction((transaction) => toggleActive(id, transaction))
+
+  const user = await tx.user.findUnique({
     where: { id },
     select: { id: true, role: true, active: true },
   })
 
   if (!user || user.role !== Role.teacher) {
-    throw new ServiceError("Docente no encontrado", 404)
+    throw new AppError("Docente no encontrado", 404)
   }
 
-  const updated = await prisma.user.update({
+  const updated = await tx.user.update({
     where: { id },
     data: { active: !user.active },
     select: TEACHER_SELECT,
@@ -132,4 +126,4 @@ async function toggleActive(id) {
   return serializeTeacher(updated)
 }
 
-module.exports = { findAll, register, toggleActive, ServiceError, serializeTeacher }
+module.exports = { findAll, register, toggleActive, serializeTeacher }

@@ -7,5 +7,6 @@ const router = express.Router()
 router.get("/docentes", adminMiddleware, adminController.listTeachers)
 router.post("/docentes", adminMiddleware, adminController.registerTeacher)
 router.patch("/docentes/:id", adminMiddleware, adminController.toggleTeacherStatus)
+router.post("/linux-accounts/reconcile", adminMiddleware, adminController.reconcileAll)
 
 module.exports = router
