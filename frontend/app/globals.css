@@ -239,6 +239,24 @@
   color: var(--primary) !important;
 }
 
+/* Teclas del teclado dentro de una leccion: <kbd>F12</kbd>, <kbd>Ctrl + Alt + T</kbd>.
+   El chip toma el rojo de la marca; la caja (radio, padding, tipografia) la pone
+   el componente kbd en markdown.tsx. */
+.lesson-kbd {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  box-shadow: var(--neon-border-shadow);
+}
+
+/* Sobre el fondo oscuro el rojo de marca se apaga, asi que la tecla usa el mismo
+   rojo brillante del prompt de la terminal. */
+.dark .lesson-kbd {
+  border-color: rgba(255, 84, 112, 0.45);
+  background: rgba(255, 84, 112, 0.12);
+  color: #ff5470;
+}
+
 /* ============================================================
    PARTES DE UN COMANDO
    Un color por papel — nombre, opciones, argumentos — igual en el

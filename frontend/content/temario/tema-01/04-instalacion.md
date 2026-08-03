@@ -26,7 +26,7 @@ Con la ISO en mano, necesitas grabarla en un pendrive de mínimo 8 GB usando una
 
 ### 4. Configura el arranque
 
-Reinicia el computador con el pendrive conectado y entra al menú de arranque. Dependiendo del equipo, la tecla es **F12**, **F2**, **ESC** o **DEL**. Ahí seleccionas el pendrive como dispositivo de arranque principal.
+Reinicia el computador con el pendrive conectado y entra al menú de arranque. Dependiendo del equipo, la tecla es <kbd>F12</kbd>, <kbd>F2</kbd>, <kbd>ESC</kbd> o <kbd>DEL</kbd>. Ahí seleccionas el pendrive como dispositivo de arranque principal.
 
 ### 5. Prueba en modo Live antes de instalar
 

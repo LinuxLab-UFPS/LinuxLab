@@ -74,6 +74,14 @@ const components: Components = {
     }
     return <code className="block text-zinc-100 font-mono whitespace-pre">{children}</code>
   },
+  // Teclas del teclado: <kbd>F12</kbd>, <kbd>Ctrl + Alt + T</kbd>. El chip lleva
+  // el rojo de la plataforma; los colores y el halo viven en `.lesson-kbd`
+  // porque cambian entre tema claro y oscuro.
+  kbd: ({ children }) => (
+    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
+      {children}
+    </kbd>
+  ),
   hr: () => <hr className="my-6 border-border" />,
   table: ({ children }) => (
     <div className="overflow-x-auto my-4">

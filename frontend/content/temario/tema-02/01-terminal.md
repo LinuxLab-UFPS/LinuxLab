@@ -10,13 +10,13 @@ En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal:
 
 **Terminal de escritorio:** Es una aplicación dentro del entorno gráfico que abre una ventana con la línea de comandos. Según la distribución que uses, la encuentras buscando "terminal" en el menú de aplicaciones. En Ubuntu se llama GNOME Terminal, en KDE es Konsole. Todas hacen lo mismo.
 
-**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas **Ctrl + Alt + F2** hasta **F6**. Cada una es una sesión completamente separada. Para volver al entorno gráfico usas **Ctrl + Alt + F1** o **F7** dependiendo del sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
+**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas <kbd>Ctrl + Alt + F2</kbd> hasta <kbd>F6</kbd>. Cada una es una sesión completamente separada. Para volver al entorno gráfico usas <kbd>Ctrl + Alt + F1</kbd> o <kbd>F7</kbd> dependiendo del sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
 
 En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona igual que cualquiera de las dos anteriores.
 
 ## El shell
 
-Cuando escribes un comando en la terminal y presionas Enter, la terminal no lo ejecuta directamente. Lo pasa al **shell**, que es el programa encargado de interpretar lo que escribiste y decirle al sistema operativo qué tiene que hacer. Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
+Cuando escribes un comando en la terminal y presionas <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, que es el programa encargado de interpretar lo que escribiste y decirle al sistema operativo qué tiene que hacer. Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
 
 El shell es el puente entre tú y el kernel.
 
@@ -36,7 +36,7 @@ La elección del shell es mayormente personal. Un usuario cómodo con Bash puede
 
 Bash lleva décadas siendo el shell por defecto en Linux. Más allá de ejecutar comandos, tiene características que lo hacen especialmente útil:
 
-- **Historial de comandos:** Puedes navegar los comandos anteriores con las flechas del teclado sin tener que escribirlos de nuevo.
+- **Historial de comandos:** Puedes navegar los comandos anteriores con las flechas <kbd>↑</kbd> y <kbd>↓</kbd> sin tener que escribirlos de nuevo.
 - **Scripting:** Puedes guardar una secuencia de comandos en un archivo y ejecutarlos todos de una sola vez. Bash incluye estructuras como condicionales y funciones, lo que lo convierte en un lenguaje de programación básico.
 - **Alias:** Puedes crear nombres cortos para comandos largos que usas con frecuencia.
 - **Variables:** Permiten guardar información que puedes reutilizar dentro de la sesión o en scripts.
