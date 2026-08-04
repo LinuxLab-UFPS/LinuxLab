@@ -25,14 +25,10 @@ import {
   getGroup,
   getGroupProgress,
   listGroupActivities,
-  listProvisioningJobs,
+  listStudents,
 } from "@/lib/features/teacher/data"
-import type {
-  Activity,
-  Group,
-  GroupProgressSummary,
-  ProvisioningJobSummary,
-} from "@/lib/features/teacher/types"
+import type { Activity, Group, GroupProgressSummary } from "@/lib/features/teacher/types"
+import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
 const EMPTY_PROGRESS: GroupProgressSummary = {
   enrolledCount: 0,
@@ -52,7 +48,7 @@ function GroupDetailContent() {
   const [group, setGroup] = useState<Group | null>(null)
   const [progress, setProgress] = useState<GroupProgressSummary>(EMPTY_PROGRESS)
   const [activities, setActivities] = useState<Activity[]>([])
-  const [provisioningJobs, setProvisioningJobs] = useState<ProvisioningJobSummary[]>([])
+  const [students, setStudents] = useState<EnrollmentStudent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -62,27 +58,27 @@ function GroupDetailContent() {
       getGroup(id),
       getGroupProgress(id),
       listGroupActivities(id),
-      listProvisioningJobs(id),
+      listStudents(id),
     ])
-      .then(([g, prog, acts, jobs]) => {
+      .then(([g, prog, acts, enrolled]) => {
         setGroup(g)
         setProgress(prog)
         setActivities(acts)
-        setProvisioningJobs(jobs)
+        setStudents(enrolled)
       })
       .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar el curso"))
       .finally(() => setLoading(false))
   }, [id])
 
+  // Las cuentas se crean en segundo plano: mientras alguna falte, se refresca.
   useEffect(() => {
-    if (!id || !provisioningJobs.length) return
-    const hasPending = provisioningJobs.some((j) => j.status !== "completed" && j.status !== "failed")
-    if (!hasPending) return
+    if (!id || students.length === 0) return
+    if (students.every((s) => s.linuxProvisioned)) return
     const interval = setInterval(() => {
-      listProvisioningJobs(id).then(setProvisioningJobs).catch(() => {})
+      listStudents(id).then(setStudents).catch(() => {})
     }, 5000)
     return () => clearInterval(interval)
-  }, [id, provisioningJobs.length])
+  }, [id, students])
 
   if (loading) {
     return (
@@ -160,9 +156,13 @@ function GroupDetailContent() {
       />
 
       {tab === "estudiantes" && (
-        <div className="mt-6 space-y-6">
-          <GroupStudents groupId={id} summary={progress} archived={group.archived} />
-          {provisioningJobs.length > 0 && <ProvisioningPanel jobs={provisioningJobs} />}
+        <div className="mt-6">
+          <GroupStudents
+            groupId={id}
+            students={students}
+            summary={progress}
+            archived={group.archived}
+          />
         </div>
       )}
 
@@ -172,83 +172,6 @@ function GroupDetailContent() {
           <GroupActivities activities={activities} archived={group.archived} />
         </div>
       )}
-    </div>
-  )
-}
-
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; icon: React.ComponentType<{ className?: string }>; style: string }
-> = {
-  completed: {
-    label: "Listo",
-    icon: CheckCircle2,
-    style: "text-success bg-success/10 border-success/30",
-  },
-  processing: {
-    label: "Creando...",
-    icon: Clock,
-    style: "text-amber-500 bg-amber-500/10 border-amber-500/30",
-  },
-  pending: {
-    label: "En cola",
-    icon: CircleDashed,
-    style: "text-muted-foreground bg-secondary border-table-line",
-  },
-  failed: {
-    label: "Error",
-    icon: AlertCircle,
-    style: "text-danger bg-danger/10 border-danger/30",
-  },
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_CONFIG[status]
-  if (!cfg) return null
-  const Icon = cfg.icon
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-        cfg.style,
-      )}
-    >
-      <Icon className="h-3 w-3" />
-      {cfg.label}
-    </span>
-  )
-}
-
-/** Estado del aprovisionamiento de cuentas Linux, solo mientras haya trabajos. */
-function ProvisioningPanel({ jobs }: { jobs: ProvisioningJobSummary[] }) {
-  const completed = jobs.filter((j) => j.status === "completed").length
-  const failed = jobs.filter((j) => j.status === "failed").length
-  const pending = jobs.filter((j) => j.status !== "completed" && j.status !== "failed").length
-
-  return (
-    <div className="rounded-xl border border-table-line bg-table-surface">
-      <div className="flex items-center justify-between gap-4 border-b border-table-line px-5 py-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Cuentas Linux
-        </h2>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="text-success">{completed} listas</span>
-          {pending > 0 && <span className="text-amber-500">{pending} pendientes</span>}
-          {failed > 0 && <span className="text-danger">{failed} con error</span>}
-        </div>
-      </div>
-      <div className="max-h-56 overflow-y-auto">
-        {jobs.slice(0, 50).map((job) => (
-          <div
-            key={job.id}
-            className="flex items-center justify-between gap-4 border-b border-table-line px-5 py-2.5 last:border-0"
-          >
-            <span className="text-sm text-foreground">{job.student.name}</span>
-            <span className="font-mono text-xs text-muted-foreground">{job.username || "—"}</span>
-            <StatusBadge status={job.status} />
-          </div>
-        ))}
-      </div>
     </div>
   )
 }

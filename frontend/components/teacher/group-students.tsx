@@ -25,15 +25,19 @@ import type { EnrollmentStudent } from "@/lib/features/auth/types"
  */
 export function GroupStudents({
   groupId,
+  students,
   summary,
   archived,
 }: {
   groupId: string
+  /** Las matrículas del curso, que son la fuente de la lista. */
+  students: EnrollmentStudent[]
+  /** Avance por estudiante, cuando el backend lo expone. */
   summary: GroupProgressSummary
   /** Un curso desactivado es solo histórico: no se le agregan estudiantes. */
   archived?: boolean
 }) {
-  const [rows, setRows] = useState(summary.rows)
+  const [rows, setRows] = useState<EnrollmentStudent[]>(students)
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -44,17 +48,7 @@ export function GroupStudents({
     setError(null)
     try {
       const created = await addStudent(groupId, student)
-      setRows((prev) => [
-        ...prev,
-        {
-          student: created,
-          topicStatus: {},
-          progress: 0,
-          lastActivity: "Sin conexión",
-          activitiesDone: 0,
-          activitiesTotal: rows[0]?.activitiesTotal ?? 0,
-        },
-      ])
+      setRows((prev) => [...prev, created])
       setAdding(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
@@ -63,12 +57,13 @@ export function GroupStudents({
     }
   }
 
+  const progressOf = new Map(summary.rows.map((row) => [row.student.id, row]))
   const q = query.trim().toLowerCase()
   const visible = rows.filter(
-    (row) =>
+    (student) =>
       !q ||
-      row.student.name.toLowerCase().includes(q) ||
-      row.student.email.toLowerCase().includes(q),
+      student.name.toLowerCase().includes(q) ||
+      student.email.toLowerCase().includes(q),
   )
 
   return (
@@ -113,42 +108,50 @@ export function GroupStudents({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((row) => (
-                <TableRow key={row.student.id}>
-                  <TableCell>
-                    <span className="block text-sm font-medium text-foreground">
-                      {row.student.name}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {row.student.email}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {row.student.linuxUsername ? (
-                      <span className="font-mono text-sm text-sky-500">
-                        {row.student.linuxUsername}
+              {visible.map((student) => {
+                const progress = progressOf.get(student.id)
+                return (
+                  <TableRow key={student.id}>
+                    <TableCell>
+                      <span className="block text-sm font-medium text-foreground">
+                        {student.name}
                       </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Sin cuenta</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <NeonProgress value={row.progress} className="w-28" />
-                    <span className="mt-1 block font-mono text-xs text-primary">
-                      {row.progress}%
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-amber-500">
-                    {row.activitiesDone ?? 0}/{row.activitiesTotal ?? 0}
-                  </TableCell>
-                  <TableCell className="font-mono text-sm text-success">
-                    {row.averageScore?.toFixed(1) ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {row.lastActivity}
-                  </TableCell>
-                </TableRow>
-              ))}
+                      <span className="block text-xs text-muted-foreground">{student.email}</span>
+                    </TableCell>
+                    <TableCell>
+                      {student.linuxUsername ? (
+                        <>
+                          <span className="block font-mono text-sm text-sky-500">
+                            {student.linuxUsername}
+                          </span>
+                          {!student.linuxProvisioned && (
+                            <span className="mt-0.5 block text-xs text-amber-500">
+                              Creando cuenta...
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">Sin cuenta</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <NeonProgress value={progress?.progress ?? 0} className="w-28" />
+                      <span className="mt-1 block font-mono text-xs text-primary">
+                        {progress?.progress ?? 0}%
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-amber-500">
+                      {progress?.activitiesDone ?? 0}/{progress?.activitiesTotal ?? 0}
+                    </TableCell>
+                    <TableCell className="font-mono text-sm text-success">
+                      {progress?.averageScore?.toFixed(1) ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {progress?.lastActivity ?? "Sin conexión"}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
 

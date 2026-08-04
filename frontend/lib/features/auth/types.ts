@@ -25,6 +25,8 @@ export interface EnrollmentStudent {
   code: string
   /** Cuenta del sistema creada al aprovisionar; null mientras no exista. */
   linuxUsername?: string | null
+  /** Si esa cuenta ya existe dentro del entorno. */
+  linuxProvisioned?: boolean
 }
 
 export interface Session {
