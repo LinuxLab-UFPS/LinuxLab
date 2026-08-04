@@ -5,6 +5,7 @@ const adminController = require("../controllers/adminController")
 const router = express.Router()
 
 router.get("/docentes", adminMiddleware, adminController.listTeachers)
+router.get("/docentes/provisioning-jobs", adminMiddleware, adminController.listTeacherProvisioningJobs)
 router.post("/docentes", adminMiddleware, adminController.registerTeacher)
 router.patch("/docentes/:id", adminMiddleware, adminController.toggleTeacherStatus)
 router.post("/linux-accounts/reconcile", adminMiddleware, adminController.reconcileAll)

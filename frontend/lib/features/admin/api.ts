@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api/client"
-import type { TeacherListItem } from "./types"
+import type { TeacherListItem, TeacherProvisioningJobSummary } from "./types"
 
 export interface TeacherFilters {
   search?: string
@@ -29,4 +29,7 @@ export const adminApi = {
     apiFetch<TeacherListItem>(`/api/admin/docentes/${id}`, {
       method: "PATCH",
     }),
+
+  listTeacherProvisioningJobs: () =>
+    apiFetch<TeacherProvisioningJobSummary[]>("/api/admin/docentes/provisioning-jobs"),
 }

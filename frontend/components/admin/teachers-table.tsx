@@ -9,6 +9,7 @@ import { useTeachers } from "@/lib/features/admin/hooks"
 import { RegisterTeacherDialog } from "./register-teacher-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import { Input } from "@/components/ui/input"
+import { StatusBadge } from "@/components/shared/status-badge"
 import {
   Select,
   SelectContent,
@@ -60,7 +61,16 @@ export function TeachersTable() {
     [debouncedSearch, statusFilter],
   )
 
-  const { teachers, loading, submitting, register, toggleStatus } = useTeachers(filters)
+  const { teachers, loading, submitting, register, toggleStatus, provisioningJobs } = useTeachers(filters)
+
+  const jobByEmail = useMemo(() => {
+    const map = new Map<string, (typeof provisioningJobs)[number]>()
+    for (const job of provisioningJobs) {
+      const key = job.teacher.email.toLowerCase()
+      if (!map.has(key)) map.set(key, job)
+    }
+    return map
+  }, [provisioningJobs])
 
   const totalPages = Math.max(1, Math.ceil(teachers.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -163,59 +173,70 @@ export function TeachersTable() {
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Docente</TableHead>
                   <TableHead className="w-48">Cuenta Linux</TableHead>
+                  <TableHead className="w-36">Estado cuenta</TableHead>
                   <TableHead className="w-36">Creado</TableHead>
                   <TableHead className="w-32">Estado</TableHead>
                   <TableHead className="w-36">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pageRows.map((teacher) => (
-                  <TableRow key={teacher.id}>
-                    <TableCell>
-                      <span className="block text-sm font-medium text-foreground">
-                        {teacher.name}
-                      </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {teacher.email}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {teacher.linuxUsername ? (
-                        <span className="inline-flex items-center gap-1.5 font-mono text-sm text-sky-500">
-                          <Terminal className="h-3.5 w-3.5 shrink-0" />
-                          {teacher.linuxUsername}
+                {pageRows.map((teacher) => {
+                  const job = jobByEmail.get(teacher.email.toLowerCase())
+                  return (
+                    <TableRow key={teacher.id}>
+                      <TableCell>
+                        <span className="block text-sm font-medium text-foreground">
+                          {teacher.name}
                         </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Sin cuenta</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm text-muted-foreground">
-                      {teacher.createdAt
-                        ? new Date(teacher.createdAt).toLocaleDateString("es-CO")
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
-                          teacher.active
-                            ? "border-success/30 bg-success/10 text-success"
-                            : "border-table-line bg-secondary text-muted-foreground",
+                        <span className="block text-xs text-muted-foreground">
+                          {teacher.email}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {teacher.linuxUsername ? (
+                          <span className="inline-flex items-center gap-1.5 font-mono text-sm text-sky-500">
+                            <Terminal className="h-3.5 w-3.5 shrink-0" />
+                            {teacher.linuxUsername}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Sin cuenta</span>
                         )}
-                      >
-                        {teacher.active ? "Activo" : "Inactivo"}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <TableActionButton
-                        tone={teacher.active ? "amber" : "emerald"}
-                        onClick={() => handleToggle(teacher)}
-                      >
-                        {teacher.active ? "Desactivar" : "Activar"}
-                      </TableActionButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell>
+                        {job ? (
+                          <StatusBadge status={job.status} />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm text-muted-foreground">
+                        {teacher.createdAt
+                          ? new Date(teacher.createdAt).toLocaleDateString("es-CO")
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+                            teacher.active
+                              ? "border-success/30 bg-success/10 text-success"
+                              : "border-table-line bg-secondary text-muted-foreground",
+                          )}
+                        >
+                          {teacher.active ? "Activo" : "Inactivo"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <TableActionButton
+                          tone={teacher.active ? "amber" : "emerald"}
+                          onClick={() => handleToggle(teacher)}
+                        >
+                          {teacher.active ? "Desactivar" : "Activar"}
+                        </TableActionButton>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
 

@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Trash2, Upload, UserPlus, CheckCircle2, Clock, AlertCircle, CircleDashed, RefreshCw } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Trash2, Upload, UserPlus, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -15,9 +14,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { StatusBadge } from "@/components/shared/status-badge"
 
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
-import type { ProvisioningJobSummary, ProvisioningStatus } from "@/lib/features/teacher/types"
+import type { ProvisioningJobSummary } from "@/lib/features/teacher/types"
 
 interface StudentManagerProps {
   students: EnrollmentStudent[]
@@ -25,24 +25,6 @@ interface StudentManagerProps {
   onAddStudent: (student: Omit<EnrollmentStudent, "id">) => void
   onRemoveStudent: (id: string) => void
   onUploadCSV: (file: File) => void
-}
-
-const STATUS_CONFIG: Record<ProvisioningStatus, { label: string; icon: React.ComponentType<{ className?: string }>; style: string }> = {
-  completed: { label: "Listo", icon: CheckCircle2, style: "text-green-600 bg-green-500/10 border-green-500/20" },
-  processing: { label: "Creando...", icon: Clock, style: "text-amber-600 bg-amber-500/10 border-amber-500/20" },
-  pending: { label: "En cola", icon: CircleDashed, style: "text-muted-foreground bg-secondary border-border" },
-  failed: { label: "Error", icon: AlertCircle, style: "text-red-600 bg-red-500/10 border-red-500/20" },
-}
-
-function StatusBadge({ status }: { status: ProvisioningStatus }) {
-  const cfg = STATUS_CONFIG[status]
-  const Icon = cfg.icon
-  return (
-    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border", cfg.style)}>
-      <Icon className="w-3 h-3" />
-      {cfg.label}
-    </span>
-  )
 }
 
 export function StudentManager({
