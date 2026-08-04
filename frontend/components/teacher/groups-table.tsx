@@ -89,35 +89,34 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
 
   return (
     <div>
-      <StatTabs
-        className="mb-4"
-        value={tab}
-        onChange={(v) => {
-          setTab(v as Tab)
-          setPage(1)
-        }}
-        tabs={[
-          {
-            value: "activos",
-            label: "Activos",
-            statLabel: "Cursos activos",
-            count: counts.activos,
-            icon: BookOpen,
-            tone: "primary",
-          },
-          {
-            value: "desactivados",
-            label: "Inactivos",
-            statLabel: "Cursos inactivos",
-            count: counts.desactivados,
-            icon: BookOpen,
-            tone: "neutral",
-          },
-        ]}
-      />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <StatTabs
+          value={tab}
+          onChange={(v) => {
+            setTab(v as Tab)
+            setPage(1)
+          }}
+          tabs={[
+            {
+              value: "activos",
+              label: "Activos",
+              statLabel: "Cursos activos",
+              count: counts.activos,
+              icon: BookOpen,
+              tone: "primary",
+            },
+            {
+              value: "desactivados",
+              label: "Inactivos",
+              statLabel: "Cursos inactivos",
+              count: counts.desactivados,
+              icon: BookOpen,
+              tone: "neutral",
+            },
+          ]}
+        />
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
+        <div className="relative w-full max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar curso por nombre..."
@@ -130,7 +129,7 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
           />
         </div>
 
-        <ActionButton tone="primary" href="/create-group">
+        <ActionButton tone="primary" href="/create-group" className="ml-auto">
           <Plus className="h-4 w-4" />
           Crear nuevo curso
         </ActionButton>
@@ -185,7 +184,7 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">
-                    <TableActionButton tone="neutral" href={`/groups/${group.id}`}>
+                    <TableActionButton tone="sky" href={`/groups/${group.id}`}>
                       Ver
                     </TableActionButton>
                     {/* Un curso desactivado ya solo se consulta. */}

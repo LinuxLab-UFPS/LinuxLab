@@ -13,6 +13,8 @@ import {
   CircleDashed,
   Target,
   Users,
+  Plus,
+  Search,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,8 +22,11 @@ import { RoleGuard } from "@/components/shared/role-guard"
 import { StatTabs } from "@/components/shared/stat-tabs"
 import { ActionButton } from "@/components/shared/action-button"
 import { GroupStudents } from "@/components/teacher/group-students"
+import { AddStudentDialog } from "@/components/teacher/add-student-dialog"
+import { Input } from "@/components/ui/input"
 import { GroupActivities } from "@/components/teacher/group-activities"
 import {
+  addStudent,
   getGroup,
   getGroupProgress,
   listGroupActivities,
@@ -49,6 +54,10 @@ function GroupDetailContent() {
   const [progress, setProgress] = useState<GroupProgressSummary>(EMPTY_PROGRESS)
   const [activities, setActivities] = useState<Activity[]>([])
   const [students, setStudents] = useState<EnrollmentStudent[]>([])
+  const [query, setQuery] = useState("")
+  const [adding, setAdding] = useState(false)
+  const [addBusy, setAddBusy] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -105,6 +114,45 @@ function GroupDetailContent() {
     )
   }
 
+  const submitStudent = async (student: Omit<EnrollmentStudent, "id">) => {
+    setAddBusy(true)
+    setAddError(null)
+    try {
+      const created = await addStudent(id, student)
+      setStudents((prev) => [...prev, created])
+      setAdding(false)
+    } catch (e) {
+      setAddError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
+    } finally {
+      setAddBusy(false)
+    }
+  }
+
+  const tabs = (
+    <StatTabs
+      value={tab}
+      onChange={(v) => setTab(v as Tab)}
+      tabs={[
+        {
+          value: "estudiantes",
+          label: "Estudiantes",
+          statLabel: "Estudiantes totales",
+          count: group.studentCount,
+          icon: Users,
+          tone: "primary",
+        },
+        {
+          value: "actividades",
+          label: "Actividades",
+          statLabel: "Actividades totales",
+          count: group.activityCount,
+          icon: Target,
+          tone: "amber",
+        },
+      ]}
+    />
+  )
+
   return (
     <div data-section="cursos" className="mx-auto max-w-6xl px-6 py-8">
       <ActionButton tone="neutral" href="/home">
@@ -132,46 +180,65 @@ function GroupDetailContent() {
         )}
       </div>
 
-      <StatTabs
-        value={tab}
-        onChange={(v) => setTab(v as Tab)}
-        tabs={[
-          {
-            value: "estudiantes",
-            label: "Estudiantes",
-            statLabel: "Estudiantes totales",
-            count: group.studentCount,
-            icon: Users,
-            tone: "primary",
-          },
-          {
-            value: "actividades",
-            label: "Actividades",
-            statLabel: "Actividades totales",
-            count: group.activityCount,
-            icon: Target,
-            tone: "amber",
-          },
-        ]}
-      />
+      {/* Las pestañas viven aquí y no dentro de cada tabla: así no se
+          desmontan al cambiar de una a otra y la transición se ve. */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        {tabs}
 
-      {tab === "estudiantes" && (
-        <div className="mt-6">
-          <GroupStudents
-            groupId={id}
-            students={students}
-            summary={progress}
-            archived={group.archived}
+        <div className="relative w-full max-w-sm flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={
+              tab === "estudiantes"
+                ? "Buscar estudiante por nombre o correo..."
+                : "Buscar actividad por nombre..."
+            }
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="border-table-line pl-9"
           />
         </div>
-      )}
 
-      {/* La sección de actividades va en ámbar: paginación y controles la siguen. */}
-      {tab === "actividades" && (
-        <div data-section="actividades" className="mt-6">
-          <GroupActivities activities={activities} archived={group.archived} />
+        {!group.archived &&
+          (tab === "estudiantes" ? (
+            <ActionButton
+              tone="primary"
+              className="ml-auto"
+              onClick={() => {
+                setAddError(null)
+                setAdding(true)
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              Agregar estudiante
+            </ActionButton>
+          ) : (
+            <ActionButton tone="amber" className="ml-auto">
+              <Plus className="h-4 w-4" />
+              Agregar actividad
+            </ActionButton>
+          ))}
+      </div>
+
+      {tab === "estudiantes" ? (
+        <GroupStudents students={students} summary={progress} query={query} />
+      ) : (
+        <div data-section="actividades">
+          <GroupActivities activities={activities} query={query} />
         </div>
       )}
+
+      <AddStudentDialog
+        open={adding}
+        busy={addBusy}
+        error={addError}
+        onSubmit={submitStudent}
+        onOpenChange={(open) => {
+          setAdding(open)
+          if (!open) setAddError(null)
+        }}
+      />
+
     </div>
   )
 }

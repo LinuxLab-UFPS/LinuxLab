@@ -1,8 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { FileCode, Plus, Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { FileCode } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -12,7 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { TablePanel, TableEmptyState, TablePagination } from "@/components/shared/data-table"
-import { ActionButton } from "@/components/shared/action-button"
 import { cn } from "@/lib/utils"
 import { getTopic } from "@/lib/features/shared/temario"
 import type { Activity, Difficulty } from "@/lib/features/teacher/types"
@@ -31,13 +29,11 @@ const DIFFICULTY: Record<Difficulty, { label: string; className: string }> = {
 /** Las actividades habilitadas en el curso. */
 export function GroupActivities({
   activities,
-  archived,
+  query,
 }: {
   activities: Activity[]
-  /** Un curso desactivado es solo histórico: no se le agregan actividades. */
-  archived?: boolean
+  query: string
 }) {
-  const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
 
   const q = query.trim().toLowerCase()
@@ -48,28 +44,6 @@ export function GroupActivities({
 
   return (
     <section>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar actividad por nombre..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setPage(1)
-            }}
-            className="border-table-line pl-9"
-          />
-        </div>
-
-        {!archived && (
-          <ActionButton tone="amber">
-            <Plus className="h-4 w-4" />
-            Agregar actividad
-          </ActionButton>
-        )}
-      </div>
-
       <TablePanel>
         <Table>
           <TableHeader>

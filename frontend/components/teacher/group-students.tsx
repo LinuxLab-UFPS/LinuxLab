@@ -1,7 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Search } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -10,56 +8,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
 import { TablePanel, TableEmptyState } from "@/components/shared/data-table"
-import { ActionButton } from "@/components/shared/action-button"
 import { NeonProgress } from "@/components/shared/neon-progress"
-import { AddStudentDialog } from "@/components/teacher/add-student-dialog"
-import { addStudent } from "@/lib/features/teacher/data"
 import type { GroupProgressSummary } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
 /**
  * Los estudiantes del curso con su avance. La tabla scrollea por dentro para que
- * la página no crezca a lo alto por muchos inscritos que haya.
+ * la pagina no crezca a lo alto por muchos inscritos que haya.
  */
 export function GroupStudents({
-  groupId,
   students,
   summary,
-  archived,
+  query,
 }: {
-  groupId: string
-  /** Las matrículas del curso, que son la fuente de la lista. */
   students: EnrollmentStudent[]
-  /** Avance por estudiante, cuando el backend lo expone. */
   summary: GroupProgressSummary
-  /** Un curso desactivado es solo histórico: no se le agregan estudiantes. */
-  archived?: boolean
+  query: string
 }) {
-  const [rows, setRows] = useState<EnrollmentStudent[]>(students)
-  const [query, setQuery] = useState("")
-  const [adding, setAdding] = useState(false)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const submit = async (student: Omit<EnrollmentStudent, "id">) => {
-    setBusy(true)
-    setError(null)
-    try {
-      const created = await addStudent(groupId, student)
-      setRows((prev) => [...prev, created])
-      setAdding(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
-    } finally {
-      setBusy(false)
-    }
-  }
-
   const progressOf = new Map(summary.rows.map((row) => [row.student.id, row]))
   const q = query.trim().toLowerCase()
-  const visible = rows.filter(
+  const visible = students.filter(
     (student) =>
       !q ||
       student.name.toLowerCase().includes(q) ||
@@ -68,31 +37,6 @@ export function GroupStudents({
 
   return (
     <section>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar estudiante por nombre o correo..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="border-table-line pl-9"
-          />
-        </div>
-
-        {!archived && (
-          <ActionButton
-            tone="primary"
-            onClick={() => {
-              setError(null)
-              setAdding(true)
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Agregar estudiante
-          </ActionButton>
-        )}
-      </div>
-
       <TablePanel>
         {/* El scroll vive dentro del panel y el encabezado se queda fijo arriba. */}
         <div className="max-h-[60vh] overflow-y-auto">
@@ -157,7 +101,7 @@ export function GroupStudents({
 
           {visible.length === 0 && (
             <TableEmptyState>
-              {rows.length === 0
+              {students.length === 0
                 ? "No hay estudiantes inscritos en este curso."
                 : "Ningún estudiante coincide con la búsqueda."}
             </TableEmptyState>
@@ -165,16 +109,6 @@ export function GroupStudents({
         </div>
       </TablePanel>
 
-      <AddStudentDialog
-        open={adding}
-        busy={busy}
-        error={error}
-        onSubmit={submit}
-        onOpenChange={(open) => {
-          setAdding(open)
-          if (!open) setError(null)
-        }}
-      />
     </section>
   )
 }
