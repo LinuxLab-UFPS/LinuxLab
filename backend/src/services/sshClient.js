@@ -124,6 +124,13 @@ async function execCommand(command, options = {}) {
       })
       stream.on("close", (code) => finish(null, { code, stdout: stdout.trim(), stderr: stderr.trim() }))
       stream.on("error", (e) => finish(e))
+
+      // Lo que entra por stdin nunca pasa por la shell: es la via para mandarle
+      // datos a un comando sin interpolarlos en la linea de comandos.
+      if (options.stdin !== undefined) {
+        stream.write(options.stdin)
+        stream.end()
+      }
       _activeAborts.add(abort)
       timer = setTimeout(() => {
         abort(new Error(`SSH command timed out after ${timeoutMs}ms: ${command.slice(0, 120)}`))

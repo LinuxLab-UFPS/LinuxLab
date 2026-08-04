@@ -10,6 +10,7 @@ const adminRoutes = require('./routes/admin');
 const groupRoutes = require('./routes/groups');
 const preferencesRoutes = require('./routes/preferences');
 const terminalRoutes = require('./routes/terminal');
+const activityRoutes = require('./routes/activities');
 const logger = require('./lib/logger');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -37,6 +38,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/terminal', terminalRoutes);
+app.use('/api/activities', activityRoutes);
 
 app.use(errorHandler);
 
