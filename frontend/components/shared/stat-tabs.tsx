@@ -146,7 +146,7 @@ export function StatTabs({
     <div
       role="tablist"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-xl bg-foreground/[0.08] p-1.5 dark:bg-foreground/[0.16]",
+        "inline-flex items-center gap-1.5 rounded-xl bg-foreground/[0.08] p-1.5",
         className,
       )}
     >
