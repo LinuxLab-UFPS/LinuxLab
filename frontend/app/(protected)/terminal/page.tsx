@@ -37,12 +37,22 @@ function TerminalContent() {
     setResetKey((k) => k + 1)
   }, [])
 
+  // Los paneles laterales (cheat sheet y actividades) son material de estudiante:
+  // el docente entra a su propia cuenta y solo necesita la consola.
+  const isStudent = user?.role === "student"
+
   return (
     <div className="flex h-full items-center justify-center px-6">
       {/* Fixed height row: the side panels always add up to this height (two
           boxes, no scroll), so switching to the activity detail never shifts
           the terminal. */}
-      <div className="flex h-[38rem] w-full max-w-7xl gap-6">
+      <div
+        className={
+          isStudent
+            ? "flex h-[38rem] w-full max-w-7xl gap-6"
+            : "flex h-[38rem] w-full max-w-5xl gap-6"
+        }
+      >
         <TerminalFrame
           className="h-full flex-1"
           toolbar={
@@ -57,9 +67,11 @@ function TerminalContent() {
         >
           <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
         </TerminalFrame>
-        <div className="flex h-full w-[26rem] shrink-0 flex-col gap-4">
-          <TerminalSidePanels />
-        </div>
+        {isStudent && (
+          <div className="flex h-full w-[26rem] shrink-0 flex-col gap-4">
+            <TerminalSidePanels />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -67,7 +79,7 @@ function TerminalContent() {
 
 export default function TerminalPage() {
   return (
-    <RoleGuard roles={["student", "admin"]}>
+    <RoleGuard roles={["student", "teacher", "admin"]}>
       <TerminalContent />
     </RoleGuard>
   )

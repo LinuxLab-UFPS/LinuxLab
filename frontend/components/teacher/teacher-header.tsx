@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Database, LogOut } from "lucide-react"
+import { BookOpen, Database, LogOut, TerminalSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -19,6 +19,13 @@ import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 
 const NAV = [
+  {
+    label: "Terminal",
+    href: "/terminal",
+    icon: TerminalSquare,
+    hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
+    active: "bg-emerald-500/15 text-emerald-400",
+  },
   {
     label: "Cursos",
     href: "/home",
