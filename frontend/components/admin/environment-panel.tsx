@@ -34,6 +34,7 @@ interface Snapshot {
   jobs: {
     users: Record<string, number>
     groups: Record<string, number>
+    teardown: Record<string, number>
   }
 }
 
@@ -128,7 +129,8 @@ export function EnvironmentPanel() {
 
   const { accounts, courses, jobs } = data
   const brokenCourses = courses.filter((c) => !c.hasUnixGroup || !c.hasDir)
-  const failedJobs = (jobs.users.failed ?? 0) + (jobs.groups.failed ?? 0)
+  const failedJobs =
+    (jobs.users.failed ?? 0) + (jobs.groups.failed ?? 0) + (jobs.teardown.failed ?? 0)
 
   return (
     <div className="space-y-6">
@@ -167,8 +169,8 @@ export function EnvironmentPanel() {
             run(
               "requeue",
               "/api/admin/environment/requeue",
-              (r: { users: number; groups: number }) =>
-                `${r.users} trabajos de cuenta y ${r.groups} de curso reencolados`,
+              (r: { users: number; groups: number; teardowns: number }) =>
+                `${r.users} trabajos de cuenta, ${r.groups} de curso y ${r.teardowns} de teardown reencolados`,
             )
           }
         >

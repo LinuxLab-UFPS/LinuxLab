@@ -21,7 +21,7 @@ const ACTION: Record<
   deactivate: {
     icon: Archive,
     message:
-      "Se borrará el entorno de la terminal y el progreso. Los estudiantes perderán acceso al curso.",
+      "Se eliminará el entorno de la terminal (usuarios y carpeta del grupo) y los estudiantes perderán acceso al curso. El histórico del curso se conserva.",
     confirm: "Sí, desactivar",
     pending: "Desactivando...",
     box: "bg-amber-500/10 text-amber-500",

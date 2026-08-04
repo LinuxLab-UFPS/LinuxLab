@@ -86,9 +86,10 @@ async function snapshot() {
     })
   }
 
-  const [userJobs, groupJobs] = await Promise.all([
+  const [userJobs, groupJobs, teardownJobs] = await Promise.all([
     prisma.userProvisioningJob.groupBy({ by: ["status"], _count: true }),
     prisma.groupProvisioningJob.groupBy({ by: ["status"], _count: true }),
+    prisma.groupTeardownJob.groupBy({ by: ["status"], _count: true }),
   ])
 
   const countsOf = (rows) =>
@@ -102,13 +103,17 @@ async function snapshot() {
       orphans,
     },
     courses,
-    jobs: { users: countsOf(userJobs), groups: countsOf(groupJobs) },
+    jobs: {
+      users: countsOf(userJobs),
+      groups: countsOf(groupJobs),
+      teardown: countsOf(teardownJobs),
+    },
   }
 }
 
 /** Devuelve a "pendiente" los trabajos que agotaron sus reintentos. */
 async function requeueFailed() {
-  const [users, groups] = await Promise.all([
+  const [users, groups, teardowns] = await Promise.all([
     prisma.userProvisioningJob.updateMany({
       where: { status: "failed" },
       data: { status: "pending", retries: 0, error: null },
@@ -117,8 +122,12 @@ async function requeueFailed() {
       where: { status: "failed" },
       data: { status: "pending", retries: 0, error: null },
     }),
+    prisma.groupTeardownJob.updateMany({
+      where: { status: "failed" },
+      data: { status: "pending", retries: 0, error: null },
+    }),
   ])
-  return { users: users.count, groups: groups.count }
+  return { users: users.count, groups: groups.count, teardowns: teardowns.count }
 }
 
 /**

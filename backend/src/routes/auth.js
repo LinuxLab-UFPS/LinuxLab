@@ -4,6 +4,7 @@ const { getAuth } = require("firebase-admin/auth")
 const firebaseApp = require("../config/firebase-admin")
 const prisma = require("../../prisma/client")
 const authMiddleware = require("../middleware/auth")
+const enrollmentService = require("../services/enrollmentService")
 const logger = require("../lib/logger")
 
 const router = express.Router()
@@ -83,6 +84,15 @@ router.post("/firebase", async (req, res) => {
       return res.status(403).json({ error: "Account deactivated. Contact the administrator." })
     }
 
+    // Al archivar un grupo (fin de semestre) las matriculas pasan a 'archived'
+    // y se borra la cuenta Linux. Sin matricula activa el estudiante no tiene
+    // nada que hacer en la plataforma.
+    if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
+      return res.status(403).json({
+        error: "No te encuentras registrado en ningún grupo de laboratorio",
+      })
+    }
+
     if (!user.google_id) {
       user = await prisma.user.update({
         where: { id: user.id },
@@ -125,6 +135,14 @@ router.get("/me", authMiddleware, async (req, res) => {
     if (!user.active) {
       res.clearCookie("token", { path: "/" })
       return res.status(403).json({ error: "Account deactivated" })
+    }
+    // Misma regla que en el login: una sesion JWT dura 7 dias y puede seguir
+    // viva despues de que se archive el grupo del estudiante.
+    if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
+      res.clearCookie("token", { path: "/" })
+      return res.status(403).json({
+        error: "No te encuentras registrado en ningún grupo de laboratorio",
+      })
     }
     res.json({ user: serializeUser(user) })
   } catch (error) {

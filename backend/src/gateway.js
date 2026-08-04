@@ -2,6 +2,7 @@ const { WebSocketServer } = require("ws")
 const wsAuth = require("./middleware/wsAuth")
 const prisma = require("../prisma/client")
 const linuxContainerService = require("./services/linuxContainerService")
+const enrollmentService = require("./services/enrollmentService")
 
 function setupGateway(server) {
   const wss = new WebSocketServer({ server, path: "/terminal" })
@@ -26,6 +27,14 @@ function setupGateway(server) {
 
     if (!user || !user.linuxAccount?.linux_username) {
       ws.close(4001, "No linux account configured")
+      return
+    }
+
+    // El estudiante pierde la terminal en cuanto se archiva su grupo: su
+    // usuario se elimina del entorno y la sesion JWT (7 dias) puede seguir
+    // viva, asi que la puerta de entrada a la consola tambien valida.
+    if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
+      ws.close(4001, "No te encuentras registrado en ningún grupo de laboratorio")
       return
     }
 

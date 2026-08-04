@@ -23,6 +23,8 @@ export interface EnrollmentStudent {
   name: string
   email: string
   code: string
+  /** "active" mientras el grupo corre; "archived" cuando se desactivo. */
+  status?: string
   /** Cuenta del sistema creada al aprovisionar; null mientras no exista. */
   linuxUsername?: string | null
   /** Si esa cuenta ya existe dentro del entorno. */

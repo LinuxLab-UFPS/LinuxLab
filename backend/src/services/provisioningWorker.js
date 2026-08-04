@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { createGroup, provisionStudentAccount, provisionTeacherAccount } = require("./linuxContainerService")
+const { createGroup, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./linuxContainerService")
 const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
@@ -105,6 +105,44 @@ async function processUserJobs() {
   })
 }
 
+async function processTeardownJobs() {
+  const jobs = await claimJobs("group_teardown_jobs")
+
+  await runPool(jobs, async (job) => {
+    try {
+      let usernames = []
+      try {
+        usernames = JSON.parse(job.usernames || "[]")
+      } catch {
+        // un JSON invalido no debe tumbar el teardown: se borra la carpeta igual
+      }
+      await teardownGroup({
+        teacherUsername: job.teacher_username,
+        groupDir: job.group_dir,
+        groupName: job.group_name,
+        usernames,
+      })
+      await prisma.groupTeardownJob.update({
+        where: { id: job.id },
+        data: { status: "completed" },
+      })
+      logger.info({ groupDir: job.group_dir, count: usernames.length }, "Group teardown completed")
+    } catch (err) {
+      const newRetries = job.retries + 1
+      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
+      await prisma.groupTeardownJob.update({
+        where: { id: job.id },
+        data: {
+          retries: newRetries,
+          status: newStatus,
+          error: err?.message || String(err),
+        },
+      })
+      logger.error({ err, groupDir: job.group_dir, retries: newRetries }, "Group teardown failed")
+    }
+  })
+}
+
 async function processPendingJobs() {
   if (isRunning) return
   isRunning = true
@@ -115,6 +153,7 @@ async function processPendingJobs() {
   try {
     await processGroupJobs()
     await processUserJobs()
+    await processTeardownJobs()
   } catch (err) {
     logger.error({ err }, "Provisioning worker error")
   } finally {

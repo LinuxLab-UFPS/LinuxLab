@@ -28,8 +28,9 @@ export const teacherApi = {
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
   createGroup: (input: CreateGroupInput) =>
     apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
-  // El backend solo desactiva: PATCH /archive fija archived=true y responde 409
-  // si ya lo estaba. No hay forma de reactivar, por eso la UI no la ofrece.
+  // PATCH /archive desactiva el grupo, archiva sus matriculas y encola el
+  // teardown del entorno (usuarios Linux y carpeta). Responde 409 si ya lo
+  // estaba. No hay forma de reactivar, por eso la UI no la ofrece.
   deactivateGroup: (id: string) =>
     apiFetch<void>(`/api/groups/${id}/archive`, { method: "PATCH" }),
 
