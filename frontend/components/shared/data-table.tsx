@@ -70,7 +70,7 @@ export function TableEmptyState({ children }: { children: React.ReactNode }) {
   return <div className="px-4 py-16 text-center text-sm text-muted-foreground">{children}</div>
 }
 
-type ActionTone = "neutral" | "amber" | "emerald" | "danger"
+type ActionTone = "neutral" | "sky" | "amber" | "emerald" | "danger"
 
 /**
  * Fichas de color con relleno de baja opacidad: el mismo color se tinta sobre
@@ -79,6 +79,7 @@ type ActionTone = "neutral" | "amber" | "emerald" | "danger"
  */
 const TONE: Record<ActionTone, string> = {
   neutral: "border-foreground/15 bg-foreground/5 text-foreground hover:bg-foreground/10",
+  sky: "border-sky-500/30 bg-sky-500/10 text-sky-500 hover:bg-sky-500/20",
   amber: "border-amber-500/30 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20",
   emerald: "border-emerald-500/30 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20",
   danger: "border-danger/30 bg-danger/10 text-danger hover:bg-danger/20",
@@ -136,6 +137,7 @@ const PAGE_TONE = {
   amber: "border-amber-500/50 bg-amber-500/10 text-amber-500",
   violet: "border-violet-500/50 bg-violet-500/10 text-violet-400",
   sky: "border-sky-500/50 bg-sky-500/10 text-sky-500",
+  emerald: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
 }
 
 /** Minimal prev / current-page / next pager, for tables with many rows. */

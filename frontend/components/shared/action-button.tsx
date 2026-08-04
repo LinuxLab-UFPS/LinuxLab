@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
-export type ActionTone = "primary" | "amber" | "violet" | "sky" | "neutral"
+export type ActionTone = "primary" | "amber" | "violet" | "sky" | "emerald" | "neutral"
 
 /** Relleno de baja opacidad y texto en el color pleno, uno por sección. */
 const TONE: Record<ActionTone, string> = {
@@ -9,8 +9,9 @@ const TONE: Record<ActionTone, string> = {
   amber: "border-amber-500/40 bg-amber-500/15 text-amber-500 hover:bg-amber-500/25",
   violet: "border-violet-500/40 bg-violet-500/15 text-violet-400 hover:bg-violet-500/25",
   sky: "border-sky-500/40 bg-sky-500/15 text-sky-500 hover:bg-sky-500/25",
+  emerald: "border-emerald-500/40 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25",
   neutral:
-    "border-table-line bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground",
+    "border-foreground/20 bg-secondary text-foreground hover:border-foreground/35 hover:bg-secondary/70",
 }
 
 /**
