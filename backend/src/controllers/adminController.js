@@ -1,5 +1,6 @@
 const teacherService = require("../services/teacherService")
 const reconcileService = require("../services/reconcileService")
+const environmentService = require("../services/environmentService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const listTeachers = asyncHandler(async (req, res) => {
@@ -20,4 +21,24 @@ const reconcileAll = asyncHandler(async (req, res) => {
   res.json(await reconcileService.reconcileAll())
 })
 
-module.exports = { listTeachers, registerTeacher, toggleTeacherStatus, reconcileAll }
+const environmentSnapshot = asyncHandler(async (req, res) => {
+  res.json(await environmentService.snapshot())
+})
+
+const requeueFailed = asyncHandler(async (req, res) => {
+  res.json(await environmentService.requeueFailed())
+})
+
+const ensureOwnAccount = asyncHandler(async (req, res) => {
+  res.json(await environmentService.ensureOwnAccount(req.user.id))
+})
+
+module.exports = {
+  listTeachers,
+  registerTeacher,
+  toggleTeacherStatus,
+  reconcileAll,
+  environmentSnapshot,
+  requeueFailed,
+  ensureOwnAccount,
+}
