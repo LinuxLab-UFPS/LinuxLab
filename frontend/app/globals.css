@@ -221,6 +221,10 @@
   --section: #8b5cf6;
 }
 
+[data-section='entorno'] {
+  --section: #10b981;
+}
+
 /* Neon / red-halo utilities: values come from the theme variables above */
 .neon-glow {
   box-shadow: var(--neon-glow);

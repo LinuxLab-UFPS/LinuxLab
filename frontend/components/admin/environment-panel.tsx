@@ -145,7 +145,7 @@ export function EnvironmentPanel() {
 
       <div className="flex flex-wrap gap-3">
         <ActionButton
-          tone="violet"
+          tone="emerald"
           disabled={busy !== null}
           onClick={() =>
             run(
