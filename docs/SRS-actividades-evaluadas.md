@@ -2,7 +2,7 @@
 
 **Proyecto:** LinuxLab UFPS
 **Versión:** 1.0 · 2026-08-04
-**Estado:** implementado y funcionando en el subtema "Práctica: crea tu estructura" (tema 3)
+**Estado:** implementado y funcionando, con dos actividades sembradas (temas 3 y 4)
 
 ---
 
@@ -29,7 +29,8 @@ Cubierto en esta versión:
 - Catálogo de cinco aserciones atómicas.
 - Evaluación bajo demanda contra el entorno real del estudiante.
 - Registro de intentos con puntaje.
-- Una práctica de ejemplo en el tema 3, invocada desde el markdown.
+- Dos prácticas en el temario (temas 3 y 4), invocadas desde el markdown.
+- La página de catálogo en `/activities`.
 
 Fuera de esta versión (ver §8):
 
@@ -196,13 +197,32 @@ detalle, para que el estudiante sepa qué le falta y no tenga que adivinar.
 La tarjeta va en ámbar mientras la actividad esté pendiente y pasa a verde al
 aprobarla.
 
-### 7.1 Ejemplo sembrado
+### 7.1 Actividades sembradas
 
-`backend/prisma/seed-actividad-directorios.js` crea:
+`seed-actividad-directorios.js` — slug `crear-directorio-practicas`, tema 3,
+100 puntos en 2 aserciones:
 
-- slug `crear-directorio-practicas`, "Crea tu primer directorio", 100 puntos
 - `directorio_existe` en `/home/$usuario/practicas` — 50 pts
 - `directorio_existe` en `/home/$usuario/practicas/tema-03` — 50 pts
+
+`seed-actividad-universidad.js` — slug `universidad-facultades`, tema 4,
+100 puntos en 7 aserciones. El estudiante arma un árbol de tres facultades con
+el pensum de cada una, o sea que combina `mkdir` y `touch`:
+
+- `directorio_existe` en `/home/$usuario/universidad` — 16 pts
+- `directorio_existe` en cada facultad (ingenieria, enfermeria, arquitectura) — 14 pts c/u
+- `archivo_existe` en el `pensum.txt` de cada facultad — 14 pts c/u
+
+El puntaje se reparte parejo y el sobrante queda en la raíz, que es de la que
+cuelga todo lo demás.
+
+### 7.2 La página de actividades
+
+`/activities` lista el catálogo con el mismo patrón que `/simulators`, en ámbar.
+El registro de presentación (título, descripción, tema, número de
+comprobaciones) vive en `lib/features/shared/activities.ts`, igual que el de
+simuladores; lo que cada actividad comprueba sigue viviendo en la base, keyed
+por el mismo `slug`. La tarjeta lleva al subtema que contiene el ejercicio.
 
 ## 8. Lo que falta
 
@@ -292,4 +312,8 @@ pty):
 | `frontend/lib/features/shared/lesson-blocks.ts` | La directiva `EJERCICIO` |
 | `frontend/components/shared/lesson-body.tsx` | Renderiza el bloque |
 | `frontend/components/student/exercise-check.tsx` | La tarjeta y el botón |
-| `frontend/content/temario/tema-03/03-practica-directorios.md` | La práctica |
+| `frontend/content/temario/tema-03/04-practica-directorios.md` | Práctica del tema 3 |
+| `frontend/content/temario/tema-04/02-practica-universidad.md` | Práctica del tema 4 |
+| `frontend/lib/features/shared/activities.ts` | Registro del catálogo |
+| `frontend/components/student/activity-card.tsx` | La tarjeta ámbar |
+| `frontend/app/(protected)/activities/page.tsx` | La página del catálogo |
