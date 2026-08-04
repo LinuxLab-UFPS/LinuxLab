@@ -41,20 +41,24 @@ export const syllabus: Topic[] = [
     number: 3,
     slug: "directorios",
     title: "Directorios",
-    description: "Tipos de directorios, la jerarquía del sistema y navegación esencial.",
+    description:
+      "Tipos de directorios, la jerarquía del sistema, navegación esencial y cómo copiar, mover y borrar.",
     subTopics: [
       { number: 1, title: "El sistema de archivos" },
       { number: 2, title: "Navegación esencial" },
+      { number: 3, title: "Copiar, mover y borrar" },
+      { number: 4, title: "Práctica: crea tu estructura" },
     ],
   },
   {
     number: 4,
     slug: "creacion-de-archivos",
     title: "Creación de archivos",
-    description: "touch y editores de texto: vi, pico, nano.",
+    description: "Crear archivos con touch y redirección, y editores de texto: vi, pico, nano.",
     subTopics: [
-      { number: 1, title: "touch" },
-      { number: 2, title: "Editores: vi, pico, nano" },
+      { number: 1, title: "Crear archivos" },
+      { number: 2, title: "Práctica: construye una universidad" },
+      { number: 3, title: "Editores: vi, pico, nano" },
     ],
   },
   {
