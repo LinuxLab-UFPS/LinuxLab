@@ -10,7 +10,7 @@ export interface CardTag {
   className: string
 }
 
-type Accent = "red" | "green"
+type Accent = "red" | "green" | "amber"
 
 /** Per-accent hover treatment: title tint, underline gradient and card glow. */
 const ACCENT: Record<Accent, { title: string; underline: string; card: string }> = {
@@ -24,13 +24,18 @@ const ACCENT: Record<Accent, { title: string; underline: string; card: string }>
     underline: "from-emerald-400 to-emerald-600",
     card: "hover:border-emerald-500/50 hover:shadow-[0_0_10px_rgba(16,185,129,0.45),0_0_30px_rgba(16,185,129,0.3)]",
   },
+  amber: {
+    title: "group-hover:text-amber-400",
+    underline: "from-amber-400 to-amber-600",
+    card: "hover:border-amber-500/50 hover:shadow-[0_0_10px_rgba(245,158,11,0.45),0_0_30px_rgba(245,158,11,0.3)]",
+  },
 }
 
 /**
  * The AlgoMaster-style card, reused by the topic grid and the simulators grid.
  * The illustration zooms and the whole card lifts and glows on hover while the
  * text stays put. Progress bar and tags are optional; the accent drives the
- * hover colors (red for topics, green for simulators).
+ * hover colors (red for topics, green for simulators, amber for activities).
  */
 export function ContentCard({
   href,
