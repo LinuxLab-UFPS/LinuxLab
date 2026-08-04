@@ -26,6 +26,7 @@ model User {
   linuxAccount          LinuxAccount?
   taughtGroups          Group[]       @relation("TeacherGroups")
   enrollments           Enrollment[]  @relation("StudentEnrollments")
+  activityAttempts      ActivityAttempt[] @relation("StudentAttempts")
   provisioningJobs      ProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
   preferences           UserPreference?
@@ -55,8 +56,61 @@ model Group {
   groupProvisioningJobs GroupProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
   groupTeardownJobs     GroupTeardownJob[]
+  activities            Activity[]
 
   @@map("groups")
+}
+
+/// Una practica evaluable. Nace del temario (con `slug`) o la crea un docente
+/// para su curso; en ambos casos se evalua con las mismas aserciones.
+model Activity {
+  id           String           @id @default(uuid()) @db.Uuid
+  slug         String?          @unique @db.VarChar(64)
+  title        String           @db.VarChar(255)
+  instructions String?          @db.Text
+  topic_number Int?             @map("topic_number")
+  group_id     String?          @db.Uuid @map("group_id")
+  group        Group?           @relation(fields: [group_id], references: [id])
+  max_score    Int              @default(100) @map("max_score")
+  created_at   DateTime         @default(now()) @map("created_at")
+  updated_at   DateTime         @updatedAt @map("updated_at")
+
+  checks   ActivityCheck[]
+  attempts ActivityAttempt[]
+
+  @@map("activities")
+}
+
+/// Una asercion del catalogo con los parametros que puso el docente. El `type`
+/// es el contrato con el evaluador que corre dentro del entorno.
+model ActivityCheck {
+  id          String   @id @default(uuid()) @db.Uuid
+  activity_id String   @db.Uuid @map("activity_id")
+  activity    Activity @relation(fields: [activity_id], references: [id], onDelete: Cascade)
+  type        String   @db.VarChar(48)
+  params      Json
+  points      Int      @default(0)
+  position    Int      @default(0)
+
+  @@index([activity_id])
+  @@map("activity_checks")
+}
+
+/// Cada vez que un estudiante pide validar. Se guarda el detalle por asercion
+/// para poder mostrarle que fallo y para que quede historico de la nota.
+model ActivityAttempt {
+  id          String   @id @default(uuid()) @db.Uuid
+  activity_id String   @db.Uuid @map("activity_id")
+  activity    Activity @relation(fields: [activity_id], references: [id], onDelete: Cascade)
+  student_id  String   @db.Uuid @map("student_id")
+  student     User     @relation("StudentAttempts", fields: [student_id], references: [id])
+  passed      Boolean  @default(false)
+  score       Int      @default(0)
+  results     Json
+  created_at  DateTime @default(now()) @map("created_at")
+
+  @@index([activity_id, student_id])
+  @@map("activity_attempts")
 }
 
 model Enrollment {
