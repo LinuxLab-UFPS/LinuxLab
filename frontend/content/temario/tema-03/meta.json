@@ -4,8 +4,21 @@
   "title": "Directorios",
   "description": "El sistema de archivos de Linux, su estructura jerárquica y cómo navegar y manipular directorios desde la terminal",
   "subtopics": [
-    { "id": "filesystem", "title": "El sistema de archivos", "file": "01-filesystem.md" },
-    { "id": "navegacion", "title": "Navegación esencial", "file": "02-navegacion.md" }
+    {
+      "id": "filesystem",
+      "title": "El sistema de archivos",
+      "file": "01-filesystem.md"
+    },
+    {
+      "id": "navegacion",
+      "title": "Navegación esencial",
+      "file": "02-navegacion.md"
+    },
+    {
+      "id": "practica-directorios",
+      "title": "Práctica: crea tu estructura",
+      "file": "03-practica-directorios.md"
+    }
   ],
   "resources": [
     {
