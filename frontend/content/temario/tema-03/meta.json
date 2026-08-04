@@ -15,9 +15,14 @@
       "file": "02-navegacion.md"
     },
     {
+      "id": "copiar-borrar",
+      "title": "Copiar, mover y borrar",
+      "file": "03-copiar-borrar.md"
+    },
+    {
       "id": "practica-directorios",
       "title": "Práctica: crea tu estructura",
-      "file": "03-practica-directorios.md"
+      "file": "04-practica-directorios.md"
     }
   ],
   "resources": [
