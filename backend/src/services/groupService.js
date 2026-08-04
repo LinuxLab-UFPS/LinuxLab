@@ -285,6 +285,18 @@ async function getGroup({ groupId, teacherUserId, role }) {
   return serializeGroup(withCount, withCount._count.enrollments)
 }
 
+/**
+ * Archiva un grupo (fin de semestre) y deja de ser usable al instante:
+ * - El grupo queda desactivado y sus matriculas pasan a 'archived' (historico).
+ * - Las cuentas Linux de los estudiantes se borran de la base: su usuario en
+ *   el entorno ya no debe existir.
+ * - Se encola un teardown job: el worker borra del contenedor los usuarios de
+ *   los matriculados (los usernames se conservan en el job porque las filas se
+ *   acaban de borrar) y la carpeta del grupo, eliminada por su group_dir.
+ *
+ * Al re-matricularse el proximo semestre se le crea una cuenta nueva y un job
+ * de aprovisionamiento, por lo que nada de lo borrado aqui hace falta.
+ */
 async function archiveGroup(args) {
   if (!args.tx) return runInTransaction((tx) => archiveGroup({ ...args, tx }))
 
@@ -293,10 +305,52 @@ async function archiveGroup(args) {
   if (group.archived) {
     throw new AppError("El grupo ya está archivado", 409, "CONFLICT")
   }
+
+  const [enrollments, teacherAccount] = await Promise.all([
+    tx.enrollment.findMany({
+      where: { group_id: groupId },
+      include: { student: { include: { linuxAccount: true } } },
+    }),
+    tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } }),
+  ])
+  const studentIds = enrollments.map((e) => e.student_id)
+  const usernames = enrollments
+    .map((e) => e.student.linuxAccount?.linux_username)
+    .filter(Boolean)
+
   const updated = await tx.group.update({
     where: { id: groupId },
     data: { archived: true },
   })
+
+  await tx.enrollment.updateMany({
+    where: { group_id: groupId },
+    data: { status: "archived" },
+  })
+
+  if (studentIds.length > 0) {
+    await tx.linuxAccount.deleteMany({ where: { user_id: { in: studentIds } } })
+  }
+
+  // Sin esto, un job de aprovisionamiento pendiente re-crearia en el entorno
+  // los usuarios que el teardown esta por eliminar.
+  await tx.userProvisioningJob.deleteMany({ where: { group_id: groupId } })
+  await tx.groupProvisioningJob.deleteMany({ where: { group_id: groupId } })
+
+  if (teacherAccount?.linux_username && group.group_dir) {
+    await tx.groupTeardownJob.create({
+      data: {
+        group_id: groupId,
+        group_dir: group.group_dir,
+        group_name: `grp_${groupId.replace(/-/g, "").substring(0, 8)}`,
+        teacher_username: teacherAccount.linux_username,
+        usernames: JSON.stringify(usernames),
+      },
+    })
+  } else {
+    logger.warn({ groupId }, "Teacher not provisioned, teardown job skipped")
+  }
+
   return serializeGroup(updated, 0)
 }
 
@@ -324,19 +378,31 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
   const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
 
   // Se anotan antes del teardown porque despues de borrar las matriculas ya no
-  // hay forma de saber a quien se le elimino la cuenta.
+  // hay forma de saber a quien se le elimino la cuenta. Los usernames pueden
+  // venir vacios: al archivar ya se borraron las filas de linux_accounts y los
+  // usuarios los elimino el teardown job; este pasada de respaldo se queda con
+  // el grupo Unix y la carpeta.
   const enrolled = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    select: { student_id: true },
+    select: {
+      student: {
+        select: { id: true, linuxAccount: { select: { linux_username: true } } },
+      },
+    },
   })
+  const studentIds = enrolled.map((e) => e.student.id)
+  const usernames = enrolled
+    .map((e) => e.student.linuxAccount?.linux_username)
+    .filter(Boolean)
 
   if (teacherAccount?.linux_username && group.group_dir) {
     try {
-      await linuxContainerService.archiveGroup(
-        teacherAccount.linux_username,
-        group.group_dir,
+      await linuxContainerService.teardownGroup({
+        teacherUsername: teacherAccount.linux_username,
+        groupDir: group.group_dir,
         groupName,
-      )
+        usernames,
+      })
     } catch (err) {
       // El contenedor puede estar caido o el directorio ya no existir. Se
       // registra y se sigue: dejar la fila viva obligaria a repetir el borrado
@@ -351,11 +417,12 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
     // aprovisionamiento (ver enrollmentService) y el estudiante se queda para
     // siempre sin cuenta con la que abrir la terminal.
     prisma.linuxAccount.updateMany({
-      where: { user_id: { in: enrolled.map((e) => e.student_id) } },
+      where: { user_id: { in: studentIds } },
       data: { linux_provisioned: false },
     }),
     prisma.enrollment.deleteMany({ where: { group_id: groupId } }),
     prisma.groupProvisioningJob.deleteMany({ where: { group_id: groupId } }),
+    prisma.groupTeardownJob.deleteMany({ where: { group_id: groupId } }),
     // El group_id es opcional aqui: se desliga en vez de borrarse para no
     // perder el rastro de las cuentas que si se llegaron a crear.
     prisma.userProvisioningJob.updateMany({

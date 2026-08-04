@@ -54,6 +54,7 @@ model Group {
 
   groupProvisioningJobs GroupProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
+  groupTeardownJobs     GroupTeardownJob[]
 
   @@map("groups")
 }
@@ -64,6 +65,7 @@ model Enrollment {
   student     User     @relation("StudentEnrollments", fields: [student_id], references: [id])
   group_id    String   @db.Uuid @map("group_id")
   group       Group    @relation(fields: [group_id], references: [id])
+  status      String   @default("active")
   enrolled_at DateTime @default(now()) @map("enrolled_at")
 
   @@unique([student_id, group_id])
@@ -138,4 +140,27 @@ model GroupProvisioningJob {
 
   @@index([status, retries])
   @@map("group_provisioning_jobs")
+}
+
+model GroupTeardownJob {
+  id               String   @id @default(uuid()) @db.Uuid
+  group_id         String   @db.Uuid
+  group_dir        String   @db.VarChar(64)
+  group_name       String   @db.VarChar(32)
+  teacher_username String   @db.VarChar(32)
+  // Usernames Linux de los matriculados al momento de archivar (JSON array):
+  // las filas de linux_accounts se borran en el mismo momento, por eso el job
+  // los conserva para saber exactamente que cuentas eliminar del entorno.
+  usernames        String   @default("[]") @db.Text
+  status           String   @default("pending")
+  retries          Int      @default(0)
+  maxRetries       Int      @default(3)
+  error            String?  @db.Text
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  group Group @relation(fields: [group_id], references: [id])
+
+  @@index([status, retries])
+  @@map("group_teardown_jobs")
 }

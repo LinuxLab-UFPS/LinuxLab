@@ -192,10 +192,27 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     name: e.student.name,
     email: e.student.email,
     code: e.student.code,
+    status: e.status,
     linuxUsername: e.student.linuxAccount?.linux_username ?? null,
     linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.enrolled_at,
   }))
+}
+
+/**
+ * Un estudiante solo tiene acceso mientras tenga una matricula activa en un
+ * grupo no archivado. Al archivar (fin de semestre) las matriculas del grupo
+ * pasan a 'archived' y esto deja de cumplirse.
+ */
+async function hasActiveEnrollment(userId) {
+  const count = await prisma.enrollment.count({
+    where: {
+      student_id: userId,
+      status: "active",
+      group: { archived: false },
+    },
+  })
+  return count > 0
 }
 
 function parseCsvRows(csvText) {
@@ -253,5 +270,6 @@ module.exports = {
   ensureStudentExists,
   importCsv,
   listByGroup,
+  hasActiveEnrollment,
   serializeStudent,
 }

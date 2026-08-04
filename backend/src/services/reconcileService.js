@@ -17,6 +17,11 @@ async function reconcileGroup({ groupId }) {
   if (!group) {
     throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
   }
+  if (group.archived) {
+    // El teardown del archivo borro los usuarios del entorno: re-aprovisionar
+    // los recrearia de la nada y sin matricula activa no tiene sentido.
+    return { checked: 0, orphaned: 0, requeued: 0 }
+  }
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },

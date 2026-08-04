@@ -86,12 +86,17 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
   }
 }
 
-async function archiveGroup(teacherUsername, groupDir, groupName) {
+/**
+ * Elimina del entorno lo que queda de un grupo archivado: los usuarios Linux
+ * de los matriculados (los usernames vienen de la BD, nunca de listar el
+ * directorio) y luego el grupo Unix y la carpeta, que se borra recursivamente
+ * por su ruta construida con el group_dir de la BD.
+ */
+async function teardownGroup({ teacherUsername, groupDir, groupName, usernames }) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
   try {
-    const { stdout } = await sshClient.execCommand(`ls ${path}/ 2>/dev/null || true`)
-    for (const student of stdout.split("\n").filter(Boolean)) {
-      await sshClient.execCommand(`sudo userdel ${student} 2>/dev/null || true`)
+    for (const username of usernames || []) {
+      await sshClient.execCommand(`sudo userdel ${username} 2>/dev/null || true`)
     }
     await sshClient.execCommand(
       `sudo groupdel ${groupName} 2>/dev/null; sudo rm -rf ${path}`,
@@ -143,7 +148,7 @@ module.exports = {
   createTeacher,
   createGroup,
   createStudent,
-  archiveGroup,
+  teardownGroup,
   provisionTeacherAccount,
   provisionStudentAccount,
   openPtySession,
