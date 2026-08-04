@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
     procps \
     passwd \
     sudo \
+    python3-minimal \
     openssh-server \
     && apt-get remove -y wget curl 2>/dev/null || true \
     && rm -rf /var/lib/apt/lists/*
@@ -47,9 +48,17 @@ RUN useradd -m -s /bin/bash labadmin \
     && chmod 700 /home/labadmin
 
 # Configurar sudoers para labadmin
-RUN echo 'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su' \
+RUN printf '%s\n%s\n' \
+    'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su' \
+    'labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py' \
     > /etc/sudoers.d/labadmin \
     && chmod 440 /etc/sudoers.d/labadmin
+
+# Evaluador de aserciones. Va horneado y no se copia en cada corrida: un script
+# que se envia es un script que el estudiante podria reemplazar o interceptar.
+COPY scripts/checker.py /usr/local/lib/linuxlab/checker.py
+RUN chmod 755 /usr/local/lib/linuxlab/checker.py \
+    && chown root:root /usr/local/lib/linuxlab/checker.py
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
