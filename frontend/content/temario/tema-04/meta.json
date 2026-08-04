@@ -1,0 +1,26 @@
+{
+  "id": "tema-04",
+  "number": 4,
+  "title": "Creación de archivos",
+  "description": "Cómo se crean archivos desde la terminal con touch y redirección, y las convenciones de nombres en Linux",
+  "subtopics": [
+    {
+      "id": "touch",
+      "title": "Crear archivos",
+      "file": "01-touch.md"
+    },
+    {
+      "id": "practica-universidad",
+      "title": "Práctica: construye una universidad",
+      "file": "02-practica-universidad.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "linuxcommand.org · Gratis, Creative Commons"
+    }
+  ]
+}
