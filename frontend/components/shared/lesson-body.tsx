@@ -3,6 +3,7 @@ import { Markdown } from "@/components/shared/markdown"
 import { ShellCommand } from "@/components/shared/shell-command"
 import { SimulatorCard } from "@/components/student/simulator-card"
 import { FilesystemHierarchy } from "@/components/shared/filesystem-hierarchy"
+import { ExerciseCheck } from "@/components/student/exercise-check"
 import { LESSON_ILLUSTRATIONS } from "@/components/shared/lesson-illustrations"
 import { getSimulator } from "@/lib/features/shared/simulators"
 import type { LessonBlock } from "@/lib/features/shared/lesson-blocks"
@@ -106,6 +107,9 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
 
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
+
+          case "exercise":
+            return <ExerciseCheck key={i} slug={block.slug} />
 
           case "illustration": {
             // Una directiva con un id que no existe se ve, igual que una imagen

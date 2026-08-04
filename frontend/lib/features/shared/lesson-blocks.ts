@@ -9,6 +9,7 @@ import { lessonAssetExists, lessonAssetUrl, lessonVideoExists, lessonVideoUrl } 
  *   <!-- IMAGE-LIGHT: logo-light.png | ... -->    (par: se muestra en tema claro)
  *   <!-- VIDEO: id-del-video | título -->
  *   <!-- ILLUSTRATION: gui-cli -->                (ver lesson-illustrations.tsx)
+ *   <!-- EJERCICIO: slug -->                      (practica evaluada en el entorno)
  *
  * Images and videos are served from `public/temario/tema-NN/`. A directive whose
  * file is not there yet renders a "pendiente" placeholder instead of breaking.
@@ -38,6 +39,7 @@ export type LessonBlock =
   | { kind: "simulator-card"; id: string }
   | { kind: "fs-tree" }
   | { kind: "illustration"; id: string }
+  | { kind: "exercise"; slug: string }
 
 interface Directive {
   type: string
@@ -50,7 +52,7 @@ type Token =
   | { kind: "directive"; directive: Directive }
 
 const DIRECTIVE_RE =
-  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
+  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION|EJERCICIO)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
 
 const FENCE_RE = /```([a-zA-Z0-9]*)[ \t]*\r?\n([\s\S]*?)```/g
 
@@ -201,6 +203,11 @@ export function parseLessonBlocks(markdown: string, topicNumber: number): Lesson
 
     if (type === "FS-TREE") {
       blocks.push({ kind: "fs-tree" })
+      continue
+    }
+
+    if (type === "EJERCICIO") {
+      blocks.push({ kind: "exercise", slug: value })
       continue
     }
 
