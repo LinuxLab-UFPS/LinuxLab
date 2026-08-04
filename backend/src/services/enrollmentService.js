@@ -172,7 +172,17 @@ async function listByGroup({ groupId, teacherUserId, role }) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    include: { student: { select: { id: true, name: true, email: true, code: true } } },
+    include: {
+      student: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          code: true,
+          linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
+        },
+      },
+    },
     orderBy: { enrolled_at: "asc" },
   })
 
@@ -182,6 +192,8 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     name: e.student.name,
     email: e.student.email,
     code: e.student.code,
+    linuxUsername: e.student.linuxAccount?.linux_username ?? null,
+    linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.enrolled_at,
   }))
 }
