@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Eye } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
 import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
@@ -11,6 +12,7 @@ import { ActivityPanel } from "@/components/student/activity-panel"
 import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
 import type { Activity } from "@/lib/features/shared/activities"
+import type { LessonRef } from "@/lib/features/shared/lessons"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
@@ -19,16 +21,23 @@ const HIDDEN_KEY = "linuxlab:suggested-hidden"
  * activities on the left, the cheat sheet underneath, and — when an activity is
  * open — its statement in place of the suggestions.
  *
- * Hiding the suggestions drops the whole column, so the terminal recentres
- * instead of leaving an empty gutter behind. The teacher never gets the column:
- * it is study material.
+ * Hiding the suggestions collapses the whole column and narrows the row, so the
+ * terminal slides across to the middle instead of leaving an empty gutter. The
+ * column keeps its own width while it collapses, otherwise the cards would
+ * reflow on the way out; it is the grid track that shrinks, not the content.
+ *
+ * The teacher never gets the column: it is study material.
  */
 export function TerminalWorkspace({
   activity,
   statement,
+  origin,
+  next,
 }: {
   activity: Activity | null
   statement: string | null
+  origin?: string
+  next?: LessonRef | null
 }) {
   const { user } = useAuth()
   const [fontSize, setFontSize] = useState(user?.preferences?.terminalFontSize ?? 16)
@@ -36,7 +45,8 @@ export function TerminalWorkspace({
     user?.preferences?.terminalFontFamily ?? "Menlo, Monaco, 'Courier New', monospace",
   )
   const [resetKey, setResetKey] = useState(0)
-  // null mientras no se ha leído el almacenamiento, para no parpadear.
+  // null mientras no se ha leído el almacenamiento: sin eso, la primera pintura
+  // arrancaría colapsada y el panel entraría con una animación que nadie pidió.
   const [hidden, setHidden] = useState<boolean | null>(null)
 
   useEffect(() => {
@@ -82,15 +92,32 @@ export function TerminalWorkspace({
   return (
     <div className="flex h-full items-center justify-center px-6">
       <div
-        className={`relative flex h-[42rem] w-full gap-6 ${showColumn ? "max-w-7xl" : "max-w-5xl"}`}
+        className={cn(
+          "relative grid h-[42rem] w-full",
+          hidden !== null && "transition-all duration-300 ease-out",
+          showColumn
+            ? "max-w-7xl grid-cols-[28rem_1fr] gap-6"
+            : "max-w-5xl grid-cols-[0px_1fr] gap-0",
+        )}
       >
-        {showColumn && (
-          <aside className="flex h-full w-[26rem] shrink-0 flex-col">
-            {open && activity && statement ? (
-              <ActivityPanel activity={activity} statement={statement} />
-            ) : (
-              <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
-            )}
+        {isStudent && (
+          <aside className="flex h-full flex-col overflow-hidden">
+            {/* Ancho propio: la columna se cierra por fuera y el contenido se
+                queda quieto en vez de recomponerse mientras sale. El padding le
+                deja sitio al halo de las tarjetas, que si no lo corta el
+                recorte de esta caja. */}
+            <div className="flex h-full w-[28rem] shrink-0 flex-col px-6">
+              {open && activity && statement ? (
+                <ActivityPanel
+                  activity={activity}
+                  statement={statement}
+                  origin={origin}
+                  next={next}
+                />
+              ) : (
+                <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
+              )}
+            </div>
           </aside>
         )}
 
@@ -102,13 +129,13 @@ export function TerminalWorkspace({
             onClick={() => setHiddenPersisted(false)}
             title="Mostrar actividades"
             aria-label="Mostrar actividades"
-            className="absolute top-0 right-full mr-3 rounded-md p-1 text-amber-500/70 transition-colors hover:text-amber-500"
+            className="absolute top-0 right-full mr-3 rounded-md p-1.5 text-amber-500/70 transition-colors hover:text-amber-500"
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-5 w-5" />
           </button>
         )}
 
-        <div className="flex h-full min-w-0 flex-1 flex-col gap-4">
+        <div className="flex h-full min-w-0 flex-col gap-4">
           <TerminalFrame
             className="min-h-0 flex-1"
             toolbar={

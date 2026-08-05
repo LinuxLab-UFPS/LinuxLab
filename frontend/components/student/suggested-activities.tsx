@@ -45,22 +45,16 @@ export function SuggestedActivities({ onHide }: { onHide: () => void }) {
   return (
     <section className="flex flex-col">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-bold text-foreground">Actividades recomendadas</h2>
+        <h2 className="text-lg font-bold text-foreground">Actividades recomendadas</h2>
         <div className="flex items-center gap-2">
-          <Link
-            href="/activities"
-            className="rounded-md bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
-          >
-            Ver más
-          </Link>
           <button
             type="button"
             onClick={onHide}
             title="Ocultar actividades"
             aria-label="Ocultar actividades"
-            className="rounded-md p-1 text-amber-500/70 transition-colors hover:text-amber-500"
+            className="rounded-md p-1.5 text-amber-500/70 transition-colors hover:text-amber-500"
           >
-            <EyeOff className="h-4 w-4" />
+            <EyeOff className="h-5 w-5" />
           </button>
         </div>
       </div>
@@ -74,6 +68,15 @@ export function SuggestedActivities({ onHide }: { onHide: () => void }) {
           {pending.map((activity) => (
             <ActivityCard key={activity.slug} activity={activity} compact />
           ))}
+          {/* Con la lista corta ya se ve todo, así que el enlace sobra. */}
+          {pending.length === SHOWN && (
+            <Link
+              href="/activities"
+              className="block rounded-md bg-amber-500/15 px-3 py-2 text-center text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
+            >
+              Ver más
+            </Link>
+          )}
         </div>
       )}
     </section>

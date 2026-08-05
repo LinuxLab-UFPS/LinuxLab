@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from "react"
 import { cn } from "@/lib/utils"
+import { COMPACT_PROSE } from "@/lib/features/shared/prose"
 
 interface TerminalUIValue {
   open: boolean
@@ -37,11 +38,6 @@ export function useTerminalUI(): TerminalUIValue {
  * ensancha y se centra para aprovechar el espacio; con la terminal ABIERTA (que
  * ocupa la derecha) vuelve al ancho normal, a la izquierda.
  */
-// With the terminal open the lesson fills the remaining width and the text
-// scales down so more fits; closed, it's a narrow reading column on the left.
-const COMPACT_PROSE =
-  "[&_.lesson-prose_h2]:text-2xl [&_.lesson-prose_h3]:text-xl [&_.lesson-prose_p]:text-base [&_.lesson-prose_ul]:text-base [&_.lesson-prose_ol]:text-base"
-
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (

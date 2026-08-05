@@ -1,5 +1,6 @@
 "use client"
 
+import { useSearchParams } from "next/navigation"
 import { ActivityCard } from "@/components/student/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { getActivity } from "@/lib/features/shared/activities"
@@ -11,8 +12,17 @@ import { getActivity } from "@/lib/features/shared/activities"
  */
 export function LessonActivity({ slug }: { slug: string }) {
   const { passed } = usePassedActivities()
+  const params = useSearchParams()
   const activity = getActivity(slug)
   if (!activity) return null
+
+  // El origen viaja en la URL: con él la actividad sabe a qué lección devolver
+  // al estudiante y cuál es el tema que sigue.
+  const tema = params.get("tema")
+  const sub = params.get("sub")
+  const href = tema
+    ? `${activity.href}&tema=${tema}${sub ? `&sub=${sub}` : ""}`
+    : activity.href
 
   return (
     <div className="my-10 max-w-md">
@@ -22,7 +32,10 @@ export function LessonActivity({ slug }: { slug: string }) {
           Actividad
         </span>
       </h2>
-      <ActivityCard activity={activity} completed={passed.has(activity.slug)} />
+      <ActivityCard
+        activity={{ ...activity, href }}
+        completed={passed.has(activity.slug)}
+      />
     </div>
   )
 }
