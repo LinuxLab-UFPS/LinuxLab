@@ -2,7 +2,8 @@
 
 import { useMemo } from "react"
 import Link from "next/link"
-import { EyeOff } from "lucide-react"
+import { PanelLeft } from "lucide-react"
+import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { ActivityCard } from "@/components/student/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { useLessonProgress } from "@/lib/features/student/progress"
@@ -46,17 +47,13 @@ export function SuggestedActivities({ onHide }: { onHide: () => void }) {
     <section className="flex flex-col">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-foreground">Actividades recomendadas</h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onHide}
-            title="Ocultar actividades"
-            aria-label="Ocultar actividades"
-            className="rounded-md p-1.5 text-amber-500/70 transition-colors hover:text-amber-500"
-          >
-            <EyeOff className="h-5 w-5" />
-          </button>
-        </div>
+        <CollapsedPanelButton
+          tone="amber"
+          label="Ocultar actividades"
+          icon={PanelLeft}
+          onClick={onHide}
+          active
+        />
       </div>
 
       {pending.length === 0 ? (

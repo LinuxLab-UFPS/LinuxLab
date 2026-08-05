@@ -22,10 +22,9 @@ const HIDDEN_KEY = "linuxlab:suggested-hidden"
  * activities on the left, the cheat sheet underneath, and — when an activity is
  * open — its statement in place of the suggestions.
  *
- * Hiding the suggestions collapses the whole column and narrows the row, so the
- * terminal slides across to the middle instead of leaving an empty gutter. The
- * column keeps its own width while it collapses, otherwise the cards would
- * reflow on the way out; it is the grid track that shrinks, not the content.
+ * The terminal is the only thing that takes up room: it stays centred and never
+ * moves. The column hangs off its left margin, so opening or closing it — and
+ * opening an activity — never resizes or shifts the console.
  *
  * The teacher never gets the column: it is study material.
  */
@@ -92,55 +91,49 @@ export function TerminalWorkspace({
   const showColumn = isStudent && (open || hidden === false)
 
   // El enunciado necesita más columna que un par de tarjetas.
-  const track = open ? "34rem" : "28rem"
+  const track = open ? "30rem" : "28rem"
 
-  // La terminal mide siempre lo mismo: la columna se abre a su lado y la fila
-  // entera crece, en vez de que la consola encoja para hacerle sitio. El tope
-  // por viewport es para que en pantallas cortas no se salga de cuadro.
-  const TERMINAL = "min(64rem, calc(100vw - 6rem))"
+  // La terminal es lo único que ocupa sitio, así que queda centrada y no se
+  // mueve nunca: la columna cuelga de su margen izquierdo, en absoluto, y abrir
+  // o cerrar no reacomoda nada. El ancho se recorta con la ventana para que ese
+  // margen alcance a sostener la columna en pantallas normales.
+  const TERMINAL = "clamp(32rem, calc(100vw - 63rem), 56rem)"
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
-      <div
-        className={cn(
-          "relative grid h-full max-h-[42rem] w-fit max-w-full",
-          hidden !== null && "transition-all duration-300 ease-out",
-        )}
-        style={{
-          gridTemplateColumns: `${showColumn ? track : "0rem"} ${TERMINAL}`,
-          columnGap: showColumn ? "1.5rem" : "0rem",
-        }}
-      >
+      <div className="relative h-full max-h-[42rem]" style={{ width: TERMINAL }}>
         {isStudent && (
-          <aside className="flex h-full flex-col overflow-hidden">
-            {/* Ancho propio: la columna se cierra por fuera y el contenido se
-                queda quieto en vez de recomponerse mientras sale. El padding le
-                deja sitio al halo de las tarjetas, que si no lo corta el
-                recorte de esta caja. */}
-            <div className="flex h-full shrink-0 flex-col px-6" style={{ width: track }}>
-              {open && activity && statement ? (
-                <ActivityPanel
-                  activity={activity}
-                  statement={statement}
-                  origin={origin}
-                  next={next}
-                />
-              ) : (
-                <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
-              )}
-            </div>
+          <aside
+            className={cn(
+              "absolute inset-y-0 right-full mr-6 flex flex-col transition-all duration-300 ease-out",
+              showColumn
+                ? "translate-x-0 opacity-100"
+                : "pointer-events-none translate-x-6 opacity-0",
+            )}
+            style={{ width: track }}
+          >
+            {open && activity && statement ? (
+              <ActivityPanel
+                activity={activity}
+                statement={statement}
+                origin={origin}
+                next={next}
+              />
+            ) : (
+              <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
+            )}
           </aside>
         )}
 
-        {/* Sin columna no queda dónde poner el control, así que el ojo se va al
-            margen: el único rastro de que hay algo escondido. */}
+        {/* Con la columna guardada, el cuadro es el único rastro de que ahí
+            había algo. */}
         {isStudent && !showColumn && hidden && (
           <CollapsedPanelButton
             tone="amber"
             label="Mostrar actividades"
             icon={PanelLeft}
             onClick={() => setHiddenPersisted(false)}
-            className="absolute top-0 right-full mr-4"
+            className="absolute top-0 right-full mr-6"
           />
         )}
 
