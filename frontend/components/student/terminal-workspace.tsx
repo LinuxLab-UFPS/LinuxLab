@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Eye } from "lucide-react"
+import { Target } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
@@ -51,9 +51,10 @@ export function TerminalWorkspace({
 
   useEffect(() => {
     try {
-      setHidden(localStorage.getItem(HIDDEN_KEY) === "true")
+      const stored = localStorage.getItem(HIDDEN_KEY)
+      setHidden(stored === null ? true : stored === "true")
     } catch {
-      setHidden(false)
+      setHidden(true)
     }
   }, [])
 
@@ -139,7 +140,7 @@ export function TerminalWorkspace({
             aria-label="Mostrar actividades"
             className="absolute top-0 right-full mr-3 rounded-md p-1.5 text-amber-500/70 transition-colors hover:text-amber-500"
           >
-            <Eye className="h-5 w-5" />
+            <Target className="h-5 w-5" />
           </button>
         )}
 
