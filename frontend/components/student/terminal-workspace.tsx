@@ -89,15 +89,23 @@ export function TerminalWorkspace({
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)
 
+  // El enunciado necesita más columna que un par de tarjetas, y la fila crece
+  // con él para que la terminal no pague ese ancho. El contenido de la columna
+  // se mide igual que su carril, si no queda flotando dentro.
+  const track = open ? "34rem" : "28rem"
+  const row = !showColumn
+    ? "max-w-5xl grid-cols-[0px_1fr] gap-0"
+    : open
+      ? "max-w-[92rem] grid-cols-[34rem_1fr] gap-6"
+      : "max-w-7xl grid-cols-[28rem_1fr] gap-6"
+
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
       <div
         className={cn(
           "relative grid h-full max-h-[42rem] w-full",
           hidden !== null && "transition-all duration-300 ease-out",
-          showColumn
-            ? "max-w-7xl grid-cols-[28rem_1fr] gap-6"
-            : "max-w-5xl grid-cols-[0px_1fr] gap-0",
+          row,
         )}
       >
         {isStudent && (
@@ -106,7 +114,7 @@ export function TerminalWorkspace({
                 queda quieto en vez de recomponerse mientras sale. El padding le
                 deja sitio al halo de las tarjetas, que si no lo corta el
                 recorte de esta caja. */}
-            <div className="flex h-full w-[28rem] shrink-0 flex-col px-6">
+            <div className="flex h-full shrink-0 flex-col px-6" style={{ width: track }}>
               {open && activity && statement ? (
                 <ActivityPanel
                   activity={activity}
