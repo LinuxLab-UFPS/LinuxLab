@@ -17,6 +17,7 @@ async function main() {
     data: {
       slug: SLUG,
       title: "Crea tu primer directorio",
+      kind: "check",
       instructions:
         "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
       topic_number: 3,

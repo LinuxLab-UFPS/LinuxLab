@@ -29,6 +29,36 @@ const serialize = (activity) => ({
   checks: activity.checks.map(publicCheck),
 })
 
+/**
+ * El banco que ve el docente. Se sirve con la forma que espera su tabla, no con
+ * la del estudiante: ahi mandan el titulo, el tema y la dificultad, y `uses`
+ * dice cuantos estudiantes distintos la han intentado.
+ */
+async function listBank() {
+  const activities = await prisma.activity.findMany({
+    where: { kind: "activity" },
+    include: {
+      checks: { orderBy: { position: "asc" } },
+      _count: { select: { attempts: true } },
+    },
+    orderBy: [{ topic_number: "asc" }, { title: "asc" }],
+  })
+
+  return activities.map((activity) => ({
+    id: activity.id,
+    title: activity.title,
+    topicNumber: activity.topic_number,
+    source: "bank",
+    difficulty: activity.difficulty,
+    instructions: activity.instructions ?? "",
+    maxScore: activity.max_score,
+    required: false,
+    evaluationType: "atomic",
+    checks: activity.checks.map(publicCheck),
+    uses: activity._count.attempts,
+  }))
+}
+
 async function getBySlug(slug) {
   const activity = await prisma.activity.findUnique({
     where: { slug },
@@ -147,4 +177,4 @@ async function lastAttempt({ slug, studentUserId }) {
   }
 }
 
-module.exports = { getBySlug, evaluate, lastAttempt, passedSlugs }
+module.exports = { listBank, getBySlug, evaluate, lastAttempt, passedSlugs }

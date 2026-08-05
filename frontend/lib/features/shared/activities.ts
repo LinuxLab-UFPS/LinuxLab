@@ -12,18 +12,18 @@ import { syllabus } from "./temario"
  * This holds the presentation (title, difficulty, topic tag); what each activity
  * checks lives in the database, keyed by the same `slug`.
  */
-export type Difficulty = "facil" | "intermedio" | "dificil"
+export type Difficulty = "basic" | "intermediate" | "advanced"
 
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
-  facil: "Fácil",
-  intermedio: "Intermedio",
-  dificil: "Difícil",
+  basic: "Fácil",
+  intermediate: "Intermedio",
+  advanced: "Difícil",
 }
 
 export const DIFFICULTY_CLASS: Record<Difficulty, string> = {
-  facil: "border-emerald-500/40 text-emerald-500",
-  intermedio: "border-amber-500/40 text-amber-500",
-  dificil: "border-rose-500/40 text-rose-500",
+  basic: "border-emerald-500/40 text-emerald-500",
+  intermediate: "border-amber-500/40 text-amber-500",
+  advanced: "border-rose-500/40 text-rose-500",
 }
 
 export interface Activity {
@@ -43,10 +43,10 @@ export interface Activity {
 const RAW = [
   {
     slug: "universidad-facultades",
-    title: "Construye una universidad",
+    title: "Archivos y ficheros",
     description:
       "Arma un árbol de facultades con el pensum de cada una, combinando mkdir y touch.",
-    difficulty: "facil" as Difficulty,
+    difficulty: "basic" as Difficulty,
     topicNumber: 4,
     checks: 7,
   },

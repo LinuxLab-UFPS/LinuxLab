@@ -38,7 +38,7 @@ export async function deleteGroup(id: string): Promise<void> {
 }
 
 export async function listBankActivities(): Promise<Activity[]> {
-  return []
+  return teacherApi.listBankActivities()
 }
 
 export async function listGroupActivities(_groupId: string): Promise<Activity[]> {

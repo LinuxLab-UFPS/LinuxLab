@@ -63,12 +63,19 @@ model Group {
 
 /// Una practica evaluable. Nace del temario (con `slug`) o la crea un docente
 /// para su curso; en ambos casos se evalua con las mismas aserciones.
+///
+/// `kind` separa las dos cosas que comparten esta maquinaria: una "check" es la
+/// comprobacion fija de una leccion, que mide avance y vive dentro del temario;
+/// una "activity" es trabajo aparte, se resuelve junto a la terminal y es lo
+/// unico que aparece en el banco del docente.
 model Activity {
   id           String           @id @default(uuid()) @db.Uuid
   slug         String?          @unique @db.VarChar(64)
   title        String           @db.VarChar(255)
   instructions String?          @db.Text
   topic_number Int?             @map("topic_number")
+  difficulty   String           @default("basic") @db.VarChar(16)
+  kind         String           @default("activity") @db.VarChar(16)
   group_id     String?          @db.Uuid @map("group_id")
   group        Group?           @relation(fields: [group_id], references: [id])
   max_score    Int              @default(100) @map("max_score")

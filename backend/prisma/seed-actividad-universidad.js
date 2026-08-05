@@ -33,7 +33,8 @@ async function main() {
   const activity = await prisma.activity.create({
     data: {
       slug: SLUG,
-      title: "Construye una universidad",
+      title: "Archivos y ficheros",
+      difficulty: "basic",
       instructions:
         "Crea el directorio universidad en tu carpeta personal, con las facultades " +
         "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
