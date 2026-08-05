@@ -9,8 +9,12 @@ const getActivity = asyncHandler(async (req, res) => {
   res.json({ ...activity, lastAttempt: attempt })
 })
 
+const getMyStatus = asyncHandler(async (req, res) => {
+  res.json({ passed: await activityService.passedSlugs(req.user.id) })
+})
+
 const checkActivity = asyncHandler(async (req, res) => {
   res.json(await activityService.evaluate({ slug: req.params.slug, studentUserId: req.user.id }))
 })
 
-module.exports = { getActivity, checkActivity }
+module.exports = { getActivity, getMyStatus, checkActivity }

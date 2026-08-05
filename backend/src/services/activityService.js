@@ -119,6 +119,16 @@ async function evaluate({ slug, studentUserId }) {
   return { passed, score, maxScore: activity.max_score, results }
 }
 
+/** Los slugs que el estudiante ya aprobo, para marcar sus tarjetas. */
+async function passedSlugs(studentUserId) {
+  const attempts = await prisma.activityAttempt.findMany({
+    where: { student_id: studentUserId, passed: true },
+    select: { activity: { select: { slug: true } } },
+    distinct: ["activity_id"],
+  })
+  return attempts.map((a) => a.activity.slug).filter(Boolean)
+}
+
 /** El ultimo intento del estudiante, para que la leccion abra con su estado. */
 async function lastAttempt({ slug, studentUserId }) {
   const activity = await prisma.activity.findUnique({ where: { slug }, select: { id: true } })
@@ -137,4 +147,4 @@ async function lastAttempt({ slug, studentUserId }) {
   }
 }
 
-module.exports = { getBySlug, evaluate, lastAttempt }
+module.exports = { getBySlug, evaluate, lastAttempt, passedSlugs }
