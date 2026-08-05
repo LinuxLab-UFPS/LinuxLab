@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import Link from "next/link"
 import { PanelLeft } from "lucide-react"
+import Link from "next/link"
 import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { ActivityCard } from "@/components/student/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"

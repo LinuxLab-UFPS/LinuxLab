@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { PanelLeft } from "lucide-react"
-import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { cn } from "@/lib/utils"
+import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
 import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
@@ -17,14 +17,18 @@ import type { LessonRef } from "@/lib/features/shared/lessons"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
+/** La consola mide siempre lo mismo: ni la columna ni la hoja le quitan sitio. */
+const TERMINAL_WIDTH = "min(64rem, calc(100vw - 6rem))"
+const TERMINAL_HEIGHT = "min(38rem, calc(100vh - 18rem))"
+
 /**
  * The student's terminal and everything that sits around it: the suggested
  * activities on the left, the cheat sheet underneath, and — when an activity is
  * open — its statement in place of the suggestions.
  *
- * The terminal is the only thing that takes up room: it stays centred and never
- * moves. The column hangs off its left margin, so opening or closing it — and
- * opening an activity — never resizes or shifts the console.
+ * The console keeps its size throughout. Opening the column widens the row and
+ * slides the terminal across; opening the cheat sheet adds a strip below it.
+ * Neither one takes space away from the console itself.
  *
  * The teacher never gets the column: it is study material.
  */
@@ -91,67 +95,80 @@ export function TerminalWorkspace({
   const showColumn = isStudent && (open || hidden === false)
 
   // El enunciado necesita más columna que un par de tarjetas.
-  const track = open ? "30rem" : "28rem"
-
-  // La terminal es lo único que ocupa sitio, así que queda centrada y no se
-  // mueve nunca: la columna cuelga de su margen izquierdo, en absoluto, y abrir
-  // o cerrar no reacomoda nada. El ancho se recorta con la ventana para que ese
-  // margen alcance a sostener la columna en pantallas normales.
-  const TERMINAL = "clamp(32rem, calc(100vw - 63rem), 56rem)"
+  const track = open ? "34rem" : "28rem"
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
-      <div className="relative h-full max-h-[42rem]" style={{ width: TERMINAL }}>
+      <div
+        className={cn(
+          "relative grid w-fit max-w-full",
+          hidden !== null && "transition-all duration-300 ease-out",
+        )}
+        style={{
+          gridTemplateColumns: `${showColumn ? track : "0rem"} ${TERMINAL_WIDTH}`,
+          columnGap: showColumn ? "1.5rem" : "0rem",
+        }}
+      >
         {isStudent && (
-          <aside
-            className={cn(
-              "absolute inset-y-0 right-full mr-6 flex flex-col transition-all duration-300 ease-out",
-              showColumn
-                ? "translate-x-0 opacity-100"
-                : "pointer-events-none translate-x-6 opacity-0",
-            )}
-            style={{ width: track }}
-          >
-            {open && activity && statement ? (
-              <ActivityPanel
-                activity={activity}
-                statement={statement}
-                origin={origin}
-                next={next}
-              />
-            ) : (
-              <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
-            )}
+          // `h-0 min-h-full`: la columna se estira a lo que mida la fila pero no
+          // la estira ella. Sin eso, un enunciado largo empujaba el alto de la
+          // fila y el panel se quedaba sin tope contra el que hacer scroll.
+          <aside className="flex h-0 min-h-full flex-col overflow-hidden">
+            {/* Ancho propio: la columna se cierra por fuera y el contenido se
+                queda quieto en vez de recomponerse mientras sale. El padding le
+                deja sitio al halo de las tarjetas, que si no lo corta el recorte
+                de esta caja. */}
+            <div className="flex h-full shrink-0 flex-col px-6" style={{ width: track }}>
+              {open && activity && statement ? (
+                <ActivityPanel
+                  activity={activity}
+                  statement={statement}
+                  origin={origin}
+                  next={next}
+                />
+              ) : (
+                <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
+              )}
+            </div>
           </aside>
         )}
 
-        {/* Con la columna guardada, el cuadro es el único rastro de que ahí
-            había algo. */}
-        {isStudent && !showColumn && hidden && (
+        {/* Con la columna abierta el interruptor vive en su cabecera, y éste
+            ocupa su sitio cuando no la hay. Entra tarde a propósito: si apareciera
+            de una, se solaparía con el otro mientras la columna se pliega y por
+            un momento parecerían dos. */}
+        {isStudent && !open && (
           <CollapsedPanelButton
             tone="amber"
             label="Mostrar actividades"
             icon={PanelLeft}
             onClick={() => setHiddenPersisted(false)}
-            className="absolute top-0 right-full mr-6"
+            className={cn(
+              "absolute top-0 right-full mr-6 transition-opacity",
+              showColumn
+                ? "pointer-events-none opacity-0 duration-100"
+                : "opacity-100 delay-300 duration-200",
+            )}
           />
         )}
 
-        <div className="flex h-full min-w-0 flex-col gap-4">
-          <TerminalFrame
-            className="min-h-0 flex-1"
-            toolbar={
-              <TerminalSettingsBar
-                fontSize={fontSize}
-                fontFamily={fontFamily}
-                onFontSizeChange={handleFontSize}
-                onFontFamilyChange={handleFontFamily}
-                onReset={handleReset}
-              />
-            }
-          >
-            <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
-          </TerminalFrame>
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="shrink-0" style={{ height: TERMINAL_HEIGHT }}>
+            <TerminalFrame
+              className="h-full"
+              toolbar={
+                <TerminalSettingsBar
+                  fontSize={fontSize}
+                  fontFamily={fontFamily}
+                  onFontSizeChange={handleFontSize}
+                  onFontFamilyChange={handleFontFamily}
+                  onReset={handleReset}
+                />
+              }
+            >
+              <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
+            </TerminalFrame>
+          </div>
 
           {isStudent && <EssentialCommands className="shrink-0" />}
         </div>
