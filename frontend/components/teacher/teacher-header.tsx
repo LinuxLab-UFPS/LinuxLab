@@ -20,18 +20,18 @@ import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 const NAV = [
   {
-    label: "Terminal",
-    href: "/terminal",
-    icon: TerminalSquare,
-    hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
-    active: "bg-emerald-500/15 text-emerald-400",
-  },
-  {
     label: "Cursos",
     href: "/home",
     icon: BookOpen,
     hover: "hover:bg-primary/15 hover:text-primary",
     active: "bg-primary/15 text-primary",
+  },
+  {
+    label: "Terminal",
+    href: "/terminal",
+    icon: TerminalSquare,
+    hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
+    active: "bg-emerald-500/15 text-emerald-400",
   },
   {
     label: "Banco de Actividades",

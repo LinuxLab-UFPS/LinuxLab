@@ -13,7 +13,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return
-    const target = user.role === "student" ? "/home" : "/home"
+    const target = user.role === "admin" ? "/admin/docentes" : "/home"
     router.replace(target)
   }, [user, router])
 
