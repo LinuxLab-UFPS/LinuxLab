@@ -1,8 +1,8 @@
 # SRS — Actividades evaluadas en el entorno real
 
 **Proyecto:** LinuxLab UFPS
-**Versión:** 1.0 · 2026-08-04
-**Estado:** implementado y funcionando, con dos actividades sembradas (temas 3 y 4)
+**Versión:** 2.0 · 2026-08-04
+**Estado:** línea base implementada y especificación de ampliación del objetivo 4
 
 ---
 
@@ -24,7 +24,7 @@ el docente.
 
 ## 2. Alcance
 
-Cubierto en esta versión:
+Cubierto en la línea base implementada:
 
 - Catálogo de cinco aserciones atómicas.
 - Evaluación bajo demanda contra el entorno real del estudiante.
@@ -32,12 +32,41 @@ Cubierto en esta versión:
 - Dos prácticas en el temario (temas 3 y 4), invocadas desde el markdown.
 - La página de catálogo en `/activities`.
 
-Fuera de esta versión (ver §8):
+Pendiente en la línea base implementada:
 
 - La interfaz del docente para armar actividades.
 - La aserción `comando_imprime`.
 - Calificaciones y bitácora.
 - Los límites de recursos del contenedor (ver §9, es lo más urgente).
+
+La versión 2.0 conserva el vertical implementado y especifica la ampliación
+necesaria para completar el objetivo 4 del anteproyecto: creación, configuración,
+publicación, resolución, evaluación y seguimiento de actividades dentro de un
+grupo de laboratorio.
+
+La ampliación incluye:
+
+- banco de actividades administrado exclusivamente por el administrador;
+- actividades propias creadas por docentes dentro de sus grupos;
+- asignación de actividades a grupos;
+- actividades de tipo taller y quiz;
+- modalidades de evaluación automática y manual;
+- límite de intentos configurable por actividad;
+- política configurable de calificación por mejor o último intento;
+- calificación automática y calificación manual;
+- retroalimentación automática y escrita por el docente;
+- seguimiento de intentos, entregas y calificaciones;
+- bitácora de eventos asociados a las actividades.
+
+Quedan fuera del alcance:
+
+- ejecución arbitraria de comandos escritos por docentes;
+- contenedores independientes por estudiante o actividad;
+- integración con Moodle u otro LMS externo;
+- trabajo colaborativo entre estudiantes;
+- generación automática de actividades;
+- evaluación avanzada de programas C o scripts completos;
+- observación y calificación de cada comando en tiempo real.
 
 ## 3. Definiciones
 
@@ -224,7 +253,11 @@ comprobaciones) vive en `lib/features/shared/activities.ts`, igual que el de
 simuladores; lo que cada actividad comprueba sigue viviendo en la base, keyed
 por el mismo `slug`. La tarjeta lleva al subtema que contiene el ejercicio.
 
-## 8. Lo que falta
+## 8. Estado de la línea base implementada
+
+Esta sección describe las diferencias entre el vertical funcional existente y la
+especificación objetivo de la versión 2.0. El plan de implementación de los
+pendientes se deriva de las secciones 11 a 21.
 
 Por orden de dependencia:
 
@@ -232,10 +265,10 @@ Por orden de dependencia:
    catálogo, con el puntaje repartido. El backend ya soporta actividades por
    grupo (`Activity.group_id`); falta el CRUD y la pantalla.
 2. **Calificaciones.** Hoy se guarda cada intento, y la lección abre mostrando
-   el **último**. Decisión tomada: **la nota debe ser el mejor intento, y la
-   tarjeta debe abrir en el mejor.** Como está, un estudiante que aprobó y
-   vuelve a comprobar después de que se limpie el entorno ve su tarjeta en rojo
-   aunque el intento bueno siga registrado.
+   el **último**. En la versión objetivo, el docente configura si la nota final
+   usa el mejor intento o el último intento válido. Como está, un estudiante que
+   aprobó y vuelve a comprobar después de que se limpie el entorno ve su tarjeta
+   en rojo aunque el intento bueno siga registrado.
 3. **Bitácora.** Que el docente vea intentos por estudiante y por actividad.
 4. **`comando_imprime`.** Se dejó para el final a propósito: es la única
    aserción que ejecuta texto escrito por el docente, así que necesita su propio
@@ -317,3 +350,471 @@ pty):
 | `frontend/lib/features/shared/activities.ts` | Registro del catálogo |
 | `frontend/components/student/activity-card.tsx` | La tarjeta ámbar |
 | `frontend/app/(protected)/activities/page.tsx` | La página del catálogo |
+
+---
+
+## 11. Especificación objetivo del componente interactivo
+
+Esta sección define el estado objetivo del componente requerido por el objetivo 4.
+La implementación actual de las actividades sembradas constituye la línea base
+desde la cual se desarrollará esta ampliación.
+
+### 11.1 Actores y responsabilidades
+
+| Actor | Responsabilidades |
+|---|---|
+| Administrador | Gestionar el banco de actividades, el catálogo de aserciones y la bitácora global. |
+| Docente | Gestionar actividades de sus grupos, asignar actividades del banco, crear actividades propias, configurar evaluación y revisar entregas manuales. |
+| Estudiante | Consultar actividades asignadas, trabajar en su terminal, solicitar validaciones, realizar entregas y consultar resultados. |
+
+El administrador es el único actor autorizado para crear, editar, activar,
+desactivar o eliminar definiciones del banco. Un docente puede utilizar una
+actividad del banco sin modificar su definición original y puede crear actividades
+propias únicamente dentro de los grupos que administra.
+
+### 11.2 Tipos y modalidades
+
+El sistema debe distinguir dos dimensiones independientes:
+
+| Dimensión | Valores | Significado |
+|---|---|---|
+| Tipo de actividad | `workshop`, `quiz` | Clasificación pedagógica de la actividad. |
+| Modalidad de evaluación | `automatic`, `manual` | Forma en que se obtiene la calificación. |
+
+Un taller o un quiz puede utilizar evaluación automática o manual. El tipo no
+determina por sí mismo el número de intentos ni la política de calificación.
+
+### 11.3 Configuración de intentos y calificación
+
+Cada actividad publicada en un grupo debe permitir configurar:
+
+| Configuración | Valores |
+|---|---|
+| `attempt_limit` | `null` para intentos ilimitados o un entero positivo para un límite definido. |
+| `grading_policy` | `best_score` o `latest_score`. |
+
+`best_score` conserva como calificación final la puntuación más alta obtenida en
+los intentos válidos. `latest_score` utiliza la calificación del último intento
+válido evaluado o calificado.
+
+La configuración se aplica tanto a actividades automáticas como manuales. Debe
+quedar bloqueada después del primer intento o entrega para evitar cambios
+retroactivos en las condiciones de evaluación. Cualquier modificación excepcional
+debe quedar registrada en la bitácora y producir una nueva versión de la actividad.
+
+Todas las calificaciones utilizan una escala de 0 a 100, independientemente de
+la modalidad de evaluación.
+
+## 12. Modelo conceptual ampliado
+
+La definición reutilizable de una actividad debe separarse de su publicación en
+un grupo. Esta separación evita que modificar una actividad del banco altere las
+condiciones o resultados históricos de un grupo.
+
+```text
+ActivityDefinition
+    └── ActivityCheck[]
+
+ActivityDefinition
+    └── GroupActivity[]
+             ├── Group
+             ├── ActivityAttempt[]
+             └── ActivitySubmission[]
+
+User
+    ├── ActivityAttempt[]
+    └── ActivitySubmission[]
+```
+
+### 12.1 ActivityDefinition
+
+Representa la definición de una actividad del banco o una definición propia del
+docente antes de ser publicada.
+
+Campos mínimos:
+
+- `id`;
+- `slug`, opcional y único para actividades invocadas desde el temario;
+- `title`;
+- `instructions`;
+- `topic_number`;
+- `difficulty`, opcional;
+- `activity_type`;
+- `evaluation_type`;
+- `max_score`;
+- `source`, con valores `bank` o `teacher`;
+- `created_by`, opcional para actividades sembradas;
+- `active`;
+- `created_at`;
+- `updated_at`.
+
+### 12.2 ActivityCheck
+
+Representa una aserción atómica configurada para una definición de actividad.
+
+Campos mínimos:
+
+- `id`;
+- `activity_definition_id`;
+- `type`;
+- `params`;
+- `points`;
+- `position`.
+
+El total de los puntos de las aserciones debe coincidir con `max_score`. Los
+parámetros deben validarse en el backend según el tipo de aserción y nunca deben
+interpretarse como comandos ejecutables.
+
+### 12.3 GroupActivity
+
+Representa la instancia de una actividad publicada o configurada para un grupo.
+
+Campos mínimos:
+
+- `id`;
+- `group_id`;
+- `activity_definition_id`, cuando proviene del banco o de una definición base;
+- `title`;
+- `instructions`;
+- `activity_type`;
+- `evaluation_type`;
+- `max_score`;
+- `attempt_limit`;
+- `grading_policy`;
+- `required`;
+- `enabled`;
+- `due_at`, opcional;
+- `published_at`, opcional;
+- `created_at`;
+- `updated_at`.
+
+La instancia debe conservar la configuración publicada. Si la definición del banco
+cambia posteriormente, las actividades ya publicadas no deben cambiar de forma
+retroactiva.
+
+### 12.4 ActivityAttempt
+
+Representa cada solicitud de evaluación automática realizada por un estudiante.
+
+Campos mínimos:
+
+- `id`;
+- `group_activity_id`;
+- `student_id`;
+- `attempt_number`;
+- `passed`;
+- `score`;
+- `results`;
+- `created_at`.
+
+Todos los intentos deben conservarse. La calificación final se obtiene aplicando
+la política configurada en `GroupActivity`.
+
+### 12.5 ActivitySubmission
+
+Representa una entrega de una actividad con evaluación manual.
+
+Campos mínimos:
+
+- `id`;
+- `group_activity_id`;
+- `student_id`;
+- `attempt_number`;
+- `status`;
+- `content` o referencia a la evidencia entregada;
+- `score`, opcional hasta la calificación;
+- `feedback`, opcional;
+- `graded_by`, opcional;
+- `submitted_at`;
+- `graded_at`, opcional.
+
+La entrega debe registrar la evidencia disponible en el momento del envío. El
+sistema no debe considerar como evidencia histórica el estado mutable posterior
+del home del estudiante.
+
+### 12.6 ActivityAuditEvent
+
+Representa un evento auditable relacionado con una actividad.
+
+Campos mínimos:
+
+- `id`;
+- `activity_id` o `group_activity_id`;
+- `group_id`, opcional;
+- `user_id`;
+- `event_type`;
+- `metadata`;
+- `created_at`.
+
+## 13. Estados y reglas de negocio
+
+### 13.1 Estados de una actividad
+
+```text
+draft -> published -> enabled -> disabled
+                         |
+                         v
+                       closed
+```
+
+Una actividad en estado `disabled`, `closed` o archivada no acepta nuevos
+intentos ni entregas. La consulta histórica debe continuar disponible para los
+usuarios autorizados.
+
+### 13.2 Estados de una entrega manual
+
+```text
+draft -> submitted -> under_review -> graded
+                                      |
+                                      v
+                                   returned
+```
+
+### 13.3 Reglas generales
+
+- El estudiante debe tener una matrícula activa en el grupo.
+- El docente debe ser propietario del grupo o tener rol de administrador.
+- Una actividad vencida no acepta nuevos intentos ni entregas.
+- Un límite de intentos se valida en una operación transaccional.
+- Un intento fallido también consume un intento cuando existe límite.
+- La nota final no elimina ni sobrescribe el historial.
+- La política `best_score` selecciona la mayor calificación válida.
+- La política `latest_score` selecciona la última calificación válida.
+- La política de calificación no puede cambiarse después del primer intento sin generar una nueva versión.
+- La nota final se expresa siempre entre 0 y 100.
+- Las aserciones desconocidas producen un resultado fallido y no un error ejecutable.
+- El estudiante no puede enviar como parámetro su propio `student_id`.
+- La identidad del estudiante se obtiene de la sesión autenticada.
+
+## 14. Requerimientos funcionales ampliados
+
+### 14.1 Banco de actividades
+
+| Código | Requerimiento |
+|---|---|
+| RF-ACT-01 | El sistema debe permitir al administrador crear actividades del banco. |
+| RF-ACT-02 | El sistema debe permitir al administrador editar, activar, desactivar y eliminar actividades del banco cuando no existan dependencias históricas que lo impidan. |
+| RF-ACT-03 | El sistema debe permitir asociar una actividad del banco con un tema del temario. |
+| RF-ACT-04 | El sistema debe permitir configurar las aserciones, posiciones y puntajes de una actividad. |
+| RF-ACT-05 | El sistema debe impedir que un docente modifique directamente una actividad del banco. |
+
+### 14.2 Actividades de grupo
+
+| Código | Requerimiento |
+|---|---|
+| RF-GRP-01 | El sistema debe permitir al docente consultar las actividades disponibles del banco. |
+| RF-GRP-02 | El sistema debe permitir al docente asignar una actividad del banco a uno de sus grupos. |
+| RF-GRP-03 | El sistema debe permitir al docente crear una actividad propia dentro de uno de sus grupos. |
+| RF-GRP-04 | El sistema debe permitir configurar el tipo como taller o quiz. |
+| RF-GRP-05 | El sistema debe permitir configurar la modalidad automática o manual. |
+| RF-GRP-06 | El sistema debe permitir definir intentos ilimitados o un número máximo de intentos. |
+| RF-GRP-07 | El sistema debe permitir seleccionar la política de mejor calificación o último intento. |
+| RF-GRP-08 | El sistema debe permitir definir si la actividad es obligatoria. |
+| RF-GRP-09 | El sistema debe permitir definir una fecha de cierre. |
+| RF-GRP-10 | El sistema debe permitir publicar, habilitar y deshabilitar una actividad. |
+| RF-GRP-11 | El sistema debe conservar la configuración publicada aunque cambie la definición del banco. |
+
+### 14.3 Evaluación automática
+
+| Código | Requerimiento |
+|---|---|
+| RF-AUTO-01 | El sistema debe mostrar al estudiante las instrucciones y criterios de la actividad. |
+| RF-AUTO-02 | El sistema debe permitir solicitar una evaluación contra el entorno Linux propio del estudiante. |
+| RF-AUTO-03 | El sistema debe ejecutar el checker con la identidad del estudiante y no como root. |
+| RF-AUTO-04 | El sistema debe mostrar el resultado individual de cada aserción. |
+| RF-AUTO-05 | El sistema debe calcular la calificación sobre 100 puntos. |
+| RF-AUTO-06 | El sistema debe registrar cada intento y su resultado completo. |
+| RF-AUTO-07 | El sistema debe impedir intentos que superen el límite configurado. |
+| RF-AUTO-08 | El sistema debe calcular la nota final según la política configurada. |
+
+### 14.4 Evaluación manual
+
+| Código | Requerimiento |
+|---|---|
+| RF-MAN-01 | El sistema debe permitir al estudiante enviar una actividad manual. |
+| RF-MAN-02 | El sistema debe registrar la evidencia disponible al momento de la entrega. |
+| RF-MAN-03 | El sistema debe permitir al docente consultar las entregas pendientes de sus grupos. |
+| RF-MAN-04 | El sistema debe permitir al docente asignar una calificación de 0 a 100. |
+| RF-MAN-05 | El sistema debe permitir al docente escribir retroalimentación. |
+| RF-MAN-06 | El sistema debe permitir consultar entregas y calificaciones históricas. |
+| RF-MAN-07 | El sistema debe calcular la nota final según la política de mejor o último intento. |
+
+### 14.5 Consulta y seguimiento
+
+| Código | Requerimiento |
+|---|---|
+| RF-TRK-01 | El estudiante debe poder consultar el estado de cada actividad. |
+| RF-TRK-02 | El estudiante debe poder consultar sus intentos, entregas y calificación final. |
+| RF-TRK-03 | El docente debe poder consultar el progreso por estudiante y actividad. |
+| RF-TRK-04 | El docente debe poder consultar promedios y actividades pendientes del grupo. |
+| RF-TRK-05 | El administrador y el docente autorizado deben poder consultar eventos de actividad según su ámbito. |
+| RF-TRK-06 | El sistema debe permitir exportar resultados de actividades según los permisos del usuario. |
+
+## 15. Requerimientos no funcionales ampliados
+
+| Código | Requerimiento |
+|---|---|
+| RNF-ACT-01 | Todas las operaciones de actividad deben validar autenticación y autorización en el backend. |
+| RNF-ACT-02 | Un estudiante no debe poder consultar ni evaluar actividades de grupos en los que no esté matriculado. |
+| RNF-ACT-03 | Un docente no debe poder administrar actividades de grupos ajenos. |
+| RNF-ACT-04 | Los intentos, entregas y calificaciones históricas deben conservar integridad transaccional. |
+| RNF-ACT-05 | Los parámetros de aserciones deben validarse por tipo antes de almacenarse y evaluarse. |
+| RNF-ACT-06 | El sistema no debe ejecutar texto arbitrario suministrado por un docente como comando del sistema. |
+| RNF-ACT-07 | Una evaluación automática debe finalizar dentro del tiempo máximo configurado para evitar bloquear recursos del entorno. |
+| RNF-ACT-08 | Los resultados deben persistir aunque el estudiante cierre la sesión o se desconecte. |
+| RNF-ACT-09 | Las acciones de publicación, evaluación, entrega y calificación deben ser auditables. |
+| RNF-ACT-10 | La interfaz debe distinguir claramente entre actividad pendiente, en evaluación, enviada, calificada y cerrada. |
+
+## 16. Casos de uso ampliados
+
+| Código | Caso de uso | Actor principal |
+|---|---|---|
+| CU14 | Administrar banco de actividades | Administrador |
+| CU15 | Configurar aserciones de una actividad | Administrador, Docente |
+| CU16 | Asignar actividad del banco a un grupo | Docente |
+| CU17 | Crear actividad propia del grupo | Docente |
+| CU18 | Publicar y configurar actividad | Docente |
+| CU19 | Resolver actividad automática | Estudiante |
+| CU20 | Enviar actividad manual | Estudiante |
+| CU21 | Consultar intentos y calificación | Estudiante |
+| CU22 | Revisar y calificar entrega manual | Docente |
+| CU23 | Consultar seguimiento del grupo | Docente |
+| CU24 | Consultar bitácora de actividades | Administrador, Docente |
+
+## 17. Contratos de API objetivo
+
+### 17.1 Banco
+
+```text
+GET    /api/activities/bank
+POST   /api/activities/bank
+GET    /api/activities/bank/:id
+PATCH  /api/activities/bank/:id
+DELETE /api/activities/bank/:id
+```
+
+Estas rutas deben estar protegidas para el administrador. Las actividades del
+temario sembradas deben exponerse como definiciones del banco o como definiciones
+del sistema que no puedan ser eliminadas accidentalmente.
+
+### 17.2 Actividades de grupo
+
+```text
+GET    /api/groups/:groupId/activities
+POST   /api/groups/:groupId/activities
+GET    /api/groups/:groupId/activities/:id
+PATCH  /api/groups/:groupId/activities/:id
+POST   /api/groups/:groupId/activities/:id/publish
+POST   /api/groups/:groupId/activities/:id/disable
+```
+
+### 17.3 Interacción del estudiante
+
+```text
+GET    /api/group-activities/:id
+POST   /api/group-activities/:id/check
+POST   /api/group-activities/:id/submit
+GET    /api/group-activities/:id/attempts
+GET    /api/group-activities/:id/submissions
+```
+
+### 17.4 Seguimiento y calificación
+
+```text
+GET   /api/groups/:groupId/progress
+GET   /api/groups/:groupId/activities/:id/submissions
+PATCH /api/submissions/:id/grade
+GET   /api/groups/:groupId/activity-events
+```
+
+Los identificadores de grupo y estudiante deben derivarse y validarse contra la
+sesión autenticada. No deben aceptarse como mecanismo de autorización valores
+enviados libremente por el cliente.
+
+## 18. Integración con el temario
+
+La directiva actual:
+
+```markdown
+<!-- EJERCICIO: slug-de-la-actividad -->
+```
+
+identifica una `ActivityDefinition`. Para evaluar correctamente dentro de un
+grupo, el frontend debe resolver el `GroupActivity` correspondiente al grupo
+activo del estudiante.
+
+La resolución debe cumplir estas reglas:
+
+- el `slug` identifica la definición del temario;
+- la actividad debe estar asignada al grupo activo;
+- el estudiante debe estar matriculado en ese grupo;
+- la evaluación debe ejecutarse sobre el `GroupActivity`;
+- un estudiante con varios grupos debe mantener explícito el contexto del grupo.
+
+Mientras el contexto de grupo no esté disponible en la lección, el endpoint actual
+por `slug` puede mantenerse únicamente como mecanismo transitorio para las
+actividades sembradas.
+
+## 19. Criterios de aceptación
+
+El objetivo 4 se considerará funcionalmente cubierto cuando se verifiquen estos
+escenarios:
+
+1. El administrador crea una actividad del banco.
+2. El administrador configura sus aserciones y puntajes.
+3. El docente consulta el banco sin poder modificarlo.
+4. El docente asigna una actividad a su grupo.
+5. El docente crea una actividad propia para su grupo.
+6. El docente define tipo, modalidad, fecha, obligatoriedad e intentos.
+7. El docente selecciona `best_score` o `latest_score`.
+8. El estudiante visualiza únicamente actividades de sus grupos.
+9. El estudiante solicita una evaluación automática desde su terminal real.
+10. El sistema muestra el resultado de cada aserción.
+11. El sistema bloquea intentos posteriores al límite configurado.
+12. El sistema conserva todos los intentos y calcula la nota final correctamente.
+13. El estudiante envía una actividad manual.
+14. El docente consulta, califica y retroalimenta la entrega.
+15. El estudiante consulta su calificación y retroalimentación.
+16. El docente consulta el progreso de su grupo.
+17. El sistema registra las acciones relevantes en la bitácora.
+18. Un usuario no autorizado no puede consultar, modificar ni evaluar actividades ajenas.
+
+## 20. Trazabilidad del objetivo 4
+
+La implementación debe mantener una relación verificable entre cada requisito y
+los artefactos que lo satisfacen:
+
+```text
+Requisito
+  -> Caso de uso
+  -> Modelo de datos
+  -> Endpoint
+  -> Pantalla
+  -> Prueba de aceptación
+```
+
+Como mínimo, la matriz de trazabilidad debe cubrir:
+
+| Área | Modelo | Backend | Frontend | Prueba |
+|---|---|---|---|---|
+| Banco | `ActivityDefinition`, `ActivityCheck` | CRUD administrativo | Página del banco | Crear, editar y desactivar |
+| Publicación | `GroupActivity` | Rutas de grupo | Formulario docente | Asignar y publicar |
+| Automática | `ActivityAttempt` | Endpoint `check` | Componente de evaluación | Validar y limitar intentos |
+| Manual | `ActivitySubmission` | Entrega y calificación | Vista de estudiante y docente | Enviar, calificar y retroalimentar |
+| Seguimiento | Intentos y entregas | Rutas de progreso | Panel docente | Consultar resultados |
+| Auditoría | `ActivityAuditEvent` | Registro de eventos | Bitácora | Verificar trazabilidad |
+
+## 21. Estado de implementación
+
+| Componente | Estado actual | Estado objetivo |
+|---|---|---|
+| Checker seguro | Implementado | Mantener y ampliar solo con aserciones revisadas |
+| Actividades sembradas | Implementado | Migrar al modelo de definiciones y asignaciones |
+| Evaluación automática | Implementación inicial | Integrar grupos, límites y políticas de calificación |
+| Banco de actividades | Pendiente | CRUD exclusivo del administrador |
+| Actividades docentes | Interfaz parcial | Backend, persistencia y publicación |
+| Intentos | Registro inicial | Límites, mejor/último resultado y seguimiento |
+| Evaluación manual | Pendiente | Entregas, calificación y retroalimentación |
+| Seguimiento | Interfaz parcial | Datos reales de intentos y entregas |
+| Bitácora de actividades | Pendiente | Eventos y consulta autorizada |
+| Pruebas | Pendiente | Checker, autorización, flujo completo y regresión |
