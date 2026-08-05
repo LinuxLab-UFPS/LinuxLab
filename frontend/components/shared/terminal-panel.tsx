@@ -4,6 +4,7 @@ import { useCallback, useState } from "react"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
 import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
+import { EssentialCommands } from "@/components/student/essential-commands"
 import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
 
@@ -30,8 +31,9 @@ export function TerminalPanel({ onClose }: { onClose: () => void }) {
   }, [])
 
   return (
-    <aside className="flex w-[38%] min-w-[360px] shrink-0 flex-col bg-background py-4">
+    <aside className="flex w-[38%] min-w-[360px] shrink-0 flex-col gap-3 bg-background py-4">
       <TerminalFrame
+        className="min-h-0 flex-1"
         onClose={onClose}
         toolbar={
           <TerminalSettingsBar
@@ -45,6 +47,8 @@ export function TerminalPanel({ onClose }: { onClose: () => void }) {
       >
         <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
       </TerminalFrame>
+
+      <EssentialCommands className="shrink-0" />
     </aside>
   )
 }
