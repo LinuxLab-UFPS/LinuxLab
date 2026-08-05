@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { Target } from "lucide-react"
+import { PanelLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
@@ -138,9 +138,9 @@ export function TerminalWorkspace({
             onClick={() => setHiddenPersisted(false)}
             title="Mostrar actividades"
             aria-label="Mostrar actividades"
-            className="absolute top-0 right-full mr-3 rounded-md p-1.5 text-amber-500/70 transition-colors hover:text-amber-500"
+            className="absolute top-0 right-full mr-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-500/60 text-amber-500 transition-colors hover:border-amber-500 hover:bg-amber-500/10"
           >
-            <Target className="h-5 w-5" />
+            <PanelLeft className="h-6 w-6" />
           </button>
         )}
 
