@@ -99,9 +99,12 @@ export function ActivityPanel({
           </div>
         ) : (
           <Collapsible className="mt-6" defaultOpen={evaluated}>
-            <CollapsibleTrigger className="group inline-flex items-center gap-2 rounded-md border border-amber-500/30 px-2.5 py-1.5 text-xs font-medium text-amber-500 transition-colors hover:bg-amber-500/10">
-              <Lightbulb className="h-3.5 w-3.5" />
-              Qué se va a revisar
+            <CollapsibleTrigger
+              title="Qué se va a revisar"
+              aria-label="Qué se va a revisar"
+              className="inline-flex rounded-md border border-amber-500/30 p-1.5 text-amber-500 transition-colors hover:bg-amber-500/10"
+            >
+              <Lightbulb className="h-4 w-4" />
             </CollapsibleTrigger>
             <CollapsibleContent>
               <CheckList rows={rows} evaluated={evaluated} className="mt-3" />

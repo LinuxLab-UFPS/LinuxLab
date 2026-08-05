@@ -90,10 +90,10 @@ export function TerminalWorkspace({
   const showColumn = isStudent && (open || hidden === false)
 
   return (
-    <div className="flex h-full items-center justify-center px-6">
+    <div className="flex h-full items-center justify-center px-6 py-8">
       <div
         className={cn(
-          "relative grid h-[42rem] w-full",
+          "relative grid h-full max-h-[42rem] w-full",
           hidden !== null && "transition-all duration-300 ease-out",
           showColumn
             ? "max-w-7xl grid-cols-[28rem_1fr] gap-6"
