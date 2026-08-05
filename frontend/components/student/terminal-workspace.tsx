@@ -152,7 +152,10 @@ export function TerminalWorkspace({
           />
         )}
 
-        <div className="flex min-w-0 flex-col gap-4">
+        {/* El docente no lleva columna, y sin ella la consola sería el primer
+            hijo de la rejilla: iría a parar al carril de 0rem. Se ancla al
+            segundo, que es el suyo tenga o no vecina a la izquierda. */}
+        <div className="flex min-w-0 flex-col gap-4" style={{ gridColumn: 2 }}>
           <div className="shrink-0" style={{ height: TERMINAL_HEIGHT }}>
             <TerminalFrame
               className="h-full"
