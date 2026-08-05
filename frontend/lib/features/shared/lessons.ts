@@ -4,7 +4,7 @@ import type { TopicContentMeta } from "@/lib/features/shared/types"
 import { env } from "@/lib/config/env"
 import { syllabus } from "./temario"
 import { getSimulators } from "./simulators"
-import { getActivities } from "./activities"
+import { getActivities, getActivitiesForTopic } from "./activities"
 
 /**
  * Content seam (server-only, reads from disk).
@@ -97,6 +97,7 @@ export interface LessonRef {
 export function getLessonSequence(): LessonRef[] {
   const refs: LessonRef[] = []
   for (const topic of syllabus) {
+    const activities = getActivitiesForTopic(topic.number).length
     const meta = getTopicContentMeta(topic.number)
     const base = {
       topicNumber: topic.number,
@@ -134,6 +135,7 @@ export function getLessonSequence(): LessonRef[] {
 export function getTopicLessonCounts(): Record<number, number> {
   const counts: Record<number, number> = {}
   for (const topic of syllabus) {
+    const activities = getActivitiesForTopic(topic.number).length
     const meta = getTopicContentMeta(topic.number)
     if (meta && meta.subtopics.length > 0) counts[topic.number] = meta.subtopics.length
   }
@@ -154,21 +156,25 @@ const SIMULATOR_DIRECTIVE = /<!--\s*SIMULATOR\s*:/gi
 const WORDS_PER_MINUTE = 200
 
 /**
- * Per-topic preview stats (reading time + how many videos, simulators and
- * activities are inside). Topics without published content are omitted, so their
- * cards show no tags. Activities are not wired to topics yet, so that count stays
- * at zero until they are.
+ * Per-topic preview stats: reading time, and how many videos, simulators and
+ * activities the topic has. All four are counted, never written down — adding an
+ * activity to the registry or a video directive to a lesson moves the number on
+ * its own.
+ *
+ * A topic with nothing published contributes no entry, so its card shows no tags.
  */
 export function getTopicPreviews(): Record<number, TopicPreview> {
   const previews: Record<number, TopicPreview> = {}
   for (const topic of syllabus) {
+    const activities = getActivitiesForTopic(topic.number).length
     const meta = getTopicContentMeta(topic.number)
-    if (!meta) continue
+    // Un tema puede anunciar una actividad antes de tener lecciones escritas.
+    if (!meta && activities === 0) continue
 
     let words = 0
     let videos = 0
     let simulators = 0
-    for (const sub of meta.subtopics) {
+    for (const sub of meta?.subtopics ?? []) {
       const md = getSubtopicMarkdown(topic.number, sub.file)
       if (!md) continue
       words += md.split(/\s+/).filter(Boolean).length
@@ -180,7 +186,7 @@ export function getTopicPreviews(): Record<number, TopicPreview> {
       minutes: words > 0 ? Math.max(1, Math.round(words / WORDS_PER_MINUTE)) : 0,
       videos,
       simulators,
-      activities: 0,
+      activities,
     }
   }
   return previews
