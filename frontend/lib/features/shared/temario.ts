@@ -57,8 +57,7 @@ export const syllabus: Topic[] = [
     description: "Crear archivos con touch y redirección, y editores de texto: vi, pico, nano.",
     subTopics: [
       { number: 1, title: "Crear archivos" },
-      { number: 2, title: "Práctica: construye una universidad" },
-      { number: 3, title: "Editores: vi, pico, nano" },
+      { number: 2, title: "Editores: vi, pico, nano" },
     ],
   },
   {

@@ -1,42 +1,53 @@
 import { syllabus } from "./temario"
 
 /**
- * Activities registry, the same shape as the simulators one: the catalog page
- * needs a title, a description and a topic tag, and those are presentation, not
- * evaluation. What each activity actually checks lives in the database, keyed by
- * this same `slug` — the lesson invokes it with `<!-- EJERCICIO: slug -->` and
- * the backend evaluates it against the student's environment.
+ * Activities registry.
+ *
+ * An activity is NOT a lesson. Lessons carry *comprobaciones* — fixed checks
+ * that measure progress and live inside a subtopic. An activity is a piece of
+ * work on its own: it never appears in the course outline, it is opened next to
+ * the terminal, and it is solved there. A topic can advertise one with a card,
+ * but the card takes the student out to the terminal.
+ *
+ * This holds the presentation (title, difficulty, topic tag); what each activity
+ * checks lives in the database, keyed by the same `slug`.
  */
+export type Difficulty = "facil" | "intermedio" | "dificil"
+
+export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  facil: "Fácil",
+  intermedio: "Intermedio",
+  dificil: "Difícil",
+}
+
+export const DIFFICULTY_CLASS: Record<Difficulty, string> = {
+  facil: "border-emerald-500/40 text-emerald-500",
+  intermedio: "border-amber-500/40 text-amber-500",
+  dificil: "border-rose-500/40 text-rose-500",
+}
+
 export interface Activity {
   slug: string
   title: string
   description: string
+  difficulty: Difficulty
   topicNumber: number
   topicSlug: string
   topicTitle: string
   /** How many assertions the laboratory checks. */
   checks: number
-  /** The lesson that holds the exercise. */
+  /** Activities are always solved next to the terminal, never inside a lesson. */
   href: string
 }
 
 const RAW = [
   {
-    slug: "crear-directorio-practicas",
-    title: "Crea tu primer directorio",
-    description:
-      "Arma tu carpeta de prácticas dentro del laboratorio y comprueba que quedó donde debe.",
-    topicNumber: 3,
-    subtopicId: "practica-directorios",
-    checks: 2,
-  },
-  {
     slug: "universidad-facultades",
     title: "Construye una universidad",
     description:
-      "Monta un árbol de directorios con tres facultades y el pensum de cada una, combinando mkdir y touch.",
+      "Arma un árbol de facultades con el pensum de cada una, combinando mkdir y touch.",
+    difficulty: "facil" as Difficulty,
     topicNumber: 4,
-    subtopicId: "practica-universidad",
     checks: 7,
   },
 ]
@@ -44,14 +55,10 @@ const RAW = [
 export const activities: Activity[] = RAW.map((a) => {
   const topic = syllabus.find((t) => t.number === a.topicNumber)
   return {
-    slug: a.slug,
-    title: a.title,
-    description: a.description,
-    topicNumber: a.topicNumber,
+    ...a,
     topicSlug: topic?.slug ?? "",
     topicTitle: topic?.title ?? "",
-    checks: a.checks,
-    href: `/group?tema=${topic?.slug ?? ""}&sub=${a.subtopicId}`,
+    href: `/terminal?actividad=${a.slug}`,
   }
 })
 
@@ -61,4 +68,9 @@ export function getActivities(): Activity[] {
 
 export function getActivity(slug: string): Activity | undefined {
   return activities.find((a) => a.slug === slug)
+}
+
+/** The activities a topic advertises, rendered as cards inside its lesson. */
+export function getActivitiesForTopic(topicNumber: number): Activity[] {
+  return activities.filter((a) => a.topicNumber === topicNumber)
 }

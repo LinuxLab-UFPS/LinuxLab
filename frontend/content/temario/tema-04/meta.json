@@ -8,11 +8,6 @@
       "id": "touch",
       "title": "Crear archivos",
       "file": "01-touch.md"
-    },
-    {
-      "id": "practica-universidad",
-      "title": "Práctica: construye una universidad",
-      "file": "02-practica-universidad.md"
     }
   ],
   "resources": [
