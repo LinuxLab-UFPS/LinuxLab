@@ -1,6 +1,7 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { Eye } from "lucide-react"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
 import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
@@ -11,12 +12,16 @@ import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
 import type { Activity } from "@/lib/features/shared/activities"
 
+const HIDDEN_KEY = "linuxlab:suggested-hidden"
+
 /**
  * The student's terminal and everything that sits around it: the suggested
  * activities on the left, the cheat sheet underneath, and — when an activity is
  * open — its statement in place of the suggestions.
  *
- * The teacher gets the console alone; the side column is study material.
+ * Hiding the suggestions drops the whole column, so the terminal recentres
+ * instead of leaving an empty gutter behind. The teacher never gets the column:
+ * it is study material.
  */
 export function TerminalWorkspace({
   activity,
@@ -31,6 +36,25 @@ export function TerminalWorkspace({
     user?.preferences?.terminalFontFamily ?? "Menlo, Monaco, 'Courier New', monospace",
   )
   const [resetKey, setResetKey] = useState(0)
+  // null mientras no se ha leído el almacenamiento, para no parpadear.
+  const [hidden, setHidden] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    try {
+      setHidden(localStorage.getItem(HIDDEN_KEY) === "true")
+    } catch {
+      setHidden(false)
+    }
+  }, [])
+
+  const setHiddenPersisted = useCallback((next: boolean) => {
+    setHidden(next)
+    try {
+      localStorage.setItem(HIDDEN_KEY, String(next))
+    } catch {
+      // Storage blocked: the choice just won't survive the session.
+    }
+  }, [])
 
   const handleFontSize = useCallback((size: number) => {
     setFontSize(size)
@@ -51,25 +75,37 @@ export function TerminalWorkspace({
   const handleReset = useCallback(() => setResetKey((k) => k + 1), [])
 
   const isStudent = user?.role === "student"
-  const open = isStudent && activity && statement
+  const open = Boolean(isStudent && activity && statement)
+  // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
+  const showColumn = isStudent && (open || hidden === false)
 
   return (
     <div className="flex h-full items-center justify-center px-6">
       <div
-        className={
-          isStudent
-            ? "flex h-[42rem] w-full max-w-7xl gap-6"
-            : "flex h-[42rem] w-full max-w-5xl gap-6"
-        }
+        className={`relative flex h-[42rem] w-full gap-6 ${showColumn ? "max-w-7xl" : "max-w-5xl"}`}
       >
-        {isStudent && (
+        {showColumn && (
           <aside className="flex h-full w-[26rem] shrink-0 flex-col">
-            {open ? (
+            {open && activity && statement ? (
               <ActivityPanel activity={activity} statement={statement} />
             ) : (
-              <SuggestedActivities />
+              <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
             )}
           </aside>
+        )}
+
+        {/* Sin columna no queda dónde poner el control, así que el ojo se va al
+            margen: el único rastro de que hay algo escondido. */}
+        {isStudent && !showColumn && hidden && (
+          <button
+            type="button"
+            onClick={() => setHiddenPersisted(false)}
+            title="Mostrar actividades"
+            aria-label="Mostrar actividades"
+            className="absolute top-0 right-full mr-3 rounded-md p-1 text-amber-500/70 transition-colors hover:text-amber-500"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
         )}
 
         <div className="flex h-full min-w-0 flex-1 flex-col gap-4">

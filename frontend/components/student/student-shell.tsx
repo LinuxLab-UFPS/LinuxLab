@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/student/site-header"
 import { getSearchIndex } from "@/lib/features/shared/lessons"
 import { getSimulators } from "@/lib/features/shared/simulators"
+import { LessonProgressProvider } from "@/lib/features/student/progress"
 
 /**
  * Shell for the student experience: a black top header instead of the left
@@ -11,9 +12,11 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   const simulators = getSimulators()
   const searchItems = getSearchIndex()
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <SiteHeader simulators={simulators} searchItems={searchItems} />
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
+    <LessonProgressProvider>
+      <div className="flex h-screen flex-col overflow-hidden bg-background">
+        <SiteHeader simulators={simulators} searchItems={searchItems} />
+        <main className="flex-1 overflow-auto">{children}</main>
+      </div>
+    </LessonProgressProvider>
   )
 }
