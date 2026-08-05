@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { PanelLeft } from "lucide-react"
+import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { cn } from "@/lib/utils"
 import { TerminalFrame } from "@/components/shared/terminal-frame"
 import { TerminalEmulator } from "@/components/shared/terminal-emulator"
@@ -90,24 +91,25 @@ export function TerminalWorkspace({
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)
 
-  // El enunciado necesita más columna que un par de tarjetas, y la fila crece
-  // con él para que la terminal no pague ese ancho. El contenido de la columna
-  // se mide igual que su carril, si no queda flotando dentro.
+  // El enunciado necesita más columna que un par de tarjetas.
   const track = open ? "34rem" : "28rem"
-  const row = !showColumn
-    ? "max-w-5xl grid-cols-[0px_1fr] gap-0"
-    : open
-      ? "max-w-[92rem] grid-cols-[34rem_1fr] gap-6"
-      : "max-w-7xl grid-cols-[28rem_1fr] gap-6"
+
+  // La terminal mide siempre lo mismo: la columna se abre a su lado y la fila
+  // entera crece, en vez de que la consola encoja para hacerle sitio. El tope
+  // por viewport es para que en pantallas cortas no se salga de cuadro.
+  const TERMINAL = "min(64rem, calc(100vw - 6rem))"
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
       <div
         className={cn(
-          "relative grid h-full max-h-[42rem] w-full",
+          "relative grid h-full max-h-[42rem] w-fit max-w-full",
           hidden !== null && "transition-all duration-300 ease-out",
-          row,
         )}
+        style={{
+          gridTemplateColumns: `${showColumn ? track : "0rem"} ${TERMINAL}`,
+          columnGap: showColumn ? "1.5rem" : "0rem",
+        }}
       >
         {isStudent && (
           <aside className="flex h-full flex-col overflow-hidden">
@@ -133,15 +135,13 @@ export function TerminalWorkspace({
         {/* Sin columna no queda dónde poner el control, así que el ojo se va al
             margen: el único rastro de que hay algo escondido. */}
         {isStudent && !showColumn && hidden && (
-          <button
-            type="button"
+          <CollapsedPanelButton
+            tone="amber"
+            label="Mostrar actividades"
+            icon={PanelLeft}
             onClick={() => setHiddenPersisted(false)}
-            title="Mostrar actividades"
-            aria-label="Mostrar actividades"
-            className="absolute top-0 right-full mr-4 flex h-12 w-12 items-center justify-center rounded-xl border border-amber-500/60 text-amber-500 transition-colors hover:border-amber-500 hover:bg-amber-500/10"
-          >
-            <PanelLeft className="h-6 w-6" />
-          </button>
+            className="absolute top-0 right-full mr-4"
+          />
         )}
 
         <div className="flex h-full min-w-0 flex-col gap-4">

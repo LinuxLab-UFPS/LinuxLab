@@ -1,7 +1,8 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Eye, EyeOff, Plus } from "lucide-react"
+import { Command, Plus } from "lucide-react"
+import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import {
   Dialog,
   DialogContent,
@@ -95,25 +96,32 @@ export function EssentialCommands({ className }: { className?: string }) {
 
   return (
     <div className={cn("flex items-start gap-2", className)}>
-      <div className="flex-1">
-        {hidden ? (
-          <p className="py-3 text-xs text-muted-foreground">Comandos esenciales ocultos.</p>
-        ) : (
+      {/* La hoja se despliega hacia abajo en vez de aparecer de golpe. La fila
+          de la rejilla va de 0fr a 1fr, que es la única forma de animar un alto
+          que no se conoce de antemano; el recorte lo hace la caja de dentro. */}
+      <div
+        className={cn(
+          "grid flex-1 transition-all duration-300 ease-out",
+          hidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
+        )}
+      >
+        <div className="overflow-hidden">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {shown.map((cmd) => (
               <CommandChip key={cmd.name} command={cmd} />
             ))}
           </div>
-        )}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1.5 pt-1">
-        <IconButton
+      <div className="flex flex-col items-center gap-1.5">
+        <CollapsedPanelButton
+          tone="primary"
           label={hidden ? "Mostrar comandos esenciales" : "Ocultar comandos esenciales"}
+          icon={Command}
           onClick={toggleHidden}
-        >
-          {hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-        </IconButton>
+          active={!hidden}
+        />
         {!hidden && (
           <IconButton label="Escoger comandos" onClick={() => setPicking(true)}>
             <Plus className="h-4 w-4" />
