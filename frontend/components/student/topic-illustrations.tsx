@@ -298,30 +298,3 @@ export function SimulatorTreeIllustration() {
   )
 }
 
-/**
- * Las actividades evaluadas: el árbol que el estudiante tiene que construir,
- * con el visto de cada punto que el laboratorio comprueba.
- */
-export function ActivityChecklistIllustration() {
-  const AMBER = "#f59e0b"
-  return (
-    <Svg>
-      <Folder x={88} y={18} color={LINE} />
-      {/* ramas hacia las tres carpetas hijas */}
-      <path
-        d="M99 34 v10 M40 44 h118 M40 44 v10 M99 44 v10 M158 44 v10"
-        stroke={BASE}
-        strokeWidth="1.6"
-      />
-      <Folder x={29} y={54} color={AMBER} />
-      <Folder x={88} y={54} color={AMBER} />
-      <Folder x={147} y={54} color={AMBER} />
-      {/* un visto por cada punto comprobado */}
-      <path
-        d="M34 82 l4 5 l8 -11 M93 82 l4 5 l8 -11 M152 82 l4 5 l8 -11"
-        stroke={AMBER}
-        strokeWidth="3"
-      />
-    </Svg>
-  )
-}
