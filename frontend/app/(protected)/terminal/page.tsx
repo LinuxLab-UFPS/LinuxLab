@@ -1,86 +1,25 @@
-"use client"
-
-import { useCallback, useState } from "react"
-import { TerminalFrame } from "@/components/shared/terminal-frame"
-import { TerminalEmulator } from "@/components/shared/terminal-emulator"
-import { TerminalSettingsBar } from "@/components/shared/terminal-settings-bar"
-import { TerminalSidePanels } from "@/components/student/terminal-side-panels"
 import { RoleGuard } from "@/components/shared/role-guard"
-import { useAuth } from "@/lib/features/auth/context"
-import { apiFetch } from "@/lib/api/client"
+import { TerminalWorkspace } from "@/components/student/terminal-workspace"
+import { getActivity } from "@/lib/features/shared/activities"
+import { getActivityStatement } from "@/lib/features/shared/activity-content"
 
-function TerminalContent() {
-  const { user } = useAuth()
-  const [fontSize, setFontSize] = useState(user?.preferences?.terminalFontSize ?? 16)
-  const [fontFamily, setFontFamily] = useState(
-    user?.preferences?.terminalFontFamily ?? "Menlo, Monaco, 'Courier New', monospace",
-  )
-  const [resetKey, setResetKey] = useState(0)
+/**
+ * The terminal, and the only place where an activity is solved: `?actividad=`
+ * opens its statement beside the console. The statement is read on the server
+ * because it lives on disk, not in the database.
+ */
+export default async function TerminalPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ actividad?: string }>
+}) {
+  const { actividad } = await searchParams
+  const activity = actividad ? getActivity(actividad) : undefined
+  const statement = activity ? getActivityStatement(activity.slug) : null
 
-  const handleFontSize = useCallback((size: number) => {
-    setFontSize(size)
-    apiFetch("/api/preferences", {
-      method: "PUT",
-      body: JSON.stringify({ terminalFontSize: size }),
-    }).catch(() => {})
-  }, [])
-
-  const handleFontFamily = useCallback((family: string) => {
-    setFontFamily(family)
-    apiFetch("/api/preferences", {
-      method: "PUT",
-      body: JSON.stringify({ terminalFontFamily: family }),
-    }).catch(() => {})
-  }, [])
-
-  const handleReset = useCallback(() => {
-    setResetKey((k) => k + 1)
-  }, [])
-
-  // Los paneles laterales (cheat sheet y actividades) son material de estudiante:
-  // el docente entra a su propia cuenta y solo necesita la consola.
-  const isStudent = user?.role === "student"
-
-  return (
-    <div className="flex h-full items-center justify-center px-6">
-      {/* Fixed height row: the side panels always add up to this height (two
-          boxes, no scroll), so switching to the activity detail never shifts
-          the terminal. */}
-      <div
-        className={
-          isStudent
-            ? "flex h-[38rem] w-full max-w-7xl gap-6"
-            : "flex h-[38rem] w-full max-w-5xl gap-6"
-        }
-      >
-        <TerminalFrame
-          className="h-full flex-1"
-          toolbar={
-            <TerminalSettingsBar
-              fontSize={fontSize}
-              fontFamily={fontFamily}
-              onFontSizeChange={handleFontSize}
-              onFontFamilyChange={handleFontFamily}
-              onReset={handleReset}
-            />
-          }
-        >
-          <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
-        </TerminalFrame>
-        {isStudent && (
-          <div className="flex h-full w-[26rem] shrink-0 flex-col gap-4">
-            <TerminalSidePanels />
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function TerminalPage() {
   return (
     <RoleGuard roles={["student", "teacher", "admin"]}>
-      <TerminalContent />
+      <TerminalWorkspace activity={activity ?? null} statement={statement} />
     </RoleGuard>
   )
 }
