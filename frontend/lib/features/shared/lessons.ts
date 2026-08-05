@@ -4,6 +4,7 @@ import type { TopicContentMeta } from "@/lib/features/shared/types"
 import { env } from "@/lib/config/env"
 import { syllabus } from "./temario"
 import { getSimulators } from "./simulators"
+import { getActivities } from "./activities"
 
 /**
  * Content seam (server-only, reads from disk).
@@ -210,8 +211,9 @@ export interface SearchItem {
   href: string
 }
 
-/** Everything the header search can find: the lessons (modules), and the
- *  subtopics/simulators of topics with published content (activities later). */
+/** Everything the header search can find: the lessons (modules), the subtopics
+ *  of topics with published content, and every simulator and activity in their
+ *  registries — adding one there puts it in the search with no further work. */
 export function getSearchIndex(): SearchItem[] {
   const items: SearchItem[] = []
   for (const topic of syllabus) {
@@ -235,13 +237,23 @@ export function getSearchIndex(): SearchItem[] {
     }
   }
 
-  // Simulators are not course subtopics anymore; add them from the registry.
+  // Neither simulators nor activities are course subtopics: they come from
+  // their own registries.
   for (const sim of getSimulators()) {
     items.push({
       title: sim.title,
       kind: "simulador",
       context: "Simulador",
       href: sim.href,
+    })
+  }
+
+  for (const activity of getActivities()) {
+    items.push({
+      title: activity.title,
+      kind: "actividad",
+      context: "Actividad",
+      href: activity.href,
     })
   }
 

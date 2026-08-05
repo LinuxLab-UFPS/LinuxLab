@@ -9,7 +9,6 @@ import {
   MonitorPlay,
   Search,
   LogOut,
-  ChevronDown,
   FolderTree,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -26,27 +25,10 @@ import { ThemeToggle } from "@/components/shared/theme-toggle"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 import { SearchDialog } from "@/components/student/search-dialog"
+import { NavDropdown } from "@/components/student/nav-dropdown"
 import type { SearchItem } from "@/lib/features/shared/lessons"
 import type { Simulator } from "@/lib/features/shared/simulators"
-
-/** Top-level nav for the student experience. These three still get their real
- *  pages later; for now Terminal is live and the other two are placeholders. */
-const NAV = [
-  {
-    label: "Terminal",
-    href: "/terminal",
-    icon: SquareTerminal,
-    hover: "hover:bg-primary/15 hover:text-primary",
-    active: "bg-primary/15 text-primary",
-  },
-  {
-    label: "Actividades",
-    href: "/activities",
-    icon: Target,
-    hover: "hover:bg-amber-500/15 hover:text-amber-400",
-    active: "bg-amber-500/15 text-amber-400",
-  },
-]
+import { getActivities } from "@/lib/features/shared/activities"
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */
 export function SiteHeader({
@@ -71,24 +53,46 @@ export function SiteHeader({
 
         {/* Primary nav, with the AlgoMaster-style rounded hover pill */}
         <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(item.href + "/")
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active ? item.active : cn("text-white/60", item.hover),
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-          <SimuladoresNav simulators={simulators} pathname={pathname} />
+          <Link
+            href="/terminal"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              pathname === "/terminal"
+                ? "bg-primary/15 text-primary"
+                : "text-white/60 hover:bg-primary/15 hover:text-primary",
+            )}
+          >
+            <SquareTerminal className="h-4 w-4" />
+            Terminal
+          </Link>
+
+          <NavDropdown
+            href="/activities"
+            label="Actividades"
+            icon={Target}
+            itemIcon={Target}
+            tone="amber"
+            entries={getActivities().map((a) => ({
+              key: a.slug,
+              title: a.title,
+              href: a.href,
+            }))}
+            pathname={pathname}
+          />
+
+          <NavDropdown
+            href="/simulators"
+            label="Simuladores"
+            icon={MonitorPlay}
+            itemIcon={FolderTree}
+            tone="emerald"
+            entries={simulators.map((s) => ({
+              key: s.id,
+              title: s.title,
+              href: s.href,
+            }))}
+            pathname={pathname}
+          />
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -149,67 +153,3 @@ export function SiteHeader({
   )
 }
 
-/**
- * Simuladores nav item: a link that also opens a hover dropdown listing the
- * simulators (green hover to match their tag color). Shows up to 5, plus a
- * "Ver más" link when there are more.
- */
-function SimuladoresNav({
-  simulators,
-  pathname,
-}: {
-  simulators: Simulator[]
-  pathname: string
-}) {
-  const [open, setOpen] = useState(false)
-  const active = pathname === "/simulators" || pathname.startsWith("/simulators/")
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      <Link
-        href="/simulators"
-        className={cn(
-          "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-          active
-            ? "bg-emerald-500/15 text-emerald-400"
-            : "text-white/60 hover:bg-emerald-500/15 hover:text-emerald-400",
-        )}
-      >
-        <MonitorPlay className="h-4 w-4" />
-        Simuladores
-        <ChevronDown
-          className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")}
-        />
-      </Link>
-
-      {open && simulators.length > 0 && (
-        <div className="absolute left-0 top-full z-50 pt-2">
-          <div className="w-64 animate-in fade-in-0 slide-in-from-top-1 rounded-xl border border-white/10 bg-[#0f0f11] p-1.5 shadow-2xl shadow-black/60 duration-150">
-            {simulators.slice(0, 5).map((sim) => (
-              <Link
-                key={`${sim.topicSlug}/${sim.id}`}
-                href={sim.href}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/90 transition-colors hover:bg-emerald-500/15 hover:text-emerald-400"
-              >
-                <FolderTree className="h-4 w-4 shrink-0" />
-                <span className="truncate">{sim.title}</span>
-              </Link>
-            ))}
-            {simulators.length > 5 && (
-              <Link
-                href="/simulators"
-                className="mt-1 flex items-center justify-center rounded-lg px-3 py-2 text-xs font-medium text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
-              >
-                Ver más
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}

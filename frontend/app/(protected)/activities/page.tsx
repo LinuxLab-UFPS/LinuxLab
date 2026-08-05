@@ -15,7 +15,7 @@ export default async function ActivitiesPage() {
         </h1>
         <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-amber-400 to-amber-600" />
         <p className="mt-5 text-lg text-muted-foreground">
-          Ponlo en práctica en tu terminal. El laboratorio revisa tu trabajo.
+          Pon en practica lo aprendido con estas actividades y demuestra tus habilidades en la terminal real.
         </p>
       </section>
 
