@@ -1,6 +1,6 @@
 import { HomeHero } from "@/components/student/home-hero"
 import { TopicGrid } from "@/components/student/topic-grid"
-import { getTopicLessonCounts, getTopicPreviews } from "@/lib/features/shared/lessons"
+import { getTopicLessons, getTopicPreviews } from "@/lib/features/shared/lessons"
 
 /** Student landing: hero on top, the topic catalogue below. */
 export function StudentDashboard() {
@@ -8,7 +8,7 @@ export function StudentDashboard() {
     <div className="min-h-full pb-24">
       <HomeHero />
       <section className="mx-auto max-w-7xl px-6">
-        <TopicGrid lessonCounts={getTopicLessonCounts()} previews={getTopicPreviews()} />
+        <TopicGrid topicLessons={getTopicLessons()} previews={getTopicPreviews()} />
       </section>
     </div>
   )

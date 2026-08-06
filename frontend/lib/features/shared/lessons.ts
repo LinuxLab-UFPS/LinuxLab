@@ -128,18 +128,37 @@ export function getLessonSequence(): LessonRef[] {
   return refs
 }
 
+export interface TopicLessons {
+  /** Subtopic ids, in temario order. */
+  ids: string[]
+  /** Subtopic id -> slug of the check it carries, only for the ones with one. */
+  checks: Record<string, string>
+}
+
+const EJERCICIO_DIRECTIVE = /<!--\s*EJERCICIO\s*:\s*([a-z0-9-]+)\s*-->/i
+
 /**
- * How many lessons each topic has, keyed by topic number. Topics without
- * published content are absent, so the UI can skip their progress bar.
+ * The lessons of each topic and which of them carry a check.
+ *
+ * Progress needs both: a plain lesson is done once it has been read, but one
+ * with a check is only done when the check passes. Topics without published
+ * content are absent, so the UI can skip their progress bar.
  */
-export function getTopicLessonCounts(): Record<number, number> {
-  const counts: Record<number, number> = {}
+export function getTopicLessons(): Record<number, TopicLessons> {
+  const lessons: Record<number, TopicLessons> = {}
   for (const topic of syllabus) {
-    const activities = getActivitiesForTopic(topic.number).length
     const meta = getTopicContentMeta(topic.number)
-    if (meta && meta.subtopics.length > 0) counts[topic.number] = meta.subtopics.length
+    if (!meta || meta.subtopics.length === 0) continue
+
+    const checks: Record<string, string> = {}
+    for (const sub of meta.subtopics) {
+      const match = getSubtopicMarkdown(topic.number, sub.file)?.match(EJERCICIO_DIRECTIVE)
+      if (match) checks[sub.id] = match[1]
+    }
+
+    lessons[topic.number] = { ids: meta.subtopics.map((sub) => sub.id), checks }
   }
-  return counts
+  return lessons
 }
 
 /** A "sneak peek" of what a topic holds, used by the content cards. */

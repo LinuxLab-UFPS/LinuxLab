@@ -4,23 +4,23 @@ import { Clock, Video, Terminal, ListChecks } from "lucide-react"
 import { syllabus } from "@/lib/features/shared/temario"
 import { topicIllustration } from "@/components/student/topic-illustrations"
 import { ContentCard, type CardTag } from "@/components/student/content-card"
-import { useLessonProgress } from "@/lib/features/student/progress"
-import type { TopicPreview } from "@/lib/features/shared/lessons"
+import { useCourseProgress } from "@/lib/features/student/course-progress"
+import type { TopicLessons, TopicPreview } from "@/lib/features/shared/lessons"
 
 interface TopicGridProps {
-  lessonCounts: Record<number, number>
+  topicLessons: Record<number, TopicLessons>
   previews: Record<number, TopicPreview>
 }
 
 /** The topic catalogue on the home, using the shared ContentCard (red accent). */
-export function TopicGrid({ lessonCounts, previews }: TopicGridProps) {
-  const { readCountForTopic } = useLessonProgress()
+export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
+  const { doneCount, lessonTotal } = useCourseProgress(topicLessons)
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {syllabus.map((topic) => {
-        const total = lessonCounts[topic.number] ?? 0
-        const done = total > 0 ? Math.min(readCountForTopic(topic.number), total) : 0
+        const total = lessonTotal(topic.number)
+        const done = doneCount(topic.number)
         const pct = total > 0 ? Math.round((done / total) * 100) : 0
         const preview = previews[topic.number]
         return (

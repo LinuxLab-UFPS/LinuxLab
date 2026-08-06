@@ -5,16 +5,17 @@ import { CheckCircle2, ChevronRight, Circle, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
 import { NeonProgress } from "@/components/shared/neon-progress"
-import { useLessonProgress } from "@/lib/features/student/progress"
+import { useCourseProgress } from "@/lib/features/student/course-progress"
 import type { LessonSubtopic } from "@/lib/features/shared/types"
+import type { TopicLessons } from "@/lib/features/shared/lessons"
 
 interface GroupSidebarProps {
   activeTopicSlug: string
   activeSubtopicId?: string
   /** Subtopics of the active topic, when it has published content. */
   contentSubtopics?: LessonSubtopic[]
-  /** Lesson count per topic number, for the completion state. */
-  lessonCounts: Record<number, number>
+  /** Lessons per topic and which of them carry a check, for the completion state. */
+  topicLessons: Record<number, TopicLessons>
   groupName?: string
 }
 
@@ -28,17 +29,12 @@ export function GroupSidebar({
   activeTopicSlug,
   activeSubtopicId,
   contentSubtopics,
-  lessonCounts,
+  topicLessons,
   groupName,
 }: GroupSidebarProps) {
-  const { readCountForTopic, isRead } = useLessonProgress()
+  const { isLessonDone, isTopicDone } = useCourseProgress(topicLessons)
 
-  const isModuleDone = (topicNumber: number) => {
-    const total = lessonCounts[topicNumber] ?? 0
-    return total > 0 && readCountForTopic(topicNumber) >= total
-  }
-
-  const doneCount = syllabus.filter((t) => isModuleDone(t.number)).length
+  const doneCount = syllabus.filter((t) => isTopicDone(t.number)).length
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
 
   return (
@@ -64,7 +60,7 @@ export function GroupSidebar({
           <ul className="space-y-0.5">
             {syllabus.map((topic) => {
               const isActive = topic.slug === activeTopicSlug
-              const done = isModuleDone(topic.number)
+              const done = isTopicDone(topic.number)
               const subs =
                 isActive && contentSubtopics && contentSubtopics.length > 0
                   ? contentSubtopics
@@ -119,7 +115,7 @@ export function GroupSidebar({
                   {isActive && subs && (
                     <ul className="ml-6 mt-0.5 space-y-0.5 border-l border-border pl-3">
                       {subs.map((sub) => {
-                        const read = isRead(topic.number, sub.id)
+                        const read = isLessonDone(topic.number, sub.id)
                         const activeSub = sub.id === activeSubtopicId
                         return (
                           <li key={sub.id}>

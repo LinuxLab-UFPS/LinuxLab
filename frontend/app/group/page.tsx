@@ -8,7 +8,7 @@ import {
   getTopicContentMeta,
   getSubtopicMarkdown,
   getLessonNeighbours,
-  getTopicLessonCounts,
+  getTopicLessons,
   getSearchIndex,
 } from "@/lib/features/shared/lessons"
 import { getSimulators } from "@/lib/features/shared/simulators"
@@ -61,7 +61,7 @@ export default async function GroupPage({
                 activeTopicSlug={topic.slug}
                 activeSubtopicId={activeSubtopic?.id}
                 contentSubtopics={meta?.subtopics}
-                lessonCounts={getTopicLessonCounts()}
+                topicLessons={getTopicLessons()}
               />
               <ContentArea
                 topic={topic}
