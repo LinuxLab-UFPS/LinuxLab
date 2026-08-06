@@ -16,8 +16,19 @@ export const env = {
   terminalGatewayUrl: process.env.TERMINAL_GATEWAY_URL ?? "",
   /** Secret used to sign session tokens (future). */
   authSecret: process.env.AUTH_SECRET ?? "",
-  /** Backend API URL */
-  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3000",
+  /** Backend API URL as the browser sees it. NEXT_PUBLIC_* queda incrustado al
+   *  compilar, asi que este valor es el del build, no el del arranque. */
+  backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000",
+  /**
+   * Backend API URL as the server sees it, leido en el arranque. En Docker el
+   * backend no es "localhost" sino el nombre del servicio, y el servidor de
+   * Next escucha en ese mismo puerto: sin esto, una peticion del servidor se la
+   * hace a si mismo y responde 404.
+   */
+  serverBackendUrl:
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "http://localhost:3000",
   /**
    * Public base URL of the video CDN (Cloudflare R2). Videos are too heavy for
    * the repo, so they are not committed (see .gitignore); unset in local dev,

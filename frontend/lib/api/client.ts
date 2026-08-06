@@ -10,10 +10,19 @@ export class ApiError extends Error {
 }
 
 function baseUrl(): string {
-  if (typeof window !== "undefined") {
-    return "http://localhost:3000"
-  }
-  return env.backendUrl
+  return typeof window === "undefined" ? env.serverBackendUrl : env.backendUrl
+}
+
+/**
+ * El navegador manda la cookie de sesion solo; el servidor no. Cuando una
+ * pantalla se pinta en el servidor hay que reenviarla a mano o el backend
+ * responde 401 y la pagina se cae.
+ */
+async function sessionHeader(): Promise<Record<string, string>> {
+  if (typeof window !== "undefined") return {}
+  const { cookies } = await import("next/headers")
+  const jar = (await cookies()).toString()
+  return jar ? { cookie: jar } : {}
 }
 
 export async function apiFetch<T = unknown>(
@@ -25,6 +34,7 @@ export async function apiFetch<T = unknown>(
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(await sessionHeader()),
       ...options?.headers,
     },
   })

@@ -109,6 +109,9 @@ services:
       - "3001:3000"
     environment:
       NEXT_PUBLIC_BACKEND_URL: http://backend:3000
+      # El navegador entra por el puerto publicado; el servidor de Next habla
+      # con el backend por la red interna.
+      BACKEND_URL: http://backend:3000
       HOSTNAME: "0.0.0.0"
     networks:
       - external
