@@ -2,7 +2,7 @@
 
 En Linux casi todo termina siendo un archivo: tus apuntes, la configuración de un programa, un script. Crear uno desde la terminal es cuestión de un comando, y hay varias formas según lo que quieras dejar dentro.
 
-## touch: un archivo vacío
+## touch
 
 `touch` crea un archivo vacío con el nombre que le des:
 
@@ -54,7 +54,7 @@ touch notas.txt
 
 Suena a detalle menor, pero hay herramientas —los compiladores, por ejemplo— que deciden qué rehacer mirando esas fechas. Marcar un archivo como recién tocado es la forma de decirles "esto cambió, vuelve a procesarlo".
 
-## cat: ver lo que hay dentro
+## cat
 
 Antes de meterle contenido a un archivo conviene saber cómo mirarlo. Para eso está `cat`, que recibe un archivo y vuelca su contenido en la terminal:
 

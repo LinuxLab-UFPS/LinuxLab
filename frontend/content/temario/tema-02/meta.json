@@ -4,9 +4,21 @@
   "title": "La Terminal",
   "description": "La línea de comandos, el shell Bash y los comandos esenciales para moverte por el sistema",
   "subtopics": [
-    { "id": "terminal", "title": "La línea de comandos", "file": "01-terminal.md" },
-    { "id": "anatomia-comando", "title": "Anatomía de un comando", "file": "02-anatomia-comando.md" },
-    { "id": "variables", "title": "Variables en Bash", "file": "03-variables.md" }
+    {
+      "id": "terminal",
+      "title": "La línea de comandos",
+      "file": "01-terminal.md"
+    },
+    {
+      "id": "anatomia-comando",
+      "title": "Anatomía de un comando",
+      "file": "02-anatomia-comando.md"
+    },
+    {
+      "id": "variables",
+      "title": "Variables en Bash",
+      "file": "03-variables.md"
+    }
   ],
   "resources": [
     {
@@ -14,6 +26,12 @@
       "title": "Comandos Esenciales: Cheat Sheet",
       "url": "/temario/tema-02/comandos-esenciales.pdf",
       "detail": "LinuxLab · Referencia rápida de comandos"
+    },
+    {
+      "type": "video",
+      "title": "Curso completo de Bash y la Terminal",
+      "url": "https://youtu.be/ABgLEKFhlZE",
+      "detail": "MoureDev by Brais Moure · Desde cero, en español"
     },
     {
       "type": "book",

@@ -31,6 +31,12 @@
       "title": "The Linux Command Line",
       "url": "https://linuxcommand.org/tlcl.php",
       "detail": "linuxcommand.org · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "Simulador de rutas y comandos Linux",
+      "url": "https://madarme.co/webapp/simulador-arbol-linux/",
+      "detail": "madarme.co · Practica rutas, comodines y comandos de archivos"
     }
   ]
 }

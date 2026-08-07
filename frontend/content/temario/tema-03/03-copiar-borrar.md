@@ -2,7 +2,7 @@
 
 Ya sabes moverte por el sistema y crear directorios. Falta lo otro: duplicar lo que necesitas, reacomodar lo que quedó mal puesto y quitar lo que sobra. Son tres comandos, y los tres trabajan igual de bien con archivos que con directorios completos.
 
-## cp: copiar
+## cp
 
 `cp` (copy) recibe primero el origen y después el destino:
 
@@ -46,7 +46,7 @@ cp -i notas.txt respaldo.txt
 cp: ¿sobrescribir 'respaldo.txt'? y
 ```
 
-## mv: mover y renombrar
+## mv
 
 `mv` (move) usa la misma forma que `cp`, pero el original no se queda:
 
@@ -62,7 +62,7 @@ mv notas.txt apuntes.txt
 
 No hay un comando `rename` separado en Linux, porque no hace falta. Y `mv` no necesita `-r` para directorios: mover una carpeta es una sola operación, no una copia de todo su contenido.
 
-## rm: borrar
+## rm
 
 `rm` (remove) elimina archivos:
 
