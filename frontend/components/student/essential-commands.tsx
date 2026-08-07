@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Command, Plus } from "lucide-react"
+import { Command, Download, Plus } from "lucide-react"
 import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   findCommand,
   type EssentialCommand,
 } from "@/lib/features/student/commands"
+import { downloadCheatSheet } from "@/lib/features/student/cheat-sheet-pdf"
 
 const PICK_KEY = "linuxlab:cheat-sheet"
 const HIDDEN_KEY = "linuxlab:cheat-sheet-hidden"
@@ -123,9 +124,12 @@ export function EssentialCommands({ className }: { className?: string }) {
           active={!hidden}
         />
         {!hidden && (
-          <IconButton label="Escoger comandos" onClick={() => setPicking(true)}>
-            <Plus className="h-4 w-4" />
-          </IconButton>
+          <CollapsedPanelButton
+            tone="primary"
+            label="Escoger comandos"
+            icon={Plus}
+            onClick={() => setPicking(true)}
+          />
         )}
       </div>
 
@@ -175,29 +179,28 @@ function CommandChip({
   )
 }
 
-function IconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string
-  onClick: () => void
-  children: React.ReactNode
-}) {
+
+/** El chip de un comando aun no aprendido: se ve, pero no se puede escoger. */
+function LockedChip({ command }: { command: EssentialCommand }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className="rounded-md p-1 text-primary/70 transition-colors hover:text-primary"
-    >
-      {children}
-    </button>
+    <div className="rounded-lg border border-border/60 p-2.5 text-left opacity-45">
+      <p className="font-mono text-sm font-bold text-muted-foreground">
+        {command.name}
+        {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
+      </p>
+      <p className="mt-1 text-xs leading-snug text-muted-foreground">{command.description}</p>
+    </div>
   )
 }
 
-/** Picker for the four commands, limited to what the student already learned. */
+/**
+ * Picker for the cheat sheet.
+ *
+ * It lists every command the course teaches, not just the ones already learned:
+ * seeing what is still ahead is part of the map. The pending ones are shown but
+ * cannot be picked — the sheet is a reminder of what you know, not a spoiler.
+ * The download takes the lot, because a printed sheet has no such problem.
+ */
 function CommandPicker({
   learned,
   picked,
@@ -211,16 +214,28 @@ function CommandPicker({
   onToggle: (name: string) => void
   onOpenChange: (open: boolean) => void
 }) {
+  const pending = COMMANDS.filter((command) => !learned.includes(command))
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] gap-0 overflow-y-auto border-primary/50 shadow-[var(--neon-glow-strong)] sm:max-w-3xl">
-        <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1 pr-6">
-          <DialogTitle className="text-lg font-bold text-primary [text-shadow:var(--neon-text-shadow)]">
-            Comandos Esenciales
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            Escoge hasta {CHEAT_SHEET_SIZE} para tenerlos debajo de tu terminal
-          </DialogDescription>
+        <div className="mb-5 flex flex-wrap items-center gap-3 pr-6">
+          <div className="min-w-0">
+            <DialogTitle className="text-lg font-bold text-foreground">
+              Comandos Esenciales
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Escoge hasta {CHEAT_SHEET_SIZE} para tenerlos debajo de tu terminal
+            </DialogDescription>
+          </div>
+          <button
+            type="button"
+            onClick={downloadCheatSheet}
+            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+          >
+            <Download className="h-4 w-4" />
+            Descargar
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -233,6 +248,22 @@ function CommandPicker({
             />
           ))}
         </div>
+
+        {pending.length > 0 && (
+          <>
+            <div className="my-5 flex items-center gap-3">
+              <span className="text-xs font-medium text-muted-foreground">
+                Aún no los has visto
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {pending.map((cmd) => (
+                <LockedChip key={cmd.name} command={cmd} />
+              ))}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   )
