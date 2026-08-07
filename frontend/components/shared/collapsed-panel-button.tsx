@@ -12,8 +12,9 @@ const TONE = {
 } as const
 
 /**
- * The switch for a panel around the terminal: a square with the icon of whatever
- * is inside it, in that panel's colour. Outlined it means "open this"; filled it
+ * The switch for a panel around the terminal: a small square with the icon of
+ * whatever is inside it, in that panel's colour. Two of them stacked come out
+ * the height of one command chip, so the row under the terminal lines up. Outlined it means "open this"; filled it
  * means the panel is showing and this closes it. Both sides use the same square,
  * so an open panel and a closed one always read the same.
  */
@@ -40,12 +41,12 @@ export function CollapsedPanelButton({
       aria-label={label}
       aria-pressed={active}
       className={cn(
-        "flex h-12 w-12 items-center justify-center rounded-xl border transition-colors",
+        "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
         active ? TONE[tone].active : TONE[tone].idle,
         className,
       )}
     >
-      <Icon className="h-6 w-6" />
+      <Icon className="h-4 w-4" />
     </button>
   )
 }
