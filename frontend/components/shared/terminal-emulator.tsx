@@ -36,6 +36,22 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     })
     termRef.current = term
 
+    // En una terminal Ctrl+V no es pegar: es `lnext`, "toma la siguiente tecla
+    // literal". xterm lo traduce a \x16 y cancela el evento, así que el pegado
+    // del navegador nunca llega a ocurrir y el atajo de toda la vida no hace
+    // nada. Devolviendo false, xterm ni lo procesa ni lo cancela: el navegador
+    // dispara su propio evento de pegado, que xterm sí sabe atender.
+    //
+    // Ctrl+Shift+V (el atajo de terminal) sigue funcionando por su cuenta.
+    term.attachCustomKeyEventHandler((event) => {
+      const isPaste =
+        event.type === "keydown" &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        event.code === "KeyV"
+      return !isPaste
+    })
+
     const fitAddon = new FitAddon()
     fitAddonRef.current = fitAddon
     term.loadAddon(fitAddon)
