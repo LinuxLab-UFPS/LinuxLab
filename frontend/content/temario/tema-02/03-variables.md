@@ -12,7 +12,27 @@ Para crear una variable y asignarle un valor, usa el signo igual sin espacios:
 nombre='Juan'
 ```
 
-Para leer su valor, antepones el signo `$`:
+Para leer su valor necesitas dos cosas: un comando que imprima en pantalla, y el signo `$` delante del nombre.
+
+`echo` es ese comando. Recibe un texto y lo escribe en la terminal, sin más:
+
+```bash
+echo Hola
+```
+
+```
+Hola
+```
+
+El `$` es lo que convierte un nombre en su contenido. Sin él, Bash entiende que le estás pasando la palabra tal cual:
+
+```bash
+echo nombre
+```
+
+```
+nombre
+```
 
 ```bash
 echo $nombre
@@ -21,6 +41,8 @@ echo $nombre
 ```
 Juan
 ```
+
+Esa diferencia entre el nombre y su valor es la que hay que tener clara: `nombre` es la etiqueta, `$nombre` es lo que hay dentro.
 
 Si la variable no existe, `echo $variable` simplemente no imprime nada. Si ya existe, la expresión de asignación reemplaza su valor anterior.
 

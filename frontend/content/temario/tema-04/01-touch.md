@@ -54,6 +54,26 @@ touch notas.txt
 
 Suena a detalle menor, pero hay herramientas —los compiladores, por ejemplo— que deciden qué rehacer mirando esas fechas. Marcar un archivo como recién tocado es la forma de decirles "esto cambió, vuelve a procesarlo".
 
+## cat: ver lo que hay dentro
+
+Antes de meterle contenido a un archivo conviene saber cómo mirarlo. Para eso está `cat`, que recibe un archivo y vuelca su contenido en la terminal:
+
+```bash
+cat notas.txt
+```
+
+Sobre un archivo recién creado con `touch` no imprime nada, y con razón: está vacío.
+
+El nombre viene de *concatenate*, porque su trabajo original era pegar archivos uno detrás de otro:
+
+```bash
+cat enero.txt febrero.txt
+```
+
+Eso muestra primero el contenido de uno y después el del otro, seguidos. Leer un solo archivo es el caso más común, pero es en realidad un efecto secundario de lo que el comando sabe hacer.
+
+`cat` vuelca el archivo completo de una vez, así que sirve para cosas cortas. Con un archivo de miles de líneas se te va la pantalla de largo y sólo alcanzas a ver el final.
+
 ## Crear un archivo con contenido
 
 `touch` deja el archivo vacío. Si quieres meterle algo desde el mismo comando, el operador `>` redirige la salida de un comando hacia un archivo:
