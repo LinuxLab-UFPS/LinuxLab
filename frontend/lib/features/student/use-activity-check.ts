@@ -27,7 +27,10 @@ const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
   archivo_existe: (p) => `Existe el archivo ${p.ruta}`,
   permisos_son: (p) => `${p.ruta} tiene permisos ${p.modo}`,
   propietario_es: (p) => `${p.ruta} pertenece a ${p.usuario}`,
-  archivo_contiene: (p) => `${p.ruta} contiene "${p.patron}"`,
+  archivo_contiene: (p) =>
+    (p.patron ?? "").length > 24
+      ? `${p.ruta} tiene el contenido esperado`
+      : `${p.ruta} contiene "${p.patron}"`,
 }
 
 export function describeCheck(type: string, params: Record<string, string>): string {

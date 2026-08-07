@@ -36,8 +36,12 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "rm", args: "[-r] <ruta>", description: "Borra sin papelera.", topicNumber: 3, subtopicId: "copiar-borrar" },
   { name: "rmdir", args: "<directorio>", description: "Borra un directorio vacío.", topicNumber: 3, subtopicId: "copiar-borrar" },
 
-  // 4 · Creación de archivos
+  // 4 · Manejo de Archivos
   { name: "cat", args: "<archivo>", description: "Muestra el contenido de un archivo.", topicNumber: 4, subtopicId: "touch" },
+  { name: "head", args: "[-n N] <archivo>", description: "Muestra las primeras líneas.", topicNumber: 4, subtopicId: "pipes" },
+  { name: "tail", args: "[-n N] <archivo>", description: "Muestra las últimas líneas.", topicNumber: 4, subtopicId: "pipes" },
+  { name: "wc", args: "[-l] <archivo>", description: "Cuenta líneas, palabras y caracteres.", topicNumber: 4, subtopicId: "pipes" },
+  { name: "nl", args: "<archivo>", description: "Numera las líneas.", topicNumber: 4, subtopicId: "pipes" },
   { name: "nano", args: "<archivo>", description: "Editor de texto sencillo.", topicNumber: 4, subtopicId: "editores" },
   { name: "vi", args: "<archivo>", description: "Editor modal, presente en todo Linux.", topicNumber: 4, subtopicId: "editores" },
 

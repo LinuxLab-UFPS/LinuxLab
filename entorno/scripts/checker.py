@@ -129,7 +129,9 @@ def check_archivo_contiene(params, home):
         raise CheckError("No se indicó qué buscar")
     if os.path.getsize(path) > MAX_FILE_BYTES:
         raise CheckError("El archivo es demasiado grande para revisarlo")
-    with open(path, "r", errors="replace") as fh:
+    # UTF-8 explicito: si el contenedor arrancara sin locale, Python leeria en
+    # ASCII y un archivo con acentos o emoji no coincidiria nunca con su patron.
+    with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if needle in line:
                 return "El archivo contiene lo esperado"

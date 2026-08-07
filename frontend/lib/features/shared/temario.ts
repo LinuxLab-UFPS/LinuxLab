@@ -52,12 +52,14 @@ export const syllabus: Topic[] = [
   },
   {
     number: 4,
-    slug: "creacion-de-archivos",
-    title: "Creación de archivos",
-    description: "Crear archivos con touch y redirección, y editores de texto: vi, pico, nano.",
+    slug: "manejo-de-archivos",
+    title: "Manejo de Archivos",
+    description:
+      "Crear archivos, verlos por partes, encadenar comandos con pipes y los editores de texto.",
     subTopics: [
       { number: 1, title: "Crear archivos" },
-      { number: 2, title: "Editores: vi, pico, nano" },
+      { number: 2, title: "Encadenar comandos" },
+      { number: 3, title: "Editores: vi, pico, nano" },
     ],
   },
   {

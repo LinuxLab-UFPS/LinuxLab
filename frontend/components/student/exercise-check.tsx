@@ -50,7 +50,19 @@ export function ExerciseCheck({ slug }: { slug: string }) {
           <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
         )}
 
-        <CheckList rows={rows} evaluated={evaluated} />
+        {/* Saber de antemano qué se revisa arruina el ejercicio: en el del
+            logo sería enseñar el logo. Antes de aprobar sólo se dice cuántas
+            van, que orienta sin destripar nada. */}
+        {passed ? (
+          <CheckList rows={rows} evaluated={evaluated} />
+        ) : (
+          evaluated && (
+            <p className="text-sm text-muted-foreground">
+              {rows.filter((row) => row.passed).length} de {rows.length}{" "}
+              {rows.length === 1 ? "comprobación lista" : "comprobaciones listas"}.
+            </p>
+          )
+        )}
 
         {error && (
           <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
