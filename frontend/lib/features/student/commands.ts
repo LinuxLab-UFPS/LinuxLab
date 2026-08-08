@@ -31,17 +31,16 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "mkdir", args: "[-p] <nombre>", description: "Crea un directorio.", topicNumber: 3, subtopicId: "navegacion" },
   { name: "touch", args: "<archivo>", description: "Crea un archivo vacío o actualiza su fecha.", topicNumber: 3, subtopicId: "navegacion" },
   { name: "tree", args: "[ruta]", description: "Muestra la estructura en forma de árbol.", topicNumber: 3, subtopicId: "navegacion" },
-  { name: "cp", args: "[-r] origen destino", description: "Copia archivos y directorios.", topicNumber: 3, subtopicId: "copiar-borrar" },
-  { name: "mv", args: "origen destino", description: "Mueve o renombra.", topicNumber: 3, subtopicId: "copiar-borrar" },
-  { name: "rm", args: "[-r] <ruta>", description: "Borra sin papelera.", topicNumber: 3, subtopicId: "copiar-borrar" },
-  { name: "rmdir", args: "<directorio>", description: "Borra un directorio vacío.", topicNumber: 3, subtopicId: "copiar-borrar" },
-
   // 4 · Manejo de Archivos
   { name: "cat", args: "<archivo>", description: "Muestra el contenido de un archivo.", topicNumber: 4, subtopicId: "touch" },
   { name: "head", args: "[-n N] <archivo>", description: "Muestra las primeras líneas.", topicNumber: 4, subtopicId: "pipes" },
   { name: "tail", args: "[-n N] <archivo>", description: "Muestra las últimas líneas.", topicNumber: 4, subtopicId: "pipes" },
   { name: "wc", args: "[-l] <archivo>", description: "Cuenta líneas, palabras y caracteres.", topicNumber: 4, subtopicId: "pipes" },
   { name: "nl", args: "<archivo>", description: "Numera las líneas.", topicNumber: 4, subtopicId: "pipes" },
+  { name: "cp", args: "[-r] origen destino", description: "Copia archivos y directorios.", topicNumber: 4, subtopicId: "copiar-borrar" },
+  { name: "mv", args: "origen destino", description: "Mueve o renombra.", topicNumber: 4, subtopicId: "copiar-borrar" },
+  { name: "rm", args: "[-r] <ruta>", description: "Borra sin papelera.", topicNumber: 4, subtopicId: "copiar-borrar" },
+  { name: "rmdir", args: "<directorio>", description: "Borra un directorio vacío.", topicNumber: 4, subtopicId: "copiar-borrar" },
   { name: "nano", args: "<archivo>", description: "Editor de texto sencillo.", topicNumber: 4, subtopicId: "editores" },
   { name: "vi", args: "<archivo>", description: "Editor modal, presente en todo Linux.", topicNumber: 4, subtopicId: "editores" },
 

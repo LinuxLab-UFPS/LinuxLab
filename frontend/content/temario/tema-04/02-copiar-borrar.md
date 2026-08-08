@@ -1,6 +1,6 @@
 ## Copiar, mover y borrar
 
-Ya sabes moverte por el sistema y crear directorios. Falta lo otro: duplicar lo que necesitas, reacomodar lo que quedó mal puesto y quitar lo que sobra. Son tres comandos, y los tres trabajan igual de bien con archivos que con directorios completos.
+Crear un archivo es sólo el primer paso. El trabajo diario con el sistema de archivos consiste en duplicar, reubicar y eliminar lo que ya existe. Tres comandos cubren esas operaciones, y los tres funcionan igual sobre archivos que sobre directorios completos.
 
 ## cp
 
@@ -108,7 +108,7 @@ rm: ¿borrar el archivo regular 'respaldo.txt'? y
 | `cp origen destino` | Copia, deja el original | `cp -r` |
 | `mv origen destino` | Mueve o renombra | igual, sin `-r` |
 | `rm archivo` | Borra sin papelera | `rm -r` |
-| `rmdir directorio` | Borra sólo si está vacío | — |
+| `rmdir directorio` | Borra sólo si está vacío | No aplica |
 
 ---
 

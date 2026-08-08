@@ -2,7 +2,7 @@
   "id": "tema-04",
   "number": 4,
   "title": "Manejo de Archivos",
-  "description": "Crear archivos, verlos por partes y encadenar comandos con pipes",
+  "description": "Crear archivos, copiarlos, moverlos y borrarlos, verlos por partes y encadenar comandos con pipes",
   "subtopics": [
     {
       "id": "touch",
@@ -10,9 +10,14 @@
       "file": "01-touch.md"
     },
     {
+      "id": "copiar-borrar",
+      "title": "Copiar, mover y borrar",
+      "file": "02-copiar-borrar.md"
+    },
+    {
       "id": "pipes",
       "title": "Encadenar comandos",
-      "file": "02-pipes.md"
+      "file": "03-pipes.md"
     }
   ],
   "resources": [

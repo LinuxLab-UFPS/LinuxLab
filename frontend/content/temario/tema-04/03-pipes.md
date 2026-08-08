@@ -1,28 +1,28 @@
 ## head y tail
 
-`cat` vuelca el archivo entero de un golpe. Con veinte líneas va bien; con cinco mil, la terminal se llena y sólo alcanzas a ver el final.
+El comando `cat` imprime el contenido completo de un archivo. En archivos cortos resulta práctico, pero en uno de varios miles de líneas la salida desborda la pantalla y sólo queda visible el final.
 
-Lo que hace falta son comandos que muestren un pedazo, y una forma de conectarlos entre sí.
+Para esos casos existen comandos que muestran una porción del archivo.
 
-`head` muestra las primeras líneas de un archivo. Por defecto son diez:
+`head` imprime las primeras líneas. Por defecto son diez:
 
 ```bash
 head materia.txt
 ```
 
-`tail` hace lo mismo con las últimas:
+`tail` imprime las últimas:
 
 ```bash
 tail materia.txt
 ```
 
-Los dos aceptan `-n` para pedir otra cantidad:
+Ambos aceptan la opción `-n` para indicar otra cantidad:
 
 ```bash
 head -n 3 materia.txt
 ```
 
-`tail` es el que más se usa en el día a día. Los archivos que crecen —los registros del sistema, por ejemplo— escriben al final, así que lo último es lo que acaba de pasar.
+`tail` es el más frecuente en administración de sistemas. Los archivos que crecen durante la operación del sistema, como los registros en `/var/log`, escriben al final, de modo que las últimas líneas corresponden a los eventos más recientes.
 
 ## wc
 
@@ -36,7 +36,7 @@ wc materia.txt
  2  4 37 materia.txt
 ```
 
-Dos líneas, cuatro palabras, 37 caracteres. Casi siempre lo que interesa es el conteo de líneas, y para eso está `-l`:
+El resultado indica dos líneas, cuatro palabras y 37 caracteres. La opción `-l` limita el conteo a las líneas:
 
 ```bash
 wc -l materia.txt
@@ -48,15 +48,15 @@ wc -l materia.txt
 
 ## El pipe
 
-Hasta aquí cada comando recibe un archivo y escribe en la pantalla. El carácter `|` —el *pipe*, o tubería— cambia el destino: en vez de imprimir, la salida de un comando se convierte en la entrada del siguiente.
+Los comandos anteriores reciben un archivo como argumento y escriben el resultado en la pantalla. El carácter `|`, llamado *pipe* o tubería, redirige ese resultado: la salida de un comando se convierte en la entrada del siguiente.
 
-Míralo con un directorio grande. `/etc` es donde el sistema guarda su configuración y tiene cientos de entradas:
+El directorio `/etc` almacena la configuración del sistema y contiene cientos de entradas:
 
 ```bash
 ls /etc
 ```
 
-Eso llena la pantalla y te deja viendo el final de la lista. Ahora conéctalo con `head`:
+La salida ocupa más de una pantalla. Conectada a `head`, el resultado se reduce a las primeras diez líneas:
 
 ```bash
 ls /etc | head
@@ -75,11 +75,11 @@ ca-certificates.conf
 cloud
 ```
 
-La lista completa nunca llegó a la pantalla: `ls` se la pasó a `head`, y `head` imprimió las diez primeras.
+La lista completa nunca llega a la pantalla. `ls` la entrega a `head`, y `head` imprime las diez primeras líneas.
 
-Fíjate en lo que acaba de pasar. Antes le dabas un archivo a `head`; ahora no le diste ninguno y funcionó igual. Un comando que no recibe archivo lee de su entrada, y el pipe es lo que la llena.
+En este último comando `head` no recibió ningún archivo como argumento. Cuando un comando no recibe archivo, lee de su entrada estándar, y el pipe es lo que la alimenta.
 
-Eso explica un uso que se vuelve costumbre:
+De ahí surge una combinación habitual:
 
 ```bash
 ls | wc -l
@@ -89,11 +89,11 @@ ls | wc -l
 7
 ```
 
-`wc` no está contando las líneas de un archivo: cuenta lo que `ls` le pasó. Siete archivos en el directorio, sin abrir nada.
+`wc` no cuenta las líneas de un archivo, sino las que recibió de `ls`. El resultado es la cantidad de archivos del directorio.
 
 ## Encadenar varios comandos
 
-Se pueden poner los que quieras, uno detrás de otro. Cada comando ve sólo lo que le entregó el anterior:
+Un mismo comando admite varios pipes consecutivos. Cada comando procesa únicamente lo que recibe del anterior:
 
 ```bash
 ls /etc | head -n 20 | tail -n 5
@@ -107,11 +107,11 @@ dhcp
 dpkg
 ```
 
-Las primeras veinte entradas, y de esas, las últimas cinco. O sea, de la 16 a la 20.
+El resultado son las primeras veinte entradas, y de esas, las últimas cinco: las posiciones 16 a 20.
 
 ## El orden de los factores, si altera el producto
 
-Esta es la parte que hay que entender de verdad, y se ve mejor con `nl`, que numera las líneas que recibe.
+El comando `nl` numera las líneas que recibe. Comparar dos encadenamientos con los mismos comandos en distinto orden muestra el efecto:
 
 ```bash
 ls /etc/ssh | nl | tail -n 3
@@ -133,45 +133,46 @@ ls /etc/ssh | tail -n 3 | nl
      3  sshd_config.d
 ```
 
-Las líneas son las mismas, los números no. En el primero se numeró la lista completa y después se recortó, así que los números son los que a esas líneas les tocaban dentro del total. En el segundo se recortó primero, y `nl` numeró tres líneas que ya venían sueltas: para él eran todo lo que había.
+Las líneas coinciden, la numeración no. En el primer caso `nl` numeró la lista completa y `tail` recortó después, así que los números corresponden a la posición dentro del total. En el segundo, `tail` recortó primero y `nl` numeró tres líneas aisladas.
 
-Ninguno está mal. Son preguntas distintas: *¿en qué posición del listado están estas tres?* contra *¿cuántas son?*
+Ninguno de los dos es incorrecto. Responden a preguntas distintas: la posición de esas tres entradas dentro del listado, frente a cuántas son.
 
 ## Pipe y redirección
 
-Los dos cambian a dónde va la salida, y se confunden seguido:
+Ambos operadores cambian el destino de la salida y suelen confundirse:
 
-| | Manda la salida a | Ejemplo |
+| | Envía la salida a | Ejemplo |
 |---|---|---|
 | `>` | un archivo | `ls /etc > listado.txt` |
 | `|` | otro comando | `ls /etc \| head` |
 
-Se combinan, porque el pipe encadena y la redirección cierra:
+Los dos se combinan en un mismo comando. El pipe encadena y la redirección cierra:
 
 ```bash
 ls /etc | head -n 20 > primeras.txt
 ```
 
-Los veinte primeros nombres quedan guardados en `primeras.txt`, sin pasar por la pantalla.
+Los veinte primeros nombres quedan guardados en `primeras.txt` sin pasar por la pantalla.
 
-## Tu turno
+## Práctica
 
-AEste botón copia algo a tu portapapeles. No vas a ver qué es: eso lo descubres cuando lo tengas dentro de un archivo.
+El siguiente botón copia un bloque de texto al portapapeles. Su contenido no se muestra en pantalla.
 
 <!-- COPIAR: logo-ufps -->
 
-Guárdalo esto en un archivo llamado `logo.txt` en tu carpeta personal usando `cat`
+El objetivo es guardarlo en un archivo llamado `logo.txt` dentro del directorio personal, usando `cat` y el operador de redirección.
 
-Primero ejecuta:
 ```bash
 cat > logo.txt
 ```
 
-Luego pega con <kbd>Ctrl</kbd> + <kbd>V</kbd>, dale *Enter*, y cierra la entrada con <kbd>Ctrl</kbd> + <kbd>D</kbd>.
+Sin archivo como argumento, `cat` lee de la entrada estándar y `>` envía esa entrada a `logo.txt`. La terminal queda a la espera de texto.
 
-Si tu teclado no responde al pegar, prueba <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>: es el atajo propio de las terminales, porque ahí <kbd>Ctrl</kbd> + <kbd>V</kbd> significaba otra cosa desde antes de que existiera copiar y pegar.
+El siguiente paso es pegar el contenido con <kbd>Ctrl</kbd> + <kbd>V</kbd>, pulsar *Enter* para cerrar la última línea y terminar la entrada con <kbd>Ctrl</kbd> + <kbd>D</kbd>.
 
-Después míralo:
+En las terminales el atajo de pegado también es <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>, porque <kbd>Ctrl</kbd> + <kbd>V</kbd> tenía otra función antes de que existiera el portapapeles.
+
+El resultado se comprueba con:
 
 ```bash
 cat logo.txt
@@ -185,4 +186,4 @@ cat logo.txt
 
 - NDG Linux Essentials. Cisco Networking Academy, 2024.
 - Barrett, D. J. *Efficient Linux at the Command Line*. O'Reilly Media, 2022.
-- GNU. *Bash Reference Manual* — Pipelines. gnu.org/software/bash/manual
+- GNU. *Bash Reference Manual*, Pipelines. gnu.org/software/bash/manual
