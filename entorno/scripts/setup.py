@@ -131,6 +131,10 @@ def main():
         resultado = construye(json.load(sys.stdin))
     except SetupError as err:
         resultado = {"ok": False, "error": str(err)}
+    except json.JSONDecodeError:
+        # El backend lee la salida como JSON. Una traza de Python aqui se
+        # convierte alli en un error generico que no dice nada.
+        resultado = {"ok": False, "error": "La descripcion de la actividad no es JSON valido"}
     except OSError as err:
         resultado = {"ok": False, "error": f"No se pudo preparar: {err.strerror}"}
 
