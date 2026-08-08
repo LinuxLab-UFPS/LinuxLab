@@ -7,7 +7,9 @@ descripcion del arbol y lo materializa dentro de la carpeta de la actividad:
 
     {"slug": "comodines", "force": false,
      "dirs": ["archivo"],
-     "files": [{"path": "informe.txt", "content": "..."}]}
+     "files": [{"path": "informe.txt", "content": "..."},
+               {"path": "largo.txt", "lines": 1000, "fill": "registro",
+                "at": {"1": "primera linea de verdad"}}]}
 
     {"ok": true, "root": "/home/.../actividades/comodines", "creados": 4}
 
@@ -26,6 +28,7 @@ se perderia la garantia que sostiene todo lo demas.
 
 import json
 import os
+import random
 import pwd
 import shutil
 import signal
@@ -42,6 +45,7 @@ BASE = "actividades"
 MAX_ARCHIVOS = 200
 MAX_BYTES_ARCHIVO = 512 * 1024
 MAX_BYTES_TOTAL = 4 * 1024 * 1024
+MAX_LINEAS = 5000
 
 #: Nombres de actividad y rutas admitidos. Sin `..`, sin rutas absolutas.
 SLUG_OK = set("abcdefghijklmnopqrstuvwxyz0123456789-")
@@ -80,6 +84,87 @@ def dentro(raiz, relativa):
     return destino
 
 
+def texto_de(archivo):
+    """El contenido de un archivo, literal o generado.
+
+    Un archivo de mil lineas no cabe razonablemente en la semilla, asi que se
+    describe: cuantas lineas, con que rellenarlas y que poner en las posiciones
+    que importan. `at` va indexado desde 1, como las cuenta el estudiante.
+    """
+    if "content" in archivo:
+        contenido = archivo["content"]
+        if not isinstance(contenido, str):
+            raise SetupError("El contenido de un archivo tiene que ser texto")
+        return contenido
+
+    try:
+        total = int(archivo.get("lines", 0))
+    except (TypeError, ValueError):
+        raise SetupError("El numero de lineas no es un numero")
+    if not 0 < total <= MAX_LINEAS:
+        raise SetupError(f"Las lineas de un archivo van de 1 a {MAX_LINEAS}")
+
+    relleno = archivo.get("fill", "linea")
+    if not isinstance(relleno, str):
+        raise SetupError("El relleno tiene que ser texto")
+
+    puestas = archivo.get("at") or {}
+    lineas = [f"{relleno} {n:04d}" for n in range(1, total + 1)]
+    for posicion, valor in puestas.items():
+        try:
+            i = int(posicion)
+        except (TypeError, ValueError):
+            raise SetupError(f"Posicion no valida: {posicion!r}")
+        if not 1 <= i <= total:
+            raise SetupError(f"La posicion {i} queda fuera del archivo")
+        if not isinstance(valor, str):
+            raise SetupError("Lo que se pone en una linea tiene que ser texto")
+        lineas[i - 1] = valor
+
+    return "\n".join(lineas) + "\n"
+
+
+def reparte(spec):
+    """Reparte unos bloques entre unos archivos, al azar.
+
+    Se baraja aqui y no en la semilla para que cada estudiante reciba un reparto
+    distinto, y para que recargar la actividad la vuelva a mezclar: quien se
+    aprende que "el bloque de arriba esta en el archivo a" no ha aprendido nada.
+
+    Sigue siendo declarativo. La semilla dice que bloques hay y en cuantos
+    archivos van; donde cae cada uno lo decide este programa.
+    """
+    plan = spec.get("shuffle")
+    if not plan:
+        return []
+
+    nombres = list(plan.get("files") or [])
+    bloques = [list(b) for b in (plan.get("blocks") or [])]
+    if len(nombres) != len(bloques):
+        raise SetupError("Hay que dar tantos archivos como bloques")
+    if not nombres:
+        return []
+
+    total = int(plan.get("lines", 100))
+    if not 0 < total <= MAX_LINEAS:
+        raise SetupError(f"Las lineas de un archivo van de 1 a {MAX_LINEAS}")
+    if any(len(b) > total for b in bloques):
+        raise SetupError("Un bloque no cabe en el archivo")
+
+    random.shuffle(bloques)
+
+    archivos = []
+    for nombre, bloque in zip(nombres, bloques):
+        # Al principio o al final, tambien al azar: asi unos piden `head` y
+        # otros `tail`, y no siempre los mismos.
+        if random.choice((True, False)):
+            at = {str(i + 1): l for i, l in enumerate(bloque)}
+        else:
+            at = {str(total - len(bloque) + 1 + i): l for i, l in enumerate(bloque)}
+        archivos.append({"path": nombre, "lines": total, "fill": plan.get("fill", "linea"), "at": at})
+    return archivos
+
+
 def construye(spec):
     raiz = os.path.join(home(), BASE, valida_slug(spec.get("slug", "")))
 
@@ -91,7 +176,7 @@ def construye(spec):
         shutil.rmtree(raiz)
     os.makedirs(raiz, mode=0o700, exist_ok=True)
 
-    archivos = spec.get("files") or []
+    archivos = list(spec.get("files") or []) + reparte(spec)
     if len(archivos) > MAX_ARCHIVOS:
         raise SetupError(f"La actividad pide {len(archivos)} archivos, el tope es {MAX_ARCHIVOS}")
 
@@ -104,9 +189,7 @@ def construye(spec):
 
     for archivo in archivos:
         destino = dentro(raiz, archivo.get("path", ""))
-        contenido = archivo.get("content", "")
-        if not isinstance(contenido, str):
-            raise SetupError("El contenido de un archivo tiene que ser texto")
+        contenido = texto_de(archivo)
 
         datos = contenido.encode("utf-8")
         if len(datos) > MAX_BYTES_ARCHIVO:
