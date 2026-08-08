@@ -27,6 +27,14 @@ const RAW = [
     topicNumber: 3,
     file: "simulador-filesystem.html",
   },
+  {
+    id: "retos-de-vi",
+    title: "Retos de vi",
+    description:
+      "Cinco retos contrarreloj con los comandos de vi: copia líneas, pégalas donde toca y borra lo que sobra.",
+    topicNumber: 4,
+    file: "simulador-vi.html",
+  },
 ]
 
 export const simulators: Simulator[] = RAW.map((s) => {

@@ -178,6 +178,8 @@ El recorrido dentro del editor es el de la lección: `i` para entrar en modo ins
 
 El nombre de la primera línea no se revisa. Lo que se comprueba es que el archivo se llame como el código, que tenga las líneas suficientes y que la última sea el correo institucional registrado en la plataforma.
 
+<!-- SIMULATOR: retos-de-vi -->
+
 ---
 
 **Fuentes**

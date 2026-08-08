@@ -1,12 +1,16 @@
 import type { ComponentType } from "react"
 import { BookOpen } from "lucide-react"
 import { ContentCard } from "@/components/student/content-card"
-import { SimulatorTreeIllustration } from "@/components/student/topic-illustrations"
+import {
+  SimulatorTreeIllustration,
+  SimulatorViIllustration,
+} from "@/components/student/topic-illustrations"
 import type { Simulator } from "@/lib/features/shared/simulators"
 
 /** Illustration per simulator id (falls back to the tree one). */
 const ILLUSTRATION: Record<string, ComponentType> = {
   "travesia-del-arbol": SimulatorTreeIllustration,
+  "retos-de-vi": SimulatorViIllustration,
 }
 
 /** A simulator as a green ContentCard, used on the simulators page and embedded

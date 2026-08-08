@@ -298,3 +298,36 @@ export function SimulatorTreeIllustration() {
   )
 }
 
+
+/**
+ * Los retos de vi: la ventana del editor con sus lineas, las tildes que marcan
+ * el final del archivo y el cursor de bloque, que es la seña de que se esta en
+ * modo normal y no escribiendo.
+ */
+export function SimulatorViIllustration() {
+  const GREEN = "#34d399"
+  return (
+    <Svg>
+      {/* marco de la ventana */}
+      <rect x={28} y={20} width={144} height={82} rx={6} stroke={LINE} strokeWidth="2" />
+      <path d="M28 34 h144" stroke={LINE} strokeWidth="1.6" />
+      <circle cx={38} cy={27} r={2.4} fill={BASE} />
+      <circle cx={47} cy={27} r={2.4} fill={BASE} />
+      <circle cx={56} cy={27} r={2.4} fill={BASE} />
+
+      {/* lineas de texto */}
+      <path
+        d="M40 47 h56 M40 59 h74 M40 71 h44"
+        stroke={BASE}
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+
+      {/* el cursor de bloque, en la linea que se esta editando */}
+      <rect x={90} y={65} width={9} height={11} fill={GREEN} />
+
+      {/* las tildes del final del archivo */}
+      <path d="M40 84 h5 M40 93 h5" stroke={BASE} strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  )
+}

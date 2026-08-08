@@ -1,0 +1,515 @@
+<title>Retos de vi · LinuxLab</title>
+<style>
+:root {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --blue:   #58A6FF;
+  --purple: #A371F7;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg);overflow:hidden}
+body{
+  display:flex;flex-direction:column;
+  color:var(--text);font-family:var(--mono);overflow:hidden;
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+  background:var(--bg);position:relative;
+}
+
+/* ---------- cabecera ---------- */
+.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px}
+.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
+.logo-name .wh{color:var(--bright);filter:none}
+.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
+.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,196,0,.4))}
+.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
+.dot.done{background:var(--green)}
+.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
+.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.score-pill{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}
+.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
+.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+
+/* ---------- disposición ---------- */
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
+.term-col{display:flex;flex-direction:column;gap:10px;width:560px;flex-shrink:0}
+
+/* ---------- barra de tiempo ---------- */
+.timer{height:12px;border-radius:6px;background:var(--surf2);border:1px solid var(--border);overflow:hidden}
+.timer-fill{height:100%;width:100%;background:var(--green);border-radius:5px;transition:width .1s linear,background .3s}
+.timer-fill.warn{background:var(--gold)}
+.timer-fill.out{background:var(--red)}
+.timer-fill.win{transition:width .35s ease-out,background .35s}
+
+/* ---------- ventana ---------- */
+.win{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
+.win-dot{width:11px;height:11px;border-radius:50%}
+.win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.editor{background:#12161d;padding:12px 14px;min-height:300px;display:flex;flex-direction:column;gap:2px}
+.row{display:flex;gap:2px;align-items:center;min-height:22px}
+.gutter{width:16px;color:var(--dim);font-size:12px;flex-shrink:0;user-select:none}
+.cell{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;border-radius:3px;line-height:1}
+.cell.cur{outline:2px solid var(--bright);outline-offset:-2px;background:rgba(240,246,252,.12)}
+.status{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--surf2);border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.mode{font-weight:700;color:var(--green);letter-spacing:.1em}
+.tip{color:var(--muted);font-size:11px}
+
+/* ---------- ayudas ---------- */
+.hints{display:flex;flex-direction:column;gap:8px;width:210px;flex-shrink:0}
+.hint{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.hint h4{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:6px;font-weight:700}
+.keys{display:flex;flex-direction:column;gap:4px}
+.key{display:flex;align-items:center;gap:8px;font-size:11px}
+.key b{display:inline-flex;align-items:center;justify-content:center;min-width:24px;padding:1px 5px;border:1px solid var(--red);border-radius:4px;color:var(--red);font-weight:700;font-size:11px}
+.key span{color:var(--text)}
+
+/* ---------- capa de inicio ---------- */
+.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20}
+.overlay.hide{display:none}
+.play{
+  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
+  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
+  font-family:var(--mono);line-height:1;
+}
+/* El triángulo tiene el peso a la izquierda y descentra a ojo; el resto de
+   glifos no, así que la corrección va sólo en él. */
+.play .tri{display:block;transform:translateX(3px)}
+.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
+.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
+.overlay p{font-size:12px;color:var(--muted);max-width:420px;text-align:center;line-height:1.7}
+
+/* ---------- card de resultado (compartida con los demas simuladores) ---------- */
+#results-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(10,13,18,.92);
+  opacity:0;pointer-events:none;transition:opacity .4s;z-index:30;
+}
+#results-overlay.show{opacity:1;pointer-events:all}
+.res-box{
+  border:2px solid var(--gold);border-radius:12px;
+  padding:38px 52px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  box-shadow:0 0 48px rgba(255,196,0,.22),0 0 90px rgba(255,196,0,.07);
+  min-width:290px;
+}
+.res-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);filter:drop-shadow(0 0 8px rgba(255,196,0,.65))}
+.res-score{font-size:80px;font-weight:900;letter-spacing:-.03em;color:var(--bright);font-variant-numeric:tabular-nums;line-height:1}
+.res-pts{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:-4px}
+.res-btns{display:flex;gap:12px;margin-top:14px}
+.res-btn{font-family:var(--mono);font-size:13px;font-weight:700;padding:10px 22px;border-radius:7px;cursor:pointer;border:none;transition:all .18s}
+.res-btn.primary{background:var(--gold);color:#000}
+.res-btn.primary:hover{background:#ffe033;box-shadow:0 0 18px rgba(255,196,0,.5)}
+.res-btn.secondary{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.res-btn.secondary:hover{color:var(--text);border-color:var(--muted)}
+
+.flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
+.flash.on{opacity:.13}
+</style>
+
+<div class="hdr">
+  <div class="logo-box">&gt;_</div>
+  <div class="logo-name">Linux<span class="wh">Lab</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-obj">
+    <span class="hdr-eyebrow">Objetivo</span>
+    <span class="hdr-goal" id="goal">&nbsp;</span>
+  </div>
+  <div class="hdr-dots" id="dots"></div>
+  <span class="hdr-n" id="counter">1 / 5</span>
+  <div class="score-pill" id="score">★ 0</div>
+  <button class="restart-btn" id="restart">Reiniciar</button>
+</div>
+
+<div class="stage">
+  <div class="term-col">
+    <div class="timer"><div class="timer-fill" id="timer"></div></div>
+    <div class="win">
+      <div class="win-bar">
+        <span class="win-dot" style="background:#FF5F56"></span>
+        <span class="win-dot" style="background:#FFBD2E"></span>
+        <span class="win-dot" style="background:#27C93F"></span>
+        <span class="win-title" id="filename">reto.txt</span>
+      </div>
+      <div class="editor" id="editor"></div>
+      <div class="status">
+        <span class="mode" id="mode">NORMAL</span>
+        <span class="tip" id="tip"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hints">
+    <div class="hint">
+      <h4>Moverse</h4>
+      <div class="keys">
+        <div class="key"><b>k</b><span>arriba</span></div>
+        <div class="key"><b>j</b><span>abajo</span></div>
+        <div class="key"><b>h</b><span>izquierda</span></div>
+        <div class="key"><b>l</b><span>derecha</span></div>
+        <div class="key"><b>gg</b><span>primera línea</span></div>
+        <div class="key"><b>G</b><span>última línea</span></div>
+      </div>
+    </div>
+    <div class="hint">
+      <h4>Copiar y pegar</h4>
+      <div class="keys">
+        <div class="key"><b>yy</b><span>copia la línea</span></div>
+        <div class="key"><b>p</b><span>pega debajo</span></div>
+        <div class="key"><b>P</b><span>pega encima</span></div>
+      </div>
+    </div>
+    <div class="hint">
+      <h4>Borrar</h4>
+      <div class="keys">
+        <div class="key"><b>dd</b><span>borra la línea</span></div>
+        <div class="key"><b>x</b><span>borra un cuadro</span></div>
+        <div class="key"><b>u</b><span>deshace</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<div id="results-overlay">
+  <div class="res-box">
+    <div class="res-title">Resultado</div>
+    <div class="res-score" id="res-score-val">0</div>
+    <div class="res-pts">puntos</div>
+    <div class="res-btns">
+      <button class="res-btn primary" id="res-again">↺ Jugar de nuevo</button>
+      <button class="res-btn secondary" id="res-exit">Salir</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <button class="play" id="play"><span class="tri">▶</span></button>
+  <h2>Retos de vi</h2>
+  <p>
+    Cinco retos contrarreloj con los comandos de vi. Copiar líneas, pegarlas
+    donde toca y borrar lo que sobra, sin salir del modo normal.
+    Cuanto antes se resuelve cada reto, más puntos.
+  </p>
+</div>
+
+<script>
+"use strict";
+
+/* Cada línea es un arreglo de celdas: así el cursor avanza por casillas y los
+   emoji, que ocupan doble ancho en una fuente monoespaciada, no descuadran la
+   rejilla. */
+const V = "🟩", A = "🟨", R = "🟥";
+
+const azar = (n) => Math.floor(Math.random() * n);
+const entre = (a, b) => a + azar(b - a + 1);
+const clonar = (m) => m.map((f) => f.slice());
+const fila3 = (c) => [c, c, c];
+
+/* Los retos son generadores, no tableros fijos: cada partida arma sus propias
+   posiciones y cantidades para que repetirla no sea repetir la solución. */
+const MODOS = [
+  {
+    id: "copiar",
+    goal: "Copia la línea verde y pégala al final",
+    tip: "yy sobre la verde · G para bajar · p para pegar",
+    segundos: 25,
+    armar() {
+      const relleno = entre(2, 4);
+      const inicio = [fila3(V), ...Array.from({ length: relleno }, () => fila3(A))];
+      return { inicio, meta: [...clonar(inicio), fila3(V)] };
+    },
+  },
+  {
+    id: "borrar",
+    goal: "Borra las líneas rojas",
+    tip: "dd sobre cada roja",
+    segundos: 28,
+    armar() {
+      const verdes = entre(2, 4), rojas = entre(2, 3);
+      const inicio = [];
+      for (let i = 0; i < verdes; i++) inicio.push(fila3(V));
+      for (let i = 0; i < rojas; i++) inicio.splice(entre(1, inicio.length), 0, fila3(R));
+      return { inicio, meta: Array.from({ length: verdes }, () => fila3(V)) };
+    },
+  },
+  {
+    id: "mover",
+    goal: "Manda la línea amarilla al final",
+    tip: "dd la corta · G baja · p la suelta",
+    segundos: 25,
+    armar() {
+      const verdes = entre(2, 4);
+      const donde = azar(verdes);
+      const inicio = Array.from({ length: verdes }, () => fila3(V));
+      inicio.splice(donde, 0, fila3(A));
+      return { inicio, meta: [...Array.from({ length: verdes }, () => fila3(V)), fila3(A)] };
+    },
+  },
+  {
+    id: "repetir",
+    goal: "",
+    tip: "yy una vez · p las veces que haga falta",
+    segundos: 30,
+    armar() {
+      const total = entre(4, 6);
+      this.goal = `Deja ${total} líneas verdes`;
+      return { inicio: [fila3(V)], meta: Array.from({ length: total }, () => fila3(V)) };
+    },
+  },
+  {
+    id: "precision",
+    goal: "Quita el cuadro rojo de cada línea",
+    tip: "h y l para moverte · x borra el cuadro de debajo",
+    segundos: 32,
+    armar() {
+      const filas = entre(2, 4), ancho = entre(3, 5);
+      const inicio = Array.from({ length: filas }, () => {
+        const f = Array.from({ length: ancho }, () => V);
+        f[azar(ancho)] = R;
+        return f;
+      });
+      return { inicio, meta: Array.from({ length: filas }, () => Array.from({ length: ancho - 1 }, () => V)) };
+    },
+  },
+];
+
+const $ = (id) => document.getElementById(id);
+
+let orden = [], reto = 0, puntos = 0;
+let lineas = [], meta = [], fila = 0, col = 0;
+let registro = null, historial = [], pendiente = "";
+let restante = 0, limite = 0, tick = null, jugando = false;
+
+/* El primero siempre es el de copiar, que es el más simple y enseña el gesto
+   básico. Los otros cuatro entran barajados. */
+function barajarModos() {
+  const resto = MODOS.slice(1);
+  for (let i = resto.length - 1; i > 0; i--) {
+    const j = azar(i + 1);
+    [resto[i], resto[j]] = [resto[j], resto[i]];
+  }
+  orden = [MODOS[0], ...resto];
+}
+
+/* ---------- pintado ---------- */
+function pintar() {
+  const ed = $("editor");
+  ed.innerHTML = "";
+  const filas = Math.max(lineas.length, 12);
+  for (let f = 0; f < filas; f++) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const g = document.createElement("span");
+    g.className = "gutter";
+    g.textContent = f >= lineas.length ? "~" : "";
+    row.appendChild(g);
+    if (f < lineas.length) {
+      lineas[f].forEach((celda, c) => {
+        const el = document.createElement("span");
+        el.className = "cell" + (f === fila && c === col ? " cur" : "");
+        el.textContent = celda;
+        row.appendChild(el);
+      });
+    }
+    ed.appendChild(row);
+  }
+}
+
+function pintarCabecera() {
+  const m = orden[reto];
+  $("goal").textContent = m ? m.goal : "";
+  $("tip").textContent = m ? m.tip : "";
+  $("counter").textContent = `${Math.min(reto + 1, orden.length)} / ${orden.length}`;
+  $("score").textContent = `★ ${puntos}`;
+  const dots = $("dots");
+  dots.innerHTML = "";
+  orden.forEach((_, i) => {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < reto ? " done" : i === reto ? " cur" : "");
+    dots.appendChild(d);
+  });
+}
+
+/* ---------- tiempo ---------- */
+function arrancarTiempo() {
+  limite = orden[reto].segundos;
+  restante = limite;
+  const barra = $("timer");
+  barra.className = "timer-fill";
+  barra.style.width = "100%";
+  clearInterval(tick);
+  tick = setInterval(() => {
+    restante = Math.max(0, restante - 0.1);
+    const pct = (restante / limite) * 100;
+    barra.style.width = pct + "%";
+    barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
+    if (restante === 0) clearInterval(tick);
+  }, 100);
+}
+
+/* ---------- reglas de vi ---------- */
+function ajustarCursor() {
+  if (lineas.length === 0) { fila = 0; col = 0; return }
+  fila = Math.min(Math.max(fila, 0), lineas.length - 1);
+  const ancho = lineas[fila].length;
+  col = Math.min(Math.max(col, 0), Math.max(0, ancho - 1));
+}
+
+function guardar() {
+  historial.push({ lineas: clonar(lineas), fila, col });
+  if (historial.length > 40) historial.shift();
+}
+
+const resuelto = () => JSON.stringify(lineas) === JSON.stringify(meta);
+
+function ejecutar(tecla) {
+  const dobles = { g: 1, y: 1, d: 1 };
+
+  if (pendiente) {
+    const combo = pendiente + tecla;
+    pendiente = "";
+    if (combo === "gg") { fila = 0; ajustarCursor() }
+    else if (combo === "yy") { registro = lineas[fila] ? lineas[fila].slice() : null }
+    else if (combo === "dd" && lineas.length) {
+      guardar();
+      registro = lineas[fila].slice();
+      lineas.splice(fila, 1);
+      ajustarCursor();
+    }
+    return;
+  }
+  if (dobles[tecla]) { pendiente = tecla; return }
+
+  switch (tecla) {
+    case "h": col--; ajustarCursor(); break;
+    case "l": col++; ajustarCursor(); break;
+    case "j": fila++; ajustarCursor(); break;
+    case "k": fila--; ajustarCursor(); break;
+    case "0": col = 0; break;
+    case "$": col = lineas[fila] ? lineas[fila].length - 1 : 0; break;
+    case "G": fila = lineas.length - 1; ajustarCursor(); break;
+    case "p":
+      if (!registro) return;
+      guardar();
+      lineas.splice(fila + 1, 0, registro.slice());
+      fila++;
+      ajustarCursor();
+      break;
+    case "P":
+      if (!registro) return;
+      guardar();
+      lineas.splice(fila, 0, registro.slice());
+      ajustarCursor();
+      break;
+    case "x":
+      if (!lineas[fila] || !lineas[fila].length) return;
+      guardar();
+      lineas[fila].splice(col, 1);
+      if (!lineas[fila].length) lineas.splice(fila, 1);
+      ajustarCursor();
+      break;
+    case "u": {
+      const previo = historial.pop();
+      if (!previo) return;
+      lineas = previo.lineas; fila = previo.fila; col = previo.col;
+      ajustarCursor();
+      break;
+    }
+  }
+}
+
+/* ---------- ciclo ---------- */
+function cargarReto() {
+  const armado = orden[reto].armar();
+  lineas = clonar(armado.inicio);
+  meta = armado.meta;
+  fila = 0; col = 0; registro = null; historial = []; pendiente = "";
+  $("filename").textContent = `reto-${reto + 1}.txt`;
+  pintarCabecera();
+  pintar();
+  arrancarTiempo();
+}
+
+function ganarReto() {
+  clearInterval(tick);
+  // Los puntos salen del tiempo que sobró: resolver rápido vale más.
+  puntos += 100 + Math.round((restante / limite) * 400);
+
+  const barra = $("timer");
+  barra.className = "timer-fill win";
+  barra.style.width = "100%";
+  $("flash").classList.add("on");
+  setTimeout(() => $("flash").classList.remove("on"), 180);
+  pintarCabecera();
+
+  setTimeout(() => {
+    reto++;
+    if (reto >= orden.length) return terminar();
+    cargarReto();
+  }, 700);
+}
+
+function terminar() {
+  jugando = false;
+  clearInterval(tick);
+  $("res-score-val").textContent = puntos;
+  $("results-overlay").classList.add("show");
+}
+
+function empezar() {
+  barajarModos();
+  reto = 0; puntos = 0; jugando = true;
+  $("overlay").classList.add("hide");
+  $("results-overlay").classList.remove("show");
+  cargarReto();
+}
+
+function volverAlInicio() {
+  clearInterval(tick);
+  jugando = false;
+  $("results-overlay").classList.remove("show");
+  $("overlay").classList.remove("hide");
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!jugando) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
+    return;
+  }
+  if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
+  e.preventDefault();
+  ejecutar(e.key);
+  pintar();
+  if (resuelto()) ganarReto();
+});
+
+$("play").addEventListener("click", empezar);
+$("res-again").addEventListener("click", empezar);
+$("res-exit").addEventListener("click", () =>
+  window.parent.postMessage({ action: "close-simulator" }, "*"),
+);
+$("restart").addEventListener("click", volverAlInicio);
+
+barajarModos();
+pintarCabecera();
+pintar();
+</script>
