@@ -1,6 +1,6 @@
 ## Copiar, mover y borrar
 
-Crear un archivo es sólo el primer paso. El trabajo diario con el sistema de archivos consiste en duplicar, reubicar y eliminar lo que ya existe. Tres comandos cubren esas operaciones, y los tres funcionan igual sobre archivos que sobre directorios completos.
+Crear un archivo es sólo el primer paso. El trabajo diario con el sistema de archivos consiste en duplicar, reubicar y eliminar lo que ya existe. Tres comandos cubren esas operaciones sobre archivos. Sus variantes para directorios se vieron en el módulo anterior.
 
 ## cp
 
@@ -23,16 +23,6 @@ Y puedes copiar varios archivos de una vez, siempre que el último argumento sea
 ```bash
 cp notas.txt tareas.txt informe.pdf Documentos/
 ```
-
-### Copiar directorios
-
-Un directorio no se copia solo con `cp`, porque implica copiar todo lo que hay dentro. Para eso está `-r` (recursive):
-
-```bash
-cp -r proyectos respaldo-proyectos
-```
-
-Sin `-r`, `cp` se niega y te avisa que omitió el directorio.
 
 ### Cuidado al sobrescribir
 
@@ -70,18 +60,6 @@ No hay un comando `rename` separado en Linux, porque no hace falta. Y `mv` no ne
 rm respaldo.txt
 ```
 
-Para directorios, otra vez `-r`:
-
-```bash
-rm -r respaldo-proyectos
-```
-
-También existe `rmdir`, que borra un directorio **sólo si está vacío**. Falla si queda algo dentro, y por eso mismo es la opción segura cuando lo que quieres es limpiar una carpeta que ya vaciaste:
-
-```bash
-rmdir carpeta-vacia
-```
-
 ### No hay papelera
 
 Esto es lo más importante de esta lección: **`rm` no manda nada a la papelera de reciclaje**. Lo que borras desde la terminal se borra, y no hay una carpeta donde ir a buscarlo después.
@@ -103,12 +81,14 @@ rm: ¿borrar el archivo regular 'respaldo.txt'? y
 
 ## Resumen
 
-| Comando | Qué hace | Para directorios |
-|---|---|---|
-| `cp origen destino` | Copia, deja el original | `cp -r` |
-| `mv origen destino` | Mueve o renombra | igual, sin `-r` |
-| `rm archivo` | Borra sin papelera | `rm -r` |
-| `rmdir directorio` | Borra sólo si está vacío | No aplica |
+| Comando | Qué hace |
+|---|---|
+| `cp origen destino` | Copia, deja el original |
+| `mv origen destino` | Mueve o renombra |
+| `rm archivo` | Borra sin papelera |
+
+Las variantes recursivas de `cp` y `rm`, junto con `rmdir`, se cubrieron en
+Operaciones con directorios.
 
 ---
 
