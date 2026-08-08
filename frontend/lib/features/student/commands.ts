@@ -41,6 +41,7 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "cp", args: "[-r] origen destino", description: "Copia archivos y directorios.", topicNumber: 4, subtopicId: "copiar-borrar" },
   { name: "mv", args: "origen destino", description: "Mueve o renombra.", topicNumber: 4, subtopicId: "copiar-borrar" },
   { name: "rm", args: "[-r] <ruta>", description: "Borra sin papelera.", topicNumber: 4, subtopicId: "copiar-borrar" },
+  { name: "*", args: "patrón", description: "Comodín: el shell lo expande a los nombres que coinciden.", topicNumber: 4, subtopicId: "copiar-borrar" },
   { name: "nano", args: "<archivo>", description: "Editor de texto sencillo.", topicNumber: 4, subtopicId: "editores" },
   { name: "vi", args: "<archivo>", description: "Editor modal, presente en todo Linux.", topicNumber: 4, subtopicId: "editores" },
 
