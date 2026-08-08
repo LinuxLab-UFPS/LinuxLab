@@ -143,10 +143,13 @@ Ambos operadores cambian el destino de la salida y suelen confundirse:
 
 | | Envía la salida a | Ejemplo |
 |---|---|---|
-| `>` | un archivo | `ls /etc > listado.txt` |
+| `>` | un archivo, reemplazando lo que hubiera | `ls /etc > listado.txt` |
+| `>>` | un archivo, después de lo que ya hay | `ls /etc/ssh >> listado.txt` |
 | `|` | otro comando | `ls /etc \| head` |
 
-Los dos se combinan en un mismo comando. El pipe encadena y la redirección cierra:
+La diferencia entre `>` y `>>` importa cuando el archivo se arma por partes. Con `>` cada comando borra el resultado del anterior y sólo sobrevive el último; con `>>` se van acumulando en el orden en que se ejecutan.
+
+Los tres se combinan en un mismo comando. El pipe encadena y la redirección cierra:
 
 ```bash
 ls /etc | head -n 20 > primeras.txt
