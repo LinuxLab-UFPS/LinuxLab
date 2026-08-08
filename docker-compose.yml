@@ -44,7 +44,11 @@ services:
     build:
       context: ./entorno
     hostname: linuxlab
-    mem_limit: 256m
+    # El servidor concede 1 GB al proyecto completo. El entorno se lleva la mitad
+    # porque es el unico que crece con la gente conectada: 28 MB en reposo y unos
+    # 10 MB por estudiante con vim abierto, o sea ~48 simultaneos. Los demas
+    # contenedores consumen lo mismo con uno o con cien.
+    mem_limit: 512m
     cpu_shares: 512
     cap_add:
       - SYS_ADMIN

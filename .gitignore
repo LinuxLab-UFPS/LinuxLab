@@ -38,4 +38,5 @@ backend/generated/prisma
 .idea/
 .vscode/
 
-
+# Notas de trabajo, no van al repositorio
+NOTAS-LOCALES.md

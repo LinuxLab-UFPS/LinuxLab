@@ -28,15 +28,32 @@ RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   
     && chmod +x /usr/local/bin/systemctl
 
 # Limites de recursos por usuario
-RUN printf '\nulimit -u 512\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+# Limites de cada sesion de estudiante.
+#
+# `ulimit -u` es el que importa: el servidor de despliegue concede 512 procesos
+# al proyecto ENTERO, no a cada estudiante. Con 512 por cabeza, uno solo podia
+# agotar el presupuesto y tumbar tambien el backend y el frontend. Un estudiante
+# trabajando usa 3, asi que 32 le sobra para tuberias y deja el fork bomb en 32
+# procesos en vez de en 512.
+#
+# TMOUT cierra las terminales inactivas a los 15 minutos. Va `readonly` para que
+# no se pueda desactivar, y es lo que hace que el cupo de sesiones rinda: quien
+# se va a almorzar libera su sitio sin tener que cerrar nada.
+RUN printf '\nulimit -u 32\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Identidad LinuxLab en la terminal (prompt rojo + saludo ambar).
 COPY scripts/linuxlab-shell.sh /etc/linuxlab-shell.sh
 RUN printf '\n. /etc/linuxlab-shell.sh\n' >> /etc/bash.bashrc
 
 # Configurar SSH: solo clave publica, sin password
+# Cada terminal abierta ocupa un canal SSH permanente sobre la unica conexion
+# que mantiene el backend. El valor por defecto de MaxSessions es 10, o sea que
+# el estudiante numero once no abria terminal por mucha memoria que sobrara. Con
+# 100 el techo lo pone la memoria y no una constante de OpenSSH.
 RUN echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config \
     && echo 'PubkeyAuthentication yes' >> /etc/ssh/sshd_config \
+    && echo 'MaxSessions 100' >> /etc/ssh/sshd_config \
+    && echo 'MaxStartups 30:60:120' >> /etc/ssh/sshd_config \
     && chmod 600 /etc/ssh/sshd_config
 
 # Quitar systemd de nsswitch (no hay systemd, cuelga NSS lookup)

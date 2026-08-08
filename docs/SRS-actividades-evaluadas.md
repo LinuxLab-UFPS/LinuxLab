@@ -291,44 +291,61 @@ viejos" es el tipo de cosa que un día se lleva un semestre que alguien
 necesitaba. Pendiente: guardar un `tar` de los homes antes del `rm -rf`, porque
 hoy un reclamo de calificación no tiene nada que mirar.
 
-## 9. Límites de recursos — lo urgente
+## 9. Límites de recursos
 
-Esto no es parte de las actividades, pero es lo que puede tumbar el laboratorio.
-Estado verificado sobre el camino real de entrada (`sudo su - <usuario>` con
-pty):
+El servidor de despliegue concede al proyecto **completo**, no a cada estudiante:
+1 GB de RAM, 512 procesos, 50% de CPU con prioridad baja y entre 3 y 5 GB de
+almacenamiento. Todo lo de esta sección se reparte dentro de ese presupuesto.
 
-**Lo que ya funciona:**
+Medido en el contenedor: **28 MB en reposo**, **3,3 MB** por sesión de bash y
+**6,3 MB** más con vim abierto. Un estudiante trabajando cuesta unos 10 MB y
+3 procesos.
+
+**Los límites vigentes:**
 
 | Límite | Valor | Frena |
 |---|---|---|
-| `ulimit -u` | 512 procesos | fork bombs |
+| `mem_limit` del entorno | 512 MB | ~48 estudiantes simultáneos |
+| `MaxSessions` del sshd | 100 | el techo de terminales abiertas |
+| `ulimit -u` | 32 procesos | fork bombs |
 | `ulimit -f` | 15 MB | archivos individuales enormes |
 | `ulimit -v` | 256 MB | un proceso que se coma la RAM |
 | `TMOUT` | 900 s, readonly | sesiones abiertas para siempre |
-| `mem_limit` | 256 MB | el contenedor completo |
 | `pkill -u` | al cerrar la terminal | procesos huérfanos |
 
-**Los huecos, en orden de gravedad:**
+Tres de esos valores tienen una historia que conviene no perder:
 
-1. **No hay cuota de disco. Este es el grave.** `ulimit -f` limita el tamaño de
-   *un* archivo, no el total. Nada impide crear medio millón de archivos de 1 KB
-   y llenar `entorno_home`. Cuando ese volumen se llena no se cae sólo ese
-   estudiante: se cae el aprovisionamiento, se caen los homes de todos, y el
-   checker empieza a fallar. La imagen ni siquiera trae herramientas de cuota.
-   Los otros dos huecos son degradación; éste es caída total.
+- **`ulimit -u` bajó de 512 a 32.** Los 512 del servidor son del proyecto entero,
+  así que con 512 por estudiante uno solo podía agotarlos y tumbar también el
+  backend y el frontend. Con 32 sobra para trabajar y el fork bomb se queda en
+  su propia sesión.
+- **`MaxSessions` subió de 10 a 100.** Es el valor por defecto de OpenSSH y cada
+  terminal abierta ocupa un canal sobre la única conexión SSH del backend. Con
+  10, el estudiante once no abría terminal por mucha memoria que sobrara.
+- **`mem_limit` del entorno subió de 256 a 512 MB.** Es el único contenedor que
+  crece con la gente conectada; los demás consumen lo mismo con uno o con cien.
+
+`TMOUT` es lo que hace que el cupo rinda: quien deja la terminal abierta y se va
+libera su sitio a los quince minutos sin tener que cerrar nada.
+
+**Lo que sigue pendiente:**
+
+1. **No hay cuota de disco por estudiante.** `ulimit -f` limita el tamaño de *un*
+   archivo, no el total. Con 3 a 5 GB de presupuesto no es la urgencia que sería
+   con menos espacio, pero un estudiante puede seguir llenando lo que haya y
+   dejar a la clase sin poder guardar.
 
 2. **No hay techo de CPU.** `cpu_shares` sólo reparte cuando hay contención. Un
-   `while true` de un estudiante degrada a todo el curso. Falta `cpus:` en el
-   compose.
+   `while true` degrada a todo el curso. Falta `cpus:` en el compose.
 
-3. **Los `ulimit` viven en `/etc/bash.bashrc`.** Hoy aplican porque el único
-   camino de entrada es bash interactivo — está verificado. Pero es frágil: el
-   sitio correcto es `/etc/security/limits.conf`, donde los aplica el kernel al
-   hacer login sin depender de qué shell arranque. Ahora mismo está vacío.
+3. **Los `ulimit` viven en `/etc/bash.bashrc`.** Aplican porque el único camino de
+   entrada es bash interactivo, y está verificado. Pero el sitio correcto es
+   `/etc/security/limits.conf`, donde los aplica el kernel al hacer login sin
+   depender de qué shell arranque.
 
-4. **No hay política `restart:` en ningún servicio del compose.** Si el servidor
-   se reinicia, el laboratorio no vuelve solo. `restart: unless-stopped` en
-   `backend`, `entorno` y `frontend`.
+4. **No hay política `restart:` en el compose.** Si el servidor se reinicia, el
+   laboratorio no vuelve solo. `restart: unless-stopped` en `backend`, `entorno`
+   y `frontend`.
 
 ## 10. Archivos
 
