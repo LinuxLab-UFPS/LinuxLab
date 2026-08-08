@@ -2,7 +2,7 @@
 
 Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos.
 
-La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema responde a tus clics. Es lo que conoce cualquiera que venga de Windows o macOS — el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
+La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema responde a tus clics. Es lo que conoce cualquiera que venga de Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
 
 La **interfaz de línea de comandos (CLI)** es texto puro: escribes lo que quieres hacer y el sistema lo ejecuta. La diferencia de fondo está ahí: cuando haces clic en un ícono, es el computador el que te está diciendo qué puedes hacer; cuando escribes un comando, eres tú quien le dice al computador qué tiene que hacer.
 
@@ -33,7 +33,7 @@ Los dos entornos más usados en Linux resuelven el mismo problema con filosofía
 
 <!-- ILLUSTRATION: gnome-kde -->
 
-**GNOME** apuesta por decidir por ti. Una barra superior, el escritorio limpio sin íconos, y todo — aplicaciones abiertas, buscador, escritorios virtuales — detrás de la vista de Actividades que se abre con la tecla Super. Hay pocas opciones a la vista porque la idea es que no tengas que configurar nada para trabajar. Viene por defecto en Ubuntu, Fedora Workstation y Debian.
+**GNOME** apuesta por decidir por ti. Una barra superior, el escritorio limpio sin íconos, y todo (aplicaciones abiertas, buscador, escritorios virtuales) detrás de la vista de Actividades que se abre con la tecla Super. Hay pocas opciones a la vista porque la idea es que no tengas que configurar nada para trabajar. Viene por defecto en Ubuntu, Fedora Workstation y Debian.
 
 **KDE Plasma** apuesta por lo contrario: que decidas tú. Barra de tareas abajo con su menú de aplicaciones, íconos y widgets sobre el escritorio, y un panel de preferencias donde se puede cambiar prácticamente cualquier cosa, desde el comportamiento de las ventanas hasta el tamaño de cada elemento. A quien viene de Windows le resulta familiar de entrada. Viene por defecto en Kubuntu, Fedora KDE y CachyOS.
 
@@ -45,7 +45,7 @@ Los dos entornos más usados en Linux resuelven el mismo problema con filosofía
 | **Personalización** | Con extensiones y GNOME Tweaks | Integrada en Preferencias del sistema |
 | **Librerías gráficas** | GTK | Qt |
 
-No son los únicos. **XFCE** y **LXQt** están pensados para equipos con pocos recursos, y **Cinnamon** — el de Linux Mint — busca ser familiar para quien llega desde Windows. Incluso puedes instalar varios en el mismo sistema y elegir cuál usar al iniciar sesión.
+No son los únicos. **XFCE** y **LXQt** están pensados para equipos con pocos recursos, y **Cinnamon**, el de Linux Mint, busca ser familiar para quien llega desde Windows. Incluso puedes instalar varios en el mismo sistema y elegir cuál usar al iniciar sesión.
 
 Lo importante no es qué entornos existen, sino que **en Linux la interfaz gráfica y el sistema operativo son cosas separadas**. El sistema funciona aunque no haya pantalla: en servidores, Linux corre sin entorno gráfico porque no lo necesita, y eso lo hace más eficiente, más seguro y más flexible.
 

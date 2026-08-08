@@ -2,7 +2,7 @@
 
 > *"An operating system exploits the hardware resources of one or more processors to provide a set of services to system users."*
 >
-> — Stallings, W. *Operating Systems: Internals and Design Principles*, 9th Ed.
+> Stallings, W. *Operating Systems: Internals and Design Principles*, 9th Ed.
 
 El sistema operativo es el intermediario entre el hardware del computador y tú. Sin él, el procesador, la memoria y el disco serían piezas inertes: nadie decidiría qué programa usa la CPU, dónde se guarda cada archivo ni cómo llega a la pantalla lo que escribes. El sistema operativo administra esos recursos y te permite usarlos sin lidiar directamente con el hardware.
 
@@ -36,7 +36,7 @@ Con el tiempo, distintas organizaciones modificaron y ramificaron Unix hasta pro
 En 1991, **Linus Torvalds**, estudiante de ciencias de la computación en la Universidad de Helsinki, estaba frustrado con MINIX: un sistema tipo Unix diseñado para enseñar, con una licencia que limitaba lo que se podía hacer con él. Decidió escribir su propio kernel y el 25 de agosto lo anunció en un grupo de noticias:
 
 ```
-Hello everybody out there using minix —
+Hello everybody out there using minix -
 I'm doing a (free) operating system (just a hobby, won't be big
 and professional like gnu) for 386(486) AT clones.
 ```

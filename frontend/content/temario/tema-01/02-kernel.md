@@ -2,7 +2,7 @@
 
 ## ¿Qué es el kernel?
 
-El kernel es el núcleo del sistema operativo: el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador — procesador, memoria RAM, discos, interfaces de red y periféricos. Cuando ejecutas un comando, abres un archivo o te conectas a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos: siempre pasan por él.
+El kernel es el núcleo del sistema operativo: el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador: procesador, memoria RAM, discos, interfaces de red y periféricos. Cuando ejecutas un comando, abres un archivo o te conectas a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos: siempre pasan por él.
 
 ## Funciones principales del kernel
 
@@ -26,13 +26,13 @@ Cada aplicación abierta consume CPU a ratos: sube cuando trabaja y baja cuando 
 
 ### 2. Gestión de memoria
 
-El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cuando dejan de usarse. Desde dentro, cada proceso cree tener un bloque grande y continuo solo para él; esa ilusión la sostiene el kernel, que reparte bloques físicos más pequeños, comparte memoria entre procesos cuando puede y manda al disco — al espacio de intercambio o **swap** — lo que lleva tiempo sin usarse. El proceso no se entera de nada de eso: solo ve memoria disponible.
+El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cuando dejan de usarse. Desde dentro, cada proceso cree tener un bloque grande y continuo solo para él; esa ilusión la sostiene el kernel, que reparte bloques físicos más pequeños, comparte memoria entre procesos cuando puede y manda al espacio de intercambio o **swap** lo que lleva tiempo sin usarse. El proceso no se entera de nada de eso: solo ve memoria disponible.
 
 <!-- ILLUSTRATION: kernel-memoria -->
 
 ### 3. Sistema de archivos
 
-Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos — ext4 (el más común), XFS, Btrfs, NTFS para compatibilidad con Windows — y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo: el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
+Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo: el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
 
 <!-- ILLUSTRATION: kernel-archivos -->
 
@@ -44,7 +44,7 @@ El kernel se comunica con el hardware a través de **controladores** (drivers): 
 
 ### 5. Comunicación de red
 
-El kernel implementa los protocolos de red — TCP/IP, UDP, ICMP — que permiten al sistema comunicarse con otros computadores, y administra las interfaces, las tablas de enrutamiento, los sockets y las conexiones activas.
+El kernel implementa los protocolos de red (TCP/IP, UDP, ICMP) que permiten al sistema comunicarse con otros computadores, y administra las interfaces, las tablas de enrutamiento, los sockets y las conexiones activas.
 
 <!-- ILLUSTRATION: kernel-red -->
 

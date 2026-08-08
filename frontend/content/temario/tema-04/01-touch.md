@@ -4,7 +4,7 @@ En Linux casi todo termina siendo un archivo: tus apuntes, la configuración de 
 
 ## touch
 
-`touch` crea un archivo vacío con el nombre que le des:
+`touch` (como ya se había visto en el modulo anterior) crea un archivo vacío con el nombre que le des:
 
 ```bash
 touch notas.txt
@@ -52,7 +52,7 @@ El nombre viene de "tocar", y ese es su comportamiento cuando el archivo **ya ex
 touch notas.txt
 ```
 
-Suena a detalle menor, pero hay herramientas —los compiladores, por ejemplo— que deciden qué rehacer mirando esas fechas. Marcar un archivo como recién tocado es la forma de decirles "esto cambió, vuelve a procesarlo".
+Suena a detalle menor, pero hay herramientas, como los compiladores, que deciden qué rehacer mirando esas fechas. Marcar un archivo como recién tocado es la forma de decirles "esto cambió, vuelve a procesarlo".
 
 ## cat
 
