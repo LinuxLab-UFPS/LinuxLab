@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
 
 export interface CheckResult {
@@ -102,6 +103,12 @@ export function useActivityCheck(slug: string) {
       })
       setResults(null)
       setPassed(false)
+      // Reiniciar borra la carpeta y crea otra en su lugar. Una shell que
+      // estuviera dentro se queda en el directorio viejo, que ya no figura en
+      // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo
+      // que se escriba ahí no llega a la carpeta nueva. El Ctrl+C limpia la
+      // línea a medias que hubiera antes de mandar el `cd`.
+      sendToTerminal("\x03cd ~\n")
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron preparar los archivos")
     } finally {

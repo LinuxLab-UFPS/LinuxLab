@@ -5,6 +5,7 @@ import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
 import { env } from "@/lib/config/env"
+import { onTerminalInput } from "@/lib/features/student/terminal-input"
 
 const WS_BASE = env.backendUrl.replace(/^http/, "ws")
 
@@ -90,11 +91,14 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       }
     }
 
-    term.onData((data) => {
+    const write = (data: string) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "input", data }))
       }
-    })
+    }
+
+    term.onData(write)
+    const unsubscribe = onTerminalInput(write)
 
     let resizeTimer: ReturnType<typeof setTimeout>
     const observer = new ResizeObserver(() => {
@@ -110,6 +114,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     observer.observe(containerRef.current)
 
     return () => {
+      unsubscribe()
       ws.close()
       term.dispose()
       observer.disconnect()
