@@ -59,6 +59,15 @@ const RAW = [
     topicNumber: 4,
     checks: 5,
   },
+  {
+    slug: "mensaje-oculto",
+    title: "El mensaje oculto",
+    description:
+      "Cuatro archivos de cien líneas esconden un dibujo por trozos. Reúnelos en el orden correcto.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 4,
+    checks: 2,
+  },
 ]
 
 export const activities: Activity[] = RAW.map((a) => {
