@@ -45,7 +45,7 @@ const RAW = [
     slug: "universidad-facultades",
     title: "Archivos y ficheros",
     description:
-      "Arma un árbol de facultades con el pensum de cada una, combinando mkdir y touch.",
+      "Levanta un árbol de facultades con el pensum de cada una.",
     difficulty: "basic" as Difficulty,
     topicNumber: 4,
     checks: 7,
@@ -54,7 +54,7 @@ const RAW = [
     slug: "limpieza-con-comodines",
     title: "Limpieza con comodines",
     description:
-      "Borra por extensión y reorganiza una carpeta con `rm *` y `mv *`, sobre archivos que puedes rehacer.",
+      "Deja una carpeta desordenada como debe quedar, sobre archivos que puedes rehacer si te pasas.",
     difficulty: "basic" as Difficulty,
     topicNumber: 4,
     checks: 5,

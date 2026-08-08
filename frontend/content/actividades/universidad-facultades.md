@@ -22,6 +22,6 @@ universidad
 
 Los nombres van en minúscula y sin tildes, tal como aparecen arriba. Recuerda que Linux distingue mayúsculas de minúsculas: `Ingenieria` no es lo mismo que `ingenieria`.
 
-Puedes hacerlo comando por comando, o aprovechar lo que ya sabes para ahorrarte pasos. `mkdir -p` crea rutas anidadas de una sola vez, y `touch` acepta varios archivos en un mismo comando.
+Se puede armar paso a paso, creando cada carpeta y cada archivo por separado, o en bastantes menos órdenes aprovechando las opciones que ya se vieron en el módulo.
 
 Cada punto se revisa por separado, así que si algo falla el detalle te dice cuál. Puedes corregir y volver a comprobar las veces que necesites.
