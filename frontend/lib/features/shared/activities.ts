@@ -50,6 +50,15 @@ const RAW = [
     topicNumber: 4,
     checks: 7,
   },
+  {
+    slug: "limpieza-con-comodines",
+    title: "Limpieza con comodines",
+    description:
+      "Borra por extensión y reorganiza una carpeta con `rm *` y `mv *`, sobre archivos que puedes rehacer.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 4,
+    checks: 5,
+  },
 ]
 
 export const activities: Activity[] = RAW.map((a) => {
