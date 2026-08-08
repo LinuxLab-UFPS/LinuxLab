@@ -186,6 +186,26 @@ body{
 .res-btn.primary:hover{background:#ffe033;box-shadow:0 0 18px rgba(255,196,0,.5);}
 .res-btn.secondary{background:transparent;color:var(--muted);border:1px solid var(--border);}
 .res-btn.secondary:hover{color:var(--text);border-color:var(--muted);}
+
+/* Capa de inicio: el simulador no arranca hasta que el estudiante lo pide. */
+#start-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  background:rgba(13,17,23,.94);z-index:40;
+}
+#start-overlay.hide{display:none}
+.play{
+  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
+  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
+  font-family:var(--mono);line-height:1;
+}
+/* El triangulo tiene el peso a la izquierda y descentra a ojo. */
+.play .tri{display:block;transform:translateX(3px)}
+.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
+#start-overlay h2{font-size:19px;color:var(--bright);font-weight:700}
+#start-overlay p{font-size:12px;color:var(--muted);max-width:420px;text-align:center;line-height:1.7}
 </style>
 
 <div class="hdr">
@@ -205,7 +225,7 @@ body{
   <div class="hdr-sep"></div>
   <div class="score-pill">⭐ <span id="score-val">0</span></div>
   <div class="hdr-sep"></div>
-  <button class="restart-btn" onclick="init()">↺ Reiniciar</button>
+  <button class="restart-btn" onclick="empezar()">↺ Reiniciar</button>
   <div class="hdr-sep"></div>
   <div class="pwd-pill" id="pwd">~</div>
 </div>
@@ -239,13 +259,23 @@ body{
     <div class="bat-sub">presta atención a los directorios</div>
     <div id="bat-count">4</div>
   </div>
+  <div id="start-overlay">
+    <button class="play" id="play-btn"><span class="tri">&#9654;</span></button>
+    <h2>Traves&iacute;a del &Aacute;rbol</h2>
+    <p>
+      Navega el &aacute;rbol de directorios con <b>cd</b> y <b>ls</b> hasta llegar
+      al objetivo. Cada ronda cambia el &aacute;rbol y aparecen modos con reglas
+      distintas.
+    </p>
+  </div>
+
   <div id="results-overlay">
     <div class="res-box">
       <div class="res-title">Resultado</div>
       <div class="res-score" id="res-score-val">0</div>
       <div class="res-pts">puntos</div>
       <div class="res-btns">
-        <button class="res-btn primary" onclick="init()">↺ Jugar de nuevo</button>
+        <button class="res-btn primary" onclick="empezar()">↺ Jugar de nuevo</button>
         <button class="res-btn secondary" onclick="exitSim()">Salir</button>
       </div>
     </div>
@@ -1100,5 +1130,22 @@ inp.addEventListener('keydown',e=>{
 document.addEventListener('click',()=>{ if(!document.getElementById('inp').disabled) inp.focus();});
 window.addEventListener('resize',redraw);
 
+function empezar(){
+  document.getElementById('start-overlay').classList.add('hide');
+  document.getElementById('results-overlay').classList.remove('show');
+  init();
+  document.getElementById('inp').disabled = false;
+  document.getElementById('inp').focus();
+}
+document.getElementById('play-btn').addEventListener('click', empezar);
+document.addEventListener('keydown', (e) => {
+  const capa = document.getElementById('start-overlay');
+  if (capa.classList.contains('hide')) return;
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); empezar() }
+});
+
+// Se arma el tablero para que la pantalla de fondo no salga vacia, pero la
+// partida no empieza hasta que el estudiante pulsa play.
 init();
+document.getElementById('inp').disabled = true;
 </script>
