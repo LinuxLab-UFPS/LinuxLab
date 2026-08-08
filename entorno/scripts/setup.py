@@ -5,11 +5,15 @@ Se ejecuta DENTRO del contenedor y CON LA IDENTIDAD DEL ESTUDIANTE
 (`sudo -u <estudiante>`), igual que el checker. Recibe un JSON por stdin con la
 descripcion del arbol y lo materializa dentro de la carpeta de la actividad:
 
-    {"slug": "comodines",
+    {"slug": "comodines", "force": false,
      "dirs": ["archivo"],
      "files": [{"path": "informe.txt", "content": "..."}]}
 
-    {"ok": true, "root": "/home/.../.actividades/comodines", "creados": 4}
+    {"ok": true, "root": "/home/.../actividades/comodines", "creados": 4}
+
+Con `force` en falso no toca nada si la carpeta ya existe: eso es lo que permite
+preparar el arbol al abrir la actividad sin borrar lo que el estudiante llevaba
+hecho. El boton de recargar manda `force` y ahi si se rehace entero.
 
 Va aparte del checker a proposito. El checker solo lee, y darle permiso de
 escritura para ahorrarse un archivo significaria que un fallo suyo pueda
@@ -30,7 +34,9 @@ import sys
 TIMEOUT_SECONDS = 20
 
 #: Todo lo de las actividades cuelga de aqui, dentro del home del estudiante.
-BASE = ".actividades"
+#: A la vista y no oculto: el estudiante tiene que encontrarlo con un `ls`, y un
+#: nombre con punto delante lo dejaba invisible justo para quien debe usarlo.
+BASE = "actividades"
 
 #: Topes para que una actividad mal escrita no llene el disco de nadie.
 MAX_ARCHIVOS = 200
@@ -77,9 +83,11 @@ def dentro(raiz, relativa):
 def construye(spec):
     raiz = os.path.join(home(), BASE, valida_slug(spec.get("slug", "")))
 
-    # Rehacer el arbol es la forma de "recargar": lo de antes se descarta entero,
-    # que es justo lo que hace segura la actividad de borrar cosas.
+    # Sin `force`, una carpeta que ya existe se deja intacta. Abrir la actividad
+    # no puede borrar el trabajo a medias de quien vuelve a ella.
     if os.path.exists(raiz):
+        if not spec.get("force"):
+            return {"ok": True, "root": raiz, "creados": 0, "yaEstaba": True}
         shutil.rmtree(raiz)
     os.makedirs(raiz, mode=0o700, exist_ok=True)
 

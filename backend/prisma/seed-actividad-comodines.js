@@ -1,7 +1,7 @@
 const prisma = require("./client")
 
 const SLUG = "limpieza-con-comodines"
-const RAIZ = "/home/$usuario/.actividades/limpieza-con-comodines"
+const RAIZ = "/home/$usuario/actividades/limpieza-con-comodines"
 
 /**
  * El estudiante trabaja sobre un arbol preparado, no sobre sus propios archivos.
@@ -12,7 +12,7 @@ const RAIZ = "/home/$usuario/.actividades/limpieza-con-comodines"
  * que hacer con el; en ningun momento se ejecuta texto escrito aqui.
  */
 const SETUP = {
-  dirs: ["documentos"],
+  dirs: ["documentos", "imagenes"],
   files: [
     { path: "informe.txt", content: "Informe de laboratorio\n" },
     { path: "notas.txt", content: "Apuntes de clase\n" },
@@ -36,21 +36,22 @@ async function main() {
       kind: "activity",
       difficulty: "basic",
       instructions:
-        "Borra todos los archivos .tmp de la carpeta de la actividad y mueve " +
-        "los .txt a documentos. Los .png se quedan donde están.",
+        "Borra los .tmp de la carpeta de la actividad, mueve los .txt a " +
+        "documentos y los .png a imagenes.",
       topic_number: 4,
       max_score: 100,
       setup: SETUP,
       checks: {
         create: [
-          // Los .tmp desaparecen
+          // Ninguna de las cinco se cumple al empezar: si alguna naciera en
+          // verde, el estudiante veria puntos regalados antes de tocar nada.
           { type: "archivo_no_existe", params: { ruta: `${RAIZ}/temporal.tmp` }, points: 20, position: 0 },
           { type: "archivo_no_existe", params: { ruta: `${RAIZ}/cache.tmp` }, points: 20, position: 1 },
-          // Los .txt terminan dentro de documentos
           { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/informe.txt` }, points: 20, position: 2 },
           { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/notas.txt` }, points: 20, position: 3 },
-          // Y los .png siguen donde estaban: un `rm *` de mas se nota aqui
-          { type: "archivo_existe", params: { ruta: `${RAIZ}/captura1.png` }, points: 20, position: 4 },
+          // Los .png tienen que llegar enteros a imagenes, asi que un `rm *`
+          // de mas deja esta sin cumplir y no hay forma de recuperarla.
+          { type: "archivo_existe", params: { ruta: `${RAIZ}/imagenes/captura1.png` }, points: 20, position: 4 },
         ],
       },
     },

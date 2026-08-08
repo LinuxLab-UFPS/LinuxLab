@@ -68,6 +68,14 @@ export function useActivityCheck(slug: string) {
           setResults(data.lastAttempt.results)
           setPassed(data.lastAttempt.passed)
         }
+        // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
+        // si ya existían, así que volver a entrar no borra lo que llevaba.
+        if (data.hasSetup) {
+          apiFetch(`/api/activities/${slug}/reset`, {
+            method: "POST",
+            body: JSON.stringify({ force: false }),
+          }).catch(() => {})
+        }
       })
       .catch((e) => {
         if (alive) setError(e instanceof Error ? e.message : "No se pudo cargar la práctica")
@@ -87,7 +95,10 @@ export function useActivityCheck(slug: string) {
     setResetting(true)
     setError(null)
     try {
-      await apiFetch(`/api/activities/${slug}/reset`, { method: "POST" })
+      await apiFetch(`/api/activities/${slug}/reset`, {
+        method: "POST",
+        body: JSON.stringify({ force: true }),
+      })
       setResults(null)
       setPassed(false)
     } catch (e) {

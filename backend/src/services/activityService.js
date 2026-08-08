@@ -214,7 +214,7 @@ async function cuentaDelEstudiante(studentUserId) {
  * y el árbol vuelve a su estado inicial. Eso es lo que permite plantear
  * actividades donde el estudiante borre sin miedo a quedarse sin nada.
  */
-async function resetSandbox({ slug, studentUserId }) {
+async function resetSandbox({ slug, studentUserId, force = false }) {
   const activity = await prisma.activity.findUnique({
     where: { slug },
     select: { slug: true, setup: true },
@@ -225,7 +225,7 @@ async function resetSandbox({ slug, studentUserId }) {
   }
 
   const account = await cuentaDelEstudiante(studentUserId)
-  const payload = JSON.stringify({ ...activity.setup, slug: activity.slug })
+  const payload = JSON.stringify({ ...activity.setup, slug: activity.slug, force })
 
   const { stdout, stderr, code } = await sshClient.execCommand(
     `sudo -u ${account.linux_username} ${SETUP}`,
@@ -244,8 +244,11 @@ async function resetSandbox({ slug, studentUserId }) {
     throw new AppError(parsed.error || "No se pudo preparar la actividad", 409, "CONFLICT")
   }
 
-  logger.info({ slug, username: account.linux_username, creados: parsed.creados }, "Sandbox ready")
-  return { root: parsed.root, creados: parsed.creados }
+  logger.info(
+    { slug, username: account.linux_username, creados: parsed.creados, force },
+    "Sandbox ready",
+  )
+  return { root: parsed.root, creados: parsed.creados, yaEstaba: Boolean(parsed.yaEstaba) }
 }
 
 /** Los slugs que el estudiante ya aprobo, para marcar sus tarjetas. */

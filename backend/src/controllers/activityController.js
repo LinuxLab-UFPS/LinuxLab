@@ -18,7 +18,15 @@ const getMyStatus = asyncHandler(async (req, res) => {
 })
 
 const resetActivity = asyncHandler(async (req, res) => {
-  res.json(await activityService.resetSandbox({ slug: req.params.slug, studentUserId: req.user.id }))
+  // Sin `force` sólo se prepara lo que falte: abrir la actividad no puede
+  // borrar el trabajo a medias de quien vuelve a ella.
+  res.json(
+    await activityService.resetSandbox({
+      slug: req.params.slug,
+      studentUserId: req.user.id,
+      force: req.body?.force === true,
+    }),
+  )
 })
 
 const checkActivity = asyncHandler(async (req, res) => {
