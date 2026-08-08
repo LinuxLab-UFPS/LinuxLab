@@ -2,6 +2,17 @@
 
 **Proyecto:** LinuxLab UFPS
 **Aplica a:** el servidor donde se despliega el contenedor `entorno`
+**Estado:** BORRADOR, pendiente de verificar
+
+> **No ejecutar todavía.** Este procedimiento se escribió asumiendo que el
+> servidor de despliegue tiene 1 GB de **disco**. Ese dato resultó ser de
+> **memoria RAM**, así que el cálculo del §1 está mal y la urgencia no es la que
+> aquí se describe.
+>
+> El riesgo de fondo sigue siendo real: no hay cuota de disco y un estudiante
+> puede llenar lo que haya. Pero el tamaño del problema, y por tanto si merece
+> la pena cambiar a ext4, depende del espacio que tenga el servidor de verdad.
+> Revisar con las características reales antes de tocar nada.
 
 ---
 
