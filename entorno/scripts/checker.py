@@ -137,6 +137,31 @@ def lineas_utiles(path):
         return [line.strip() for line in fh.read().splitlines() if line.strip()]
 
 
+def check_archivo_es(params, home):
+    """El archivo tiene exactamente este contenido, linea por linea y en orden.
+
+    `archivo_contiene` no sirve cuando el orden es parte del ejercicio: con ella,
+    las mismas lineas puestas al reves aprobarian igual. Se comparan las lineas
+    con contenido, sin espacios al final, para que un salto de linea de mas no
+    tumbe un trabajo correcto.
+    """
+    path = resolve(params.get("ruta", ""), home)
+    if not os.path.isfile(path):
+        raise CheckError("No existe o no es un archivo")
+
+    esperadas = [l.rstrip() for l in (params.get("valor") or "").splitlines() if l.strip()]
+    if not esperadas:
+        raise CheckError("No se indico cual es el contenido esperado")
+
+    obtenidas = lineas_utiles(path)
+    if len(obtenidas) != len(esperadas):
+        raise CheckError(f"Tiene {len(obtenidas)} lineas y se esperaban {len(esperadas)}")
+    for i, (tuya, esperada) in enumerate(zip(obtenidas, esperadas), start=1):
+        if tuya != esperada:
+            raise CheckError(f"La linea {i} no es la que va ahi")
+    return "El contenido es exacto"
+
+
 def check_minimo_lineas(params, home):
     path = resolve(params.get("ruta", ""), home)
     if not os.path.isfile(path):
@@ -192,6 +217,7 @@ CHECKS = {
     "propietario_es": check_propietario_es,
     "archivo_contiene": check_archivo_contiene,
     "minimo_lineas": check_minimo_lineas,
+    "archivo_es": check_archivo_es,
     "ultima_linea_es": check_ultima_linea_es,
 }
 

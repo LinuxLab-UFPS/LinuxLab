@@ -30,6 +30,7 @@ const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
   archivo_no_existe: (p) => `Ya no está ${p.ruta}`,
   permisos_son: (p) => `${p.ruta} tiene permisos ${p.modo}`,
   propietario_es: (p) => `${p.ruta} pertenece a ${p.usuario}`,
+  archivo_es: (p) => `${p.ruta} tiene el contenido exacto`,
   minimo_lineas: (p) => `${p.ruta} tiene al menos ${p.cantidad} líneas`,
   ultima_linea_es: (p) => `La última línea de ${p.ruta} es ${p.valor}`,
   archivo_contiene: (p) =>
