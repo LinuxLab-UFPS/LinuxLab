@@ -12,6 +12,32 @@ const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/
 
 const EVAL_TIMEOUT_MS = 20000
 
+/**
+ * Datos del estudiante que el contenedor no tiene forma de conocer.
+ *
+ * `$usuario` lo resuelve el checker por dentro, leyendo la cuenta con la que
+ * corre, y por eso no se puede falsear. El codigo y el correo solo viven en la
+ * base, asi que se sustituyen aqui: siguen viniendo del servidor, nunca de la
+ * peticion, que es lo que importa.
+ */
+function personalize(params, student) {
+  const valores = { $codigo: student.code, $correo: student.email }
+  const salida = {}
+  for (const [clave, valor] of Object.entries(params ?? {})) {
+    salida[clave] =
+      typeof valor === "string"
+        ? Object.entries(valores).reduce(
+            (texto, [token, real]) => texto.split(token).join(real),
+            valor,
+          )
+        : valor
+  }
+  return salida
+}
+
+/** Los tokens que hay que poder resolver antes de evaluar. */
+const NEEDS_CODE = /\$codigo\b/
+
 const publicCheck = (check) => ({
   id: check.id,
   type: check.type,
@@ -102,8 +128,26 @@ async function evaluate({ slug, studentUserId }) {
     throw new AppError("El nombre de tu cuenta no es válido", 500, "INTERNAL_ERROR")
   }
 
+  const student = await prisma.user.findUnique({
+    where: { id: studentUserId },
+    select: { code: true, email: true },
+  })
+
+  // Sin codigo no se puede evaluar una actividad que lo pide, y el mensaje tiene
+  // que decir eso y no fallar con una ruta rara mas adelante.
+  const usesCode = activity.checks.some((c) =>
+    Object.values(c.params ?? {}).some((v) => typeof v === "string" && NEEDS_CODE.test(v)),
+  )
+  if (usesCode && !student?.code) {
+    throw new AppError("Tu perfil no tiene código estudiantil registrado", 409, "CONFLICT")
+  }
+
   const payload = JSON.stringify({
-    checks: activity.checks.map((c) => ({ id: c.id, type: c.type, params: c.params })),
+    checks: activity.checks.map((c) => ({
+      id: c.id,
+      type: c.type,
+      params: personalize(c.params, student),
+    })),
   })
 
   const { code, stdout, stderr } = await sshClient.execCommand(

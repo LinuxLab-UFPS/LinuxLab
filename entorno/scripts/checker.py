@@ -120,6 +120,44 @@ def check_propietario_es(params, home):
     return f"El propietario es {owner}"
 
 
+def lineas_utiles(path):
+    """Las lineas con algo escrito. Las vacias no cuentan: si contaran, cinco
+    veces Enter cumpliria cualquier requisito de cantidad."""
+    if os.path.getsize(path) > MAX_FILE_BYTES:
+        raise CheckError("El archivo es demasiado grande para revisarlo")
+    with open(path, "r", encoding="utf-8", errors="replace") as fh:
+        return [line.strip() for line in fh.read().splitlines() if line.strip()]
+
+
+def check_minimo_lineas(params, home):
+    path = resolve(params.get("ruta", ""), home)
+    if not os.path.isfile(path):
+        raise CheckError("No existe o no es un archivo")
+    try:
+        minimo = int(params.get("cantidad", 0))
+    except (TypeError, ValueError):
+        raise CheckError("La cantidad de lineas esperada no es un numero")
+    lineas = lineas_utiles(path)
+    if len(lineas) < minimo:
+        raise CheckError(f"Tiene {len(lineas)} lineas y se esperaban al menos {minimo}")
+    return f"Tiene {len(lineas)} lineas"
+
+
+def check_ultima_linea_es(params, home):
+    path = resolve(params.get("ruta", ""), home)
+    if not os.path.isfile(path):
+        raise CheckError("No existe o no es un archivo")
+    esperado = (params.get("valor") or "").strip()
+    if not esperado:
+        raise CheckError("No se indico que debia ir en la ultima linea")
+    lineas = lineas_utiles(path)
+    if not lineas:
+        raise CheckError("El archivo esta vacio")
+    if lineas[-1] != esperado:
+        raise CheckError(f"La ultima linea es \"{lineas[-1]}\"")
+    return "La ultima linea es la esperada"
+
+
 def check_archivo_contiene(params, home):
     path = resolve(params.get("ruta", ""), home)
     if not os.path.isfile(path):
@@ -144,6 +182,8 @@ CHECKS = {
     "permisos_son": check_permisos_son,
     "propietario_es": check_propietario_es,
     "archivo_contiene": check_archivo_contiene,
+    "minimo_lineas": check_minimo_lineas,
+    "ultima_linea_es": check_ultima_linea_es,
 }
 
 

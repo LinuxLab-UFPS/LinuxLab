@@ -156,6 +156,28 @@ Desde el modo normal, `/` seguido de un texto busca hacia adelante:
 
 Es más cómodo para una edición rápida, pero no siempre está instalado. En un servidor recién montado o en un sistema de rescate suele haber únicamente `vi`, y por eso conviene manejarlo.
 
+## Práctica
+
+El ejercicio consiste en crear una ficha personal dentro del directorio home, usando `vi` para escribirla.
+
+El archivo debe llamarse como el código estudiantil, con extensión `.txt`. Para un código 1152186 el comando sería:
+
+```bash
+vi 1152186.txt
+```
+
+El contenido tiene esta estructura:
+
+1. El nombre completo en la primera línea.
+2. Tres comandos aprendidos hasta ahora, uno por línea.
+3. El correo institucional en la última línea.
+
+El recorrido dentro del editor es el de la lección: `i` para entrar en modo inserción, <kbd>Esc</kbd> para volver al modo normal y `:wq` para guardar y salir.
+
+<!-- EJERCICIO: ficha-personal -->
+
+El nombre de la primera línea no se revisa. Lo que se comprueba es que el archivo se llame como el código, que tenga las líneas suficientes y que la última sea el correo institucional registrado en la plataforma.
+
 ---
 
 **Fuentes**
