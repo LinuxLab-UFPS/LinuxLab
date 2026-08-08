@@ -54,7 +54,7 @@ const RAW = [
     slug: "limpieza-con-comodines",
     title: "Limpieza con comodines",
     description:
-      "Deja una carpeta desordenada como debe quedar, sobre archivos que puedes rehacer si te pasas.",
+      "Una carpeta con nueve archivos de tres tipos. Borra unos, reparte los otros.",
     difficulty: "basic" as Difficulty,
     topicNumber: 4,
     checks: 5,
