@@ -153,7 +153,10 @@ async function createExecStream(command) {
   const conn = await getConnection()
   return new Promise((resolve, reject) => {
     conn.exec(command, {
-      pty: { cols: 180, rows: 40, term: "xterm-256color" },
+      // 80x24 es el tamaño clásico de una terminal y el que asume cualquier
+      // programa que no reciba otro. Sólo dura hasta que el navegador informa
+      // el suyo, pero si eso fallara, 180x40 dejaba la pantalla descuadrada.
+      pty: { cols: 80, rows: 24, term: "xterm-256color" },
     }, (err, stream) => {
       if (err) return reject(err)
       resolve(stream)

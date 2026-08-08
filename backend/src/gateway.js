@@ -8,6 +8,33 @@ function setupGateway(server) {
   const wss = new WebSocketServer({ server, path: "/terminal" })
 
   wss.on("connection", async (ws, request) => {
+    // El navegador manda el tamaño en cuanto abre el socket, pero abrir la PTY
+    // pasa por la base y por SSH. Sin escuchar desde ya, ese primer mensaje
+    // llegaba antes de que existiera el manejador y se perdía: la PTY se
+    // quedaba con su tamaño por defecto mientras la pantalla tenía otro, y
+    // cualquier programa que dibuje por posición (vi, top) salía descuadrado.
+    let stream = null
+    let pending = null
+
+    const applySize = (size) => {
+      if (!size) return
+      if (stream) stream.setWindow(size.rows, size.cols, 0, 0)
+      else pending = size
+    }
+
+    ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString())
+        if (msg.type === "input") {
+          if (stream) stream.write(msg.data)
+        } else if (msg.type === "resize") {
+          applySize({ rows: msg.rows, cols: msg.cols })
+        }
+      } catch {
+        // skip invalid messages
+      }
+    })
+
     const auth = wsAuth(request)
     if (auth.error) {
       ws.close(4001, auth.error)
@@ -38,12 +65,17 @@ function setupGateway(server) {
       return
     }
 
-    let stream
     try {
       stream = await linuxContainerService.openPtySession(user.linuxAccount.linux_username)
     } catch (err) {
       ws.close(4001, `Container error: ${err.message}`)
       return
+    }
+
+    // El tamaño que llegó mientras se abría la sesión.
+    if (pending) {
+      stream.setWindow(pending.rows, pending.cols, 0, 0)
+      pending = null
     }
 
     stream.on("data", (data) => {
@@ -59,19 +91,6 @@ function setupGateway(server) {
 
     stream.on("error", () => {
       ws.close(4001, "Stream error")
-    })
-
-    ws.on("message", (raw) => {
-      try {
-        const msg = JSON.parse(raw.toString())
-        if (msg.type === "input") {
-          stream.write(msg.data)
-        } else if (msg.type === "resize") {
-          stream.setWindow(msg.rows, msg.cols, 0, 0)
-        }
-      } catch {
-        // skip invalid messages
-      }
     })
 
     ws.on("close", () => {
