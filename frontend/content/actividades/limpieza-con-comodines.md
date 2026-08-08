@@ -21,8 +21,8 @@ documentos/   imagenes/
 2. Mover los `.txt` dentro de `documentos`.
 3. Mover los `.png` dentro de `imagenes`.
 
-Los comodines son lo que hace esto viable sin escribir nueve nombres. `rm *.tmp` alcanza a los tres temporales de una sola orden, y `mv *.txt documentos/` traslada los tres apuntes.
+Se puede hacer nombrando los nueve archivos uno por uno, pero el tema de comodines existe justamente para no tener que hacerlo.
 
-Conviene recordar quién expande el patrón: el shell, antes de que el comando lo vea. `ls *.tmp` muestra exactamente la lista que recibirá `rm`, así que comprobar primero cuesta una orden y evita un borrado de más.
+Conviene recordar quién expande el patrón: el shell, antes de que el comando lo vea. Cualquier patrón se puede comprobar con `ls` antes de usarlo en algo que borre, porque lo que `ls` muestra es exactamente lo que va a recibir el otro comando.
 
-Un patrón demasiado amplio se nota en el resultado. `rm *` deja la carpeta vacía, y entre lo que se lleva están los `.png` que todavía había que mover. Desde ahí no hay vuelta atrás salvo reiniciar los archivos.
+Un patrón demasiado amplio se nota tarde. Si la carpeta queda vacía, entre lo que se fue estaban los `.png` que todavía había que mover, y desde ahí no hay vuelta atrás salvo reiniciar los archivos.
