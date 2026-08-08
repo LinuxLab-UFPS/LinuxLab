@@ -22,6 +22,8 @@ export interface NavEntry {
   key: string
   title: string
   href: string
+  /** Icono propio de la entrada. Sin él se usa el del menú. */
+  icon?: React.ComponentType<{ className?: string }>
 }
 
 /**
@@ -76,19 +78,22 @@ export function NavDropdown({
       {open && shown.length > 0 && (
         <div className="absolute left-0 top-full z-50 pt-2">
           <div className="w-64 animate-in fade-in-0 slide-in-from-top-1 rounded-xl border border-white/10 bg-[#0f0f11] p-1.5 shadow-2xl shadow-black/60 duration-150">
-            {shown.map((entry) => (
-              <Link
-                key={entry.key}
-                href={entry.href}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/90 transition-colors",
-                  t.item,
-                )}
-              >
-                <ItemIcon className="h-4 w-4 shrink-0" />
-                <span className="truncate">{entry.title}</span>
-              </Link>
-            ))}
+            {shown.map((entry) => {
+              const Icon = entry.icon ?? ItemIcon
+              return (
+                <Link
+                  key={entry.key}
+                  href={entry.href}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/90 transition-colors",
+                    t.item,
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{entry.title}</span>
+                </Link>
+              )
+            })}
             {entries.length >= max && (
               <Link
                 href={href}

@@ -10,6 +10,7 @@ import {
   Search,
   LogOut,
   FolderTree,
+  SquarePen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -29,6 +30,12 @@ import { NavDropdown } from "@/components/student/nav-dropdown"
 import type { SearchItem } from "@/lib/features/shared/lessons"
 import type { Simulator } from "@/lib/features/shared/simulators"
 import { getActivities } from "@/lib/features/shared/activities"
+
+/** Icono propio de cada simulador en el menú; sin entrada, cae al del grupo. */
+const SIMULATOR_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  "travesia-del-arbol": FolderTree,
+  "retos-de-vi": SquarePen,
+}
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */
 export function SiteHeader({
@@ -90,6 +97,7 @@ export function SiteHeader({
               key: s.id,
               title: s.title,
               href: s.href,
+              icon: SIMULATOR_ICONS[s.id],
             }))}
             pathname={pathname}
           />
