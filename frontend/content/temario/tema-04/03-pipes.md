@@ -156,7 +156,7 @@ Los veinte primeros nombres quedan guardados en `primeras.txt` sin pasar por la 
 
 ## Práctica
 
-El siguiente botón copia un bloque de texto al portapapeles. Su contenido no se muestra en pantalla.
+El siguiente botón copia un bloque de texto al portapapeles. (Su contenido es una sorpresa)
 
 <!-- COPIAR: logo-ufps -->
 

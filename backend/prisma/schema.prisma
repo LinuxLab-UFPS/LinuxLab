@@ -76,6 +76,9 @@ model Activity {
   topic_number Int?             @map("topic_number")
   difficulty   String           @default("basic") @db.VarChar(16)
   kind         String           @default("activity") @db.VarChar(16)
+  /// Arbol de archivos que la actividad prepara en `~/.actividades/<slug>/`.
+  /// Se declara como datos (rutas y contenidos), nunca como comandos.
+  setup        Json?
   group_id     String?          @db.Uuid @map("group_id")
   group        Group?           @relation(fields: [group_id], references: [id])
   max_score    Int              @default(100) @map("max_score")

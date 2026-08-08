@@ -6,6 +6,7 @@ const enrollmentService = require("./enrollmentService")
 
 /** El evaluador vive dentro de la imagen del entorno, en ruta fija. */
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
+const SETUP = "/usr/local/lib/linuxlab/setup.py"
 
 /** Nombres de cuenta que puede haber en el contenedor. */
 const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/
@@ -52,6 +53,7 @@ const serialize = (activity) => ({
   instructions: activity.instructions,
   topicNumber: activity.topic_number,
   maxScore: activity.max_score,
+  hasSetup: Boolean(activity.setup),
   checks: activity.checks.map(publicCheck),
 })
 
@@ -113,20 +115,7 @@ async function evaluate({ slug, studentUserId }) {
     throw new AppError("La actividad no tiene aserciones que evaluar", 409, "CONFLICT")
   }
 
-  if (!(await enrollmentService.hasActiveEnrollment(studentUserId))) {
-    throw new AuthorizationError("No estás inscrito en ningún curso activo")
-  }
-
-  const account = await prisma.linuxAccount.findUnique({ where: { user_id: studentUserId } })
-  if (!account?.linux_username) {
-    throw new AppError("Todavía no tienes cuenta en el entorno", 409, "CONFLICT")
-  }
-  if (!account.linux_provisioned) {
-    throw new AppError("Tu cuenta del entorno se está creando, intenta en un momento", 409, "CONFLICT")
-  }
-  if (!USERNAME.test(account.linux_username)) {
-    throw new AppError("El nombre de tu cuenta no es válido", 500, "INTERNAL_ERROR")
-  }
+  const account = await cuentaDelEstudiante(studentUserId)
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
@@ -193,6 +182,72 @@ async function evaluate({ slug, studentUserId }) {
   return { passed, score, maxScore: activity.max_score, results }
 }
 
+/**
+ * Comprobaciones comunes antes de tocar el entorno de un estudiante.
+ *
+ * Se hacen en el mismo orden y con los mismos mensajes tanto para evaluar como
+ * para preparar el directorio de trabajo: si la matricula no vale para una cosa,
+ * tampoco vale para la otra.
+ */
+async function cuentaDelEstudiante(studentUserId) {
+  if (!(await enrollmentService.hasActiveEnrollment(studentUserId))) {
+    throw new AuthorizationError("No estás inscrito en ningún curso activo")
+  }
+
+  const account = await prisma.linuxAccount.findUnique({ where: { user_id: studentUserId } })
+  if (!account?.linux_username) {
+    throw new AppError("Todavía no tienes cuenta en el entorno", 409, "CONFLICT")
+  }
+  if (!account.linux_provisioned) {
+    throw new AppError("Tu cuenta del entorno se está creando, intenta en un momento", 409, "CONFLICT")
+  }
+  if (!USERNAME.test(account.linux_username)) {
+    throw new AppError("El nombre de tu cuenta no es válido", 500, "INTERNAL_ERROR")
+  }
+  return account
+}
+
+/**
+ * Rehace el directorio de trabajo de una actividad desde cero.
+ *
+ * Es lo que hay detrás del botón de recargar: lo que hubiera se descarta entero
+ * y el árbol vuelve a su estado inicial. Eso es lo que permite plantear
+ * actividades donde el estudiante borre sin miedo a quedarse sin nada.
+ */
+async function resetSandbox({ slug, studentUserId }) {
+  const activity = await prisma.activity.findUnique({
+    where: { slug },
+    select: { slug: true, setup: true },
+  })
+  if (!activity) throw new NotFoundError("Actividad no encontrada")
+  if (!activity.setup) {
+    throw new AppError("Esta actividad no tiene archivos que preparar", 409, "CONFLICT")
+  }
+
+  const account = await cuentaDelEstudiante(studentUserId)
+  const payload = JSON.stringify({ ...activity.setup, slug: activity.slug })
+
+  const { stdout, stderr, code } = await sshClient.execCommand(
+    `sudo -u ${account.linux_username} ${SETUP}`,
+    { stdin: payload, timeoutMs: EVAL_TIMEOUT_MS },
+  )
+
+  let parsed
+  try {
+    parsed = JSON.parse(stdout)
+  } catch {
+    logger.error({ code, stderr, slug }, "Setup output was not JSON")
+    throw new AppError("No se pudo preparar la actividad, inténtalo de nuevo", 502, "INTERNAL_ERROR")
+  }
+  if (!parsed.ok) {
+    logger.error({ slug, error: parsed.error }, "Activity setup rejected")
+    throw new AppError(parsed.error || "No se pudo preparar la actividad", 409, "CONFLICT")
+  }
+
+  logger.info({ slug, username: account.linux_username, creados: parsed.creados }, "Sandbox ready")
+  return { root: parsed.root, creados: parsed.creados }
+}
+
 /** Los slugs que el estudiante ya aprobo, para marcar sus tarjetas. */
 async function passedSlugs(studentUserId) {
   const attempts = await prisma.activityAttempt.findMany({
@@ -221,4 +276,4 @@ async function lastAttempt({ slug, studentUserId }) {
   }
 }
 
-module.exports = { listBank, getBySlug, evaluate, lastAttempt, passedSlugs }
+module.exports = { listBank, getBySlug, evaluate, resetSandbox, lastAttempt, passedSlugs }

@@ -11,5 +11,6 @@ router.get("/bank", requireRoles("teacher", "admin"), activityController.listBan
 router.get("/mine/status", authMiddleware, activityController.getMyStatus)
 router.get("/:slug", authMiddleware, activityController.getActivity)
 router.post("/:slug/check", authMiddleware, activityController.checkActivity)
+router.post("/:slug/reset", authMiddleware, activityController.resetActivity)
 
 module.exports = router

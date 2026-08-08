@@ -67,15 +67,19 @@ RUN useradd -m -s /bin/bash labadmin \
 # Configurar sudoers para labadmin
 RUN printf '%s\n%s\n' \
     'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su' \
-    'labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py' \
+    'labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py' \
     > /etc/sudoers.d/labadmin \
     && chmod 440 /etc/sudoers.d/labadmin
 
 # Evaluador de aserciones. Va horneado y no se copia en cada corrida: un script
 # que se envia es un script que el estudiante podria reemplazar o interceptar.
 COPY scripts/checker.py /usr/local/lib/linuxlab/checker.py
-RUN chmod 755 /usr/local/lib/linuxlab/checker.py \
-    && chown root:root /usr/local/lib/linuxlab/checker.py
+# Prepara el arbol de una actividad. Va aparte del checker porque escribe, y el
+# checker solo lee: darle permiso de escritura al que evalua significaria que un
+# fallo suyo pueda estropear el trabajo que esta midiendo.
+COPY scripts/setup.py /usr/local/lib/linuxlab/setup.py
+RUN chmod 755 /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py \
+    && chown root:root /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

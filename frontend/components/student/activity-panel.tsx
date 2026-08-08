@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Lightbulb, Loader2, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ArrowRight, Lightbulb, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Markdown } from "@/components/shared/markdown"
 import { ActionButton } from "@/components/shared/action-button"
@@ -44,9 +44,8 @@ export function ActivityPanel({
   /** Where the course continues after that lesson. */
   next?: LessonRef | null
 }) {
-  const { rows, evaluated, passed, loading, checking, error, check } = useActivityCheck(
-    activity.slug,
-  )
+  const { activity: data, rows, evaluated, passed, loading, checking, error, check, reset, resetting } =
+    useActivityCheck(activity.slug)
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
@@ -119,18 +118,33 @@ export function ActivityPanel({
             {error}
           </p>
         )}
-        <ActionButton
-          tone={passed ? "emerald" : "amber"}
-          onClick={check}
-          disabled={checking || loading}
-        >
-          {checking ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <ShieldCheck className="h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <ActionButton
+            tone={passed ? "emerald" : "amber"}
+            onClick={check}
+            disabled={checking || loading}
+          >
+            {checking ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ShieldCheck className="h-4 w-4" />
+            )}
+            {checking ? "Comprobando..." : "Comprobar actividad"}
+          </ActionButton>
+
+          {/* Sólo las actividades que preparan archivos se pueden rehacer, y es
+              lo que permite plantear ejercicios donde haya que borrar cosas. */}
+          {data?.hasSetup && (
+            <ActionButton tone="neutral" onClick={reset} disabled={resetting || loading}>
+              {resetting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="h-4 w-4" />
+              )}
+              {resetting ? "Preparando..." : "Reiniciar archivos"}
+            </ActionButton>
           )}
-          {checking ? "Comprobando..." : "Comprobar actividad"}
-        </ActionButton>
+        </div>
       </footer>
     </div>
   )

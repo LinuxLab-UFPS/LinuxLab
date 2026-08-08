@@ -96,6 +96,14 @@ def check_archivo_existe(params, home):
     return "El archivo existe y es tuyo"
 
 
+def check_archivo_no_existe(params, home):
+    """Para las actividades de borrar: lo que se comprueba es la ausencia."""
+    path = resolve(params.get("ruta", ""), home)
+    if os.path.exists(path):
+        raise CheckError("Todavia existe")
+    return "Ya no existe"
+
+
 def check_permisos_son(params, home):
     path = resolve(params.get("ruta", ""), home)
     if not os.path.exists(path):
@@ -179,6 +187,7 @@ def check_archivo_contiene(params, home):
 CHECKS = {
     "directorio_existe": check_directorio_existe,
     "archivo_existe": check_archivo_existe,
+    "archivo_no_existe": check_archivo_no_existe,
     "permisos_son": check_permisos_son,
     "propietario_es": check_propietario_es,
     "archivo_contiene": check_archivo_contiene,

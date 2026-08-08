@@ -17,8 +17,12 @@ const getMyStatus = asyncHandler(async (req, res) => {
   res.json({ passed: await activityService.passedSlugs(req.user.id) })
 })
 
+const resetActivity = asyncHandler(async (req, res) => {
+  res.json(await activityService.resetSandbox({ slug: req.params.slug, studentUserId: req.user.id }))
+})
+
 const checkActivity = asyncHandler(async (req, res) => {
   res.json(await activityService.evaluate({ slug: req.params.slug, studentUserId: req.user.id }))
 })
 
-module.exports = { listBank, getActivity, getMyStatus, checkActivity }
+module.exports = { listBank, getActivity, getMyStatus, checkActivity, resetActivity }

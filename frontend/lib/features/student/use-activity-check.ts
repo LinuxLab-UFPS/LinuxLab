@@ -14,6 +14,8 @@ export interface CheckResult {
 
 export interface CheckedActivity {
   slug: string
+  /** La actividad prepara archivos y por tanto se pueden rehacer. */
+  hasSetup: boolean
   title: string
   instructions: string | null
   maxScore: number
@@ -25,6 +27,7 @@ export interface CheckedActivity {
 const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
   directorio_existe: (p) => `Existe el directorio ${p.ruta}`,
   archivo_existe: (p) => `Existe el archivo ${p.ruta}`,
+  archivo_no_existe: (p) => `Ya no está ${p.ruta}`,
   permisos_son: (p) => `${p.ruta} tiene permisos ${p.modo}`,
   propietario_es: (p) => `${p.ruta} pertenece a ${p.usuario}`,
   minimo_lineas: (p) => `${p.ruta} tiene al menos ${p.cantidad} líneas`,
@@ -77,6 +80,23 @@ export function useActivityCheck(slug: string) {
     }
   }, [slug])
 
+  const [resetting, setResetting] = useState(false)
+
+  /** Devuelve el árbol de la actividad a su estado inicial. */
+  const reset = useCallback(async () => {
+    setResetting(true)
+    setError(null)
+    try {
+      await apiFetch(`/api/activities/${slug}/reset`, { method: "POST" })
+      setResults(null)
+      setPassed(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudieron preparar los archivos")
+    } finally {
+      setResetting(false)
+    }
+  }, [slug])
+
   const check = useCallback(async () => {
     setChecking(true)
     setError(null)
@@ -98,5 +118,8 @@ export function useActivityCheck(slug: string) {
   const rows: CheckResult[] =
     results ?? (activity?.checks ?? []).map((c) => ({ ...c, passed: false, detail: "" }))
 
-  return { activity, rows, evaluated: results !== null, passed, loading, checking, error, check }
+  return {
+    activity, rows, evaluated: results !== null, passed,
+    loading, checking, error, check, reset, resetting,
+  }
 }
