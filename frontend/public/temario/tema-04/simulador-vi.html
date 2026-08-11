@@ -123,6 +123,7 @@ body{
 
 .flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
 .flash.on{opacity:.13}
+.flash.err{background:var(--red)}
 </style>
 
 <div class="hdr">
@@ -230,13 +231,15 @@ const fila3 = (c) => [c, c, c];
 const MODOS = [
   {
     id: "copiar",
-    goal: "Copia la línea verde y pégala al final",
-    tip: "yy sobre la verde · G para bajar · p para pegar",
+    goal: "Deja una línea verde al final",
+    tip: "yy copia · G baja · p pega · dd borra",
     segundos: 25,
     armar() {
       const relleno = entre(2, 4);
       const inicio = [fila3(V), ...Array.from({ length: relleno }, () => fila3(A))];
-      return { inicio, meta: [...clonar(inicio), fila3(V)] };
+      // Vale cualquier camino: copiar la verde y pegarla abajo, o quitar de en
+      // medio lo que sobra. Lo que se pide es el resultado.
+      return { inicio, gana: (l) => l.length > 0 && l[l.length - 1].every((c) => c === V) };
     },
   },
   {
@@ -249,7 +252,13 @@ const MODOS = [
       const inicio = [];
       for (let i = 0; i < verdes; i++) inicio.push(fila3(V));
       for (let i = 0; i < rojas; i++) inicio.splice(entre(1, inicio.length), 0, fila3(R));
-      return { inicio, meta: Array.from({ length: verdes }, () => fila3(V)) };
+      const cuentaVerdes = (l) => l.filter((f) => f.every((c) => c === V)).length;
+      return {
+        inicio,
+        meta: Array.from({ length: verdes }, () => fila3(V)),
+        // Borrar a ciegas deja de ser una estrategia: si cae una verde, se pierde.
+        pierde: (l) => cuentaVerdes(l) < verdes,
+      };
     },
   },
   {
@@ -273,7 +282,13 @@ const MODOS = [
     armar() {
       const total = entre(4, 6);
       this.goal = `Deja ${total} líneas verdes`;
-      return { inicio: [fila3(V)], meta: Array.from({ length: total }, () => fila3(V)) };
+      return {
+        inicio: [fila3(V)],
+        meta: Array.from({ length: total }, () => fila3(V)),
+        // Se parte de una sola verde y de ella salen las demas: si esa cae, no
+        // queda nada que copiar y el reto se vuelve irresoluble.
+        pierde: (l) => l.filter((f) => f.every((c) => c === V)).length < 1,
+      };
     },
   },
   {
@@ -288,7 +303,13 @@ const MODOS = [
         f[azar(ancho)] = R;
         return f;
       });
-      return { inicio, meta: Array.from({ length: filas }, () => Array.from({ length: ancho - 1 }, () => V)) };
+      const verdes = filas * (ancho - 1);
+      const cuentaVerdes = (l) => l.reduce((n, f) => n + f.filter((c) => c === V).length, 0);
+      return {
+        inicio,
+        meta: Array.from({ length: filas }, () => Array.from({ length: ancho - 1 }, () => V)),
+        pierde: (l) => cuentaVerdes(l) < verdes,
+      };
     },
   },
 ];
@@ -298,6 +319,7 @@ const $ = (id) => document.getElementById(id);
 let orden = [], reto = 0, puntos = 0;
 let lineas = [], meta = [], fila = 0, col = 0;
 let registro = null, historial = [], pendiente = "";
+let gana = null, pierde = null;
 let restante = 0, limite = 0, tick = null, jugando = false;
 
 /* El primero siempre es el de copiar, que es el más simple y enseña el gesto
@@ -380,7 +402,13 @@ function guardar() {
   if (historial.length > 40) historial.shift();
 }
 
-const resuelto = () => JSON.stringify(lineas) === JSON.stringify(meta);
+/* Un reto puede pedir un tablero exacto o solo una condicion. Con `gana` se
+   acepta cualquier camino que llegue al resultado; sin el, se compara contra la
+   meta como siempre. */
+const resuelto = () =>
+  gana ? gana(lineas) : JSON.stringify(lineas) === JSON.stringify(meta);
+
+const arruinado = () => Boolean(pierde && pierde(lineas));
 
 function ejecutar(tecla) {
   const dobles = { g: 1, y: 1, d: 1 };
@@ -442,7 +470,9 @@ function ejecutar(tecla) {
 function cargarReto() {
   const armado = orden[reto].armar();
   lineas = clonar(armado.inicio);
-  meta = armado.meta;
+  meta = armado.meta ?? null;
+  gana = armado.gana ?? null;
+  pierde = armado.pierde ?? null;
   fila = 0; col = 0; registro = null; historial = []; pendiente = "";
   $("filename").textContent = `reto-${reto + 1}.txt`;
   pintarCabecera();
@@ -461,6 +491,23 @@ function ganarReto() {
   $("flash").classList.add("on");
   setTimeout(() => $("flash").classList.remove("on"), 180);
   pintarCabecera();
+
+  setTimeout(() => {
+    reto++;
+    if (reto >= orden.length) return terminar();
+    cargarReto();
+  }, 700);
+}
+
+/* Se pierde por estropear lo que habia que conservar. No resta puntos: se pasa
+   al siguiente reto sin sumar, que ya es castigo suficiente en un contrarreloj. */
+function fallarReto() {
+  clearInterval(tick);
+  const barra = $("timer");
+  barra.className = "timer-fill out";
+  const f = $("flash");
+  f.classList.add("on", "err");
+  setTimeout(() => f.classList.remove("on", "err"), 260);
 
   setTimeout(() => {
     reto++;
@@ -500,7 +547,8 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   ejecutar(e.key);
   pintar();
-  if (resuelto()) ganarReto();
+  if (arruinado()) fallarReto();
+  else if (resuelto()) ganarReto();
 });
 
 $("play").addEventListener("click", empezar);
