@@ -1,0 +1,689 @@
+<!doctype html>
+<title>Filtro de permisos · LinuxLab</title>
+<style>
+:root {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --blue:   #58A6FF;
+  --purple: #A371F7;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg);overflow:hidden}
+body{
+  display:flex;flex-direction:column;
+  color:var(--text);font-family:var(--mono);overflow:hidden;
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+  background:var(--bg);position:relative;
+}
+
+/* ---------- cabecera ---------- */
+.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px}
+.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
+.logo-name .wh{color:var(--bright);filter:none}
+.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
+.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,196,0,.4))}
+.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
+.dot.done{background:var(--green)}
+.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
+.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.score-pill{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}
+.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
+.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+.ritmo-btn[data-activo="true"]{color:var(--gold);border-color:var(--gold)}
+
+/* ---------- disposición ---------- */
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
+.term-col{display:flex;flex-direction:column;gap:10px;width:520px;flex-shrink:0}
+
+/* ---------- barra de tiempo ---------- */
+.timer{height:12px;border-radius:6px;background:var(--surf2);border:1px solid var(--border);overflow:hidden}
+.timer-fill{height:100%;width:100%;background:var(--green);border-radius:5px;transition:width .1s linear,background .3s}
+.timer-fill.warn{background:var(--gold)}
+.timer-fill.out{background:var(--red)}
+.timer-fill.win{transition:width .35s ease-out,background .35s}
+
+/* ---------- ventana ---------- */
+.win{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
+.win-dot{width:11px;height:11px;border-radius:50%}
+.win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.console{background:#12161d;padding:12px 14px;height:300px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;font-size:12.5px}
+.log{white-space:pre-wrap;line-height:1.5}
+.log.ok{color:var(--green)}
+.log.bad{color:var(--red)}
+.log.note{color:var(--muted)}
+.log.echo{color:var(--text)}
+/* El hueco separa el simbolo del prompt de lo tecleado, pero no debe abrirse
+   entre el texto y el cursor: por eso los dos van dentro del mismo hijo. */
+.prompt{display:flex;align-items:center;gap:7px;font-size:13px}
+.entrada{display:flex;align-items:center}
+.ps1{color:var(--green);font-weight:700;flex-shrink:0}
+.typed{color:var(--bright);white-space:pre}
+.caret{display:inline-block;width:8px;height:16px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
+@keyframes blink{50%{opacity:0}}
+.status{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--surf2);border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.mode{font-weight:700;color:var(--green);letter-spacing:.1em}
+.tip{color:var(--muted);font-size:11px}
+
+/* ---------- ficha del archivo ---------- */
+/* El estado vive en un unico atributo y de ahi cuelga el color de todo: borde,
+   lineas, icono y la exigencia. Asi no hay que sincronizar seis reglas cuando
+   la ronda cambia de amarillo a rojo o a verde. */
+.desk{display:flex;flex-direction:column;gap:10px;width:420px;flex-shrink:0}
+.ficha{display:flex;align-items:center;gap:16px}
+.ficha[data-estado="espera"]{--acento:var(--gold)}
+.ficha[data-estado="error"] {--acento:var(--red)}
+.ficha[data-estado="ok"]    {--acento:var(--green)}
+
+.visor{
+  position:relative;width:200px;height:200px;flex-shrink:0;overflow:hidden;
+  border:2px solid var(--acento);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .25s;
+  box-shadow:0 0 26px -6px var(--acento);
+}
+.ficha.entra .visor{animation:entra .4s ease-out}
+@keyframes entra{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
+
+/* Las lineas se desplazan justo un periodo, asi que el bucle no tiene costura. */
+.lineas{
+  position:absolute;inset:-20px;
+  background:repeating-linear-gradient(to bottom,
+    transparent 0 15px, var(--acento) 15px 16px);
+  opacity:.26;animation:deriva 3.2s linear infinite;transition:opacity .25s;
+}
+@keyframes deriva{to{background-position:0 16px}}
+
+.icono{
+  position:relative;font-size:74px;font-weight:700;line-height:1;
+  color:var(--acento);letter-spacing:-.04em;
+  transition:color .25s;filter:drop-shadow(0 0 14px var(--acento));
+}
+.icono.corto{font-size:44px;letter-spacing:.02em}
+
+.datos{display:flex;flex-direction:column;gap:3px;min-width:0}
+.doc-name{font-size:15px;color:var(--bright);font-weight:700;word-break:break-all;margin-bottom:7px}
+.doc-label{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700}
+.doc-mode{font-size:15px;color:var(--bright);letter-spacing:.08em;margin-bottom:9px}
+.doc-mode b{color:var(--acento);font-weight:400}
+.doc-need{display:flex;flex-direction:column;gap:4px}
+.need{font-size:12.5px;line-height:1.35;color:var(--text);transition:color .25s}
+.ficha[data-estado="error"] .need:not(.hecho),
+.ficha[data-estado="ok"]    .need{color:var(--acento)}
+.need.hecho{color:var(--muted);text-decoration:line-through}
+
+.card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.card h4{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:6px;font-weight:700}
+.keys{display:flex;flex-direction:column;gap:4px}
+.key{display:flex;align-items:center;gap:8px;font-size:11px}
+.key b{display:inline-flex;align-items:center;justify-content:center;min-width:24px;padding:1px 5px;border:1px solid var(--red);border-radius:4px;color:var(--red);font-weight:700;font-size:11px}
+.key span{color:var(--text);display:flex;align-items:center;gap:7px;flex:1}
+/* El numero va al final de su fila, alineado con los demas, para que se lea la
+   columna de valores de un vistazo. */
+.key span i{margin-left:auto;font-style:normal;color:var(--gold);font-weight:700}
+
+/* ---------- capa de inicio ---------- */
+.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20}
+.overlay.hide{display:none}
+.play{
+  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
+  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
+  font-family:var(--mono);line-height:1;
+}
+/* El triángulo tiene el peso a la izquierda y descentra a ojo; el resto de
+   glifos no, así que la corrección va sólo en él. */
+.play .tri{display:block;transform:translateX(3px)}
+.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
+.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
+.overlay p{font-size:12px;color:var(--muted);max-width:430px;text-align:center;line-height:1.7}
+
+/* ---------- card de resultado (compartida con los demas simuladores) ---------- */
+#results-overlay{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(10,13,18,.92);
+  opacity:0;pointer-events:none;transition:opacity .4s;z-index:30;
+}
+#results-overlay.show{opacity:1;pointer-events:all}
+.res-box{
+  border:2px solid var(--gold);border-radius:12px;
+  padding:38px 52px;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  box-shadow:0 0 48px rgba(255,196,0,.22),0 0 90px rgba(255,196,0,.07);
+  min-width:290px;
+}
+.res-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);filter:drop-shadow(0 0 8px rgba(255,196,0,.65))}
+.res-score{font-size:80px;font-weight:900;letter-spacing:-.03em;color:var(--bright);font-variant-numeric:tabular-nums;line-height:1}
+.res-pts{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:-4px}
+.res-btns{display:flex;gap:12px;margin-top:14px}
+.res-btn{font-family:var(--mono);font-size:13px;font-weight:700;padding:10px 22px;border-radius:7px;cursor:pointer;border:none;transition:all .18s}
+.res-btn.primary{background:var(--gold);color:#000}
+.res-btn.primary:hover{background:#ffe033;box-shadow:0 0 18px rgba(255,196,0,.5)}
+.res-btn.secondary{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.res-btn.secondary:hover{color:var(--text);border-color:var(--muted)}
+
+.flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
+.flash.on{opacity:.13}
+.flash.err{background:var(--red)}
+</style>
+
+<div class="hdr">
+  <div class="logo-box">&gt;_</div>
+  <div class="logo-name">Linux<span class="wh">Lab</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-obj">
+    <span class="hdr-eyebrow">Objetivo</span>
+    <span class="hdr-goal" id="goal">&nbsp;</span>
+  </div>
+  <div class="hdr-dots" id="dots"></div>
+  <span class="hdr-n" id="counter">1 / 5</span>
+  <div class="score-pill" id="score">★ 0</div>
+  <button class="restart-btn ritmo-btn" id="ritmo" data-activo="false">Normal</button>
+  <button class="restart-btn" id="restart">Reiniciar</button>
+</div>
+
+<div class="stage">
+  <div class="term-col">
+    <div class="timer"><div class="timer-fill" id="timer"></div></div>
+    <div class="win">
+      <div class="win-bar">
+        <span class="win-dot" style="background:#FF5F56"></span>
+        <span class="win-dot" style="background:#FFBD2E"></span>
+        <span class="win-dot" style="background:#27C93F"></span>
+        <span class="win-title">filtro de permisos</span>
+      </div>
+      <div class="console" id="console">
+        <div class="prompt">
+          <span class="ps1">$</span>
+          <span class="entrada"><span class="typed" id="typed"></span><span class="caret"></span></span>
+        </div>
+      </div>
+      <div class="status">
+        <span class="mode" id="mode">ESPERANDO</span>
+        <span class="tip" id="tip"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="desk">
+    <div class="ficha" id="ficha" data-estado="espera">
+      <div class="visor">
+        <div class="lineas"></div>
+        <div class="icono" id="icono">{}</div>
+      </div>
+      <div class="datos">
+        <div class="doc-name" id="doc-name">&nbsp;</div>
+        <div class="doc-label">Tiene</div>
+        <div class="doc-mode" id="doc-mode">&nbsp;</div>
+        <div class="doc-label">Necesita</div>
+        <div class="doc-need" id="doc-need"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>Formas de escribirlo</h4>
+      <div class="keys">
+        <div class="key"><b>r</b><span>leer<i>4</i></span></div>
+        <div class="key"><b>w</b><span>escribir<i>2</i></span></div>
+        <div class="key"><b>x</b><span>ejecutar<i>1</i></span></div>
+        <div class="key"><b>u g o a</b><span>dueño, grupo, otros, todos</span></div>
+        <div class="key"><b>+ - =</b><span>añade, quita, fija</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+
+<div id="results-overlay">
+  <div class="res-box">
+    <div class="res-title">Resultado</div>
+    <div class="res-score" id="res-score-val">0</div>
+    <div class="res-pts">puntos</div>
+    <div class="res-btns">
+      <button class="res-btn primary" id="res-again">↺ Jugar de nuevo</button>
+      <button class="res-btn secondary" id="res-exit">Salir</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <button class="play" id="play"><span class="tri">▶</span></button>
+  <h2>Filtro de permisos</h2>
+  <p>
+    Llegan archivos a tu mesa. Cada uno dice qué permisos trae y qué necesita.
+    Arréglalos con chmod antes de que se acabe el tiempo, y ajusta la umask
+    cuando lo que llegue sean archivos por crearse. Equivocarse cuesta segundos.
+  </p>
+</div>
+
+<script>
+"use strict";
+
+/* Un modo son nueve bits, tres por bloque. Se trabaja con el número y sólo se
+   traduce a letras para mostrarlo, que es justo como lo hace el sistema. */
+const R = 4, W = 2, X = 1;
+const BLOQUES = { u: 6, g: 3, o: 0 };   // desplazamiento de cada bloque
+
+const azar = (n) => Math.floor(Math.random() * n);
+const elegir = (a) => a[azar(a.length)];
+
+function aLetras(modo, dir) {
+  let s = dir ? "d" : "-";
+  for (const b of ["u", "g", "o"]) {
+    const t = (modo >> BLOQUES[b]) & 7;
+    s += (t & R ? "r" : "-") + (t & W ? "w" : "-") + (t & X ? "x" : "-");
+  }
+  return s;
+}
+
+const tiene = (modo, quien, bit) => Boolean((modo >> BLOQUES[quien]) & bit);
+
+/* ---------- exigencias ---------- */
+/* Cada exigencia sabe comprobarse y sabe decirse en voz alta. Se validan contra
+   el modo resultante, no contra el texto tecleado: por eso valen tanto la forma
+   octal como la simbólica, y cualquier camino que llegue al mismo sitio. */
+const EXIGENCIAS = [
+  { id:"g+r", texto:"el grupo tiene que poder leerlo",        ok:(m)=> tiene(m,"g",R) },
+  { id:"g+w", texto:"el grupo tiene que poder modificarlo",   ok:(m)=> tiene(m,"g",W) },
+  { id:"g-w", texto:"el grupo no debe poder modificarlo",     ok:(m)=>!tiene(m,"g",W) },
+  { id:"g-r", texto:"el grupo no debe poder leerlo",          ok:(m)=>!tiene(m,"g",R) },
+  { id:"o-r", texto:"los demás no deben poder leerlo",        ok:(m)=>!tiene(m,"o",R) },
+  { id:"o+r", texto:"los demás tienen que poder leerlo",      ok:(m)=> tiene(m,"o",R) },
+  { id:"o-w", texto:"los demás no deben poder modificarlo",   ok:(m)=>!tiene(m,"o",W) },
+  { id:"u+x", texto:"tú tienes que poder ejecutarlo",         ok:(m)=> tiene(m,"u",X) },
+  { id:"u+w", texto:"tú tienes que poder modificarlo",        ok:(m)=> tiene(m,"u",W) },
+  { id:"a-x", texto:"nadie debe poder ejecutarlo",            ok:(m)=>!tiene(m,"u",X)&&!tiene(m,"g",X)&&!tiene(m,"o",X) },
+  { id:"solo-tu", texto:"sólo tú debes poder tocarlo",        ok:(m)=>((m>>3)&7)===0 && (m&7)===0 },
+];
+
+/* Pares que se contradicen y no pueden salir en el mismo expediente. */
+const INCOMPATIBLES = [
+  ["g+r","g-r"], ["g+w","g-w"], ["o+r","o-r"],
+  ["g+r","solo-tu"], ["g+w","solo-tu"], ["o+r","solo-tu"],
+  ["u+x","a-x"],
+];
+
+function chocan(a, b) {
+  return INCOMPATIBLES.some(([x, y]) =>
+    (a.id === x && b.id === y) || (a.id === y && b.id === x));
+}
+
+const ICONOS = { json: "{}", sh: ">_", md: "#" };
+
+function iconoDe(nombre) {
+  const ext = (nombre.split(".").pop() || "").toLowerCase();
+  return ICONOS[ext] || ext.toUpperCase();
+}
+
+const NOMBRES = [
+  "informe.txt","respaldo.sh","claves.conf","notas.md","reporte.csv",
+  "arranque.sh","matricula.txt","bitacora.log","practica.sh","datos.json",
+];
+
+/* ---------- rondas de chmod ---------- */
+/* El modo de partida se sortea hasta que incumple alguna exigencia: un
+   expediente que ya viniera en regla se aprobaría sin tocar nada. */
+function armarChmod(cuantas) {
+  for (let intento = 0; intento < 400; intento++) {
+    const pedidas = [];
+    while (pedidas.length < cuantas) {
+      const e = elegir(EXIGENCIAS);
+      if (pedidas.some((p) => p.id === e.id || chocan(p, e))) continue;
+      pedidas.push(e);
+    }
+    const modo = azar(512);
+    if (pedidas.every((e) => e.ok(modo))) continue;   // ya venía bien
+    if (!hayModoValido(pedidas)) continue;            // sin solución posible
+    return { modo, pedidas, nombre: elegir(NOMBRES) };
+  }
+  return { modo: 0o777, pedidas: [EXIGENCIAS[4]], nombre: "informe.txt" };
+}
+
+const hayModoValido = (pedidas) => {
+  for (let m = 0; m < 512; m++) if (pedidas.every((e) => e.ok(m))) return true;
+  return false;
+};
+
+/* ---------- rondas de umask ---------- */
+/* Se sortea la máscara y se muestran los dos resultados que produce. Con el de
+   archivos solo habría varias máscaras válidas; enseñando también el de
+   directorios queda una sola, porque los bits de ejecución dejan de ser mudos. */
+function armarUmask() {
+  const mascara = azar(8) * 64 + azar(8) * 8 + azar(8);
+  return {
+    mascara,
+    arch: 0o666 & ~mascara,
+    dir: 0o777 & ~mascara,
+    cuantos: 2 + azar(4),
+  };
+}
+
+/* ---------- parseo de lo tecleado ---------- */
+/* El destinatario se exige siempre. Omitirlo es válido en un sistema real, pero
+   entonces chmod aplica a todos descontando la umask, y ese resultado sólo se
+   entiende sabiendo qué máscara hay puesta. Aquí se pide explícito para no
+   enseñar de refilón una regla que además chocaría con las rondas de umask. */
+function aplicarSimbolico(modo, expr) {
+  for (const parte of expr.split(",")) {
+    const m = /^([ugoa]+)([+\-=])([rwx]*)$/.exec(parte.trim());
+    if (!m) return null;
+    const quienes = m[1].includes("a") ? ["u","g","o"] : [...new Set(m[1].split(""))];
+    const bits = (m[3].includes("r") ? R : 0) | (m[3].includes("w") ? W : 0) | (m[3].includes("x") ? X : 0);
+    for (const q of quienes) {
+      const d = BLOQUES[q];
+      const actual = (modo >> d) & 7;
+      const nuevo = m[2] === "+" ? actual | bits : m[2] === "-" ? actual & ~bits : bits;
+      modo = (modo & ~(7 << d)) | (nuevo << d);
+    }
+  }
+  return modo;
+}
+
+function leerChmod(argumento, modo) {
+  if (/^[0-7]{3}$/.test(argumento)) return parseInt(argumento, 8);
+  if (/^0[0-7]{3}$/.test(argumento)) return parseInt(argumento.slice(1), 8);
+  return aplicarSimbolico(modo, argumento);
+}
+
+const $ = (id) => document.getElementById(id);
+
+/* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
+   con mas margen para pensar la cuenta, que es de lo que va el tema. */
+const RITMOS = { normal: 1, calma: 1.8 };
+let ritmo = "normal";
+
+let orden = [], ronda = 0, puntos = 0, tecleado = "";
+let actual = null, restante = 0, limite = 0, tick = null, jugando = false;
+
+/* Tres de chmod y dos de umask, en ese orden: la máscara sólo tiene sentido
+   cuando ya se sabe leer un modo. Dentro de cada tramo el sorteo cambia. */
+function armarPartida() {
+  orden = [
+    { tipo:"chmod", datos: armarChmod(1), segundos: 30 },
+    { tipo:"chmod", datos: armarChmod(2), segundos: 34 },
+    { tipo:"chmod", datos: armarChmod(elegir([2, 3])), segundos: 38 },
+    { tipo:"umask", datos: armarUmask(), segundos: 34 },
+    { tipo:"umask", datos: armarUmask(), segundos: 30 },
+  ];
+}
+
+/* ---------- pintado ---------- */
+function pintarCabecera() {
+  const r = orden[ronda];
+  $("goal").textContent = !r ? "" :
+    r.tipo === "chmod" ? "Deja el archivo como lo pide su ficha"
+                       : "Ajusta la umask para lo que va a llegar";
+  $("tip").textContent = !r ? "" :
+    r.tipo === "chmod" ? "chmod 640 archivo · chmod g+r archivo"
+                       : "umask 027";
+  $("counter").textContent = `${Math.min(ronda + 1, orden.length)} / ${orden.length}`;
+  $("score").textContent = `★ ${puntos}`;
+  const dots = $("dots");
+  dots.innerHTML = "";
+  orden.forEach((_, i) => {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < ronda ? " done" : i === ronda ? " cur" : "");
+    dots.appendChild(d);
+  });
+}
+
+function pintarExpediente() {
+  const r = orden[ronda];
+  const ficha = $("ficha");
+  ficha.classList.remove("entra");
+  void ficha.offsetWidth;               // reinicia la animación de entrada
+  ficha.classList.add("entra");
+
+  const need = $("doc-need");
+  need.innerHTML = "";
+
+  if (r.tipo === "chmod") {
+    const icono = iconoDe(r.datos.nombre);
+    $("icono").textContent = icono;
+    $("icono").className = "icono" + (icono.length > 2 ? " corto" : "");
+    $("doc-name").textContent = r.datos.nombre;
+    $("doc-mode").innerHTML = aLetras(actual.modo, false);
+    r.datos.pedidas.forEach((e) => {
+      const el = document.createElement("div");
+      el.className = "need" + (e.ok(actual.modo) ? " hecho" : "");
+      el.textContent = e.texto;
+      need.appendChild(el);
+    });
+  } else {
+    $("icono").textContent = "+";
+    $("icono").className = "icono";
+    $("doc-name").textContent = `${r.datos.cuantos} archivos por crear`;
+    $("doc-mode").innerHTML = `<b>umask</b> ${aLetras(0o666 & ~actual.mascara, false)}`;
+    [["archivo", aLetras(r.datos.arch, false)], ["directorio", aLetras(r.datos.dir, true)]]
+      .forEach(([que, letras]) => {
+        const el = document.createElement("div");
+        el.className = "need";
+        el.textContent = `cada ${que} se crea con ${letras}`;
+        need.appendChild(el);
+      });
+  }
+}
+
+function limpiarConsola() {
+  $("console").querySelectorAll(".log").forEach((n) => n.remove());
+}
+
+function escribir(texto, clase) {
+  const el = document.createElement("div");
+  el.className = "log " + clase;
+  el.textContent = texto;
+  const c = $("console");
+  c.insertBefore(el, c.lastElementChild);
+  // La consola es corta a propósito: sólo interesa lo último que se intentó.
+  while (c.children.length > 9) c.removeChild(c.firstElementChild);
+}
+
+function estado(cual) {
+  $("ficha").dataset.estado = cual;
+}
+
+function destello(err) {
+  const f = $("flash");
+  f.className = "flash on" + (err ? " err" : "");
+  setTimeout(() => { f.className = "flash" + (err ? " err" : "") }, 180);
+}
+
+/* ---------- tiempo ---------- */
+function pintarBarra() {
+  const barra = $("timer");
+  const pct = Math.max(0, (restante / limite) * 100);
+  barra.style.width = pct + "%";
+  barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
+}
+
+function cambiarRitmo() {
+  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
+  ritmo = ritmo === "normal" ? "calma" : "normal";
+  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
+  // pegue un salto al cambiar de modo a mitad de ronda.
+  limite *= factor;
+  restante *= factor;
+  pintarBarra();
+  const b = $("ritmo");
+  b.textContent = ritmo === "calma" ? "Con calma" : "Normal";
+  b.dataset.activo = String(ritmo === "calma");
+}
+
+function arrancarTiempo() {
+  limite = orden[ronda].segundos * RITMOS[ritmo];
+  restante = limite;
+  $("timer").className = "timer-fill";
+  $("timer").style.width = "100%";
+  clearInterval(tick);
+  tick = setInterval(() => {
+    restante = Math.max(0, restante - 0.1);
+    pintarBarra();
+    if (restante === 0) { clearInterval(tick); perderRonda() }
+  }, 100);
+}
+
+/* ---------- resolución ---------- */
+function enviar() {
+  const linea = tecleado.trim().replace(/\s+/g, " ");
+  tecleado = "";
+  $("typed").textContent = "";
+  if (!linea) return;
+  escribir("$ " + linea, "echo");
+
+  const r = orden[ronda];
+  const partes = linea.split(" ");
+
+  if (r.tipo === "umask") return resolverUmask(partes);
+  return resolverChmod(partes, r);
+}
+
+function resolverUmask(partes) {
+  if (partes[0] !== "umask") {
+    return fallar("aquí no hay ningún archivo todavía: lo que se ajusta es la umask");
+  }
+  if (!/^0?[0-7]{3}$/.test(partes[1] || "")) {
+    return fallar("la umask son tres dígitos octales, por ejemplo 027");
+  }
+  const mascara = parseInt(partes[1], 8);
+  actual.mascara = mascara;
+  const d = orden[ronda].datos;
+  if ((0o666 & ~mascara) === d.arch && (0o777 & ~mascara) === d.dir) return ganarRonda();
+
+  pintarExpediente();
+  fallar(`con esa máscara se crearían ${aLetras(0o666 & ~mascara, false)} y ${aLetras(0o777 & ~mascara, true)}`);
+}
+
+function resolverChmod(partes, r) {
+  if (partes[0] !== "chmod") return fallar("el comando que cambia permisos es chmod");
+  if (partes.length < 3) return fallar("faltan datos: chmod <permiso> <archivo>");
+  if (partes[2] !== r.datos.nombre) return fallar(`ese no es el archivo de la mesa, es ${r.datos.nombre}`);
+
+  const nuevo = leerChmod(partes[1], actual.modo);
+  if (nuevo === null) {
+    return fallar(/^[+\-=]/.test(partes[1])
+      ? "di a quién afecta: u, g, o o a. Por ejemplo g+r"
+      : `no se entiende "${partes[1]}" como permiso`);
+  }
+
+  actual.modo = nuevo;
+  pintarExpediente();
+
+  const faltan = r.datos.pedidas.filter((e) => !e.ok(nuevo));
+  if (faltan.length === 0) return ganarRonda();
+  fallar(`queda pendiente: ${faltan[0].texto}`);
+}
+
+function fallar(motivo) {
+  // La penalización va sobre el tiempo y no sobre los intentos: castiga la
+  // prisa sin cerrar la puerta a corregir.
+  restante = Math.max(0, restante - 3);
+  pintarBarra();
+  escribir("rechazado · -3s · " + motivo, "bad");
+  estado("error");
+  destello(true);
+  // Vuelve al amarillo de espera: el rojo señala el intento, no la ronda.
+  setTimeout(() => { if (jugando) estado("espera") }, 900);
+  if (restante === 0) { clearInterval(tick); perderRonda() }
+}
+
+function ganarRonda() {
+  clearInterval(tick);
+  puntos += 100 + Math.round((restante / limite) * 400);
+  escribir("aprobado", "ok");
+  estado("ok");
+  $("timer").className = "timer-fill win";
+  $("timer").style.width = "100%";
+  destello(false);
+  pintarCabecera();
+  setTimeout(siguiente, 780);
+}
+
+function perderRonda() {
+  escribir("se acabó el tiempo para este archivo", "note");
+  estado("error");
+  setTimeout(siguiente, 900);
+}
+
+function siguiente() {
+  ronda++;
+  if (ronda >= orden.length) return terminar();
+  cargarRonda();
+}
+
+function cargarRonda() {
+  const r = orden[ronda];
+  actual = r.tipo === "chmod" ? { modo: r.datos.modo } : { mascara: 0o022 };
+  tecleado = "";
+  $("typed").textContent = "";
+  $("mode").textContent = r.tipo === "chmod" ? "CHMOD" : "UMASK";
+  limpiarConsola();
+  estado("espera");
+  pintarCabecera();
+  pintarExpediente();
+  arrancarTiempo();
+}
+
+function terminar() {
+  jugando = false;
+  clearInterval(tick);
+  $("res-score-val").textContent = puntos;
+  $("results-overlay").classList.add("show");
+}
+
+function empezar() {
+  armarPartida();
+  ronda = 0; puntos = 0; jugando = true;
+  limpiarConsola();
+  $("overlay").classList.add("hide");
+  $("results-overlay").classList.remove("show");
+  cargarRonda();
+}
+
+function volverAlInicio() {
+  clearInterval(tick);
+  jugando = false;
+  $("results-overlay").classList.remove("show");
+  $("overlay").classList.remove("hide");
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!jugando) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
+    return;
+  }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === "Enter") { e.preventDefault(); return enviar() }
+  if (e.key === "Backspace") { e.preventDefault(); tecleado = tecleado.slice(0, -1) }
+  else if (e.key.length === 1) { e.preventDefault(); tecleado += e.key }
+  else return;
+  $("typed").textContent = tecleado;
+});
+
+$("play").addEventListener("click", empezar);
+$("res-again").addEventListener("click", empezar);
+$("res-exit").addEventListener("click", () =>
+  window.parent.postMessage({ action: "close-simulator" }, "*"),
+);
+$("restart").addEventListener("click", volverAlInicio);
+$("ritmo").addEventListener("click", cambiarRitmo);
+
+armarPartida();
+pintarCabecera();
+</script>

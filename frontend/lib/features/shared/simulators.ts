@@ -35,6 +35,14 @@ const RAW = [
     topicNumber: 4,
     file: "simulador-vi.html",
   },
+  {
+    id: "filtro-de-permisos",
+    title: "Filtro de permisos",
+    description:
+      "Llegan archivos con los permisos que traen y los que necesitan. Arréglalos con chmod y ajusta la umask para los que están por crear.",
+    topicNumber: 5,
+    file: "simulador-permisos.html",
+  },
 ]
 
 export const simulators: Simulator[] = RAW.map((s) => {

@@ -331,3 +331,48 @@ export function SimulatorViIllustration() {
     </Svg>
   )
 }
+
+
+/**
+ * El filtro de permisos: el expediente que llega a la mesa con su rejilla de
+ * nueve permisos, tres por bloque, y el sello de aprobado encima. Los cuadros
+ * llenos son los concedidos y los huecos los que faltan, que es exactamente lo
+ * que el estudiante tiene que corregir.
+ */
+export function SimulatorPermissionsIllustration() {
+  const GREEN = "#34d399"
+  // Rejilla de 3x3: cada fila es un bloque (dueño, grupo, otros).
+  const filas = [
+    [true, true, true],
+    [true, false, true],
+    [false, false, false],
+  ]
+  return (
+    <Svg>
+      {/* la hoja, con la esquina doblada */}
+      <path d="M56 14 h58 l22 22 v68 h-80 Z" stroke={LINE} strokeWidth="2" />
+      <path d="M114 14 v22 h22" stroke={BASE} strokeWidth="1.6" />
+
+      {filas.map((fila, f) =>
+        fila.map((puesto, c) => (
+          <rect
+            key={`${f}-${c}`}
+            x={70 + c * 18}
+            y={46 + f * 18}
+            width={12}
+            height={12}
+            rx={2.5}
+            fill={puesto ? BASE : "none"}
+            stroke={puesto ? BASE : BASE}
+            strokeWidth="1.6"
+            opacity={puesto ? 1 : 0.45}
+          />
+        )),
+      )}
+
+      {/* el sello, pisando el borde de la hoja */}
+      <circle cx={148} cy={86} r={19} stroke={GREEN} strokeWidth="2.5" />
+      <path d="M139 86 l6 7 l12 -14" stroke={GREEN} strokeWidth="3" />
+    </Svg>
+  )
+}

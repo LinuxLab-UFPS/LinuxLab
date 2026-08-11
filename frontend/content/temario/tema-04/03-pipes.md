@@ -183,6 +183,8 @@ cat logo.txt
 
 <!-- EJERCICIO: logo-ufps -->
 
+<!-- ACTIVIDAD: mensaje-oculto -->
+
 ---
 
 **Fuentes**
