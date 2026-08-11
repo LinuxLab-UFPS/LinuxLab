@@ -3,6 +3,7 @@ services:
     build:
       context: ./backend
     networks:
+      - internal
       - external
     depends_on:
       postgres:
@@ -21,8 +22,10 @@ services:
     image: postgres:16-alpine
     mem_limit: 256m
     cpu_shares: 1024
+    # Solo la red interna: la base no se alcanza desde fuera ni publica puertos.
+    # Su unico cliente es el backend, que si esta en las dos redes.
     networks:
-      - external
+      - internal
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
