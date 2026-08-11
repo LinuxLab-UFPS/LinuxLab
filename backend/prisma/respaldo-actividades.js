@@ -1,16 +1,19 @@
 /**
- * Copia de seguridad de las actividades y sus intentos.
+ * Copia de seguridad de las actividades y del trabajo de los estudiantes.
  *
  *   node prisma/respaldo-actividades.js guardar
  *   node prisma/respaldo-actividades.js restaurar prisma/respaldo/actividades-2026-08-11.json
  *
- * Las definiciones (actividad y aserciones) se pueden rehacer desde las semillas
- * `seed-*.js`, pero los intentos no: son el trabajo real de los estudiantes con
- * su nota, y la clave foránea los borra en cascada al borrar la actividad. Esta
- * copia existe para eso.
+ * Se guardan cuatro cosas, y no todas valen lo mismo. Las definiciones y sus
+ * aserciones se pueden rehacer desde las semillas `seed-*.js`. Las
+ * publicaciones en grupo, los intentos y las entregas no: son configuracion del
+ * docente y trabajo real de los estudiantes, y la clave foranea los borra en
+ * cascada al borrar la definicion de la que cuelgan.
  *
- * Al restaurar se conservan los identificadores originales, de modo que un
- * intento vuelve a colgar de su actividad. Lo que ya exista no se toca.
+ * Al restaurar se conservan los identificadores originales, de modo que cada
+ * pieza vuelve a colgar de la suya. Lo que ya exista no se toca, y lo que
+ * dependa de un grupo o de un usuario que no esten en la base se salta con
+ * aviso en vez de reventar a mitad.
  */
 
 const fs = require("fs")
@@ -20,52 +23,78 @@ const prisma = require("./client")
 const CARPETA = path.join(__dirname, "respaldo")
 
 async function guardar() {
-  const actividades = await prisma.activity.findMany({
-    include: { checks: { orderBy: { position: "asc" } }, attempts: true },
+  const definiciones = await prisma.activityDefinition.findMany({
+    include: { checks: { orderBy: { position: "asc" } } },
     orderBy: { slug: "asc" },
   })
+  const publicaciones = await prisma.groupActivity.findMany()
+  const intentos = await prisma.activityAttempt.findMany()
+  const entregas = await prisma.activitySubmission.findMany()
 
   fs.mkdirSync(CARPETA, { recursive: true })
-  const fecha = new Date().toISOString().slice(0, 10)
-  const destino = path.join(CARPETA, `actividades-${fecha}.json`)
-  fs.writeFileSync(destino, JSON.stringify({ fecha: new Date().toISOString(), actividades }, null, 2))
+  const destino = path.join(CARPETA, `actividades-${new Date().toISOString().slice(0, 10)}.json`)
+  fs.writeFileSync(
+    destino,
+    JSON.stringify(
+      { fecha: new Date().toISOString(), esquema: 2, definiciones, publicaciones, intentos, entregas },
+      null,
+      2,
+    ),
+  )
 
-  const checks = actividades.reduce((n, a) => n + a.checks.length, 0)
-  const intentos = actividades.reduce((n, a) => n + a.attempts.length, 0)
+  const aserciones = definiciones.reduce((n, d) => n + d.checks.length, 0)
   console.log(`Guardado en ${destino}`)
-  console.log(`  ${actividades.length} actividades · ${checks} aserciones · ${intentos} intentos`)
-  for (const a of actividades) {
-    console.log(`    ${a.slug} [${a.kind}] ${a.checks.length} aserciones, ${a.attempts.length} intentos`)
+  console.log(`  ${definiciones.length} definiciones · ${aserciones} aserciones`)
+  console.log(`  ${publicaciones.length} publicaciones · ${intentos.length} intentos · ${entregas.length} entregas`)
+  for (const d of definiciones) {
+    console.log(`    ${(d.slug ?? "(sin slug)").padEnd(28)} [${d.kind}] ${d.checks.length} aserciones`)
   }
+}
+
+/** Crea la fila si no estaba ya, y avisa si le falta algo de lo que depende. */
+async function reponer(modelo, fila, requisitos = []) {
+  if (await modelo.findUnique({ where: { id: fila.id } })) return "existe"
+  for (const [nombre, comprobar] of requisitos) {
+    if (!(await comprobar())) return `falta ${nombre}`
+  }
+  await modelo.create({ data: fila })
+  return "creada"
 }
 
 async function restaurar(archivo) {
   if (!archivo) throw new Error("Falta la ruta del archivo de respaldo")
-  const { actividades } = JSON.parse(fs.readFileSync(archivo, "utf8"))
-
-  let nuevas = 0, saltadas = 0, intentos = 0
-  for (const a of actividades) {
-    const { checks, attempts, ...datos } = a
-    const existe = await prisma.activity.findUnique({ where: { id: datos.id } })
-    if (existe) {
-      saltadas++
-    } else {
-      await prisma.activity.create({
-        data: { ...datos, checks: { create: checks.map(({ activity_id, ...c }) => c) } },
-      })
-      nuevas++
-    }
-    // Los intentos se reponen aparte: puede faltar sólo el historial aunque la
-    // actividad siga en pie.
-    for (const intento of attempts) {
-      const yaEsta = await prisma.activityAttempt.findUnique({ where: { id: intento.id } })
-      if (!yaEsta) {
-        await prisma.activityAttempt.create({ data: intento })
-        intentos++
-      }
-    }
+  const copia = JSON.parse(fs.readFileSync(archivo, "utf8"))
+  if (copia.esquema !== 2) {
+    throw new Error(
+      "Este respaldo es de un esquema anterior (actividades sin publicacion por grupo) y no se puede restaurar",
+    )
   }
-  console.log(`Restauradas ${nuevas} actividades (${saltadas} ya estaban) y ${intentos} intentos`)
+
+  const cuenta = {}
+  const anota = (r) => { cuenta[r] = (cuenta[r] ?? 0) + 1 }
+
+  // El orden importa: cada tanda depende de la anterior.
+  for (const { checks, ...definicion } of copia.definiciones) {
+    if (await prisma.activityDefinition.findUnique({ where: { id: definicion.id } })) { anota("definicion existe"); continue }
+    await prisma.activityDefinition.create({
+      data: { ...definicion, checks: { create: checks.map(({ activity_definition_id, ...c }) => c) } },
+    })
+    anota("definicion creada")
+  }
+
+  const hay = (modelo, id) => async () => Boolean(id) && Boolean(await modelo.findUnique({ where: { id } }))
+
+  for (const p of copia.publicaciones) {
+    anota("publicacion " + (await reponer(prisma.groupActivity, p, [["grupo", hay(prisma.group, p.group_id)]])))
+  }
+  for (const i of copia.intentos) {
+    anota("intento " + (await reponer(prisma.activityAttempt, i, [["estudiante", hay(prisma.user, i.student_id)]])))
+  }
+  for (const e of copia.entregas) {
+    anota("entrega " + (await reponer(prisma.activitySubmission, e, [["estudiante", hay(prisma.user, e.student_id)]])))
+  }
+
+  for (const [que, n] of Object.entries(cuenta).sort()) console.log(`  ${que}: ${n}`)
 }
 
 const [accion, archivo] = process.argv.slice(2)
