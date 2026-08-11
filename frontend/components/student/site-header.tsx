@@ -11,6 +11,7 @@ import {
   LogOut,
   FolderTree,
   SquarePen,
+  Stamp,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -35,6 +36,7 @@ import { getActivities } from "@/lib/features/shared/activities"
 const SIMULATOR_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "travesia-del-arbol": FolderTree,
   "retos-de-vi": SquarePen,
+  "filtro-de-permisos": Stamp,
 }
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */
