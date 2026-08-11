@@ -44,6 +44,7 @@ body{
 .score-pill{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}
 .restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
 .restart-btn:hover{color:var(--text);border-color:var(--muted)}
+.ritmo-btn[data-activo="true"]{color:var(--gold);border-color:var(--gold)}
 
 /* ---------- disposición ---------- */
 .stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
@@ -194,6 +195,7 @@ body{
   <div class="hdr-dots" id="dots"></div>
   <span class="hdr-n" id="counter">1 / 5</span>
   <div class="score-pill" id="score">★ 0</div>
+  <button class="restart-btn ritmo-btn" id="ritmo" data-activo="false">Normal</button>
   <button class="restart-btn" id="restart">Reiniciar</button>
 </div>
 
@@ -402,6 +404,11 @@ function leerChmod(argumento, modo) {
 
 const $ = (id) => document.getElementById(id);
 
+/* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
+   con mas margen para pensar la cuenta, que es de lo que va el tema. */
+const RITMOS = { normal: 1, calma: 1.8 };
+let ritmo = "normal";
+
 let orden = [], ronda = 0, puntos = 0, tecleado = "";
 let actual = null, restante = 0, limite = 0, tick = null, jugando = false;
 
@@ -506,8 +513,21 @@ function pintarBarra() {
   barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
 }
 
+function cambiarRitmo() {
+  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
+  ritmo = ritmo === "normal" ? "calma" : "normal";
+  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
+  // pegue un salto al cambiar de modo a mitad de ronda.
+  limite *= factor;
+  restante *= factor;
+  pintarBarra();
+  const b = $("ritmo");
+  b.textContent = ritmo === "calma" ? "Con calma" : "Normal";
+  b.dataset.activo = String(ritmo === "calma");
+}
+
 function arrancarTiempo() {
-  limite = orden[ronda].segundos;
+  limite = orden[ronda].segundos * RITMOS[ritmo];
   restante = limite;
   $("timer").className = "timer-fill";
   $("timer").style.width = "100%";
@@ -662,6 +682,7 @@ $("res-exit").addEventListener("click", () =>
   window.parent.postMessage({ action: "close-simulator" }, "*"),
 );
 $("restart").addEventListener("click", volverAlInicio);
+$("ritmo").addEventListener("click", cambiarRitmo);
 
 armarPartida();
 pintarCabecera();
