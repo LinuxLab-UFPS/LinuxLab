@@ -60,6 +60,24 @@ const RAW = [
     checks: 5,
   },
   {
+    slug: "cada-archivo-en-su-sitio",
+    title: "Cada archivo en su sitio",
+    description:
+      "Cuatro archivos llegaron con los permisos por defecto. Deja cada uno como pide su función.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 5,
+    checks: 4,
+  },
+  {
+    slug: "cerrar-el-proyecto",
+    title: "Cerrar el proyecto",
+    description:
+      "Una carpeta a punto de entregarse. Revisa permisos de archivos y de directorios, y quita lo que sobra.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 5,
+    checks: 5,
+  },
+  {
     slug: "mensaje-oculto",
     title: "El mensaje oculto",
     description:

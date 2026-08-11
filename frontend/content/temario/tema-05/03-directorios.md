@@ -171,6 +171,8 @@ drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:21 recien
 
 En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea. Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
 
+<!-- ACTIVIDAD: cerrar-el-proyecto -->
+
 ---
 
 **Fuentes**

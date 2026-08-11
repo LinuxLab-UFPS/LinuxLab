@@ -196,6 +196,8 @@ Conviene mirar ese resultado con atención. El `700` era el permiso adecuado par
 | `chmod u+wx,g+w archivo` | Varios permisos en cada tramo de la coma |
 | `chmod -R 700 carpeta` | Aplica el cambio a todo el contenido |
 
+<!-- ACTIVIDAD: cada-archivo-en-su-sitio -->
+
 ---
 
 **Fuentes**
