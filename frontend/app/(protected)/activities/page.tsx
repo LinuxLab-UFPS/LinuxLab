@@ -1,5 +1,5 @@
 import { getActivities } from "@/lib/features/shared/activities"
-import { ActivityGrid } from "@/components/student/activity-grid"
+import { ActivityBrowser } from "@/components/student/activity-browser"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function ActivitiesPage() {
@@ -20,7 +20,7 @@ export default async function ActivitiesPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6">
-        <ActivityGrid activities={getActivities()} />
+        <ActivityBrowser activities={getActivities()} />
       </section>
     </div>
   )
