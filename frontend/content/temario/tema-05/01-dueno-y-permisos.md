@@ -128,6 +128,62 @@ stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
 
 Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido del siguiente subtema.
 
+## Práctica
+
+El ejercicio consiste en crear un archivo, quitarle el permiso de escritura y comprobar qué deja de funcionar. Los permisos se entienden mejor estorbando.
+
+El archivo se llama `solo-lectura.txt`, va en el directorio personal y necesita al menos dos líneas. Se escribe con `vi`, como en el módulo anterior:
+
+```bash
+vi solo-lectura.txt
+```
+
+El recorrido dentro del editor es el de siempre: `i` para entrar en modo inserción, <kbd>Esc</kbd> para volver al modo normal y `:wq` para guardar y salir.
+
+Con el contenido dentro, se retira la escritura a los tres bloques:
+
+```bash
+chmod a-w solo-lectura.txt
+```
+
+Conviene que sea a los tres. Un archivo recién creado tiene permisos `664`, así que quitársela sólo al dueño con `u-w` deja `464` y el grupo conserva la escritura.
+
+A partir de ahí, añadir texto desde la terminal deja de ser posible:
+
+```bash
+echo tercera >> solo-lectura.txt
+```
+
+```
+bash: solo-lectura.txt: Permission denied
+```
+
+Y al abrirlo de nuevo con `vi`, el editor avisa desde el principio con `[readonly]` junto al nombre. Si se intenta guardar con `:w`, se niega:
+
+```
+E45: 'readonly' option is set (add ! to override)
+```
+
+### El dueño siempre puede deshacerlo
+
+Ese mensaje dice algo importante: *add ! to override*. Guardando con `:w!` el archivo se modifica igualmente, y los permisos siguen en `444` después.
+
+No es un fallo del sistema. El dueño de un archivo puede cambiarle los permisos cuando quiera, así que retirarse a sí mismo la escritura no es un candado: es una señal. Sirve para no estropear por descuido algo importante, no para impedírselo a quien manda sobre el archivo. Contra los demás sí es una barrera real, porque ellos no pueden hacer ese `chmod`.
+
+<!-- EJERCICIO: archivo-solo-lectura -->
+
+Cuando la comprobación esté en verde, conviene no dejar el archivo ahí:
+
+```bash
+rm solo-lectura.txt
+```
+
+```
+rm: remove write-protected regular file 'solo-lectura.txt'?
+```
+
+`rm` pide confirmación justo porque el archivo no tiene permiso de escritura. Respondiendo `y` lo borra igual, y la razón es la del subtema de directorios: borrar no depende del permiso del archivo, sino del de la carpeta que lo contiene.
+
 ---
 
 **Fuentes**
