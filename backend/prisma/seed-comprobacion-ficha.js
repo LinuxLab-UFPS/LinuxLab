@@ -17,11 +17,43 @@ const RUTA = "/home/$usuario/$codigo.txt"
 /** Nombre + tres comandos + correo. */
 const LINEAS_MINIMAS = 5
 
-async function main() {
-  await prisma.activity.deleteMany({ where: { slug: SLUG } })
+const CHECKS = [
+  {
+    type: "archivo_existe",
+    params: { ruta: RUTA },
+    points: 34,
+    position: 0,
+  },
+  {
+    type: "minimo_lineas",
+    params: { ruta: RUTA, cantidad: String(LINEAS_MINIMAS) },
+    points: 33,
+    position: 1,
+  },
+  {
+    type: "ultima_linea_es",
+    params: { ruta: RUTA, valor: "$correo" },
+    points: 33,
+    position: 2,
+  },
+]
 
-  const activity = await prisma.activity.create({
-    data: {
+async function main() {
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
+      title: "Tu ficha en el laboratorio",
+      kind: "check",
+      difficulty: "basic",
+      instructions:
+        "Crea un archivo con tu código estudiantil como nombre y edítalo con vi: " +
+        "tu nombre en la primera línea, tres comandos aprendidos en las siguientes " +
+        "y tu correo institucional al final.",
+      topic_number: 4,
+      max_score: 100,
+      checks: { deleteMany: {}, create: CHECKS },
+    },
+    create: {
       slug: SLUG,
       title: "Tu ficha en el laboratorio",
       kind: "check",
@@ -32,28 +64,9 @@ async function main() {
         "y tu correo institucional al final.",
       topic_number: 4,
       max_score: 100,
-      checks: {
-        create: [
-          {
-            type: "archivo_existe",
-            params: { ruta: RUTA },
-            points: 34,
-            position: 0,
-          },
-          {
-            type: "minimo_lineas",
-            params: { ruta: RUTA, cantidad: String(LINEAS_MINIMAS) },
-            points: 33,
-            position: 1,
-          },
-          {
-            type: "ultima_linea_es",
-            params: { ruta: RUTA, valor: "$correo" },
-            points: 33,
-            position: 2,
-          },
-        ],
-      },
+      source: "bank",
+      active: true,
+      checks: { create: CHECKS },
     },
     include: { checks: true },
   })

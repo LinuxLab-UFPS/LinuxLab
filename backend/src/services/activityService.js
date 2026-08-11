@@ -63,7 +63,7 @@ const serialize = (activity) => ({
  * dice cuantos estudiantes distintos la han intentado.
  */
 async function listBank() {
-  const activities = await prisma.activity.findMany({
+  const activities = await prisma.activityDefinition.findMany({
     where: { kind: "activity" },
     include: {
       checks: { orderBy: { position: "asc" } },
@@ -76,19 +76,19 @@ async function listBank() {
     id: activity.id,
     title: activity.title,
     topicNumber: activity.topic_number,
-    source: "bank",
+    source: activity.source,
     difficulty: activity.difficulty,
     instructions: activity.instructions ?? "",
     maxScore: activity.max_score,
     required: false,
-    evaluationType: "atomic",
+    evaluationType: activity.evaluation_type === "manual" ? "manual" : "atomic",
     checks: activity.checks.map(publicCheck),
     uses: activity._count.attempts,
   }))
 }
 
 async function getBySlug(slug) {
-  const activity = await prisma.activity.findUnique({
+  const activity = await prisma.activityDefinition.findUnique({
     where: { slug },
     include: { checks: { orderBy: { position: "asc" } } },
   })
@@ -106,7 +106,7 @@ async function getBySlug(slug) {
  * es el nombre de la cuenta, validado contra `USERNAME`.
  */
 async function evaluate({ slug, studentUserId }) {
-  const activity = await prisma.activity.findUnique({
+  const activity = await prisma.activityDefinition.findUnique({
     where: { slug },
     include: { checks: { orderBy: { position: "asc" } } },
   })
@@ -168,10 +168,18 @@ async function evaluate({ slug, studentUserId }) {
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
   const passed = results.every((r) => r.passed)
 
+  // Los intentos por slug (comprobaciones del temario) no tienen publicacion:
+  // group_activity_id queda NULL y el numero de intento es el siguiente del
+  // estudiante en esta definicion.
+  const attemptNumber = await prisma.activityAttempt.count({
+    where: { activity_definition_id: activity.id, student_id: studentUserId },
+  })
+
   await prisma.activityAttempt.create({
     data: {
-      activity_id: activity.id,
+      activity_definition_id: activity.id,
       student_id: studentUserId,
+      attempt_number: attemptNumber + 1,
       passed,
       score,
       results,
@@ -215,7 +223,7 @@ async function cuentaDelEstudiante(studentUserId) {
  * actividades donde el estudiante borre sin miedo a quedarse sin nada.
  */
 async function resetSandbox({ slug, studentUserId, force = false }) {
-  const activity = await prisma.activity.findUnique({
+  const activity = await prisma.activityDefinition.findUnique({
     where: { slug },
     select: { slug: true, setup: true },
   })
@@ -255,19 +263,22 @@ async function resetSandbox({ slug, studentUserId, force = false }) {
 async function passedSlugs(studentUserId) {
   const attempts = await prisma.activityAttempt.findMany({
     where: { student_id: studentUserId, passed: true },
-    select: { activity: { select: { slug: true } } },
-    distinct: ["activity_id"],
+    select: { definition: { select: { slug: true } } },
+    distinct: ["activity_definition_id"],
   })
-  return attempts.map((a) => a.activity.slug).filter(Boolean)
+  return attempts.map((a) => a.definition.slug).filter(Boolean)
 }
 
 /** El ultimo intento del estudiante, para que la leccion abra con su estado. */
 async function lastAttempt({ slug, studentUserId }) {
-  const activity = await prisma.activity.findUnique({ where: { slug }, select: { id: true } })
+  const activity = await prisma.activityDefinition.findUnique({
+    where: { slug },
+    select: { id: true },
+  })
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
   const attempt = await prisma.activityAttempt.findFirst({
-    where: { activity_id: activity.id, student_id: studentUserId },
+    where: { activity_definition_id: activity.id, student_id: studentUserId },
     orderBy: { created_at: "desc" },
   })
   if (!attempt) return null

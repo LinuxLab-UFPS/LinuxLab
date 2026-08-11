@@ -24,9 +24,13 @@ model User {
   updated_at DateTime @updatedAt
 
   linuxAccount          LinuxAccount?
-  taughtGroups          Group[]       @relation("TeacherGroups")
-  enrollments           Enrollment[]  @relation("StudentEnrollments")
-  activityAttempts      ActivityAttempt[] @relation("StudentAttempts")
+  taughtGroups          Group[]                @relation("TeacherGroups")
+  enrollments           Enrollment[]           @relation("StudentEnrollments")
+  activityAttempts      ActivityAttempt[]      @relation("StudentAttempts")
+  activitySubmissions   ActivitySubmission[]   @relation("StudentSubmissions")
+  gradedSubmissions     ActivitySubmission[]   @relation("SubmissionGraders")
+  auditEvents           ActivityAuditEvent[]   @relation("AuditEvents")
+  createdDefinitions    ActivityDefinition[]   @relation("ActivityCreators")
   provisioningJobs      ProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
   preferences           UserPreference?
@@ -56,71 +60,170 @@ model Group {
   groupProvisioningJobs GroupProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
   groupTeardownJobs     GroupTeardownJob[]
-  activities            Activity[]
+  groupActivities       GroupActivity[]
 
   @@map("groups")
 }
 
-/// Una practica evaluable. Nace del temario (con `slug`) o la crea un docente
-/// para su curso; en ambos casos se evalua con las mismas aserciones.
+/// Definicion reutilizable de una actividad: nace del banco (administrador) o
+/// de un docente que la crea para publicarla en su grupo. Lo que el estudiante
+/// resuelve es una publicacion (`GroupActivity`) hecha sobre esta definicion.
 ///
 /// `kind` separa las dos cosas que comparten esta maquinaria: una "check" es la
 /// comprobacion fija de una leccion, que mide avance y vive dentro del temario;
 /// una "activity" es trabajo aparte, se resuelve junto a la terminal y es lo
 /// unico que aparece en el banco del docente.
-model Activity {
-  id           String           @id @default(uuid()) @db.Uuid
-  slug         String?          @unique @db.VarChar(64)
-  title        String           @db.VarChar(255)
-  instructions String?          @db.Text
-  topic_number Int?             @map("topic_number")
-  difficulty   String           @default("basic") @db.VarChar(16)
-  kind         String           @default("activity") @db.VarChar(16)
+model ActivityDefinition {
+  id              String   @id @default(uuid()) @db.Uuid
+  slug            String?  @unique @db.VarChar(64)
+  title           String   @db.VarChar(255)
+  instructions    String?  @db.Text
+  topic_number    Int?     @map("topic_number")
+  difficulty      String   @default("basic") @db.VarChar(16)
+  kind            String   @default("activity") @db.VarChar(16)
   /// Arbol de archivos que la actividad prepara en `~/.actividades/<slug>/`.
   /// Se declara como datos (rutas y contenidos), nunca como comandos.
-  setup        Json?
-  group_id     String?          @db.Uuid @map("group_id")
-  group        Group?           @relation(fields: [group_id], references: [id])
-  max_score    Int              @default(100) @map("max_score")
-  created_at   DateTime         @default(now()) @map("created_at")
-  updated_at   DateTime         @updatedAt @map("updated_at")
+  setup           Json?
+  /// `workshop` (taller) o `quiz`.
+  activity_type   String   @default("workshop") @db.VarChar(16) @map("activity_type")
+  /// `automatic` (aserciones atómicas) o `manual` (revisión docente).
+  evaluation_type String   @default("automatic") @db.VarChar(16) @map("evaluation_type")
+  /// De donde nace: `bank` (administra el admin) o `teacher` (docente).
+  source          String   @default("bank") @db.VarChar(16)
+  active          Boolean  @default(true)
+  max_score       Int      @default(100) @map("max_score")
+  created_by      String?  @db.Uuid @map("created_by")
+  creator         User?    @relation("ActivityCreators", fields: [created_by], references: [id])
+  created_at      DateTime @default(now()) @map("created_at")
+  updated_at      DateTime @updatedAt @map("updated_at")
 
-  checks   ActivityCheck[]
-  attempts ActivityAttempt[]
+  checks          ActivityCheck[]
+  attempts        ActivityAttempt[]
+  groupActivities GroupActivity[]
 
-  @@map("activities")
+  @@map("activity_definitions")
 }
 
 /// Una asercion del catalogo con los parametros que puso el docente. El `type`
 /// es el contrato con el evaluador que corre dentro del entorno.
 model ActivityCheck {
-  id          String   @id @default(uuid()) @db.Uuid
-  activity_id String   @db.Uuid @map("activity_id")
-  activity    Activity @relation(fields: [activity_id], references: [id], onDelete: Cascade)
-  type        String   @db.VarChar(48)
-  params      Json
-  points      Int      @default(0)
-  position    Int      @default(0)
+  id                      String               @id @default(uuid()) @db.Uuid
+  activity_definition_id  String               @db.Uuid @map("activity_definition_id")
+  definition              ActivityDefinition   @relation(fields: [activity_definition_id], references: [id], onDelete: Cascade)
+  type                    String               @db.VarChar(48)
+  params                  Json
+  points                  Int                  @default(0)
+  position                Int                  @default(0)
 
-  @@index([activity_id])
+  @@index([activity_definition_id])
   @@map("activity_checks")
+}
+
+/// La publicacion de una actividad en un grupo: la definicion aplicada a un
+/// curso con su configuracion de evaluacion.
+///
+/// Guarda una copia (snapshot) de titulo, instrucciones, puntaje y aserciones:
+/// si la definicion del banco cambia despues, lo que ya se publico no cambia
+/// retroactivamente (RF-GRP-11). La evaluacion de una publicacion usa su
+/// propia copia, nunca la de la definicion.
+model GroupActivity {
+  id                      String               @id @default(uuid()) @db.Uuid
+  group_id                String               @db.Uuid @map("group_id")
+  group                   Group                @relation(fields: [group_id], references: [id])
+  activity_definition_id  String?              @db.Uuid @map("activity_definition_id")
+  definition              ActivityDefinition?  @relation(fields: [activity_definition_id], references: [id])
+  title                   String               @db.VarChar(255)
+  instructions            String?              @db.Text
+  activity_type           String               @db.VarChar(16) @map("activity_type")
+  evaluation_type         String               @db.VarChar(16) @map("evaluation_type")
+  max_score               Int                  @default(100) @map("max_score")
+  /// Copia de las aserciones al momento de publicar: JSON de
+  /// {id, type, params, points, position} en orden.
+  checks                  Json
+  /// `null` para intentos ilimitados o un entero positivo como limite.
+  attempt_limit           Int?                 @map("attempt_limit")
+  /// `best_score` (mejor intento valido) o `latest_score` (ultimo valido).
+  grading_policy          String               @default("best_score") @db.VarChar(16) @map("grading_policy")
+  required                Boolean              @default(true)
+  enabled                 Boolean              @default(true)
+  due_at                  DateTime?            @map("due_at")
+  published_at            DateTime?            @map("published_at")
+  created_at              DateTime             @default(now()) @map("created_at")
+  updated_at              DateTime             @updatedAt @map("updated_at")
+
+  attempts    ActivityAttempt[]
+  submissions ActivitySubmission[]
+
+  @@index([group_id])
+  @@index([activity_definition_id])
+  @@map("group_activities")
 }
 
 /// Cada vez que un estudiante pide validar. Se guarda el detalle por asercion
 /// para poder mostrarle que fallo y para que quede historico de la nota.
+///
+/// `group_activity_id` es nullable: los intentos por slug (comprobaciones del
+/// temario y mecanismo transitorio) no tienen publicacion.
 model ActivityAttempt {
-  id          String   @id @default(uuid()) @db.Uuid
-  activity_id String   @db.Uuid @map("activity_id")
-  activity    Activity @relation(fields: [activity_id], references: [id], onDelete: Cascade)
-  student_id  String   @db.Uuid @map("student_id")
-  student     User     @relation("StudentAttempts", fields: [student_id], references: [id])
-  passed      Boolean  @default(false)
-  score       Int      @default(0)
-  results     Json
-  created_at  DateTime @default(now()) @map("created_at")
+  id                      String               @id @default(uuid()) @db.Uuid
+  activity_definition_id  String               @db.Uuid @map("activity_definition_id")
+  definition              ActivityDefinition   @relation(fields: [activity_definition_id], references: [id])
+  group_activity_id       String?              @db.Uuid @map("group_activity_id")
+  groupActivity           GroupActivity?       @relation(fields: [group_activity_id], references: [id])
+  student_id              String               @db.Uuid @map("student_id")
+  student                 User                 @relation("StudentAttempts", fields: [student_id], references: [id])
+  attempt_number          Int                  @default(1) @map("attempt_number")
+  passed                  Boolean              @default(false)
+  score                   Int                  @default(0)
+  results                 Json
+  created_at              DateTime             @default(now()) @map("created_at")
 
-  @@index([activity_id, student_id])
+  @@index([activity_definition_id, student_id])
+  @@index([group_activity_id])
   @@map("activity_attempts")
+}
+
+/// Una entrega de una actividad con evaluacion manual. La `evidence` es un
+/// snapshot del entorno al momento del envio: el home del estudiante despues
+/// muta, y no sirve como evidencia historica.
+model ActivitySubmission {
+  id                String         @id @default(uuid()) @db.Uuid
+  group_activity_id String         @db.Uuid @map("group_activity_id")
+  groupActivity     GroupActivity  @relation(fields: [group_activity_id], references: [id])
+  student_id        String         @db.Uuid @map("student_id")
+  student           User           @relation("StudentSubmissions", fields: [student_id], references: [id])
+  attempt_number    Int            @default(1) @map("attempt_number")
+  /// `submitted` | `under_review` | `graded` | `returned`
+  status            String         @default("submitted")
+  evidence          Json
+  score             Int?
+  feedback          String?        @db.Text
+  graded_by         String?        @db.Uuid @map("graded_by")
+  grader            User?          @relation("SubmissionGraders", fields: [graded_by], references: [id])
+  submitted_at      DateTime       @default(now()) @map("submitted_at")
+  graded_at         DateTime?      @map("graded_at")
+
+  @@index([group_activity_id, student_id])
+  @@map("activity_submissions")
+}
+
+/// Bitacora de eventos relevantes del modulo de actividades.
+///
+/// `group_id` es nullable a proposito: si el grupo se borra (borrado con
+/// confirmacion), el evento conserva su rastro en `metadata` y `target`.
+model ActivityAuditEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid @map("user_id")
+  user       User     @relation("AuditEvents", fields: [user_id], references: [id])
+  group_id   String?  @db.Uuid @map("group_id")
+  event_type String   @db.VarChar(48) @map("event_type")
+  target     String?  @db.VarChar(255)
+  metadata   Json?
+  created_at DateTime @default(now()) @map("created_at")
+
+  @@index([group_id])
+  @@index([user_id])
+  @@map("activity_audit_events")
 }
 
 model Enrollment {

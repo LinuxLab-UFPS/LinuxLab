@@ -1,43 +1,54 @@
 /**
  * La practica del subtema de directorios. Se siembra con `slug` para que la
  * leccion la invoque por nombre y no por id.
+ *
+ * Es un `upsert`: re-sembrar NO borra la definicion ni su historial (los
+ * intentos cuelgan de la definicion con RESTRICT); solo actualiza los campos
+ * y re-crea las aserciones cuando el seed cambia.
  */
 const prisma = require("./client")
 
 const SLUG = "crear-directorio-practicas"
 
-async function main() {
-  const existing = await prisma.activity.findUnique({ where: { slug: SLUG } })
-  if (existing) {
-    console.log("La actividad ya existe:", existing.id)
-    return
-  }
+const CHECKS = [
+  {
+    type: "directorio_existe",
+    params: { ruta: "/home/$usuario/practicas" },
+    points: 50,
+    position: 0,
+  },
+  {
+    type: "directorio_existe",
+    params: { ruta: "/home/$usuario/practicas/tema-03" },
+    points: 50,
+    position: 1,
+  },
+]
 
-  const activity = await prisma.activity.create({
-    data: {
-      slug: SLUG,
+async function main() {
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
       title: "Crea tu primer directorio",
       kind: "check",
       instructions:
         "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
       topic_number: 3,
       max_score: 100,
-      checks: {
-        create: [
-          {
-            type: "directorio_existe",
-            params: { ruta: "/home/$usuario/practicas" },
-            points: 50,
-            position: 0,
-          },
-          {
-            type: "directorio_existe",
-            params: { ruta: "/home/$usuario/practicas/tema-03" },
-            points: 50,
-            position: 1,
-          },
-        ],
-      },
+      checks: { deleteMany: {}, create: CHECKS },
+    },
+    create: {
+      slug: SLUG,
+      title: "Crea tu primer directorio",
+      kind: "check",
+      difficulty: "basic",
+      instructions:
+        "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
+      topic_number: 3,
+      max_score: 100,
+      source: "bank",
+      active: true,
+      checks: { create: CHECKS },
     },
     include: { checks: true },
   })

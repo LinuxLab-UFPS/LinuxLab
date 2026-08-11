@@ -15,8 +15,6 @@ const FILAS = [
 ]
 
 async function main() {
-  await prisma.activity.deleteMany({ where: { slug: SLUG } })
-
   const checks = [
     { type: "archivo_existe", params: { ruta: RUTA }, points: 25, position: 0 },
     ...FILAS.map((patron, i) => ({
@@ -27,8 +25,20 @@ async function main() {
     })),
   ]
 
-  const activity = await prisma.activity.create({
-    data: {
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
+      title: "Guarda el logo",
+      kind: "check",
+      difficulty: "basic",
+      instructions:
+        "Copia el logo con el botón de la lección y guárdalo en un archivo " +
+        "llamado logo.txt en tu carpeta personal.",
+      topic_number: 4,
+      max_score: 100,
+      checks: { deleteMany: {}, create: checks },
+    },
+    create: {
       slug: SLUG,
       title: "Guarda el logo",
       kind: "check",
@@ -38,6 +48,8 @@ async function main() {
         "llamado logo.txt en tu carpeta personal.",
       topic_number: 4,
       max_score: 100,
+      source: "bank",
+      active: true,
       checks: { create: checks },
     },
     include: { checks: true },
