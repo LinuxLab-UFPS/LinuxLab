@@ -63,7 +63,7 @@ async function main() {
     await client.query(
       `SELECT id, group_id, activity_definition_id, title, evaluation_type,
               jsonb_array_length(checks) AS checks_count, attempt_limit,
-              grading_policy, required, enabled, published_at IS NOT NULL AS published
+              grading_policy, required, enabled
        FROM group_activities ORDER BY activity_definition_id`,
     )
   ).rows

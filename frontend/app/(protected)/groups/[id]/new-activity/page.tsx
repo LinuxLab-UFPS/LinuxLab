@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { ChevronRight, Calendar, Save, Send, Copy, Trash2 } from "lucide-react"
+import { ChevronRight, Calendar, Send } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,15 +19,9 @@ import { RichTextEditor } from "@/components/teacher/rich-text-editor"
 import { CheckBuilder, type ActivityCheck } from "@/components/teacher/check-builder"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
-import { createTerminalSession } from "@/lib/features/student/data"
 import { createActivity } from "@/lib/features/teacher/data"
 import type { EvaluationType } from "@/lib/features/teacher/types"
 import { RoleGuard } from "@/components/shared/role-guard"
-
-interface TerminalLine {
-  type: "prompt" | "output"
-  content: string
-}
 
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
@@ -46,59 +40,6 @@ function NewActivityPage() {
   const [distributeEvenly, setDistributeEvenly] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
-
-  // Terminal (teacher test environment), routed through the terminal seam.
-  const session = useMemo(() => createTerminalSession({ user: "teacher" }), [])
-  const greeting = useMemo<TerminalLine[]>(
-    () => session.greeting.map((content) => ({ type: "output", content })),
-    [session]
-  )
-  const [terminalHistory, setTerminalHistory] = useState<TerminalLine[]>(greeting)
-  const [terminalInput, setTerminalInput] = useState("")
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const terminalBodyRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const interval = setInterval(() => setCursorVisible((prev) => !prev), 530)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (terminalBodyRef.current) {
-      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight
-    }
-  }, [terminalHistory, terminalInput])
-
-  const handleTerminalSubmit = async () => {
-    if (!terminalInput.trim()) return
-    const command = terminalInput
-    setTerminalHistory((prev) => [...prev, { type: "prompt", content: command }])
-    setTerminalInput("")
-    const result = await session.run(command)
-    if (result.clear) {
-      setTerminalHistory([])
-      return
-    }
-    if (result.output) {
-      setTerminalHistory((prev) => [...prev, { type: "output", content: result.output }])
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleTerminalSubmit()
-  }
-
-  const focusInput = () => inputRef.current?.focus()
-
-  const copyToClipboard = () => {
-    const text = terminalHistory
-      .map((line) => (line.type === "prompt" ? `$ ${line.content}` : line.content))
-      .join("\n")
-    navigator.clipboard.writeText(text)
-  }
-
-  const clearTerminal = () => setTerminalHistory(greeting)
 
   const handlePublish = async () => {
     setError(null)
@@ -152,10 +93,6 @@ function NewActivityPage() {
                   Cancelar
                 </Button>
               </Link>
-              <Button variant="outline" className="border-border hover:bg-secondary">
-                <Save className="w-4 h-4 mr-2" />
-                Guardar borrador
-              </Button>
               <Button
                 onClick={handlePublish}
                 disabled={publishing}
@@ -169,13 +106,11 @@ function NewActivityPage() {
         </div>
       </header>
 
-      {/* Split Layout */}
-      <div className="flex-1 flex">
-        {/* Left Side - Configuration (55%) */}
-        <div className="w-[55%] border-r border-border overflow-y-auto">
-          <div className="p-6 space-y-8">
-            {error && (
-              <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
+      {/* Formulario centrado */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-6 py-8 space-y-8">
+          {error && (
+            <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
                 {error}
               </div>
             )}
@@ -403,96 +338,6 @@ function NewActivityPage() {
               )}
             </section>
           </div>
-        </div>
-
-        {/* Right Side - Terminal Preview (45%) */}
-        <div className="w-[45%] flex flex-col bg-[#0a0a0a]">
-          <div className="px-4 py-3 border-b border-border bg-card">
-            <h3 className="text-sm font-medium text-foreground">Terminal de prueba</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Usa esta terminal para reproducir la solución y verificar tus aserciones
-            </p>
-          </div>
-
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 bg-[#161616] border-b border-primary/30">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-                </div>
-                <span className="text-sm text-zinc-400 ml-3 font-mono">bash</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
-                  onClick={copyToClipboard}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
-                  onClick={clearTerminal}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="h-px bg-primary/50" />
-
-            <div
-              ref={terminalBodyRef}
-              className="flex-1 p-4 overflow-y-auto font-mono text-sm cursor-text"
-              onClick={focusInput}
-            >
-              {terminalHistory.map((line, index) => (
-                <div key={index} className="leading-6">
-                  {line.type === "prompt" ? (
-                    <div className="flex">
-                      <span className="text-[#238636]">docente@linuxlab</span>
-                      <span className="text-zinc-100">:</span>
-                      <span className="text-[#58a6ff]">~</span>
-                      <span className="text-zinc-100">$ </span>
-                      <span className="text-zinc-100">{line.content}</span>
-                    </div>
-                  ) : (
-                    <div className="text-zinc-400 whitespace-pre-wrap">{line.content}</div>
-                  )}
-                </div>
-              ))}
-
-              <div className="flex leading-6">
-                <span className="text-[#238636]">docente@linuxlab</span>
-                <span className="text-zinc-100">:</span>
-                <span className="text-[#58a6ff]">~</span>
-                <span className="text-zinc-100">$ </span>
-                <span className="text-zinc-100">{terminalInput}</span>
-                <span
-                  className={cn(
-                    "w-2 h-5 bg-zinc-100 ml-0.5 inline-block",
-                    !cursorVisible && "opacity-0"
-                  )}
-                />
-              </div>
-
-              <input
-                ref={inputRef}
-                type="text"
-                value={terminalInput}
-                onChange={(e) => setTerminalInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="absolute opacity-0 pointer-events-none"
-                autoFocus
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

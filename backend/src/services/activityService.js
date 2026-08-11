@@ -505,7 +505,6 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
       required: body.required !== false,
       enabled: true,
       due_at: dueAt,
-      published_at: new Date(),
     },
   })
 

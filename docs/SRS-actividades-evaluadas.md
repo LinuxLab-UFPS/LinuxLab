@@ -486,6 +486,9 @@ interpretarse como comandos ejecutables.
 
 Representa la instancia de una actividad publicada o configurada para un grupo.
 
+No hay estado borrador: crear una actividad es publicarla. `enabled` la habilita
+o deshabilita y `due_at` la cierra.
+
 Campos mínimos:
 
 - `id`;
@@ -501,7 +504,6 @@ Campos mínimos:
 - `required`;
 - `enabled`;
 - `due_at`, opcional;
-- `published_at`, opcional;
 - `created_at`;
 - `updated_at`.
 
@@ -567,11 +569,15 @@ Campos mínimos:
 
 ### 13.1 Estados de una actividad
 
+Crear una actividad es publicarla: no existe estado borrador. Sobre lo
+publicado solo se puede habilitar o deshabilitar, y el cierre vence la
+actividad:
+
 ```text
-draft -> published -> enabled -> disabled
-                         |
-                         v
-                       closed
+enabled <-> disabled
+      |
+      v
+    closed   (derivado de due_at)
 ```
 
 Una actividad en estado `disabled`, `closed` o archivada no acepta nuevos
@@ -581,10 +587,10 @@ usuarios autorizados.
 ### 13.2 Estados de una entrega manual
 
 ```text
-draft -> submitted -> under_review -> graded
-                                      |
-                                      v
-                                   returned
+submitted -> under_review -> graded
+                          |
+                          v
+                       returned
 ```
 
 ### 13.3 Reglas generales

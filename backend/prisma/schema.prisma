@@ -126,6 +126,9 @@ model ActivityCheck {
 /// si la definicion del banco cambia despues, lo que ya se publico no cambia
 /// retroactivamente (RF-GRP-11). La evaluacion de una publicacion usa su
 /// propia copia, nunca la de la definicion.
+///
+/// No hay estado borrador: crear una actividad es publicarla (queda habilitada
+/// al instante). `enabled` la habilita o deshabilita, y `due_at` la cierra.
 model GroupActivity {
   id                      String               @id @default(uuid()) @db.Uuid
   group_id                String               @db.Uuid @map("group_id")
@@ -147,7 +150,6 @@ model GroupActivity {
   required                Boolean              @default(true)
   enabled                 Boolean              @default(true)
   due_at                  DateTime?            @map("due_at")
-  published_at            DateTime?            @map("published_at")
   created_at              DateTime             @default(now()) @map("created_at")
   updated_at              DateTime             @updatedAt @map("updated_at")
 
