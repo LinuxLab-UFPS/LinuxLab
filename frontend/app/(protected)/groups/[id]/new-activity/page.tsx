@@ -2,8 +2,9 @@
 
 import { useState, useRef, useEffect, useMemo } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { ChevronRight, Calendar, Save, Send, Copy, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -30,6 +31,7 @@ interface TerminalLine {
 
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const groupId = params?.id ?? ""
 
   const [activityName, setActivityName] = useState("")
@@ -37,6 +39,7 @@ function NewActivityPage() {
   const [maxScore, setMaxScore] = useState("100")
   const [dueDate, setDueDate] = useState("")
   const [isRequired, setIsRequired] = useState(true)
+  const [gradingPolicy, setGradingPolicy] = useState<"best_score" | "latest_score">("best_score")
   const [instructions, setInstructions] = useState("")
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("atomic")
   const [checks, setChecks] = useState<ActivityCheck[]>([])
@@ -101,18 +104,20 @@ function NewActivityPage() {
     setError(null)
     setPublishing(true)
     try {
-      await createActivity({
+      await createActivity(groupId, {
         title: activityName,
         topicNumber: Number(selectedTopic) || 0,
         source: "teacher",
         instructions,
         maxScore: Number(maxScore) || 0,
-        dueDate: dueDate || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         required: isRequired,
         evaluationType,
+        gradingPolicy,
         checks,
       })
-      // On success the backend returns the activity; redirect to the course.
+      toast.success("Actividad publicada")
+      router.push(`/groups/${groupId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo publicar la actividad.")
     } finally {
@@ -234,11 +239,11 @@ function NewActivityPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
-                      Fecha límite de entrega
+                      Fecha y hora de cierre
                     </label>
                     <div className="relative">
                       <Input
-                        type="date"
+                        type="datetime-local"
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
                         className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20 [color-scheme:dark]"
@@ -248,21 +253,51 @@ function NewActivityPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Tipo de actividad</label>
-                    <div className="flex items-center gap-3 h-9">
-                      <Switch
-                        checked={isRequired}
-                        onCheckedChange={setIsRequired}
-                        className="data-[state=checked]:bg-primary"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {isRequired ? (
-                          <span className="text-foreground font-medium">Obligatoria</span>
-                        ) : (
-                          "Complementaria"
-                        )}
-                      </span>
-                    </div>
+                    <label className="text-sm font-medium text-foreground">
+                      Política de calificación
+                    </label>
+                    <Select
+                      value={gradingPolicy}
+                      onValueChange={(v) =>
+                        setGradingPolicy(v as "best_score" | "latest_score")
+                      }
+                    >
+                      <SelectTrigger className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20">
+                        <SelectValue placeholder="Política de calificación" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem
+                          value="best_score"
+                          className="focus:bg-primary/10 focus:text-foreground"
+                        >
+                          Mejor intento
+                        </SelectItem>
+                        <SelectItem
+                          value="latest_score"
+                          className="focus:bg-primary/10 focus:text-foreground"
+                        >
+                          Último intento
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Obligatoriedad</label>
+                  <div className="flex items-center gap-3 h-9">
+                    <Switch
+                      checked={isRequired}
+                      onCheckedChange={setIsRequired}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {isRequired ? (
+                        <span className="text-foreground font-medium">Obligatoria</span>
+                      ) : (
+                        "Complementaria"
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>

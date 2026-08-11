@@ -48,6 +48,7 @@ export interface Activity {
   dueDate?: string
   required: boolean
   evaluationType: EvaluationType
+  gradingPolicy?: "best_score" | "latest_score"
   checks: ActivityCheck[]
   uses?: number
 }

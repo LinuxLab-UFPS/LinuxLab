@@ -41,16 +41,19 @@ export async function listBankActivities(): Promise<Activity[]> {
   return teacherApi.listBankActivities()
 }
 
-export async function listGroupActivities(_groupId: string): Promise<Activity[]> {
-  return []
+export async function listGroupActivities(groupId: string): Promise<Activity[]> {
+  return teacherApi.listGroupActivities(groupId)
 }
 
 export async function getActivity(_id: string): Promise<Activity | null> {
   return null
 }
 
-export async function createActivity(_input: CreateActivityInput): Promise<Activity> {
-  throw new Error("Actividades: no implementado todavía")
+export async function createActivity(
+  groupId: string,
+  input: CreateActivityInput,
+): Promise<Activity> {
+  return teacherApi.createActivity(groupId, input)
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {

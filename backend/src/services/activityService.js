@@ -1,8 +1,10 @@
+const { randomUUID } = require("crypto")
 const prisma = require("../../prisma/client")
 const sshClient = require("./sshClient")
 const logger = require("../lib/logger")
 const { AppError, NotFoundError, AuthorizationError } = require("../lib/errors")
 const enrollmentService = require("./enrollmentService")
+const groupService = require("./groupService")
 
 /** El evaluador vive dentro de la imagen del entorno, en ruta fija. */
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
@@ -12,6 +14,47 @@ const SETUP = "/usr/local/lib/linuxlab/setup.py"
 const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/
 
 const EVAL_TIMEOUT_MS = 20000
+
+/**
+ * Validacion de parametros por tipo de asercion. El catalogo es el contrato con
+ * el checker de la imagen: solo se aceptan los tipos que el conoce, y cada uno
+ * valida sus propios campos. Devuelve null si esta bien, o un mensaje de error.
+ */
+const CHECK_VALIDATORS = {
+  directorio_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
+  archivo_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
+  archivo_no_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
+  permisos_son: ({ ruta, modo }) => {
+    if (!ruta) return "Falta la ruta"
+    if (!/^[0-7]{3,4}$/.test(String(modo ?? ""))) return "El modo debe ser octal (ej: 755)"
+    return null
+  },
+  propietario_es: ({ ruta, usuario }) => {
+    if (!ruta) return "Falta la ruta"
+    if (!usuario) return "Falta el usuario esperado"
+    return null
+  },
+  archivo_contiene: ({ ruta, patron }) => {
+    if (!ruta) return "Falta la ruta"
+    if (patron === undefined || patron === null || patron === "") return "Falta el patrón a buscar"
+    return null
+  },
+  minimo_lineas: ({ ruta, cantidad }) => {
+    if (!ruta) return "Falta la ruta"
+    if (!/^[1-9]\d*$/.test(String(cantidad ?? ""))) return "La cantidad debe ser un entero positivo"
+    return null
+  },
+  archivo_es: ({ ruta, valor }) => {
+    if (!ruta) return "Falta la ruta"
+    if (valor === undefined || valor === null) return "Falta el valor esperado"
+    return null
+  },
+  ultima_linea_es: ({ ruta, valor }) => {
+    if (!ruta) return "Falta la ruta"
+    if (valor === undefined || valor === null) return "Falta el valor esperado"
+    return null
+  },
+}
 
 /**
  * Datos del estudiante que el contenedor no tiene forma de conocer.
@@ -64,7 +107,9 @@ const serialize = (activity) => ({
  */
 async function listBank() {
   const activities = await prisma.activityDefinition.findMany({
-    where: { kind: "activity" },
+    // Solo el banco: las definiciones que crea un docente (source=teacher) son
+    // suyas y no deben aparecerle a nadie mas.
+    where: { kind: "activity", source: "bank" },
     include: {
       checks: { orderBy: { position: "asc" } },
       _count: { select: { attempts: true } },
@@ -290,4 +335,221 @@ async function lastAttempt({ slug, studentUserId }) {
   }
 }
 
-module.exports = { listBank, getBySlug, evaluate, resetSandbox, lastAttempt, passedSlugs }
+/** Normaliza la modalidad que manda el frontend ("atomic") a la de la base. */
+function normalizeEvaluationType(value) {
+  return value === "atomic" ? "automatic" : value
+}
+
+/**
+ * Valida las aserciones de una actividad automatica y devuelve su snapshot con
+ * ids generados en el servidor (los del cliente no se aceptan). Las posiciones
+ * salen del orden de llegada y el puntaje debe repartir el maximo exacto.
+ */
+function buildChecks(list, { evaluationType, maxScore }) {
+  if (evaluationType === "manual") return []
+
+  if (!Array.isArray(list) || list.length === 0) {
+    throw new AppError("Una actividad automática necesita al menos una aserción", 400, "VALIDATION_ERROR")
+  }
+
+  const checks = []
+  let total = 0
+  for (let i = 0; i < list.length; i++) {
+    const check = list[i] ?? {}
+    const validator = CHECK_VALIDATORS[check.type]
+    if (!validator) {
+      throw new AppError(`El tipo de aserción "${check.type}" no existe en el catálogo`, 400, "VALIDATION_ERROR")
+    }
+    const params = check.params ?? {}
+    const error = validator(params)
+    if (error) {
+      throw new AppError(`Aserción ${i + 1} (${check.type}): ${error}`, 400, "VALIDATION_ERROR")
+    }
+    const points = Number(check.points)
+    if (!Number.isInteger(points) || points < 0) {
+      throw new AppError(
+        `Aserción ${i + 1} (${check.type}): los puntos deben ser un entero no negativo`,
+        400,
+        "VALIDATION_ERROR",
+      )
+    }
+    total += points
+    checks.push({ id: randomUUID(), type: check.type, params, points, position: i })
+  }
+
+  if (total !== maxScore) {
+    throw new AppError(
+      `El puntaje repartido (${total}) no coincide con el de la actividad (${maxScore})`,
+      400,
+      "VALIDATION_ERROR",
+    )
+  }
+  return checks
+}
+
+/** La forma que espera el frontend para la tabla de actividades de un curso. */
+function serializeGroupActivity(ga, definition) {
+  return {
+    id: ga.id,
+    title: ga.title,
+    topicNumber: definition?.topic_number ?? 0,
+    source: "teacher",
+    difficulty: definition?.difficulty ?? "basic",
+    instructions: ga.instructions ?? "",
+    maxScore: ga.max_score,
+    dueDate: ga.due_at?.toISOString(),
+    required: ga.required,
+    evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
+    gradingPolicy: ga.grading_policy,
+    checks: (ga.checks ?? []).map((c) => ({
+      id: c.id,
+      type: c.type,
+      params: c.params,
+      points: c.points,
+    })),
+    uses: 0,
+  }
+}
+
+/** Registra un evento de auditoria; un fallo aqui nunca tumba la operacion. */
+async function audit({ userId, groupId, eventType, target, metadata }) {
+  try {
+    await prisma.activityAuditEvent.create({
+      data: {
+        user_id: userId,
+        group_id: groupId ?? null,
+        event_type: eventType,
+        target: target ?? null,
+        metadata: metadata ?? undefined,
+      },
+    })
+  } catch (err) {
+    logger.error({ err, eventType }, "Audit event not recorded")
+  }
+}
+
+/**
+ * Crea una actividad propia del docente dentro de su grupo (RF-GRP-03).
+ *
+ * Nace con su definicion (source=teacher: es del docente, no aparece en el
+ * banco) y su publicacion (GroupActivity con el snapshot de lo publicado:
+ * titulo, instrucciones, modalidad, puntaje y aserciones. Si la definicion
+ * cambiara, lo publicado no cambia: RF-GRP-11).
+ *
+ * La creacion es a la vez publicacion: queda habilitada al instante. El limite
+ * de intentos y la configuracion de taller/quiz se agregan en una fase
+ * posterior; aqui quedan sus valores por defecto (ilimitado, workshop,
+ * best_score).
+ */
+async function createGroupActivity({ groupId, teacherUserId, role, input }) {
+  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const body = input ?? {}
+
+  const title = body.title?.trim()
+  if (!title) throw new AppError("El nombre de la actividad es requerido", 400, "VALIDATION_ERROR")
+
+  const maxScore = Number(body.maxScore)
+  if (!Number.isInteger(maxScore) || maxScore < 1 || maxScore > 100) {
+    throw new AppError("La puntuación máxima debe ser un entero entre 1 y 100", 400, "VALIDATION_ERROR")
+  }
+
+  const gradingPolicy = body.gradingPolicy ?? "best_score"
+  if (!["best_score", "latest_score"].includes(gradingPolicy)) {
+    throw new AppError("La política de calificación no es válida", 400, "VALIDATION_ERROR")
+  }
+
+  const evaluationType = normalizeEvaluationType(body.evaluationType ?? "automatic")
+  if (!["automatic", "manual"].includes(evaluationType)) {
+    throw new AppError("La modalidad de evaluación no es válida", 400, "VALIDATION_ERROR")
+  }
+
+  let dueAt = null
+  if (body.dueDate) {
+    dueAt = new Date(body.dueDate)
+    if (Number.isNaN(dueAt.getTime())) {
+      throw new AppError("La fecha de cierre no es válida", 400, "VALIDATION_ERROR")
+    }
+  }
+
+  const topicNumber = Number(body.topicNumber)
+  const checks = buildChecks(body.checks, { evaluationType, maxScore })
+
+  const activity = await prisma.activityDefinition.create({
+    data: {
+      title,
+      instructions: body.instructions?.trim() || null,
+      topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+      difficulty: body.difficulty ?? "basic",
+      kind: "activity",
+      activity_type: "workshop",
+      evaluation_type: evaluationType,
+      max_score: maxScore,
+      source: "teacher",
+      active: true,
+      created_by: teacherUserId,
+    },
+  })
+
+  const groupActivity = await prisma.groupActivity.create({
+    data: {
+      group_id: group.id,
+      activity_definition_id: activity.id,
+      title,
+      instructions: activity.instructions,
+      activity_type: "workshop",
+      evaluation_type: evaluationType,
+      max_score: maxScore,
+      checks,
+      attempt_limit: null,
+      grading_policy: gradingPolicy,
+      required: body.required !== false,
+      enabled: true,
+      due_at: dueAt,
+      published_at: new Date(),
+    },
+  })
+
+  audit({
+    userId: teacherUserId,
+    groupId: group.id,
+    eventType: "activity_created",
+    target: title,
+    metadata: { groupActivityId: groupActivity.id, definitionId: activity.id },
+  })
+
+  logger.info({ groupId, teacherUserId, activityId: groupActivity.id }, "Group activity created")
+  return serializeGroupActivity(groupActivity, activity)
+}
+
+/** Las actividades publicadas en el grupo, para la pestaña de su curso. */
+async function listGroupActivities({ groupId, teacherUserId, role }) {
+  await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const rows = await prisma.groupActivity.findMany({
+    where: { group_id: groupId },
+    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    orderBy: { created_at: "desc" },
+  })
+  return rows.map((ga) => serializeGroupActivity(ga, ga.definition))
+}
+
+async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
+  await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    include: { definition: { select: { topic_number: true, difficulty: true } } },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  return serializeGroupActivity(ga, ga.definition)
+}
+
+module.exports = {
+  listBank,
+  getBySlug,
+  evaluate,
+  resetSandbox,
+  lastAttempt,
+  passedSlugs,
+  createGroupActivity,
+  listGroupActivities,
+  getGroupActivity,
+}
