@@ -474,7 +474,7 @@ function pintarExpediente() {
 }
 
 function limpiarConsola() {
-  limpiarConsola();
+  $("console").querySelectorAll(".log").forEach((n) => n.remove());
 }
 
 function escribir(texto, clase) {
@@ -629,7 +629,7 @@ function terminar() {
 function empezar() {
   armarPartida();
   ronda = 0; puntos = 0; jugando = true;
-  $("console").querySelectorAll(".log").forEach((n) => n.remove());
+  limpiarConsola();
   $("overlay").classList.add("hide");
   $("results-overlay").classList.remove("show");
   cargarRonda();
