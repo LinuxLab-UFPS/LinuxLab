@@ -29,17 +29,31 @@ function checks() {
 async function main() {
   const data = checks()
 
-  await prisma.activity.deleteMany({ where: { slug: SLUG } })
-  const activity = await prisma.activity.create({
-    data: {
-      slug: SLUG,
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
       title: "Archivos y ficheros",
+      kind: "activity",
       difficulty: "basic",
       instructions:
         "Crea el directorio universidad en tu carpeta personal, con las facultades " +
         "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
       topic_number: 4,
       max_score: 100,
+      checks: { deleteMany: {}, create: data },
+    },
+    create: {
+      slug: SLUG,
+      title: "Archivos y ficheros",
+      kind: "activity",
+      difficulty: "basic",
+      instructions:
+        "Crea el directorio universidad en tu carpeta personal, con las facultades " +
+        "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
+      topic_number: 4,
+      max_score: 100,
+      source: "bank",
+      active: true,
       checks: { create: data },
     },
     include: { checks: true },

@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
-import { ChevronRight, Calendar, Save, Send, Copy, Trash2 } from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { ChevronRight, Calendar, Send } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -18,18 +19,13 @@ import { RichTextEditor } from "@/components/teacher/rich-text-editor"
 import { CheckBuilder, type ActivityCheck } from "@/components/teacher/check-builder"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
-import { createTerminalSession } from "@/lib/features/student/data"
 import { createActivity } from "@/lib/features/teacher/data"
 import type { EvaluationType } from "@/lib/features/teacher/types"
 import { RoleGuard } from "@/components/shared/role-guard"
 
-interface TerminalLine {
-  type: "prompt" | "output"
-  content: string
-}
-
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const groupId = params?.id ?? ""
 
   const [activityName, setActivityName] = useState("")
@@ -37,6 +33,7 @@ function NewActivityPage() {
   const [maxScore, setMaxScore] = useState("100")
   const [dueDate, setDueDate] = useState("")
   const [isRequired, setIsRequired] = useState(true)
+  const [gradingPolicy, setGradingPolicy] = useState<"best_score" | "latest_score">("best_score")
   const [instructions, setInstructions] = useState("")
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("atomic")
   const [checks, setChecks] = useState<ActivityCheck[]>([])
@@ -44,75 +41,24 @@ function NewActivityPage() {
   const [error, setError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
 
-  // Terminal (teacher test environment), routed through the terminal seam.
-  const session = useMemo(() => createTerminalSession({ user: "teacher" }), [])
-  const greeting = useMemo<TerminalLine[]>(
-    () => session.greeting.map((content) => ({ type: "output", content })),
-    [session]
-  )
-  const [terminalHistory, setTerminalHistory] = useState<TerminalLine[]>(greeting)
-  const [terminalInput, setTerminalInput] = useState("")
-  const [cursorVisible, setCursorVisible] = useState(true)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const terminalBodyRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const interval = setInterval(() => setCursorVisible((prev) => !prev), 530)
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (terminalBodyRef.current) {
-      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight
-    }
-  }, [terminalHistory, terminalInput])
-
-  const handleTerminalSubmit = async () => {
-    if (!terminalInput.trim()) return
-    const command = terminalInput
-    setTerminalHistory((prev) => [...prev, { type: "prompt", content: command }])
-    setTerminalInput("")
-    const result = await session.run(command)
-    if (result.clear) {
-      setTerminalHistory([])
-      return
-    }
-    if (result.output) {
-      setTerminalHistory((prev) => [...prev, { type: "output", content: result.output }])
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleTerminalSubmit()
-  }
-
-  const focusInput = () => inputRef.current?.focus()
-
-  const copyToClipboard = () => {
-    const text = terminalHistory
-      .map((line) => (line.type === "prompt" ? `$ ${line.content}` : line.content))
-      .join("\n")
-    navigator.clipboard.writeText(text)
-  }
-
-  const clearTerminal = () => setTerminalHistory(greeting)
-
   const handlePublish = async () => {
     setError(null)
     setPublishing(true)
     try {
-      await createActivity({
+      await createActivity(groupId, {
         title: activityName,
         topicNumber: Number(selectedTopic) || 0,
         source: "teacher",
         instructions,
         maxScore: Number(maxScore) || 0,
-        dueDate: dueDate || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         required: isRequired,
         evaluationType,
+        gradingPolicy,
         checks,
       })
-      // On success the backend returns the activity; redirect to the course.
+      toast.success("Actividad publicada")
+      router.push(`/groups/${groupId}`)
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo publicar la actividad.")
     } finally {
@@ -147,10 +93,6 @@ function NewActivityPage() {
                   Cancelar
                 </Button>
               </Link>
-              <Button variant="outline" className="border-border hover:bg-secondary">
-                <Save className="w-4 h-4 mr-2" />
-                Guardar borrador
-              </Button>
               <Button
                 onClick={handlePublish}
                 disabled={publishing}
@@ -164,13 +106,11 @@ function NewActivityPage() {
         </div>
       </header>
 
-      {/* Split Layout */}
-      <div className="flex-1 flex">
-        {/* Left Side - Configuration (55%) */}
-        <div className="w-[55%] border-r border-border overflow-y-auto">
-          <div className="p-6 space-y-8">
-            {error && (
-              <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
+      {/* Formulario centrado */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-6 py-8 space-y-8">
+          {error && (
+            <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
                 {error}
               </div>
             )}
@@ -234,11 +174,11 @@ function NewActivityPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">
-                      Fecha límite de entrega
+                      Fecha y hora de cierre
                     </label>
                     <div className="relative">
                       <Input
-                        type="date"
+                        type="datetime-local"
                         value={dueDate}
                         onChange={(e) => setDueDate(e.target.value)}
                         className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20 [color-scheme:dark]"
@@ -248,21 +188,51 @@ function NewActivityPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Tipo de actividad</label>
-                    <div className="flex items-center gap-3 h-9">
-                      <Switch
-                        checked={isRequired}
-                        onCheckedChange={setIsRequired}
-                        className="data-[state=checked]:bg-primary"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {isRequired ? (
-                          <span className="text-foreground font-medium">Obligatoria</span>
-                        ) : (
-                          "Complementaria"
-                        )}
-                      </span>
-                    </div>
+                    <label className="text-sm font-medium text-foreground">
+                      Política de calificación
+                    </label>
+                    <Select
+                      value={gradingPolicy}
+                      onValueChange={(v) =>
+                        setGradingPolicy(v as "best_score" | "latest_score")
+                      }
+                    >
+                      <SelectTrigger className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20">
+                        <SelectValue placeholder="Política de calificación" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        <SelectItem
+                          value="best_score"
+                          className="focus:bg-primary/10 focus:text-foreground"
+                        >
+                          Mejor intento
+                        </SelectItem>
+                        <SelectItem
+                          value="latest_score"
+                          className="focus:bg-primary/10 focus:text-foreground"
+                        >
+                          Último intento
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Obligatoriedad</label>
+                  <div className="flex items-center gap-3 h-9">
+                    <Switch
+                      checked={isRequired}
+                      onCheckedChange={setIsRequired}
+                      className="data-[state=checked]:bg-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      {isRequired ? (
+                        <span className="text-foreground font-medium">Obligatoria</span>
+                      ) : (
+                        "Complementaria"
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -368,96 +338,6 @@ function NewActivityPage() {
               )}
             </section>
           </div>
-        </div>
-
-        {/* Right Side - Terminal Preview (45%) */}
-        <div className="w-[45%] flex flex-col bg-[#0a0a0a]">
-          <div className="px-4 py-3 border-b border-border bg-card">
-            <h3 className="text-sm font-medium text-foreground">Terminal de prueba</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Usa esta terminal para reproducir la solución y verificar tus aserciones
-            </p>
-          </div>
-
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 bg-[#161616] border-b border-primary/30">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28c840]" />
-                </div>
-                <span className="text-sm text-zinc-400 ml-3 font-mono">bash</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
-                  onClick={copyToClipboard}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-zinc-400 hover:text-zinc-100"
-                  onClick={clearTerminal}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="h-px bg-primary/50" />
-
-            <div
-              ref={terminalBodyRef}
-              className="flex-1 p-4 overflow-y-auto font-mono text-sm cursor-text"
-              onClick={focusInput}
-            >
-              {terminalHistory.map((line, index) => (
-                <div key={index} className="leading-6">
-                  {line.type === "prompt" ? (
-                    <div className="flex">
-                      <span className="text-[#238636]">docente@linuxlab</span>
-                      <span className="text-zinc-100">:</span>
-                      <span className="text-[#58a6ff]">~</span>
-                      <span className="text-zinc-100">$ </span>
-                      <span className="text-zinc-100">{line.content}</span>
-                    </div>
-                  ) : (
-                    <div className="text-zinc-400 whitespace-pre-wrap">{line.content}</div>
-                  )}
-                </div>
-              ))}
-
-              <div className="flex leading-6">
-                <span className="text-[#238636]">docente@linuxlab</span>
-                <span className="text-zinc-100">:</span>
-                <span className="text-[#58a6ff]">~</span>
-                <span className="text-zinc-100">$ </span>
-                <span className="text-zinc-100">{terminalInput}</span>
-                <span
-                  className={cn(
-                    "w-2 h-5 bg-zinc-100 ml-0.5 inline-block",
-                    !cursorVisible && "opacity-0"
-                  )}
-                />
-              </div>
-
-              <input
-                ref={inputRef}
-                type="text"
-                value={terminalInput}
-                onChange={(e) => setTerminalInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="absolute opacity-0 pointer-events-none"
-                autoFocus
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

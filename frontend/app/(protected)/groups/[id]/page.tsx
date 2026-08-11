@@ -213,7 +213,11 @@ function GroupDetailContent() {
               Agregar estudiante
             </ActionButton>
           ) : (
-            <ActionButton tone="amber" className="ml-auto">
+            <ActionButton
+              tone="amber"
+              className="ml-auto"
+              href={`/groups/${id}/new-activity`}
+            >
               <Plus className="h-4 w-4" />
               Agregar actividad
             </ActionButton>

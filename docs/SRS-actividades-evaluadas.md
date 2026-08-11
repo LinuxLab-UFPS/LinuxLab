@@ -486,6 +486,9 @@ interpretarse como comandos ejecutables.
 
 Representa la instancia de una actividad publicada o configurada para un grupo.
 
+No hay estado borrador: crear una actividad es publicarla. `enabled` la habilita
+o deshabilita y `due_at` la cierra.
+
 Campos mínimos:
 
 - `id`;
@@ -501,7 +504,6 @@ Campos mínimos:
 - `required`;
 - `enabled`;
 - `due_at`, opcional;
-- `published_at`, opcional;
 - `created_at`;
 - `updated_at`.
 
@@ -567,11 +569,15 @@ Campos mínimos:
 
 ### 13.1 Estados de una actividad
 
+Crear una actividad es publicarla: no existe estado borrador. Sobre lo
+publicado solo se puede habilitar o deshabilitar, y el cierre vence la
+actividad:
+
 ```text
-draft -> published -> enabled -> disabled
-                         |
-                         v
-                       closed
+enabled <-> disabled
+      |
+      v
+    closed   (derivado de due_at)
 ```
 
 Una actividad en estado `disabled`, `closed` o archivada no acepta nuevos
@@ -581,10 +587,10 @@ usuarios autorizados.
 ### 13.2 Estados de una entrega manual
 
 ```text
-draft -> submitted -> under_review -> graded
-                                      |
-                                      v
-                                   returned
+submitted -> under_review -> graded
+                          |
+                          v
+                       returned
 ```
 
 ### 13.3 Reglas generales
@@ -825,12 +831,13 @@ Como mínimo, la matriz de trazabilidad debe cubrir:
 
 | Componente | Estado actual | Estado objetivo |
 |---|---|---|
+| Modelo de datos | Migrado: `ActivityDefinition` + `GroupActivity` (snapshot de aserciones al publicar) + `ActivitySubmission` + `ActivityAuditEvent`. Intentos con `group_activity_id` (nullable) y `attempt_number`; seeds en `upsert`; FKs `RESTRICT` | Mantener; el borrado de historial solo manual y con confirmación |
 | Checker seguro | Implementado | Mantener y ampliar solo con aserciones revisadas |
-| Actividades sembradas | Implementado | Migrar al modelo de definiciones y asignaciones |
+| Actividades sembradas | Implementado, migradas al modelo de definiciones | Publicación por grupo y contexto de grupo en la lección |
 | Evaluación automática | Implementación inicial | Integrar grupos, límites y políticas de calificación |
 | Banco de actividades | Pendiente | CRUD exclusivo del administrador |
 | Actividades docentes | Interfaz parcial | Backend, persistencia y publicación |
-| Intentos | Registro inicial | Límites, mejor/último resultado y seguimiento |
+| Intentos | Registro inicial (numerados) | Límites, mejor/último resultado y seguimiento |
 | Evaluación manual | Pendiente | Entregas, calificación y retroalimentación |
 | Seguimiento | Interfaz parcial | Datos reales de intentos y entregas |
 | Bitácora de actividades | Pendiente | Eventos y consulta autorizada |

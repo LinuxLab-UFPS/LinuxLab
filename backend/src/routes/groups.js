@@ -18,4 +18,9 @@ router.get("/:id/students", groupController.listStudents)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 
+// Actividades del curso (docente)
+router.get("/:id/activities", groupController.listGroupActivities)
+router.post("/:id/activities", groupController.createGroupActivity)
+router.get("/:id/activities/:activityId", groupController.getGroupActivity)
+
 module.exports = router

@@ -52,11 +52,9 @@ const SETUP = {
 const LOGO = "███████████████████\n█                 █\n█ █ █ ███ ███ ███ █\n█ █ █ █   █ █ █   █\n█ █ █ ██  ███ ███ █\n█ █ █ █   █     █ █\n█ ███ █   █   ███ █\n█                 █\n███████████████████"
 
 async function main() {
-  await prisma.activity.deleteMany({ where: { slug: SLUG } })
-
-  const activity = await prisma.activity.create({
-    data: {
-      slug: SLUG,
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
       title: "El mensaje oculto",
       kind: "activity",
       difficulty: "intermediate",
@@ -67,10 +65,31 @@ async function main() {
       max_score: 100,
       setup: SETUP,
       checks: {
+        deleteMany: {},
         create: [
           { type: "archivo_existe", params: { ruta: `${RAIZ}/logo.txt` }, points: 30, position: 0 },
           // Contenido exacto: con `archivo_contiene`, las mismas filas en otro
           // orden aprobarian, y el orden es justo lo que hay que resolver.
+          { type: "archivo_es", params: { ruta: `${RAIZ}/logo.txt`, valor: LOGO + "\n$codigo" }, points: 70, position: 1 },
+        ],
+      },
+    },
+    create: {
+      slug: SLUG,
+      title: "El mensaje oculto",
+      kind: "activity",
+      difficulty: "intermediate",
+      instructions:
+        "Cada archivo esconde un trozo de un dibujo. Reúnelos en logo.txt en el " +
+        "orden correcto y firma con tu código en la última línea.",
+      topic_number: 4,
+      max_score: 100,
+      setup: SETUP,
+      source: "bank",
+      active: true,
+      checks: {
+        create: [
+          { type: "archivo_existe", params: { ruta: `${RAIZ}/logo.txt` }, points: 30, position: 0 },
           { type: "archivo_es", params: { ruta: `${RAIZ}/logo.txt`, valor: LOGO + "\n$codigo" }, points: 70, position: 1 },
         ],
       },

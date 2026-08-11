@@ -40,8 +40,11 @@ export const teacherApi = {
   listGroupActivities: (groupId: string) =>
     apiFetch<Activity[]>(`/api/groups/${groupId}/activities`),
   getActivity: (id: string) => apiFetch<Activity>(`/api/activities/${id}`),
-  createActivity: (input: CreateActivityInput) =>
-    apiFetch<Activity>("/api/activities", { method: "POST", body: JSON.stringify(input) }),
+  createActivity: (groupId: string, input: CreateActivityInput) =>
+    apiFetch<Activity>(`/api/groups/${groupId}/activities`, {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
   validateActivity: (activityId: string) =>

@@ -26,11 +26,34 @@ const SETUP = {
   ],
 }
 
-async function main() {
-  await prisma.activity.deleteMany({ where: { slug: SLUG } })
+/** Ninguna de las cinco se cumple al empezar: si alguna naciera en verde, el
+ *  estudiante veria puntos regalados antes de tocar nada. */
+const CHECKS = [
+  { type: "archivo_no_existe", params: { ruta: `${RAIZ}/temporal.tmp` }, points: 20, position: 0 },
+  { type: "archivo_no_existe", params: { ruta: `${RAIZ}/cache.tmp` }, points: 20, position: 1 },
+  { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/informe.txt` }, points: 20, position: 2 },
+  { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/notas.txt` }, points: 20, position: 3 },
+  // Los .png tienen que llegar enteros a imagenes, asi que un `rm *` de mas
+  // deja esta sin cumplir y no hay forma de recuperarla.
+  { type: "archivo_existe", params: { ruta: `${RAIZ}/imagenes/captura1.png` }, points: 20, position: 4 },
+]
 
-  const activity = await prisma.activity.create({
-    data: {
+async function main() {
+  const activity = await prisma.activityDefinition.upsert({
+    where: { slug: SLUG },
+    update: {
+      title: "Limpieza con comodines",
+      kind: "activity",
+      difficulty: "basic",
+      instructions:
+        "Borra los .tmp de la carpeta de la actividad, mueve los .txt a " +
+        "documentos y los .png a imagenes.",
+      topic_number: 4,
+      max_score: 100,
+      setup: SETUP,
+      checks: { deleteMany: {}, create: CHECKS },
+    },
+    create: {
       slug: SLUG,
       title: "Limpieza con comodines",
       kind: "activity",
@@ -41,19 +64,9 @@ async function main() {
       topic_number: 4,
       max_score: 100,
       setup: SETUP,
-      checks: {
-        create: [
-          // Ninguna de las cinco se cumple al empezar: si alguna naciera en
-          // verde, el estudiante veria puntos regalados antes de tocar nada.
-          { type: "archivo_no_existe", params: { ruta: `${RAIZ}/temporal.tmp` }, points: 20, position: 0 },
-          { type: "archivo_no_existe", params: { ruta: `${RAIZ}/cache.tmp` }, points: 20, position: 1 },
-          { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/informe.txt` }, points: 20, position: 2 },
-          { type: "archivo_existe", params: { ruta: `${RAIZ}/documentos/notas.txt` }, points: 20, position: 3 },
-          // Los .png tienen que llegar enteros a imagenes, asi que un `rm *`
-          // de mas deja esta sin cumplir y no hay forma de recuperarla.
-          { type: "archivo_existe", params: { ruta: `${RAIZ}/imagenes/captura1.png` }, points: 20, position: 4 },
-        ],
-      },
+      source: "bank",
+      active: true,
+      checks: { create: CHECKS },
     },
     include: { checks: true },
   })

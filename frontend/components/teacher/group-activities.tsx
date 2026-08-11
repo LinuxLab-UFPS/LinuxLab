@@ -66,7 +66,8 @@ export function GroupActivities({
                     </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {getTopic(activity.topicNumber)?.title ?? `Tema ${activity.topicNumber}`}
+                    {getTopic(activity.topicNumber)?.title ??
+                      (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                   </TableCell>
                   <TableCell>
                     {difficulty && (
