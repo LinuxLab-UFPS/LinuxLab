@@ -40,3 +40,6 @@ backend/generated/prisma
 
 # Notas de trabajo, no van al repositorio
 NOTAS-LOCALES.md
+
+# Copias de la base con intentos de estudiantes
+backend/prisma/respaldo/
