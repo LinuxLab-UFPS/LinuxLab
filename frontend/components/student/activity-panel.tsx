@@ -1,15 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Lightbulb, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Markdown } from "@/components/shared/markdown"
 import { ActionButton } from "@/components/shared/action-button"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
 import { CheckList } from "@/components/student/check-list"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@/lib/features/shared/prose"
@@ -27,9 +22,9 @@ const PILL = "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-mediu
  * never inside the course.
  *
  * The header and the check button stay put while the statement scrolls on its
- * own, so the student never loses the button. What the laboratory will look at
- * is folded away behind a hint — the point is to work it out from the statement,
- * not to read the answer key first.
+ * own, so the student never loses the button. What the laboratory looks at is
+ * only listed once the activity is solved: an activity is a challenge, and
+ * reading the assertions beforehand is reading the answer.
  */
 export function ActivityPanel({
   activity,
@@ -96,19 +91,15 @@ export function ActivityPanel({
           <div className="flex justify-center py-6">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
+        ) : passed ? (
+          <CheckList rows={rows} evaluated={evaluated} className="mt-6" />
         ) : (
-          <Collapsible className="mt-6" defaultOpen={evaluated}>
-            <CollapsibleTrigger
-              title="Qué se va a revisar"
-              aria-label="Qué se va a revisar"
-              className="inline-flex rounded-md border border-amber-500/30 p-1.5 text-amber-500 transition-colors hover:bg-amber-500/10"
-            >
-              <Lightbulb className="h-4 w-4" />
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CheckList rows={rows} evaluated={evaluated} className="mt-3" />
-            </CollapsibleContent>
-          </Collapsible>
+          evaluated && (
+            <p className="mt-6 text-sm text-muted-foreground">
+              {rows.filter((row) => row.passed).length} de {rows.length}{" "}
+              {rows.length === 1 ? "comprobación lista" : "comprobaciones listas"}.
+            </p>
+          )
         )}
       </div>
 

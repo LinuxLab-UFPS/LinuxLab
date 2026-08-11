@@ -34,10 +34,7 @@ const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
   archivo_es: (p) => `${p.ruta} tiene el contenido exacto`,
   minimo_lineas: (p) => `${p.ruta} tiene al menos ${p.cantidad} líneas`,
   ultima_linea_es: (p) => `La última línea de ${p.ruta} es ${p.valor}`,
-  archivo_contiene: (p) =>
-    (p.patron ?? "").length > 24
-      ? `${p.ruta} tiene el contenido esperado`
-      : `${p.ruta} contiene "${p.patron}"`,
+  archivo_contiene: (p) => `${p.ruta} tiene el contenido esperado`,
 }
 
 export function describeCheck(type: string, params: Record<string, string>): string {
