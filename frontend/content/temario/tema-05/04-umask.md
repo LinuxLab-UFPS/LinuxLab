@@ -1,3 +1,5 @@
+<!-- VIDEO: video-permisos-linux | Permisos: de dónde salen los números de chmod y umask -->
+
 ## Permisos por defecto
 
 Los archivos creados hasta ahora nunca han llevado los mismos permisos que un directorio recién hecho, y nadie ha elegido ninguno de los dos. Eso lo decide la `umask`, un valor que cada sesión arrastra y que determina con qué permisos se crea todo lo nuevo.
