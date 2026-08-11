@@ -1,0 +1,48 @@
+{
+  "id": "tema-05",
+  "number": 5,
+  "title": "Permisos",
+  "description": "Leer los permisos de un archivo, cambiarlos con chmod y entender qué significan sobre un directorio",
+  "subtopics": [
+    {
+      "id": "dueno-y-permisos",
+      "title": "Dueño, grupo y permisos",
+      "file": "01-dueno-y-permisos.md"
+    },
+    {
+      "id": "chmod",
+      "title": "Cambiar permisos con chmod",
+      "file": "02-chmod.md"
+    },
+    {
+      "id": "directorios",
+      "title": "Permisos sobre directorios",
+      "file": "03-directorios.md"
+    },
+    {
+      "id": "umask",
+      "title": "Permisos por defecto",
+      "file": "04-umask.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "link",
+      "title": "Simulador de permisos",
+      "url": "https://madarme.co/webapp/permisos.html",
+      "detail": "madarme.co · chmod en octal y simbólico"
+    },
+    {
+      "type": "link",
+      "title": "Simulador de umask",
+      "url": "https://madarme.co/webapp/umask.html",
+      "detail": "madarme.co · Permisos por defecto"
+    },
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 9: \"Permissions\" · Gratis, Creative Commons"
+    }
+  ]
+}
