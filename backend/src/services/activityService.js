@@ -269,9 +269,30 @@ function normalizeEvaluationType(value) {
 }
 
 /**
+ * La carpeta de trabajo de una actividad: nace del titulo para que sea legible
+ * y del id para que sea unica (dos actividades con el mismo titulo no chocan).
+ * El docente nunca la escribe; sus aserciones usan rutas relativas a ella.
+ */
+function generateWorkdir(title, id) {
+  const slug =
+    title
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 20) || "actividad"
+  return `${slug}-${id.replace(/-/g, "").slice(0, 8)}`
+}
+
+/**
  * Valida las aserciones de una actividad automatica y devuelve su snapshot con
  * ids generados en el servidor (los del cliente no se aceptan). Las posiciones
  * salen del orden de llegada y el puntaje repartido no puede superar el maximo.
+ *
+ * Las rutas son SIEMPRE relativas a la carpeta de trabajo de la actividad:
+ * ni absolutas ni con `..`. El backend las resuelve contra la carpeta al
+ * evaluar; aqui solo se valida la forma.
  */
 function buildChecks(list, { evaluationType, maxScore }) {
   if (evaluationType === "manual") return []
@@ -291,6 +312,14 @@ function buildChecks(list, { evaluationType, maxScore }) {
     const error = checkCatalog.validatorOf(check.type)(params)
     if (error) {
       throw new AppError(`Aserción ${i + 1} (${check.type}): ${error}`, 400, "VALIDATION_ERROR")
+    }
+    const ruta = params.ruta
+    if (typeof ruta === "string" && ruta.trim() && (ruta.startsWith("/") || ruta.split("/").includes(".."))) {
+      throw new AppError(
+        `Aserción ${i + 1} (${check.type}): la ruta debe ser relativa a la carpeta de trabajo de la actividad`,
+        400,
+        "VALIDATION_ERROR",
+      )
     }
     const points = Number(check.points)
     if (!Number.isInteger(points) || points < 0) {
@@ -328,6 +357,7 @@ function serializeGroupActivity(ga, definition) {
     required: ga.required,
     evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
     gradingPolicy: ga.grading_policy,
+    workdir: ga.workdir,
     checks: (ga.checks ?? []).map((c) => ({
       id: c.id,
       type: c.type,
@@ -428,8 +458,14 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
     },
   })
 
+  // La carpeta de trabajo nace del id de la publicacion: se genera antes de
+  // crearla para poder guardarla en el mismo registro.
+  const groupActivityId = randomUUID()
+  const workdir = generateWorkdir(title, groupActivityId)
+
   const groupActivity = await prisma.groupActivity.create({
     data: {
+      id: groupActivityId,
       group_id: group.id,
       activity_definition_id: activity.id,
       title,
@@ -443,6 +479,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
       required: true,
       enabled: true,
       due_at: dueAt,
+      workdir,
     },
   })
 

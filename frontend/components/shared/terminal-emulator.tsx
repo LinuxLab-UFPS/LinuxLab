@@ -5,7 +5,7 @@ import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
 import { env } from "@/lib/config/env"
-import { onTerminalInput } from "@/lib/features/student/terminal-input"
+import { onTerminalInput, markTerminalReady } from "@/lib/features/student/terminal-input"
 
 const WS_BASE = env.backendUrl.replace(/^http/, "ws")
 
@@ -65,6 +65,9 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     ws.onopen = () => {
       const { cols, rows } = term
       ws.send(JSON.stringify({ type: "resize", cols, rows }))
+      // La terminal está lista: los comandos que llegaron antes (p. ej. el cd
+      // a la carpeta de trabajo al abrir una actividad) se vacían en orden.
+      markTerminalReady()
     }
 
     ws.onmessage = (event) => {

@@ -7,6 +7,10 @@
  * validador de sus parametros. Agregar un tipo nuevo es: implementarlo en
  * `entorno/scripts/checker.py` (la autoridad final de evaluacion) y anadirlo
  * aqui — la interfaz lo muestra solo.
+ *
+ * La `ruta` de cada asercion es RELATIVA a la carpeta de trabajo de la
+ * actividad (`~/actividades/<workdir>/`): el docente escribe solo el archivo o
+ * directorio que va a verificar, y el backend la resuelve al evaluar.
  */
 
 const field = (key, label, placeholder) => ({ key, label, placeholder })
@@ -15,22 +19,22 @@ const CATALOG = [
   {
     type: "directorio_existe",
     label: "El directorio existe",
-    hint: "Verifica que exista un directorio en la ruta indicada.",
-    fields: [field("ruta", "Ruta del directorio", "/home/$usuario/practicas")],
+    hint: "Verifica que exista un directorio dentro de la carpeta de trabajo de la actividad.",
+    fields: [field("ruta", "Directorio", "carpeta")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {
     type: "archivo_existe",
     label: "El archivo existe",
-    hint: "Verifica que exista un archivo en la ruta indicada.",
-    fields: [field("ruta", "Ruta del archivo", "/home/$usuario/notas.txt")],
+    hint: "Verifica que exista un archivo dentro de la carpeta de trabajo de la actividad.",
+    fields: [field("ruta", "Archivo", "informe.txt")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {
     type: "archivo_no_existe",
     label: "El archivo ya no existe",
-    hint: "Verifica que el archivo no exista en la ruta indicada.",
-    fields: [field("ruta", "Ruta del archivo", "/home/$usuario/notas.txt")],
+    hint: "Verifica que el archivo no exista dentro de la carpeta de trabajo de la actividad.",
+    fields: [field("ruta", "Archivo", "temporal.tmp")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {
@@ -38,7 +42,7 @@ const CATALOG = [
     label: "Los permisos son",
     hint: "Compara los permisos del archivo con el modo octal esperado.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/script.sh"),
+      field("ruta", "Archivo", "script.sh"),
       field("modo", "Modo (octal)", "755"),
     ],
     validate: ({ ruta, modo }) => {
@@ -52,7 +56,7 @@ const CATALOG = [
     label: "El propietario es",
     hint: "Verifica el usuario propietario del archivo o directorio.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/archivo"),
+      field("ruta", "Archivo", "archivo"),
       field("usuario", "Usuario esperado", "$usuario"),
     ],
     validate: ({ ruta, usuario }) => {
@@ -66,7 +70,7 @@ const CATALOG = [
     label: "El archivo contiene",
     hint: "Busca un texto o patrón dentro del contenido del archivo.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/.bashrc"),
+      field("ruta", "Archivo", "config.txt"),
       field("patron", "Texto o patrón", "export PATH="),
     ],
     validate: ({ ruta, patron }) => {
@@ -80,7 +84,7 @@ const CATALOG = [
     label: "Tiene al menos N líneas",
     hint: "Verifica que el archivo tenga una cantidad mínima de líneas.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/ficha.txt"),
+      field("ruta", "Archivo", "ficha.txt"),
       field("cantidad", "Cantidad mínima", "5"),
     ],
     validate: ({ ruta, cantidad }) => {
@@ -94,7 +98,7 @@ const CATALOG = [
     label: "El archivo es exactamente",
     hint: "Compara el contenido completo del archivo con el valor esperado.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/logo.txt"),
+      field("ruta", "Archivo", "logo.txt"),
       field("valor", "Contenido esperado", "…"),
     ],
     validate: ({ ruta, valor }) => {
@@ -108,7 +112,7 @@ const CATALOG = [
     label: "La última línea es",
     hint: "Verifica el contenido de la última línea del archivo.",
     fields: [
-      field("ruta", "Ruta", "/home/$usuario/ficha.txt"),
+      field("ruta", "Archivo", "ficha.txt"),
       field("valor", "Valor esperado", "$correo"),
     ],
     validate: ({ ruta, valor }) => {

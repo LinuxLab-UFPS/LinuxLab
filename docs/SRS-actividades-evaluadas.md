@@ -191,6 +191,14 @@ entrada en `checkCatalog.js` (backend): la interfaz del docente lo muestra
 automáticamente vía `GET /api/activities/catalog`, que sirve los tipos, etiquetas
 y campos de la misma fuente que valida la creación.
 
+**Rutas relativas a la carpeta de trabajo.** Cada actividad publicada tiene una
+carpeta de trabajo autogenerada (`~/actividades/<workdir>/`, con `workdir`
+derivado del título y del id). Las aserciones del docente escriben la `ruta`
+**relativa a esa carpeta** (p. ej. `informe.txt`, `carpeta/logo.txt`); el backend
+la resuelve contra la carpeta al evaluar. En la creación se rechazan las rutas
+absolutas y las que contengan `..`. Las comprobaciones del temario conservan sus
+rutas absolutas y se evalúan por slug, sin pasar por esta regla.
+
 **Todas evalúan estado, no comandos.** Es deliberado: al estudiante no le
 importa si llegó con `mkdir -p` o con dos `mkdir`, le importa que la estructura
 quede bien. Y evaluar estado no requiere ejecutar nada que venga del docente.
@@ -511,6 +519,9 @@ Campos mínimos:
 - `required`;
 - `enabled`;
 - `due_at`, opcional;
+- `workdir`, autogenerado al crear: nombre de la carpeta de trabajo
+  (`~/actividades/<workdir>/`) sobre el que se resuelven las rutas relativas de
+  las aserciones;
 - `created_at`;
 - `updated_at`.
 
@@ -844,7 +855,7 @@ Como mínimo, la matriz de trazabilidad debe cubrir:
 | Actividades sembradas | Implementado, migradas al modelo de definiciones | Publicación por grupo y contexto de grupo en la lección |
 | Evaluación automática | Implementación inicial | Integrar grupos, límites y políticas de calificación |
 | Banco de actividades | Decisión: predefinido de la plataforma (sin gestión admin/docente). Vista de consulta y endpoint retirados | Mantener como catálogo interno sembrado (seeds) |
-| Actividades docentes | Creación y publicación implementadas (formulario + `POST /api/groups/:id/activities` + listado) | Edición, habilitar/deshabilitar y asignar del banco |
+| Actividades docentes | Creación y publicación implementadas (formulario + `POST /api/groups/:id/activities` + listado). Carpeta de trabajo autogenerada con rutas de aserciones relativas | Edición, habilitar/deshabilitar, asignar del banco y lado del estudiante |
 | Intentos | Registro inicial (numerados) | Límites, mejor/último resultado y seguimiento |
 | Evaluación manual | Pendiente | Entregas, calificación y retroalimentación |
 | Seguimiento | Interfaz parcial | Datos reales de intentos y entregas |

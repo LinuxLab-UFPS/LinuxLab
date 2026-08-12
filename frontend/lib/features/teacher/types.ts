@@ -64,6 +64,8 @@ export interface Activity {
   required: boolean
   evaluationType: EvaluationType
   gradingPolicy?: "best_score" | "latest_score"
+  /** Carpeta de trabajo autogenerada (`~/actividades/<workdir>/`). */
+  workdir?: string
   checks: ActivityCheck[]
   uses?: number
 }

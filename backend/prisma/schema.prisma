@@ -150,6 +150,9 @@ model GroupActivity {
   required                Boolean              @default(true)
   enabled                 Boolean              @default(true)
   due_at                  DateTime?            @map("due_at")
+  /// Nombre de la carpeta de trabajo, autogenerado al crear (`~/actividades/<workdir>/`).
+  /// Las aserciones de la actividad usan rutas relativas a esta carpeta.
+  workdir                 String               @db.VarChar(64)
   created_at              DateTime             @default(now()) @map("created_at")
   updated_at              DateTime             @updatedAt @map("updated_at")
 

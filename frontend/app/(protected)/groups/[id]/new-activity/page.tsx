@@ -327,6 +327,11 @@ function NewActivityPage() {
                     solicita la validación, sin necesidad de escribir scripts. El valor
                     de la actividad ({MAX_SCORE} pts) se reparte entre las aserciones.
                   </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Las rutas de las aserciones son relativas a la carpeta de trabajo
+                    de la actividad: escribe solo el archivo o directorio que se va a
+                    verificar (ej: <code className="font-mono text-foreground">informe.txt</code>).
+                  </p>
                   <CheckBuilder
                     checks={checks}
                     onChange={setChecks}
