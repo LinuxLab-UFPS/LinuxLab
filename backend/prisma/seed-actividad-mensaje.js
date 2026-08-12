@@ -55,12 +55,12 @@ async function main() {
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
-      title: "El mensaje oculto",
+      title: "Arma el logo",
       kind: "activity",
       difficulty: "intermediate",
       instructions:
-        "Cada archivo esconde un trozo de un dibujo. Reúnelos en logo.txt en el " +
-        "orden correcto y firma con tu código en la última línea.",
+        "El logo está repartido en trozos entre cuatro archivos. Reúnelos en " +
+        "logo.txt en el orden correcto y firma con tu código en la última línea.",
       topic_number: 4,
       max_score: 100,
       setup: SETUP,
@@ -76,12 +76,12 @@ async function main() {
     },
     create: {
       slug: SLUG,
-      title: "El mensaje oculto",
+      title: "Arma el logo",
       kind: "activity",
       difficulty: "intermediate",
       instructions:
-        "Cada archivo esconde un trozo de un dibujo. Reúnelos en logo.txt en el " +
-        "orden correcto y firma con tu código en la última línea.",
+        "El logo está repartido en trozos entre cuatro archivos. Reúnelos en " +
+        "logo.txt en el orden correcto y firma con tu código en la última línea.",
       topic_number: 4,
       max_score: 100,
       setup: SETUP,

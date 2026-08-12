@@ -79,9 +79,9 @@ const RAW = [
   },
   {
     slug: "mensaje-oculto",
-    title: "El mensaje oculto",
+    title: "Arma el logo",
     description:
-      "Cuatro archivos de cien líneas esconden un dibujo por trozos. Reúnelos en el orden correcto.",
+      "El logo está repartido en cuatro archivos de cien líneas. Saca cada trozo y júntalos en orden.",
     difficulty: "intermediate" as Difficulty,
     topicNumber: 4,
     checks: 2,
