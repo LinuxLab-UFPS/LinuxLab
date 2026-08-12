@@ -1,0 +1,24 @@
+{
+  "id": "tema-06",
+  "number": 6,
+  "title": "Compresión",
+  "description": "Reducir el tamaño de un archivo con gzip y bzip2, y empaquetar carpetas enteras con tar",
+  "subtopics": [
+    { "id": "comprimir", "title": "Comprimir y descomprimir", "file": "01-comprimir.md" },
+    { "id": "tar", "title": "Empaquetar con tar", "file": "02-tar.md" }
+  ],
+  "resources": [
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 18: \"Archiving and Backup\" · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "GNU tar: manual de referencia",
+      "url": "https://www.gnu.org/software/tar/manual/",
+      "detail": "gnu.org · Todas las opciones, con ejemplos"
+    }
+  ]
+}

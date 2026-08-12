@@ -80,6 +80,15 @@ Recursos aportados por el director del curso:
 | Simulador de permisos | madarme.co/webapp/permisos.html |
 | Simulador de umask | madarme.co/webapp/umask.html |
 
+### 6. Compresión
+
+| Lección | Fuentes |
+|---|---|
+| Comprimir y descomprimir | Cisco · Shotts, cap. 18 "Archiving and Backup" · GNU Gzip Manual |
+| Empaquetar con tar | Cisco · Shotts, cap. 18 · GNU Tar Manual |
+
+Recursos: Shotts, manual de referencia de GNU tar.
+
 AlgoMaster (algomaster.io/learn/operating-systems) se usa como referencia de
 apoyo, no como fuente principal: es un tutorial web sin licencia declarada, así
 que se cita pero no se reproduce texto suyo.

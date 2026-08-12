@@ -79,7 +79,10 @@ export const syllabus: Topic[] = [
     slug: "compresion",
     title: "Compresión",
     description: "Compresión de archivos con tar, gzip, bzip2 y zip.",
-    subTopics: [],
+    subTopics: [
+      { number: 1, title: "Comprimir y descomprimir" },
+      { number: 2, title: "Empaquetar con tar" },
+    ],
   },
   {
     number: 7,
