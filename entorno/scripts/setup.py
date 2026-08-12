@@ -84,6 +84,16 @@ def dentro(raiz, relativa):
     return destino
 
 
+def modo_de(valor):
+    """Los permisos de un archivo, en octal de tres digitos como los escribe
+    `chmod`. Se rechaza cualquier otra cosa para que un descuido en la semilla
+    no acabe en un archivo abierto de par en par."""
+    texto = str(valor).strip()
+    if len(texto) != 3 or any(c not in "01234567" for c in texto):
+        raise SetupError(f"El modo {valor!r} no es un octal de tres digitos")
+    return int(texto, 8)
+
+
 def texto_de(archivo):
     """El contenido de un archivo, literal o generado.
 
@@ -201,6 +211,11 @@ def construye(spec):
         os.makedirs(os.path.dirname(destino), mode=0o700, exist_ok=True)
         with open(destino, "w", encoding="utf-8") as fh:
             fh.write(contenido)
+        # Sin `mode` el archivo se queda con lo que dicte la umask. Ponerlo a
+        # mano es lo que permite plantear una actividad de permisos: si todos
+        # llegan iguales, corregirlos no requiere entender nada.
+        if "mode" in archivo:
+            os.chmod(destino, modo_de(archivo["mode"]))
         creados += 1
 
     return {"ok": True, "root": raiz, "creados": creados}
