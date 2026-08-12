@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BookOpen, Database, LogOut, TerminalSquare } from "lucide-react"
+import { BookOpen, LogOut, TerminalSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -32,13 +32,6 @@ const NAV = [
     icon: TerminalSquare,
     hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
     active: "bg-emerald-500/15 text-emerald-400",
-  },
-  {
-    label: "Banco de Actividades",
-    href: "/bank",
-    icon: Database,
-    hover: "hover:bg-amber-500/15 hover:text-amber-400",
-    active: "bg-amber-500/15 text-amber-400",
   },
 ]
 
