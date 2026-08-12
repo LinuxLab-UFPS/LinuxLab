@@ -10,6 +10,7 @@ import type {
   StudentGroupDetail,
   Enrollment,
   ProvisioningJobSummary,
+  CatalogEntry,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -36,7 +37,7 @@ export const teacherApi = {
 
   deleteGroup: (id: string) => apiFetch<void>(`/api/groups/${id}`, { method: "DELETE" }),
 
-  listBankActivities: () => apiFetch<Activity[]>("/api/activities/bank"),
+  getCheckCatalog: () => apiFetch<CatalogEntry[]>("/api/activities/catalog"),
   listGroupActivities: (groupId: string) =>
     apiFetch<Activity[]>(`/api/groups/${groupId}/activities`),
   getActivity: (id: string) => apiFetch<Activity>(`/api/activities/${id}`),

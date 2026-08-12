@@ -5,6 +5,7 @@ const logger = require("../lib/logger")
 const { AppError, NotFoundError, AuthorizationError } = require("../lib/errors")
 const enrollmentService = require("./enrollmentService")
 const groupService = require("./groupService")
+const checkCatalog = require("./checkCatalog")
 
 /** El evaluador vive dentro de la imagen del entorno, en ruta fija. */
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
@@ -14,47 +15,6 @@ const SETUP = "/usr/local/lib/linuxlab/setup.py"
 const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/
 
 const EVAL_TIMEOUT_MS = 20000
-
-/**
- * Validacion de parametros por tipo de asercion. El catalogo es el contrato con
- * el checker de la imagen: solo se aceptan los tipos que el conoce, y cada uno
- * valida sus propios campos. Devuelve null si esta bien, o un mensaje de error.
- */
-const CHECK_VALIDATORS = {
-  directorio_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
-  archivo_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
-  archivo_no_existe: ({ ruta }) => (ruta ? null : "Falta la ruta"),
-  permisos_son: ({ ruta, modo }) => {
-    if (!ruta) return "Falta la ruta"
-    if (!/^[0-7]{3,4}$/.test(String(modo ?? ""))) return "El modo debe ser octal (ej: 755)"
-    return null
-  },
-  propietario_es: ({ ruta, usuario }) => {
-    if (!ruta) return "Falta la ruta"
-    if (!usuario) return "Falta el usuario esperado"
-    return null
-  },
-  archivo_contiene: ({ ruta, patron }) => {
-    if (!ruta) return "Falta la ruta"
-    if (patron === undefined || patron === null || patron === "") return "Falta el patrón a buscar"
-    return null
-  },
-  minimo_lineas: ({ ruta, cantidad }) => {
-    if (!ruta) return "Falta la ruta"
-    if (!/^[1-9]\d*$/.test(String(cantidad ?? ""))) return "La cantidad debe ser un entero positivo"
-    return null
-  },
-  archivo_es: ({ ruta, valor }) => {
-    if (!ruta) return "Falta la ruta"
-    if (valor === undefined || valor === null) return "Falta el valor esperado"
-    return null
-  },
-  ultima_linea_es: ({ ruta, valor }) => {
-    if (!ruta) return "Falta la ruta"
-    if (valor === undefined || valor === null) return "Falta el valor esperado"
-    return null
-  },
-}
 
 /**
  * Datos del estudiante que el contenedor no tiene forma de conocer.
@@ -99,38 +59,6 @@ const serialize = (activity) => ({
   hasSetup: Boolean(activity.setup),
   checks: activity.checks.map(publicCheck),
 })
-
-/**
- * El banco que ve el docente. Se sirve con la forma que espera su tabla, no con
- * la del estudiante: ahi mandan el titulo, el tema y la dificultad, y `uses`
- * dice cuantos estudiantes distintos la han intentado.
- */
-async function listBank() {
-  const activities = await prisma.activityDefinition.findMany({
-    // Solo el banco: las definiciones que crea un docente (source=teacher) son
-    // suyas y no deben aparecerle a nadie mas.
-    where: { kind: "activity", source: "bank" },
-    include: {
-      checks: { orderBy: { position: "asc" } },
-      _count: { select: { attempts: true } },
-    },
-    orderBy: [{ topic_number: "asc" }, { title: "asc" }],
-  })
-
-  return activities.map((activity) => ({
-    id: activity.id,
-    title: activity.title,
-    topicNumber: activity.topic_number,
-    source: activity.source,
-    difficulty: activity.difficulty,
-    instructions: activity.instructions ?? "",
-    maxScore: activity.max_score,
-    required: false,
-    evaluationType: activity.evaluation_type === "manual" ? "manual" : "atomic",
-    checks: activity.checks.map(publicCheck),
-    uses: activity._count.attempts,
-  }))
-}
 
 async function getBySlug(slug) {
   const activity = await prisma.activityDefinition.findUnique({
@@ -343,7 +271,7 @@ function normalizeEvaluationType(value) {
 /**
  * Valida las aserciones de una actividad automatica y devuelve su snapshot con
  * ids generados en el servidor (los del cliente no se aceptan). Las posiciones
- * salen del orden de llegada y el puntaje debe repartir el maximo exacto.
+ * salen del orden de llegada y el puntaje repartido no puede superar el maximo.
  */
 function buildChecks(list, { evaluationType, maxScore }) {
   if (evaluationType === "manual") return []
@@ -356,12 +284,11 @@ function buildChecks(list, { evaluationType, maxScore }) {
   let total = 0
   for (let i = 0; i < list.length; i++) {
     const check = list[i] ?? {}
-    const validator = CHECK_VALIDATORS[check.type]
-    if (!validator) {
+    if (!checkCatalog.isKnown(check.type)) {
       throw new AppError(`El tipo de aserción "${check.type}" no existe en el catálogo`, 400, "VALIDATION_ERROR")
     }
     const params = check.params ?? {}
-    const error = validator(params)
+    const error = checkCatalog.validatorOf(check.type)(params)
     if (error) {
       throw new AppError(`Aserción ${i + 1} (${check.type}): ${error}`, 400, "VALIDATION_ERROR")
     }
@@ -377,9 +304,9 @@ function buildChecks(list, { evaluationType, maxScore }) {
     checks.push({ id: randomUUID(), type: check.type, params, points, position: i })
   }
 
-  if (total !== maxScore) {
+  if (total > maxScore) {
     throw new AppError(
-      `El puntaje repartido (${total}) no coincide con el de la actividad (${maxScore})`,
+      `El puntaje repartido (${total}) supera el de la actividad (${maxScore})`,
       400,
       "VALIDATION_ERROR",
     )
@@ -447,11 +374,19 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
 
   const title = body.title?.trim()
   if (!title) throw new AppError("El nombre de la actividad es requerido", 400, "VALIDATION_ERROR")
-
-  const maxScore = Number(body.maxScore)
-  if (!Number.isInteger(maxScore) || maxScore < 1 || maxScore > 100) {
-    throw new AppError("La puntuación máxima debe ser un entero entre 1 y 100", 400, "VALIDATION_ERROR")
+  if (title.length > 255) {
+    throw new AppError("El nombre de la actividad no puede superar los 255 caracteres", 400, "VALIDATION_ERROR")
   }
+
+  const instructions = body.instructions?.trim() || null
+  if (instructions && instructions.length > 2000) {
+    throw new AppError("La descripción no puede superar los 2000 caracteres", 400, "VALIDATION_ERROR")
+  }
+
+  // Toda actividad vale 100 puntos (escala 0-100). No se lee del cuerpo: lo
+  // unico que se valida es que el puntaje repartido entre las aserciones no
+  // supere ese valor (ver buildChecks).
+  const maxScore = 100
 
   const gradingPolicy = body.gradingPolicy ?? "best_score"
   if (!["best_score", "latest_score"].includes(gradingPolicy)) {
@@ -469,6 +404,9 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
     if (Number.isNaN(dueAt.getTime())) {
       throw new AppError("La fecha de cierre no es válida", 400, "VALIDATION_ERROR")
     }
+    if (dueAt <= new Date()) {
+      throw new AppError("La fecha de cierre debe ser posterior a la fecha actual", 400, "VALIDATION_ERROR")
+    }
   }
 
   const topicNumber = Number(body.topicNumber)
@@ -477,7 +415,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const activity = await prisma.activityDefinition.create({
     data: {
       title,
-      instructions: body.instructions?.trim() || null,
+      instructions,
       topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
       difficulty: body.difficulty ?? "basic",
       kind: "activity",
@@ -495,14 +433,14 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
       group_id: group.id,
       activity_definition_id: activity.id,
       title,
-      instructions: activity.instructions,
+      instructions,
       activity_type: "workshop",
       evaluation_type: evaluationType,
       max_score: maxScore,
       checks,
       attempt_limit: null,
       grading_policy: gradingPolicy,
-      required: body.required !== false,
+      required: true,
       enabled: true,
       due_at: dueAt,
     },
@@ -541,13 +479,18 @@ async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   return serializeGroupActivity(ga, ga.definition)
 }
 
+/** El catalogo de aserciones que puede usar el docente al crear actividades. */
+function getCatalog() {
+  return checkCatalog.publicCatalog()
+}
+
 module.exports = {
-  listBank,
   getBySlug,
   evaluate,
   resetSandbox,
   lastAttempt,
   passedSlugs,
+  getCatalog,
   createGroupActivity,
   listGroupActivities,
   getGroupActivity,

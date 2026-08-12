@@ -9,6 +9,7 @@ import type {
   StudentGroupDetail,
   Enrollment,
   ProvisioningJobSummary,
+  CatalogEntry,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -37,8 +38,8 @@ export async function deleteGroup(id: string): Promise<void> {
   await teacherApi.deleteGroup(id)
 }
 
-export async function listBankActivities(): Promise<Activity[]> {
-  return teacherApi.listBankActivities()
+export async function getCheckCatalog(): Promise<CatalogEntry[]> {
+  return teacherApi.getCheckCatalog()
 }
 
 export async function listGroupActivities(groupId: string): Promise<Activity[]> {

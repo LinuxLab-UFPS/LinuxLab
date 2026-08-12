@@ -1,0 +1,19 @@
+# El cliente de Prisma lo genera el build (RUN npx prisma generate): si se
+# copiara el node_modules del host, se pisaria el cliente recien generado con
+# uno obsoleto (los cambios de schema no llegarian al contenedor).
+node_modules
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+*.log
+nohup.out
+
+# Sistema y editor
+.DS_Store
+.idea/
+.vscode/

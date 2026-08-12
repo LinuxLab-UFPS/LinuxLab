@@ -177,12 +177,19 @@ El docente no escribe código: escoge un tipo del catálogo y llena sus campos.
 |---|---|---|
 | `directorio_existe` | `ruta` | Existe, es directorio, y es del estudiante |
 | `archivo_existe` | `ruta` | Existe, es archivo, y es del estudiante |
+| `archivo_no_existe` | `ruta` | Ya no existe en esa ruta |
 | `permisos_son` | `ruta`, `modo` | El modo octal coincide |
 | `propietario_es` | `ruta`, `usuario` | El dueño coincide |
 | `archivo_contiene` | `ruta`, `patron` | Alguna línea contiene el patrón |
+| `minimo_lineas` | `ruta`, `cantidad` | Tiene al menos esa cantidad de líneas |
+| `archivo_es` | `ruta`, `valor` | El contenido completo coincide |
+| `ultima_linea_es` | `ruta`, `valor` | La última línea coincide |
 
 Todas comparten `resolve()`, así que todas heredan las mismas garantías. Añadir
-un tipo nuevo es añadir una función al diccionario `CHECKS`.
+un tipo nuevo es añadir una función al diccionario `CHECKS` del checker y su
+entrada en `checkCatalog.js` (backend): la interfaz del docente lo muestra
+automáticamente vía `GET /api/activities/catalog`, que sirve los tipos, etiquetas
+y campos de la misma fuente que valida la creación.
 
 **Todas evalúan estado, no comandos.** Es deliberado: al estudiante no le
 importa si llegó con `mkdir -p` o con dos `mkdir`, le importa que la estructura
@@ -833,10 +840,11 @@ Como mínimo, la matriz de trazabilidad debe cubrir:
 |---|---|---|
 | Modelo de datos | Migrado: `ActivityDefinition` + `GroupActivity` (snapshot de aserciones al publicar) + `ActivitySubmission` + `ActivityAuditEvent`. Intentos con `group_activity_id` (nullable) y `attempt_number`; seeds en `upsert`; FKs `RESTRICT` | Mantener; el borrado de historial solo manual y con confirmación |
 | Checker seguro | Implementado | Mantener y ampliar solo con aserciones revisadas |
+| Catálogo de aserciones | Servido por `GET /api/activities/catalog` (teacher/admin); una sola fuente en `checkCatalog.js`; la interfaz del docente lo consume | Mantener; cada tipo nuevo = checker + catálogo |
 | Actividades sembradas | Implementado, migradas al modelo de definiciones | Publicación por grupo y contexto de grupo en la lección |
 | Evaluación automática | Implementación inicial | Integrar grupos, límites y políticas de calificación |
-| Banco de actividades | Pendiente | CRUD exclusivo del administrador |
-| Actividades docentes | Interfaz parcial | Backend, persistencia y publicación |
+| Banco de actividades | Decisión: predefinido de la plataforma (sin gestión admin/docente). Vista de consulta y endpoint retirados | Mantener como catálogo interno sembrado (seeds) |
+| Actividades docentes | Creación y publicación implementadas (formulario + `POST /api/groups/:id/activities` + listado) | Edición, habilitar/deshabilitar y asignar del banco |
 | Intentos | Registro inicial (numerados) | Límites, mejor/último resultado y seguimiento |
 | Evaluación manual | Pendiente | Entregas, calificación y retroalimentación |
 | Seguimiento | Interfaz parcial | Datos reales de intentos y entregas |

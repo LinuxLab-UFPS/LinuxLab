@@ -9,8 +9,8 @@ const getActivity = asyncHandler(async (req, res) => {
   res.json({ ...activity, lastAttempt: attempt })
 })
 
-const listBank = asyncHandler(async (_req, res) => {
-  res.json(await activityService.listBank())
+const getCatalog = asyncHandler(async (_req, res) => {
+  res.json(await activityService.getCatalog())
 })
 
 const getMyStatus = asyncHandler(async (req, res) => {
@@ -33,4 +33,4 @@ const checkActivity = asyncHandler(async (req, res) => {
   res.json(await activityService.evaluate({ slug: req.params.slug, studentUserId: req.user.id }))
 })
 
-module.exports = { listBank, getActivity, getMyStatus, checkActivity, resetActivity }
+module.exports = { getCatalog, getActivity, getMyStatus, checkActivity, resetActivity }

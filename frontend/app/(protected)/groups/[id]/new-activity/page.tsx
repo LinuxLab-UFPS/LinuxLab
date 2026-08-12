@@ -14,14 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { RichTextEditor } from "@/components/teacher/rich-text-editor"
 import { CheckBuilder, type ActivityCheck } from "@/components/teacher/check-builder"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
 import { createActivity } from "@/lib/features/teacher/data"
 import type { EvaluationType } from "@/lib/features/teacher/types"
 import { RoleGuard } from "@/components/shared/role-guard"
+
+/** La escala de calificacion es fija: 0 a 100. */
+const MAX_SCORE = 100
 
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
@@ -30,29 +31,58 @@ function NewActivityPage() {
 
   const [activityName, setActivityName] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("")
-  const [maxScore, setMaxScore] = useState("100")
   const [dueDate, setDueDate] = useState("")
-  const [isRequired, setIsRequired] = useState(true)
   const [gradingPolicy, setGradingPolicy] = useState<"best_score" | "latest_score">("best_score")
   const [instructions, setInstructions] = useState("")
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("atomic")
   const [checks, setChecks] = useState<ActivityCheck[]>([])
   const [distributeEvenly, setDistributeEvenly] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [titleError, setTitleError] = useState<string | null>(null)
+  const [descError, setDescError] = useState<string | null>(null)
+  const [dateError, setDateError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
+
+  // El minimo del datetime-local se arma en hora local para que el selector
+  // no ofrezca momentos ya pasados (la validacion real ocurre al publicar).
+  const now = new Date()
+  const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
 
   const handlePublish = async () => {
     setError(null)
+    setTitleError(null)
+    setDescError(null)
+    setDateError(null)
+
+    let hasError = false
+    const title = activityName.trim()
+    if (!title) {
+      setTitleError("El nombre de la actividad es requerido")
+      hasError = true
+    } else if (title.length > 255) {
+      setTitleError("El nombre no puede superar los 255 caracteres")
+      hasError = true
+    }
+    if (instructions.length > 2000) {
+      setDescError("La descripción no puede superar los 2000 caracteres")
+      hasError = true
+    }
+    if (dueDate && new Date(dueDate) <= new Date()) {
+      setDateError("La fecha de cierre debe ser posterior a la fecha actual")
+      hasError = true
+    }
+    if (hasError) return
+
     setPublishing(true)
     try {
       await createActivity(groupId, {
-        title: activityName,
+        title,
         topicNumber: Number(selectedTopic) || 0,
         source: "teacher",
         instructions,
-        maxScore: Number(maxScore) || 0,
+        maxScore: MAX_SCORE,
         dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        required: isRequired,
+        required: true,
         evaluationType,
         gradingPolicy,
         checks,
@@ -131,10 +161,15 @@ function NewActivityPage() {
                   </label>
                   <Input
                     value={activityName}
-                    onChange={(e) => setActivityName(e.target.value)}
+                    onChange={(e) => {
+                      setActivityName(e.target.value)
+                      setTitleError(null)
+                    }}
                     placeholder="Ej: Tarea: Script de backup"
+                    maxLength={255}
                     className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20"
                   />
+                  {titleError && <p className="text-xs text-danger">{titleError}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -160,14 +195,12 @@ function NewActivityPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Puntuación máxima</label>
-                    <Input
-                      type="number"
-                      value={maxScore}
-                      onChange={(e) => setMaxScore(e.target.value)}
-                      placeholder="100"
-                      min="0"
-                      className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20"
-                    />
+                    <div className="flex h-9 items-center rounded-md border border-border bg-secondary/30 px-3 text-sm font-mono text-foreground">
+                      {MAX_SCORE} pts
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      La escala de calificación va de 0 a 100.
+                    </p>
                   </div>
                 </div>
 
@@ -180,11 +213,16 @@ function NewActivityPage() {
                       <Input
                         type="datetime-local"
                         value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
+                        min={minDateTime}
+                        onChange={(e) => {
+                          setDueDate(e.target.value)
+                          setDateError(null)
+                        }}
                         className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20 [color-scheme:dark]"
                       />
                       <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     </div>
+                    {dateError && <p className="text-xs text-danger">{dateError}</p>}
                   </div>
 
                   <div className="space-y-2">
@@ -217,24 +255,6 @@ function NewActivityPage() {
                     </Select>
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Obligatoriedad</label>
-                  <div className="flex items-center gap-3 h-9">
-                    <Switch
-                      checked={isRequired}
-                      onCheckedChange={setIsRequired}
-                      className="data-[state=checked]:bg-primary"
-                    />
-                    <span className="text-sm text-muted-foreground">
-                      {isRequired ? (
-                        <span className="text-foreground font-medium">Obligatoria</span>
-                      ) : (
-                        "Complementaria"
-                      )}
-                    </span>
-                  </div>
-                </div>
               </div>
             </section>
 
@@ -251,14 +271,17 @@ function NewActivityPage() {
                 <label className="text-sm font-medium text-foreground">
                   Describe la actividad para los estudiantes
                 </label>
-                <RichTextEditor
+                <textarea
                   value={instructions}
-                  onChange={setInstructions}
+                  onChange={(e) => {
+                    setInstructions(e.target.value)
+                    setDescError(null)
+                  }}
                   placeholder="Escribe las instrucciones de la actividad..."
+                  maxLength={2000}
+                  className="w-full min-h-[160px] resize-y rounded-md border border-border bg-secondary/30 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 focus:outline-none"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Puedes usar formato Markdown para organizar las instrucciones.
-                </p>
+                {descError && <p className="text-xs text-danger">{descError}</p>}
               </div>
             </section>
 
@@ -302,12 +325,12 @@ function NewActivityPage() {
                     Define cómo se valida la actividad agregando aserciones del catálogo.
                     El sistema las ejecuta sobre el entorno del estudiante cuando este
                     solicita la validación, sin necesidad de escribir scripts. El valor
-                    de la actividad ({maxScore || 0} pts) se reparte entre las aserciones.
+                    de la actividad ({MAX_SCORE} pts) se reparte entre las aserciones.
                   </p>
                   <CheckBuilder
                     checks={checks}
                     onChange={setChecks}
-                    activityValue={Number(maxScore) || 0}
+                    activityValue={MAX_SCORE}
                     distributeEvenly={distributeEvenly}
                     onDistributeChange={setDistributeEvenly}
                   />
@@ -331,7 +354,7 @@ function NewActivityPage() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     La actividad tendrá un valor de{" "}
-                    <span className="font-medium text-foreground">{maxScore || 0} pts</span>{" "}
+                    <span className="font-medium text-foreground">{MAX_SCORE} pts</span>{" "}
                     asignados directamente por ti.
                   </p>
                 </div>
