@@ -46,8 +46,15 @@ export async function listGroupActivities(groupId: string): Promise<Activity[]> 
   return teacherApi.listGroupActivities(groupId)
 }
 
-export async function getActivity(_id: string): Promise<Activity | null> {
-  return null
+export async function getGroupActivity(
+  groupId: string,
+  activityId: string,
+): Promise<Activity | null> {
+  try {
+    return await teacherApi.getGroupActivity(groupId, activityId)
+  } catch {
+    return null
+  }
 }
 
 export async function createActivity(
@@ -55,6 +62,14 @@ export async function createActivity(
   input: CreateActivityInput,
 ): Promise<Activity> {
   return teacherApi.createActivity(groupId, input)
+}
+
+export async function updateActivity(
+  groupId: string,
+  activityId: string,
+  input: CreateActivityInput,
+): Promise<Activity> {
+  return teacherApi.updateActivity(groupId, activityId, input)
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {

@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
 import type { Activity } from "@/lib/features/shared/activities"
 import type { LessonRef } from "@/lib/features/shared/lessons"
+import type { GroupActivityDetail } from "@/lib/features/student/group-activities"
+import { GroupActivityPanel } from "@/components/student/group-activity-panel"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
@@ -35,11 +37,13 @@ const TERMINAL_HEIGHT = "min(38rem, calc(100vh - 18rem))"
 export function TerminalWorkspace({
   activity,
   statement,
+  groupActivity,
   origin,
   next,
 }: {
   activity: Activity | null
   statement: string | null
+  groupActivity: GroupActivityDetail | null
   origin?: string
   next?: LessonRef | null
 }) {
@@ -90,7 +94,7 @@ export function TerminalWorkspace({
   const handleReset = useCallback(() => setResetKey((k) => k + 1), [])
 
   const isStudent = user?.role === "student"
-  const open = Boolean(isStudent && activity && statement)
+  const open = Boolean(isStudent && ((activity && statement) || groupActivity))
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)
 
@@ -126,6 +130,8 @@ export function TerminalWorkspace({
                   origin={origin}
                   next={next}
                 />
+              ) : open && groupActivity ? (
+                <GroupActivityPanel detail={groupActivity} />
               ) : (
                 <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
               )}

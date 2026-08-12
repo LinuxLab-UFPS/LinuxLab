@@ -154,6 +154,18 @@ const getGroupActivity = asyncHandler(async (req, res) => {
   )
 })
 
+const updateGroupActivity = asyncHandler(async (req, res) => {
+  res.json(
+    await activityService.updateGroupActivity({
+      groupId: req.params.id,
+      activityId: req.params.activityId,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+      input: req.body,
+    }),
+  )
+})
+
 module.exports = {
   createGroup,
   listGroups,
@@ -168,4 +180,5 @@ module.exports = {
   listGroupActivities,
   createGroupActivity,
   getGroupActivity,
+  updateGroupActivity,
 }

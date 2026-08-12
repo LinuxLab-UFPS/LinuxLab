@@ -68,8 +68,8 @@ export function ActivityPanel({
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
-          <span className={cn(PILL, DIFFICULTY_CLASS[activity.difficulty])}>
-            {DIFFICULTY_LABEL[activity.difficulty]}
+          <span className={cn(PILL, activity.difficulty ? DIFFICULTY_CLASS[activity.difficulty] : "border-border text-muted-foreground")}>
+            {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
           </span>
           <span
             className={cn(

@@ -386,22 +386,10 @@ async function audit({ userId, groupId, eventType, target, metadata }) {
 }
 
 /**
- * Crea una actividad propia del docente dentro de su grupo (RF-GRP-03).
- *
- * Nace con su definicion (source=teacher: es del docente, no aparece en el
- * banco) y su publicacion (GroupActivity con el snapshot de lo publicado:
- * titulo, instrucciones, modalidad, puntaje y aserciones. Si la definicion
- * cambiara, lo publicado no cambia: RF-GRP-11).
- *
- * La creacion es a la vez publicacion: queda habilitada al instante. El limite
- * de intentos y la configuracion de taller/quiz se agregan en una fase
- * posterior; aqui quedan sus valores por defecto (ilimitado, workshop,
- * best_score).
+ * Validacion comun de la configuracion de una actividad de grupo, usada por la
+ * creacion y la edicion. Devuelve los valores ya validados y normalizados.
  */
-async function createGroupActivity({ groupId, teacherUserId, role, input }) {
-  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
-  const body = input ?? {}
-
+function validateActivityInput(body) {
   const title = body.title?.trim()
   if (!title) throw new AppError("El nombre de la actividad es requerido", 400, "VALIDATION_ERROR")
   if (title.length > 255) {
@@ -442,12 +430,33 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const topicNumber = Number(body.topicNumber)
   const checks = buildChecks(body.checks, { evaluationType, maxScore })
 
+  return { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks }
+}
+
+/**
+ * Crea una actividad propia del docente dentro de su grupo (RF-GRP-03).
+ *
+ * Nace con su definicion (source=teacher: es del docente, no aparece en el
+ * banco) y su publicacion (GroupActivity con el snapshot de lo publicado:
+ * titulo, instrucciones, modalidad, puntaje y aserciones. Si la definicion
+ * cambiara, lo publicado no cambia: RF-GRP-11).
+ *
+ * La creacion es a la vez publicacion: queda habilitada al instante. El limite
+ * de intentos y la configuracion de taller/quiz se agregan en una fase
+ * posterior; aqui quedan sus valores por defecto (ilimitado, workshop,
+ * best_score).
+ */
+async function createGroupActivity({ groupId, teacherUserId, role, input }) {
+  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
+    validateActivityInput(input ?? {})
+
   const activity = await prisma.activityDefinition.create({
     data: {
       title,
       instructions,
       topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
-      difficulty: body.difficulty ?? "basic",
+      difficulty: "basic",
       kind: "activity",
       activity_type: "workshop",
       evaluation_type: evaluationType,
@@ -495,6 +504,83 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   return serializeGroupActivity(groupActivity, activity)
 }
 
+/**
+ * Edita la configuracion publicada de una actividad de grupo.
+ *
+ * La carpeta de trabajo, la puntuacion (siempre 100) y la obligatoriedad
+ * (siempre true) no se editan. Y la actividad con intentos o entregas no se
+ * toca: cambiar las condiciones con historial seria cambiar las reglas a mitad
+ * de partida (la politica queda congelada tras el primer intento).
+ */
+async function updateGroupActivity({ groupId, activityId, teacherUserId, role, input }) {
+  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
+
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: group.id },
+    include: {
+      _count: { select: { attempts: true, submissions: true } },
+      definition: { select: { id: true } },
+    },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  if (ga._count.attempts > 0 || ga._count.submissions > 0) {
+    throw new AppError("La actividad ya tiene intentos o entregas; no se puede editar", 409, "CONFLICT")
+  }
+
+  const body = input ?? {}
+  if (body.workdir !== undefined && body.workdir !== ga.workdir) {
+    throw new AppError("La carpeta de trabajo no se puede cambiar", 400, "VALIDATION_ERROR")
+  }
+  if (body.maxScore !== undefined && Number(body.maxScore) !== 100) {
+    throw new AppError("La puntuación máxima siempre es 100", 400, "VALIDATION_ERROR")
+  }
+  if (body.required !== undefined && body.required !== true) {
+    throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
+  }
+
+  const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
+    validateActivityInput(body)
+
+  // La definicion del docente es 1:1 con la publicacion: se mantiene en
+  // sincronia para que el listado y el detalle sigan mostrando lo mismo.
+  if (ga.definition) {
+    await prisma.activityDefinition.update({
+      where: { id: ga.definition.id },
+      data: {
+        title,
+        instructions,
+        topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+        evaluation_type: evaluationType,
+      },
+    })
+  }
+
+  const updated = await prisma.groupActivity.update({
+    where: { id: ga.id },
+    data: {
+      title,
+      instructions,
+      evaluation_type: evaluationType,
+      checks,
+      grading_policy: gradingPolicy,
+      due_at: dueAt,
+    },
+    include: { definition: { select: { topic_number: true, difficulty: true } } },
+  })
+
+  audit({
+    userId: teacherUserId,
+    groupId: group.id,
+    eventType: "activity_updated",
+    target: title,
+    metadata: { groupActivityId: ga.id },
+  })
+
+  logger.info({ groupId, teacherUserId, activityId: ga.id }, "Group activity updated")
+  return serializeGroupActivity(updated, updated.definition)
+}
+
 /** Las actividades publicadas en el grupo, para la pestaña de su curso. */
 async function listGroupActivities({ groupId, teacherUserId, role }) {
   await groupService.getGroupAccess({ groupId, teacherUserId, role })
@@ -521,6 +607,234 @@ function getCatalog() {
   return checkCatalog.publicCatalog()
 }
 
+/** Matricula activa del estudiante en un grupo concreto (no global). */
+async function hasEnrollmentInGroup(studentUserId, groupId) {
+  const count = await prisma.enrollment.count({
+    where: {
+      student_id: studentUserId,
+      group_id: groupId,
+      status: "active",
+      group: { archived: false },
+    },
+  })
+  return count > 0
+}
+
+/**
+ * Resuelve las rutas de las aserciones contra la carpeta de trabajo: las
+ * relativas se anteponen `actividades/<workdir>/`; las absolutas se respetan
+ * (las comprobaciones del temario backfilled las usan).
+ */
+function resolveRuta(params, workdir) {
+  const salida = {}
+  for (const [clave, valor] of Object.entries(params ?? {})) {
+    salida[clave] =
+      clave === "ruta" && typeof valor === "string" && valor.trim() && !valor.startsWith("/")
+        ? `actividades/${workdir}/${valor}`
+        : valor
+  }
+  return salida
+}
+
+/**
+ * El grupo de laboratorio del estudiante (su matricula activa) y sus
+ * actividades de curso, para la vista "Mi Grupo". El estudiante tiene un solo
+ * grupo activo; si no tiene ninguno, `group` es null.
+ */
+async function listMine(studentUserId) {
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student_id: studentUserId, status: "active", group: { archived: false } },
+    include: { group: { include: { teacher: { select: { name: true } } } } },
+    orderBy: { enrolled_at: "asc" },
+  })
+  if (!enrollment) return { group: null, activities: [] }
+
+  const rows = await prisma.groupActivity.findMany({
+    where: { group_id: enrollment.group_id },
+    include: {
+      definition: { select: { topic_number: true } },
+      attempts: {
+        where: { student_id: studentUserId },
+        orderBy: { created_at: "desc" },
+        take: 1,
+        select: { passed: true, score: true },
+      },
+    },
+    orderBy: { created_at: "desc" },
+  })
+
+  return {
+    group: {
+      id: enrollment.group.id,
+      name: enrollment.group.name,
+      description: enrollment.group.description ?? "",
+      teacherName: enrollment.group.teacher?.name ?? "",
+    },
+    activities: rows.map((ga) => ({
+      id: ga.id,
+      title: ga.title,
+      description: ga.instructions ?? "",
+      topicNumber: ga.definition?.topic_number ?? 0,
+      checksCount: (ga.checks ?? []).length,
+      passed: ga.attempts[0]?.passed ?? false,
+      lastScore: ga.attempts[0]?.score ?? null,
+    })),
+  }
+}
+
+/** Detalle que ve el estudiante: sin los criterios (ocultos hasta aprobar). */
+async function getForStudent(studentUserId, groupActivityId) {
+  const ga = await prisma.groupActivity.findUnique({
+    where: { id: groupActivityId },
+    select: { id: true, group_id: true, title: true, instructions: true, workdir: true, due_at: true, evaluation_type: true, max_score: true, checks: true },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  if (!(await hasEnrollmentInGroup(studentUserId, ga.group_id))) {
+    throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
+  }
+
+  const lastAttempt = await prisma.activityAttempt.findFirst({
+    where: { group_activity_id: ga.id, student_id: studentUserId },
+    orderBy: { created_at: "desc" },
+    select: { passed: true, score: true },
+  })
+
+  return {
+    id: ga.id,
+    title: ga.title,
+    instructions: ga.instructions ?? "",
+    workdir: ga.workdir,
+    dueAt: ga.due_at?.toISOString() ?? null,
+    evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
+    maxScore: ga.max_score,
+    checksCount: (ga.checks ?? []).length,
+    lastAttempt: lastAttempt ? { passed: lastAttempt.passed, score: lastAttempt.score } : null,
+  }
+}
+
+/**
+ * Evalua la actividad de curso contra el entorno del estudiante (RF-AUTO-02).
+ *
+ * Misma maquinaria que la linea base: el checker corre CON LA IDENTIDAD del
+ * estudiante, los parametros viajan por stdin y las rutas relativas se
+ * resuelven contra la carpeta de trabajo antes de mandar el payload.
+ */
+async function checkForStudent(studentUserId, groupActivityId) {
+  const ga = await prisma.groupActivity.findUnique({
+    where: { id: groupActivityId },
+    select: {
+      id: true,
+      group_id: true,
+      title: true,
+      workdir: true,
+      checks: true,
+      evaluation_type: true,
+      max_score: true,
+      enabled: true,
+      due_at: true,
+      activity_definition_id: true,
+    },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  if (!(await hasEnrollmentInGroup(studentUserId, ga.group_id))) {
+    throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
+  }
+  if (!ga.enabled) throw new AppError("La actividad está deshabilitada", 409, "CONFLICT")
+  if (ga.due_at && ga.due_at <= new Date()) {
+    throw new AppError("La actividad ya venció", 409, "CONFLICT")
+  }
+  if (ga.evaluation_type !== "automatic") {
+    throw new AppError("Esta actividad se revisa manualmente", 409, "CONFLICT")
+  }
+  if (!ga.activity_definition_id) {
+    throw new AppError("La actividad ya no está disponible", 409, "CONFLICT")
+  }
+  const checks = ga.checks ?? []
+  if (checks.length === 0) {
+    throw new AppError("La actividad no tiene aserciones que evaluar", 409, "CONFLICT")
+  }
+
+  const account = await prisma.linuxAccount.findUnique({ where: { user_id: studentUserId } })
+  if (!account?.linux_username) {
+    throw new AppError("Todavía no tienes cuenta en el entorno", 409, "CONFLICT")
+  }
+  if (!account.linux_provisioned) {
+    throw new AppError("Tu cuenta del entorno se está creando, intenta en un momento", 409, "CONFLICT")
+  }
+  if (!USERNAME.test(account.linux_username)) {
+    throw new AppError("El nombre de tu cuenta no es válido", 500, "INTERNAL_ERROR")
+  }
+
+  const student = await prisma.user.findUnique({
+    where: { id: studentUserId },
+    select: { code: true, email: true },
+  })
+
+  const payload = JSON.stringify({
+    checks: checks.map((c) => ({
+      id: c.id,
+      type: c.type,
+      params: personalize(resolveRuta(c.params, ga.workdir), student),
+    })),
+  })
+
+  const { code, stdout, stderr } = await sshClient.execCommand(
+    `sudo -u ${account.linux_username} ${CHECKER}`,
+    { stdin: payload, timeoutMs: EVAL_TIMEOUT_MS },
+  )
+
+  let parsed
+  try {
+    parsed = JSON.parse(stdout)
+  } catch {
+    logger.error({ code, stderr, groupActivityId: ga.id }, "Checker output was not JSON")
+    throw new AppError("No se pudo evaluar tu entorno, inténtalo de nuevo", 502, "INTERNAL_ERROR")
+  }
+
+  const byId = new Map(parsed.results.map((r) => [r.id, r]))
+  const results = checks.map((check) => {
+    const outcome = byId.get(check.id)
+    return {
+      id: check.id,
+      type: check.type,
+      params: check.params,
+      points: check.points,
+      passed: outcome?.passed ?? false,
+      detail: outcome?.detail ?? "No se pudo evaluar",
+    }
+  })
+
+  const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
+  const passed = results.every((r) => r.passed)
+
+  const attemptNumber = await prisma.activityAttempt.count({
+    where: { group_activity_id: ga.id, student_id: studentUserId },
+  })
+
+  await prisma.activityAttempt.create({
+    data: {
+      activity_definition_id: ga.activity_definition_id,
+      group_activity_id: ga.id,
+      student_id: studentUserId,
+      attempt_number: attemptNumber + 1,
+      passed,
+      score,
+      results,
+    },
+  })
+
+  audit({
+    userId: studentUserId,
+    groupId: ga.group_id,
+    eventType: "activity_checked",
+    target: ga.title,
+    metadata: { groupActivityId: ga.id, passed, score },
+  })
+
+  logger.info({ groupActivityId: ga.id, username: account.linux_username, passed, score }, "Group activity checked")
+  return { passed, score, maxScore: ga.max_score, results }
+}
+
 module.exports = {
   getBySlug,
   evaluate,
@@ -529,6 +843,10 @@ module.exports = {
   passedSlugs,
   getCatalog,
   createGroupActivity,
+  updateGroupActivity,
   listGroupActivities,
   getGroupActivity,
+  listMine,
+  getForStudent,
+  checkForStudent,
 }

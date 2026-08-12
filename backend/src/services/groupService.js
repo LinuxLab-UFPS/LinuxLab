@@ -22,7 +22,7 @@ function generateGroupDir(name, groupId) {
   return `grp_${slug}_${shortId}`
 }
 
-function serializeGroup(group, studentCount) {
+function serializeGroup(group, studentCount, activityCount) {
   return {
     id: group.id,
     name: group.name,
@@ -33,7 +33,7 @@ function serializeGroup(group, studentCount) {
     teacherName: group.teacher?.name ?? null,
     studentCount: studentCount ?? 0,
     enabledTopics: [],
-    activityCount: 0,
+    activityCount: activityCount ?? 0,
   }
 }
 
@@ -114,11 +114,11 @@ async function createGroup(args) {
     where: { id: group.id },
     include: {
       teacher: { select: { name: true } },
-      _count: { select: { enrollments: true } },
+      _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
   return {
-    group: serializeGroup(withCount, withCount._count.enrollments),
+    group: serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities),
     enrollment,
   }
 }
@@ -259,18 +259,18 @@ async function listGroups({ teacherUserId, role }) {
     const groups = await prisma.group.findMany({
       include: {
         teacher: { select: { name: true } },
-        _count: { select: { enrollments: true } },
+        _count: { select: { enrollments: true, groupActivities: true } },
       },
       orderBy: { created_at: "desc" },
     })
-    return groups.map((g) => serializeGroup(g, g._count.enrollments))
+    return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities))
   }
   const groups = await prisma.group.findMany({
     where: { teacher_id: teacherUserId },
-    include: { _count: { select: { enrollments: true } } },
+    include: { _count: { select: { enrollments: true, groupActivities: true } } },
     orderBy: { created_at: "desc" },
   })
-  return groups.map((g) => serializeGroup(g, g._count.enrollments))
+  return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities))
 }
 
 async function getGroup({ groupId, teacherUserId, role }) {
@@ -279,10 +279,10 @@ async function getGroup({ groupId, teacherUserId, role }) {
     where: { id: groupId },
     include: {
       teacher: { select: { name: true } },
-      _count: { select: { enrollments: true } },
+      _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
-  return serializeGroup(withCount, withCount._count.enrollments)
+  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities)
 }
 
 /**

@@ -855,7 +855,9 @@ Como mínimo, la matriz de trazabilidad debe cubrir:
 | Actividades sembradas | Implementado, migradas al modelo de definiciones | Publicación por grupo y contexto de grupo en la lección |
 | Evaluación automática | Implementación inicial | Integrar grupos, límites y políticas de calificación |
 | Banco de actividades | Decisión: predefinido de la plataforma (sin gestión admin/docente). Vista de consulta y endpoint retirados | Mantener como catálogo interno sembrado (seeds) |
-| Actividades docentes | Creación y publicación implementadas (formulario + `POST /api/groups/:id/activities` + listado). Carpeta de trabajo autogenerada con rutas de aserciones relativas | Edición, habilitar/deshabilitar, asignar del banco y lado del estudiante |
+| Actividades docentes | Creación, edición (PATCH, bloqueada tras el primer intento) y detalle implementadas. Carpeta de trabajo autogenerada con rutas relativas | Habilitar/deshabilitar, asignar del banco y manual (entregas) |
+| Actividades en el catálogo del estudiante | El catálogo `/activities` solo lista las del temario; las de curso viven en la vista `Mi Grupo` (`/mi-grupo`, con nombre, descripción, docente y listado con estado) | — |
+| Resolución del estudiante | `GET /api/group-activities/:id` (criterios ocultos) y `POST /:id/check` (checker con rutas resueltas contra la carpeta de trabajo, intentos registrados); panel junto a la terminal con auto-cd | Límites de intentos y modalidad manual |
 | Intentos | Registro inicial (numerados) | Límites, mejor/último resultado y seguimiento |
 | Evaluación manual | Pendiente | Entregas, calificación y retroalimentación |
 | Seguimiento | Interfaz parcial | Datos reales de intentos y entregas |

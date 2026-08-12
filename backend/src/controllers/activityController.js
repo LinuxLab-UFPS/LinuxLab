@@ -33,4 +33,27 @@ const checkActivity = asyncHandler(async (req, res) => {
   res.json(await activityService.evaluate({ slug: req.params.slug, studentUserId: req.user.id }))
 })
 
-module.exports = { getCatalog, getActivity, getMyStatus, checkActivity, resetActivity }
+// Lado estudiante: las actividades de curso (GroupActivity).
+
+const getMyGroupActivities = asyncHandler(async (req, res) => {
+  res.json(await activityService.listMine(req.user.id))
+})
+
+const getGroupActivityForStudent = asyncHandler(async (req, res) => {
+  res.json(await activityService.getForStudent(req.user.id, req.params.id))
+})
+
+const checkGroupActivity = asyncHandler(async (req, res) => {
+  res.json(await activityService.checkForStudent(req.user.id, req.params.id))
+})
+
+module.exports = {
+  getCatalog,
+  getActivity,
+  getMyStatus,
+  checkActivity,
+  resetActivity,
+  getMyGroupActivities,
+  getGroupActivityForStudent,
+  checkGroupActivity,
+}

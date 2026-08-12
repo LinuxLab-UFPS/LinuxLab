@@ -30,7 +30,8 @@ export interface Activity {
   slug: string
   title: string
   description: string
-  difficulty: Difficulty
+  /** Opcional: las actividades de curso no declaran dificultad. */
+  difficulty?: Difficulty
   topicNumber: number
   topicSlug: string
   topicTitle: string
@@ -38,6 +39,8 @@ export interface Activity {
   checks: number
   /** Activities are always solved next to the terminal, never inside a lesson. */
   href: string
+  /** Solo las de curso lo traen; las del temario lo decide el registro local. */
+  completed?: boolean
 }
 
 const RAW = [

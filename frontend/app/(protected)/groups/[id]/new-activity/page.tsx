@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ChevronRight, Calendar, Send } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -17,17 +17,26 @@ import {
 import { CheckBuilder, type ActivityCheck } from "@/components/teacher/check-builder"
 import { cn } from "@/lib/utils"
 import { syllabus } from "@/lib/features/shared/temario"
-import { createActivity } from "@/lib/features/teacher/data"
-import type { EvaluationType } from "@/lib/features/teacher/types"
+import { createActivity, updateActivity, getGroupActivity } from "@/lib/features/teacher/data"
+import type { CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
 import { RoleGuard } from "@/components/shared/role-guard"
 
 /** La escala de calificacion es fija: 0 a 100. */
 const MAX_SCORE = 100
 
+/** Convierte un ISO a la forma que espera un input datetime-local (hora local). */
+function toLocalInputValue(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
+
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
   const router = useRouter()
   const groupId = params?.id ?? ""
+  const editId = searchParams.get("edit")
+  const editing = Boolean(editId)
 
   const [activityName, setActivityName] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("")
@@ -37,11 +46,39 @@ function NewActivityPage() {
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("atomic")
   const [checks, setChecks] = useState<ActivityCheck[]>([])
   const [distributeEvenly, setDistributeEvenly] = useState(true)
+  const [loadingDetail, setLoadingDetail] = useState(Boolean(editId))
   const [error, setError] = useState<string | null>(null)
   const [titleError, setTitleError] = useState<string | null>(null)
   const [descError, setDescError] = useState<string | null>(null)
   const [dateError, setDateError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
+
+  // Modo edicion: se carga la actividad publicada y se rellena el formulario.
+  useEffect(() => {
+    if (!editId) return
+    let alive = true
+    getGroupActivity(groupId, editId)
+      .then((activity) => {
+        if (!alive || !activity) return
+        setActivityName(activity.title)
+        setSelectedTopic(activity.topicNumber ? String(activity.topicNumber) : "")
+        setDueDate(activity.dueDate ? toLocalInputValue(activity.dueDate) : "")
+        setGradingPolicy(activity.gradingPolicy ?? "best_score")
+        setInstructions(activity.instructions ?? "")
+        setEvaluationType(activity.evaluationType)
+        setChecks(activity.checks.map((c) => ({ id: c.id, type: c.type, params: c.params, points: c.points })))
+        setDistributeEvenly(false)
+      })
+      .catch(() => {
+        if (alive) setError("No se pudo cargar la actividad para editar")
+      })
+      .finally(() => {
+        if (alive) setLoadingDetail(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [groupId, editId])
 
   // El minimo del datetime-local se arma en hora local para que el selector
   // no ofrezca momentos ya pasados (la validacion real ocurre al publicar).
@@ -75,7 +112,7 @@ function NewActivityPage() {
 
     setPublishing(true)
     try {
-      await createActivity(groupId, {
+      const input: CreateActivityInput = {
         title,
         topicNumber: Number(selectedTopic) || 0,
         source: "teacher",
@@ -86,11 +123,18 @@ function NewActivityPage() {
         evaluationType,
         gradingPolicy,
         checks,
-      })
-      toast.success("Actividad publicada")
-      router.push(`/groups/${groupId}`)
+      }
+      if (editId) {
+        await updateActivity(groupId, editId, input)
+        toast.success("Actividad actualizada")
+        router.push(`/groups/${groupId}/activities/${editId}`)
+      } else {
+        await createActivity(groupId, input)
+        toast.success("Actividad publicada")
+        router.push(`/groups/${groupId}`)
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo publicar la actividad.")
+      setError(e instanceof Error ? e.message : "No se pudo guardar la actividad.")
     } finally {
       setPublishing(false)
     }
@@ -111,12 +155,16 @@ function NewActivityPage() {
               Grupo
             </Link>
             <ChevronRight className="w-4 h-4" />
-            <span className="text-foreground">Nueva Actividad</span>
+            <span className="text-foreground">
+              {editing ? "Editar Actividad" : "Nueva Actividad"}
+            </span>
           </nav>
 
           {/* Title and actions */}
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-foreground">Crear nueva actividad</h1>
+            <h1 className="text-xl font-semibold text-foreground">
+              {editing ? "Editar actividad" : "Crear nueva actividad"}
+            </h1>
             <div className="flex items-center gap-3">
               <Link href={`/groups/${groupId}`}>
                 <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
@@ -125,11 +173,15 @@ function NewActivityPage() {
               </Link>
               <Button
                 onClick={handlePublish}
-                disabled={publishing}
+                disabled={publishing || loadingDetail}
                 className="border border-primary/40 bg-primary/15 text-primary shadow-none hover:bg-primary/25"
               >
                 <Send className="w-4 h-4 mr-2" />
-                {publishing ? "Publicando…" : "Publicar actividad"}
+                {publishing
+                  ? "Guardando…"
+                  : editing
+                    ? "Guardar cambios"
+                    : "Publicar actividad"}
               </Button>
             </div>
           </div>
@@ -374,7 +426,9 @@ function NewActivityPage() {
 export default function NewActivityPageWrapper() {
   return (
     <RoleGuard roles={["teacher", "admin"]}>
-      <NewActivityPage />
+      <Suspense fallback={null}>
+        <NewActivityPage />
+      </Suspense>
     </RoleGuard>
   )
 }
