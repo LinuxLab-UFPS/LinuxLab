@@ -57,7 +57,12 @@ while [ $# -gt 0 ]; do
 done
 
 run() {
-  if $DRY_RUN; then log "DRY-RUN: $*"; else eval "$*"; fi
+  if $DRY_RUN; then log "DRY-RUN: $*"; return; fi
+  local out
+  out="$(eval "$*" 2>&1)" || {
+    echo -e "\033[1;31m[deploy-server]\033[0m Fallo el paso: $*\n\n$out" >&2
+    exit 1
+  }
 }
 
 # ---- 0. Pre-checks ---------------------------------------------------------
@@ -154,6 +159,7 @@ else
   log "Sembrando actividades del temario..."
   for seed in seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines seed-actividad-mensaje seed-comprobacion-ficha seed-comprobacion-logo; do
     run "podman exec linuxlab-backend node prisma/$seed.js"
+    log "  OK: $seed"
   done
 fi
 

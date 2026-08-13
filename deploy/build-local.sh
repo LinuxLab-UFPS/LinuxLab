@@ -31,6 +31,14 @@ log()  { echo -e "\033[1;34m[build-local]\033[0m $*"; }
 warn() { echo -e "\033[1;33m[build-local]\033[0m $*"; }
 die()  { echo -e "\033[1;31m[build-local]\033[0m $*" >&2; exit 1; }
 
+run() {
+  local out
+  out="$(eval "$*" 2>&1)" || {
+    echo -e "\033[1;31m[build-local]\033[0m Fallo el paso: $*\n\n$out" >&2
+    exit 1
+  }
+}
+
 usage() {
   sed -n '2,20p' "$0"
   exit 0
@@ -70,21 +78,22 @@ fi
 
 # ---- Build de las 3 imagenes ----------------------------------------------
 log "Construyendo imagenes (frontend, backend, entorno)..."
-docker build -t linuxlab-frontend -f "$REPO/frontend/Dockerfile" "$REPO/frontend"
-docker build -t linuxlab-backend  -f "$REPO/backend/Dockerfile"  "$REPO/backend"
-docker build -t linuxlab-entorno  -f "$REPO/entorno/Dockerfile"  "$REPO/entorno"
+run "docker build -q -t linuxlab-frontend -f $REPO/frontend/Dockerfile $REPO/frontend" && log "  OK: linuxlab-frontend"
+run "docker build -q -t linuxlab-backend  -f $REPO/backend/Dockerfile  $REPO/backend"   && log "  OK: linuxlab-backend"
+run "docker build -q -t linuxlab-entorno  -f $REPO/entorno/Dockerfile  $REPO/entorno"   && log "  OK: linuxlab-entorno"
 
 # ---- Empaquetar ------------------------------------------------------------
 TARBALL="$REPO/imagenes.tar.gz"
 log "Empaquetando imagenes -> $TARBALL"
-docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > "$TARBALL"
+run "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > '$TARBALL'"
+log "  Paquete listo ($(ls -lh "$TARBALL" | awk '{print $5}'))."
 
 # ---- Transferir (opcional) -------------------------------------------------
 if [ -n "$HOST" ]; then
   SCP_OPTS=""
   [ -n "$KEY" ] && SCP_OPTS="-i $KEY"
   log "Enviando al servidor: $HOST:$PATH_REMOTE"
-  scp $SCP_OPTS "$TARBALL" "$HOST:$PATH_REMOTE"
+  run "scp -q $SCP_OPTS '$TARBALL' '$HOST:$PATH_REMOTE'"
   log "Listo. En el servidor: bash deploy/deploy-server.sh"
 else
   log "Listo: $TARBALL (sin --host no se transfirio)."
