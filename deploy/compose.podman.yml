@@ -1,0 +1,153 @@
+# LinuxLab en Podman (servidor de la U)
+#
+# Adaptado a podman-compose 1.0.6 rootless:
+#  · puertos publicos via PORT_0..PORT_9 (asignados por la infraestructura)
+#  · red interna pre-creada con `podman network create --internal linuxlab_internal`
+#  · sin cap_add/security_opt (rootless no los permite; los fallbacks del
+#    entrypoint del entorno cubren hidepid/cgroups)
+#  · depends_on simple (sin condition: service_healthy): migrate con retry
+#
+# Uso (desde la raiz del repo):
+#   podman network create --internal linuxlab_internal
+#   podman-compose -p linuxlab -f deploy/compose.podman.yml up -d
+
+x-logging: &logging
+  driver: "json-file"
+  options: { max-size: "10m", max-file: "3" }
+
+x-health-pg: &health-pg
+  test: ["CMD-SHELL", "pg_isready -U linuxlab -d linuxlab -h localhost"]
+  interval: 10s
+  timeout: 3s
+  retries: 6
+  start_period: 10s
+
+x-health-backend: &health-backend
+  test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  interval: 15s
+  timeout: 5s
+  retries: 6
+  start_period: 30s
+
+services:
+  migrate:
+    build:
+      context: ../backend
+    container_name: linuxlab-migrate
+    networks: [internal]
+    depends_on:
+      - postgres
+    env_file: ../backend/.env
+    # One-shot con reintento: postgres puede tardar en aceptar conexiones y
+    # podman-compose 1.0.6 no soporta condition: service_healthy.
+    entrypoint:
+      [
+        "sh", "-c",
+        "i=0; until npx prisma migrate deploy; do i=$$((i+1)); [ $$i -ge 20 ] && echo '[migrate] no se pudo aplicar tras 20 intentos' && exit 1; echo '[migrate] postgres no listo, reintentando...'; sleep 3; done",
+      ]
+    logging: *logging
+
+  init:
+    image: alpine:3
+    container_name: linuxlab-init
+    # Necesita salida a internet en el primer arranque (apk add).
+    networks: [external]
+    volumes:
+      - ../scripts/docker:/scripts:ro
+      - ssh_keys:/ssh
+    entrypoint: ["/scripts/init-env.sh"]
+    logging: *logging
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: linuxlab-postgres
+    networks: [internal]
+    environment:
+      POSTGRES_USER: linuxlab
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
+      POSTGRES_DB: linuxlab
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck: *health-pg
+    restart: unless-stopped
+    logging: *logging
+
+  entorno:
+    build:
+      context: ../entorno
+    hostname: linuxlab
+    container_name: linuxlab-entorno
+    networks: [internal]
+    mem_limit: 512m
+    cpus: 0.5
+    cpu_shares: 512
+    depends_on:
+      - init
+    volumes:
+      - ssh_keys:/ssh:ro
+      - entorno_home:/home
+      - entorno_etc:/var/lib/linuxlab
+    restart: unless-stopped
+    logging: *logging
+
+  backend:
+    build:
+      context: ../backend
+    container_name: linuxlab-backend
+    networks: [internal, external]
+    mem_limit: 256m
+    cpu_shares: 1024
+    ports:
+      - "${PORT_1:-3000}:3000"
+    env_file: ../backend/.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      SSH_HOST: entorno
+      SSH_USER: labadmin
+      SSH_KEY_PATH: /ssh/ssh_key
+      JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
+      FRONTEND_URL: http://frontend:3000
+    depends_on:
+      - postgres
+      - migrate
+      - init
+    volumes:
+      - ssh_keys:/ssh:ro
+    healthcheck: *health-backend
+    restart: unless-stopped
+    logging: *logging
+
+  frontend:
+    build:
+      context: ../frontend
+    container_name: linuxlab-frontend
+    networks: [external]
+    mem_limit: 128m
+    cpu_shares: 256
+    ports:
+      - "${PORT_0:-3001}:3000"
+    environment:
+      # La URL publica del backend se incrusta en el build (NEXT_PUBLIC_*):
+      # se define en frontend/.env.local antes de construir. Este BACKEND_URL
+      # es para las llamadas server-side de Next dentro de la red.
+      BACKEND_URL: http://backend:3000
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    logging: *logging
+
+networks:
+  # Pre-creada con --internal: sin egress ni puertos publicados. Solo viven
+  # aqui postgres y el entorno; el backend (en ambas redes) es su unico cliente.
+  internal:
+    external: true
+    name: linuxlab_internal
+  external:
+    name: linuxlab_external
+
+volumes:
+  pgdata:
+  ssh_keys:
+  entorno_home:
+  entorno_etc:
