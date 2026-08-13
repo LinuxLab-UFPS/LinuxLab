@@ -76,19 +76,6 @@ export function SiteHeader({
             Terminal
           </Link>
 
-          <Link
-            href="/mi-grupo"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              pathname === "/mi-grupo"
-                ? "bg-primary/15 text-primary"
-                : "text-white/60 hover:bg-primary/15 hover:text-primary",
-            )}
-          >
-            <Users className="h-4 w-4" />
-            Mi Grupo
-          </Link>
-
           <NavDropdown
             href="/activities"
             label="Actividades"
@@ -152,6 +139,15 @@ export function SiteHeader({
                   {user?.email ?? "Sin sesión activa"}
                 </span>
               </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {/* El grupo es del estudiante, no del temario: vive aquí y no en
+                  la barra, que es para el contenido del curso. */}
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/mi-grupo">
+                  <Users className="mr-2 h-4 w-4" />
+                  Mi Grupo
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {
