@@ -16,6 +16,7 @@
 #   --url <url>     URL publica del backend; se escribe en frontend/.env.local
 #                   antes de compilar (se incrusta en el bundle del navegador)
 #   --host <h>      scp automatico de imagenes.tar.gz al servidor
+#   --key <ruta>    clave SSH privada para el scp (p. ej. /home/tu/Documentos/clave)
 #   --path <ruta>   directorio remoto destino del scp (default: home)
 #   -h | --help     esta ayuda
 set -euo pipefail
@@ -23,6 +24,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 URL=""
 HOST=""
+KEY=""
 PATH_REMOTE="~"
 
 log()  { echo -e "\033[1;34m[build-local]\033[0m $*"; }
@@ -38,6 +40,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --url)  URL="${2:-}"; shift 2 ;;
     --host) HOST="${2:-}"; shift 2 ;;
+    --key)  KEY="${2:-}"; shift 2 ;;
     --path) PATH_REMOTE="${2:-}"; shift 2 ;;
     -h | --help) usage ;;
     *) die "Opcion desconocida: $1 (usa --help)" ;;
@@ -78,8 +81,10 @@ docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > "$TARBA
 
 # ---- Transferir (opcional) -------------------------------------------------
 if [ -n "$HOST" ]; then
+  SCP_OPTS=""
+  [ -n "$KEY" ] && SCP_OPTS="-i $KEY"
   log "Enviando al servidor: $HOST:$PATH_REMOTE"
-  scp "$TARBALL" "$HOST:$PATH_REMOTE"
+  scp $SCP_OPTS "$TARBALL" "$HOST:$PATH_REMOTE"
   log "Listo. En el servidor: bash deploy/deploy-server.sh"
 else
   log "Listo: $TARBALL (sin --host no se transfirio)."

@@ -43,5 +43,14 @@ NOTAS-LOCALES.md
 
 # Respaldos de base de datos
 scripts/backups/
+
+# Artefactos del despliegue
+imagenes.tar.gz
+
+# Claves privadas (nunca al repo)
+*.pem
+*_rsa
+*_ed25519
+1152186
 # Copias de la base con intentos de estudiantes
 backend/prisma/respaldo/
