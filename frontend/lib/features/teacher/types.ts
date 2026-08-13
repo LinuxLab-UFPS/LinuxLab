@@ -30,6 +30,21 @@ export type Difficulty = "basic" | "intermediate" | "advanced"
 
 export type EvaluationType = "atomic" | "manual"
 
+/** Un campo de formulario de una asercion del catalogo. */
+export interface CatalogField {
+  key: string
+  label: string
+  placeholder?: string
+}
+
+/** Una asercion del catalogo, servida por GET /api/activities/catalog. */
+export interface CatalogEntry {
+  type: string
+  label: string
+  hint: string
+  fields: CatalogField[]
+}
+
 export interface ActivityCheck {
   id: string
   type: string
@@ -49,6 +64,8 @@ export interface Activity {
   required: boolean
   evaluationType: EvaluationType
   gradingPolicy?: "best_score" | "latest_score"
+  /** Carpeta de trabajo autogenerada (`~/actividades/<workdir>/`). */
+  workdir?: string
   checks: ActivityCheck[]
   uses?: number
 }

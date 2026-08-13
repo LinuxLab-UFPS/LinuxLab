@@ -1,94 +1,12 @@
 "use client"
 
-import { Plus, Trash2, ShieldCheck } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Plus, Trash2, ShieldCheck, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { ActivityCheck } from "@/lib/features/teacher/types"
+import { getCheckCatalog } from "@/lib/features/teacher/data"
+import type { ActivityCheck, CatalogEntry } from "@/lib/features/teacher/types"
 
 export type { ActivityCheck }
-
-interface Field {
-  key: string
-  label: string
-  placeholder: string
-}
-
-interface CatalogEntry {
-  type: string
-  label: string
-  hint: string
-  fields: Field[]
-}
-
-/** Catálogo predefinido de aserciones (RF-17). El docente solo elige y rellena. */
-export const CHECK_CATALOG: CatalogEntry[] = [
-  {
-    type: "archivo_existe",
-    label: "El archivo existe",
-    hint: "Verifica que exista un archivo en la ruta indicada.",
-    fields: [{ key: "ruta", label: "Ruta del archivo", placeholder: "/home/$usuario/notas.txt" }],
-  },
-  {
-    type: "directorio_existe",
-    label: "El directorio existe",
-    hint: "Verifica que exista un directorio en la ruta indicada.",
-    fields: [{ key: "ruta", label: "Ruta del directorio", placeholder: "/home/$usuario/practicas" }],
-  },
-  {
-    type: "permisos_son",
-    label: "Los permisos son",
-    hint: "Compara los permisos del archivo con el modo octal esperado.",
-    fields: [
-      { key: "ruta", label: "Ruta", placeholder: "/home/$usuario/script.sh" },
-      { key: "modo", label: "Modo (octal)", placeholder: "755" },
-    ],
-  },
-  {
-    type: "propietario_es",
-    label: "El propietario es",
-    hint: "Verifica el usuario propietario del archivo o directorio.",
-    fields: [
-      { key: "ruta", label: "Ruta", placeholder: "/home/$usuario/archivo" },
-      { key: "usuario", label: "Usuario esperado", placeholder: "$usuario" },
-    ],
-  },
-  {
-    type: "archivo_contiene",
-    label: "El archivo contiene",
-    hint: "Busca un texto o patrón dentro del contenido del archivo.",
-    fields: [
-      { key: "ruta", label: "Ruta", placeholder: "/home/$usuario/.bashrc" },
-      { key: "patron", label: "Texto o patrón", placeholder: "export PATH=" },
-    ],
-  },
-  {
-    type: "comando_imprime",
-    label: "El comando imprime",
-    hint: "Ejecuta un comando y verifica que su salida contenga el texto esperado.",
-    fields: [
-      { key: "comando", label: "Comando", placeholder: "ls -a" },
-      { key: "salida", label: "Salida esperada (contiene)", placeholder: ".bashrc" },
-    ],
-  },
-  {
-    type: "comprimido_contiene",
-    label: "El comprimido contiene",
-    hint: "Verifica que un archivo comprimido incluya los archivos esperados.",
-    fields: [
-      { key: "archivo", label: "Archivo comprimido", placeholder: "backup.tar.gz" },
-      { key: "contenidos", label: "Archivos esperados (separa con coma)", placeholder: "a.txt, b.txt" },
-    ],
-  },
-  {
-    type: "umask_es",
-    label: "El umask es",
-    hint: "Ejecuta umask en la sesión del estudiante y compara el valor.",
-    fields: [{ key: "valor", label: "Valor esperado", placeholder: "022" }],
-  },
-]
-
-function getEntry(type: string) {
-  return CHECK_CATALOG.find((c) => c.type === type) ?? CHECK_CATALOG[0]
-}
 
 interface CheckBuilderProps {
   checks: ActivityCheck[]
@@ -98,6 +16,12 @@ interface CheckBuilderProps {
   onDistributeChange: (v: boolean) => void
 }
 
+/**
+ * Constructor de aserciones. El catalogo lo sirve el backend
+ * (`GET /api/activities/catalog`): la interfaz muestra exactamente los tipos
+ * que la validacion acepta, y un tipo nuevo llega solo con anadirlo al checker
+ * del entorno y al catalogo del servidor.
+ */
 export function CheckBuilder({
   checks,
   onChange,
@@ -105,6 +29,31 @@ export function CheckBuilder({
   distributeEvenly,
   onDistributeChange,
 }: CheckBuilderProps) {
+  const [catalog, setCatalog] = useState<CatalogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    getCheckCatalog()
+      .then((entries) => {
+        if (!alive) return
+        setCatalog(entries)
+      })
+      .catch(() => {
+        if (alive) setError("No se pudo cargar el catálogo de aserciones")
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  const getEntry = (type: string) =>
+    catalog.find((c) => c.type === type) ?? catalog[0]
+
   const evenPoints =
     checks.length > 0 ? Math.round((activityValue / checks.length) * 10) / 10 : 0
 
@@ -112,10 +61,11 @@ export function CheckBuilder({
     distributeEvenly ? evenPoints : c.points
 
   const customTotal = checks.reduce((sum, c) => sum + (Number(c.points) || 0), 0)
-  const mismatch = !distributeEvenly && Math.abs(customTotal - activityValue) > 0.5
+  const exceeds = !distributeEvenly && customTotal > activityValue
 
   const addCheck = () => {
-    const entry = CHECK_CATALOG[0]
+    const entry = catalog[0]
+    if (!entry) return
     onChange([
       ...checks,
       {
@@ -138,6 +88,23 @@ export function CheckBuilder({
     )
 
   const removeCheck = (id: string) => onChange(checks.filter((c) => c.id !== id))
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Cargando catálogo de aserciones…
+      </div>
+    )
+  }
+
+  if (error || catalog.length === 0) {
+    return (
+      <div className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
+        {error ?? "El catálogo de aserciones está vacío"}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
@@ -176,7 +143,7 @@ export function CheckBuilder({
                   onChange={(e) => updateCheck(check.id, { type: e.target.value, params: {} })}
                   className="flex-1 h-9 bg-card border border-border rounded-md px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 >
-                  {CHECK_CATALOG.map((c) => (
+                  {catalog.map((c) => (
                     <option key={c.type} value={c.type}>
                       {c.label}
                     </option>
@@ -249,15 +216,15 @@ export function CheckBuilder({
           <span
             className={cn(
               "font-mono font-medium",
-              mismatch ? "text-danger" : "text-foreground"
+              exceeds ? "text-danger" : "text-foreground"
             )}
           >
             {distributeEvenly ? activityValue : customTotal}
           </span>
           <span className="text-muted-foreground"> / {activityValue} pts</span>
-          {mismatch && (
+          {exceeds && (
             <span className="ml-2 text-xs text-danger">
-              La suma debe igualar el valor de la actividad.
+              La suma no puede superar los {activityValue} pts.
             </span>
           )}
         </div>

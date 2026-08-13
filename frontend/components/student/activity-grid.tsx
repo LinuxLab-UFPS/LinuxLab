@@ -18,7 +18,7 @@ export function ActivityGrid({ activities }: { activities: Activity[] }) {
         <ActivityCard
           key={activity.slug}
           activity={activity}
-          completed={passed.has(activity.slug)}
+          completed={activity.completed ?? passed.has(activity.slug)}
         />
       ))}
     </div>

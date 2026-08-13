@@ -22,5 +22,6 @@ router.post("/:id/reconcile", groupController.reconcileGroup)
 router.get("/:id/activities", groupController.listGroupActivities)
 router.post("/:id/activities", groupController.createGroupActivity)
 router.get("/:id/activities/:activityId", groupController.getGroupActivity)
+router.patch("/:id/activities/:activityId", groupController.updateGroupActivity)
 
 module.exports = router

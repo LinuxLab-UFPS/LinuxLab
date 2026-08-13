@@ -12,6 +12,7 @@ import {
   FolderTree,
   SquarePen,
   Stamp,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -73,6 +74,19 @@ export function SiteHeader({
           >
             <SquareTerminal className="h-4 w-4" />
             Terminal
+          </Link>
+
+          <Link
+            href="/mi-grupo"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              pathname === "/mi-grupo"
+                ? "bg-primary/15 text-primary"
+                : "text-white/60 hover:bg-primary/15 hover:text-primary",
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Mi Grupo
           </Link>
 
           <NavDropdown

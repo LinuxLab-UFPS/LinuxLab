@@ -56,9 +56,11 @@ export function ActivityCard({
             {activity.title}
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <Pill className={DIFFICULTY_CLASS[activity.difficulty]}>
-              {DIFFICULTY_LABEL[activity.difficulty]}
-            </Pill>
+            {activity.difficulty && (
+              <Pill className={DIFFICULTY_CLASS[activity.difficulty]}>
+                {DIFFICULTY_LABEL[activity.difficulty]}
+              </Pill>
+            )}
             {completed && (
               <Pill className="border-sky-500/40 text-sky-400">Completada</Pill>
             )}

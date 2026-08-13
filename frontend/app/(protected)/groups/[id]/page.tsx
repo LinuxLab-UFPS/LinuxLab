@@ -228,7 +228,7 @@ function GroupDetailContent() {
         <GroupStudents students={students} summary={progress} query={query} />
       ) : (
         <div data-section="actividades">
-          <GroupActivities activities={activities} query={query} />
+          <GroupActivities activities={activities} query={query} groupId={id} />
         </div>
       )}
 
