@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { PanelLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { CollapsedPanelButton } from "@/components/shared/collapsed-panel-button"
 import { ActivityCard } from "@/components/student/activity-card"
@@ -29,7 +30,13 @@ function shuffle<T>(items: T[]): T[] {
  * La lista tiene su propio scroll y el encabezado se queda fijo: cuatro tarjetas
  * no caben en la columna y la última salía cortada por el recorte del aside.
  */
-export function SuggestedActivities({ onHide }: { onHide: () => void }) {
+export function SuggestedActivities({
+  onHide,
+  visible,
+}: {
+  onHide: () => void
+  visible: boolean
+}) {
   const { passed, loading } = usePassedActivities()
   const { readCountForTopic } = useLessonProgress()
 
@@ -44,7 +51,14 @@ export function SuggestedActivities({ onHide }: { onHide: () => void }) {
   }, [loading, passed])
 
   return (
-    <section className="flex min-h-0 flex-1 flex-col">
+    // El panel se cierra por fuera (la columna se pliega), así que su marco se
+    // apaga antes: si no, se vería un borde encogiéndose mientras sale.
+    <section
+      className={cn(
+        "flex min-h-0 flex-1 flex-col rounded-xl border bg-background p-5 transition-colors",
+        visible ? "border-border" : "border-transparent",
+      )}
+    >
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-foreground">Actividades recomendadas</h2>
         <CollapsedPanelButton
