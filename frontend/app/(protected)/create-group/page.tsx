@@ -9,28 +9,24 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Stepper, type Step } from "@/components/shared/stepper"
 import { StudentManager, type DraftStudent } from "@/components/teacher/student-manager"
-import { CourseActivitiesStep } from "@/components/teacher/course-activities-step"
 import { createGroup } from "@/lib/features/teacher/data"
 import { RoleGuard } from "@/components/shared/role-guard"
 
 const PASOS: Step[] = [
   { id: "curso", label: "Información" },
   { id: "estudiantes", label: "Estudiantes" },
-  { id: "actividades", label: "Actividades" },
   { id: "confirmar", label: "Confirmar y publicar" },
 ]
 
 const TITULO = [
   "Información del curso",
   "Estudiantes",
-  "Actividades",
   "Revisa antes de publicar",
 ]
 
 const ENTRADILLA = [
   "El nombre con el que tus estudiantes verán el curso.",
   "Quiénes lo van a cursar. Puedes agregarlos uno a uno o cargar un CSV, y también hacerlo más tarde.",
-  "Las actividades que aparecerán en tu curso. Vienen incluidas en todos y no hay que escogerlas.",
   "Comprueba que todo esté como lo quieres. Al publicar se crean las cuentas de los estudiantes en el entorno.",
 ]
 
@@ -156,10 +152,6 @@ function CreateGroupContent() {
             )}
 
             {paso === 2 && (
-<CourseActivitiesStep />
-            )}
-
-            {paso === 3 && (
               <dl className="divide-y divide-table-line rounded-lg border border-table-line">
                 <div className="flex gap-4 px-4 py-3">
                   <dt className="w-32 shrink-0 text-sm text-muted-foreground">Nombre</dt>
