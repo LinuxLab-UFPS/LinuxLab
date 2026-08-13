@@ -15,7 +15,9 @@ export function GroupActivitiesSection({
   activities: GroupActivitySummary[]
 }) {
   return (
-    <section className="mb-10">
+    // La línea de abajo separa lo asignado del catálogo. Va aquí y no en el
+    // catálogo para que no exista cuando no hay actividades del curso.
+    <section className="mb-10 border-b border-border pb-10">
       <h2 className="text-2xl font-bold tracking-tight text-foreground">
         Actividades del curso
       </h2>
