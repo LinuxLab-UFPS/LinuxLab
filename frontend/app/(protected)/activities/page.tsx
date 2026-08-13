@@ -1,9 +1,18 @@
 import { getActivities } from "@/lib/features/shared/activities"
 import { ActivityBrowser } from "@/components/student/activity-browser"
+import { GroupActivitiesSection } from "@/components/student/group-activities-section"
+import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function ActivitiesPage() {
   await requireServerRole(["student", "admin"])
+
+  // Sin grupo (o con el backend caído) la página sigue siendo el catálogo: las
+  // del temario no dependen de estar matriculado.
+  const { group, activities } = await listMyGroupActivities().catch(() => ({
+    group: null,
+    activities: [],
+  }))
 
   return (
     <div className="min-h-full pb-24">
@@ -22,6 +31,8 @@ export default async function ActivitiesPage() {
       <section className="mx-auto max-w-7xl px-6">
         <ActivityBrowser activities={getActivities()} />
       </section>
+
+      {group && <GroupActivitiesSection activities={activities} />}
     </div>
   )
 }
