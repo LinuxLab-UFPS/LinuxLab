@@ -9,14 +9,11 @@ export default async function ActivitiesPage() {
 
   // Sin grupo (o con el backend caído) la página sigue siendo el catálogo: las
   // del temario no dependen de estar matriculado.
-  const { group, activities } = await listMyGroupActivities().catch(() => ({
-    group: null,
-    activities: [],
-  }))
+  const { activities } = await listMyGroupActivities().catch(() => ({ activities: [] }))
 
   return (
     <div className="min-h-full pb-24">
-      <section className="mx-auto max-w-7xl px-6 pt-16 pb-10">
+      <section className="mx-auto max-w-7xl px-6 pt-16 pb-8">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
           <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
             Actividades
@@ -28,12 +25,13 @@ export default async function ActivitiesPage() {
         </p>
       </section>
 
-      {/* Las del curso van primero: son las que el docente asignó y las que
-          llevan nota. El banco del temario queda después. */}
-      {group && <GroupActivitiesSection activities={activities} />}
-
-      <section className="mx-auto max-w-7xl px-6 pt-10 border-t border-border">
-        <ActivityBrowser activities={getActivities()} />
+      <section className="mx-auto max-w-7xl px-6">
+        {/* El buscador abre la página y no se mueve nunca. Las del curso van
+            debajo de él, y solo si el docente publicó alguna: sin actividades
+            asignadas la página es el catálogo y ya. */}
+        <ActivityBrowser activities={getActivities()}>
+          {activities.length > 0 && <GroupActivitiesSection activities={activities} />}
+        </ActivityBrowser>
       </section>
     </div>
   )
