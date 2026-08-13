@@ -36,7 +36,14 @@ const normaliza = (texto: string) =>
  * Los temas del desplegable salen de las actividades que hay, no del temario
  * completo: ofrecer un tema sin actividades sólo lleva a una lista vacía.
  */
-export function ActivityBrowser({ activities }: { activities: Activity[] }) {
+export function ActivityBrowser({
+  activities,
+  children,
+}: {
+  activities: Activity[]
+  /** Lo que se pinta entre los filtros y el catálogo (las del curso). */
+  children?: React.ReactNode
+}) {
   const [busqueda, setBusqueda] = useState("")
   const [tema, setTema] = useState(TODOS)
   const [dificultad, setDificultad] = useState(TODOS)
@@ -127,6 +134,8 @@ export function ActivityBrowser({ activities }: { activities: Activity[] }) {
           </p>
         )}
       </div>
+
+      {children}
 
       {visibles.length === 0 && filtrando ? (
         <p className="text-muted-foreground">

@@ -133,7 +133,10 @@ export function TerminalWorkspace({
               ) : open && groupActivity ? (
                 <GroupActivityPanel detail={groupActivity} />
               ) : (
-                <SuggestedActivities onHide={() => setHiddenPersisted(true)} />
+                <SuggestedActivities
+                  onHide={() => setHiddenPersisted(true)}
+                  visible={showColumn}
+                />
               )}
             </div>
           </aside>
