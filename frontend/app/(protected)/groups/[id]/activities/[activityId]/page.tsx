@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Pencil, ListChecks, FolderOpen } from "lucide-react"
+import { ArrowLeft, Pencil, ListChecks, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ActionButton } from "@/components/shared/action-button"
-import { getGroup, getGroupActivity } from "@/lib/features/teacher/data"
+import { getGroupActivity } from "@/lib/features/teacher/data"
 import { getTopic } from "@/lib/features/shared/temario"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
@@ -22,8 +22,13 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function ActivityDetail({ groupId, activity }: { groupId: string; activity: Activity }) {
   const topic = getTopic(activity.topicNumber)
   return (
-    <div data-section="cursos" className="mx-auto max-w-3xl px-6 py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div data-section="cursos" className="mx-auto max-w-3xl px-6 py-8">
+      <ActionButton tone="neutral" href={`/groups/${groupId}`}>
+        <ArrowLeft className="h-4 w-4" />
+        Volver al curso
+      </ActionButton>
+
+      <div className="mb-6 mt-9 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{activity.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -124,45 +129,21 @@ export default async function ActivityDetailPage({
 }) {
   await requireServerRole(["teacher", "admin"])
   const { id, activityId } = await params
-  const [group, activity] = await Promise.all([getGroup(id), getGroupActivity(id, activityId)])
+  const activity = await getGroupActivity(id, activityId)
 
-  return (
-    <div className="min-h-screen">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="px-6 py-4">
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-            <Link href="/home" className="hover:text-foreground transition-colors">
-              Mis Grupos
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <Link href={`/groups/${id}`} className="hover:text-foreground transition-colors">
-              {group?.name ?? "Grupo"}
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground">Detalle de actividad</span>
-          </nav>
-          <Link href={`/groups/${id}`}>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <ChevronLeft className="h-4 w-4" />
-              Volver al curso
-            </Button>
-          </Link>
-        </div>
+  if (!activity) {
+    return (
+      <div className="mx-auto max-w-md px-6 py-24 text-center">
+        <h2 className="mb-1 text-base font-medium text-foreground">Actividad no encontrada</h2>
+        <p className="mb-6 text-sm text-muted-foreground">
+          Esta actividad no existe o no pertenece al curso.
+        </p>
+        <Link href={`/groups/${id}`}>
+          <Button variant="outline">Volver al curso</Button>
+        </Link>
       </div>
+    )
+  }
 
-      {!activity ? (
-        <div className="mx-auto max-w-md px-6 py-24 text-center">
-          <h2 className="mb-1 text-base font-medium text-foreground">Actividad no encontrada</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Esta actividad no existe o no pertenece al curso.
-          </p>
-          <Link href={`/groups/${id}`}>
-            <Button variant="outline">Volver al curso</Button>
-          </Link>
-        </div>
-      ) : (
-        <ActivityDetail groupId={id} activity={activity} />
-      )}
-    </div>
-  )
+  return <ActivityDetail groupId={id} activity={activity} />
 }
