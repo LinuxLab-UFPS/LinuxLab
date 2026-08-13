@@ -10,7 +10,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { useLessonProgress } from "@/lib/features/student/progress"
 import {
   CHEAT_SHEET_SIZE,
   COMMANDS,
@@ -21,6 +20,9 @@ import { downloadCheatSheet } from "@/lib/features/student/cheat-sheet-pdf"
 
 const PICK_KEY = "linuxlab:cheat-sheet"
 const HIDDEN_KEY = "linuxlab:cheat-sheet-hidden"
+
+/** La elección con la que arranca la hoja: los primeros esenciales. */
+const DEFAULT_PICK = COMMANDS.slice(0, CHEAT_SHEET_SIZE).map((c) => c.name)
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -40,37 +42,30 @@ function write(key: string, value: unknown) {
 }
 
 /**
- * The cheat sheet under the terminal: four commands the student keeps at hand.
- *
- * Only commands from lessons already read are offered — the sheet grows with the
- * course instead of spoiling what comes later. The student can swap the four
- * from the picker, or hide the whole strip.
+ * The cheat sheet under the terminal: four essential commands the student keeps
+ * at hand. All the essentials are always available — the sheet does not depend
+ * on which lessons have been read. The student can swap the four from the
+ * picker, or hide the whole strip.
  */
 export function EssentialCommands({ className }: { className?: string }) {
-  const { isRead } = useLessonProgress()
   const [picked, setPicked] = useState<string[] | null>(null)
   const [hidden, setHidden] = useState(false)
   const [picking, setPicking] = useState(false)
 
   useEffect(() => {
-    setPicked(read<string[]>(PICK_KEY, []))
+    setPicked(read<string[]>(PICK_KEY, DEFAULT_PICK))
     setHidden(read<boolean>(HIDDEN_KEY, false))
   }, [])
 
-  const learned = useMemo(
-    () => COMMANDS.filter((c) => isRead(c.topicNumber, c.subtopicId)),
-    [isRead],
-  )
-
-  // Sin elección propia, la hoja se llena sola con lo más reciente que aprendió.
+  // La hoja siempre es la selección real; si se vació (quitaron los cuatro),
+  // vuelve a sugerir los primeros esenciales.
   const shown = useMemo(() => {
-    if (picked === null) return []
-    const chosen = picked
+    const chosen = (picked ?? [])
       .map(findCommand)
-      .filter((c): c is EssentialCommand => c !== undefined && learned.includes(c))
+      .filter((c): c is EssentialCommand => c !== undefined)
     if (chosen.length > 0) return chosen.slice(0, CHEAT_SHEET_SIZE)
-    return learned.slice(-CHEAT_SHEET_SIZE)
-  }, [picked, learned])
+    return DEFAULT_PICK.map(findCommand).filter((c): c is EssentialCommand => c !== undefined)
+  }, [picked])
 
   const toggleHidden = useCallback(() => {
     setHidden((prev) => {
@@ -82,18 +77,23 @@ export function EssentialCommands({ className }: { className?: string }) {
   const toggleCommand = useCallback((name: string) => {
     setPicked((prev) => {
       const current = prev ?? []
-      const next = current.includes(name)
-        ? current.filter((n) => n !== name)
-        : current.length >= CHEAT_SHEET_SIZE
-          ? current
-          : [...current, name]
+      let next: string[]
+      if (current.includes(name)) {
+        // Quitar una elegida.
+        next = current.filter((n) => n !== name)
+      } else if (current.length >= CHEAT_SHEET_SIZE) {
+        // Al tope: entra la nueva y sale la más antigua.
+        next = [...current.slice(1), name]
+      } else {
+        next = [...current, name]
+      }
       write(PICK_KEY, next)
       return next
     })
   }, [])
 
-  // Nada aprendido todavía: no hay hoja que mostrar ni que ofrecer.
-  if (picked === null || learned.length === 0) return null
+  // Aún no se ha leído el almacenamiento: nada que pintar todavía.
+  if (picked === null) return null
 
   return (
     <div className={cn("flex items-start gap-2", className)}>
@@ -134,8 +134,7 @@ export function EssentialCommands({ className }: { className?: string }) {
       </div>
 
       <CommandPicker
-        learned={learned}
-        picked={shown.map((c) => c.name)}
+        picked={picked ?? []}
         open={picking}
         onToggle={toggleCommand}
         onOpenChange={setPicking}
@@ -179,43 +178,22 @@ function CommandChip({
   )
 }
 
-
-/** El chip de un comando aun no aprendido: se ve, pero no se puede escoger. */
-function LockedChip({ command }: { command: EssentialCommand }) {
-  return (
-    <div className="rounded-lg border border-border/60 p-2.5 text-left opacity-45">
-      <p className="font-mono text-sm font-bold text-muted-foreground">
-        {command.name}
-        {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
-      </p>
-      <p className="mt-1 text-xs leading-snug text-muted-foreground">{command.description}</p>
-    </div>
-  )
-}
-
 /**
- * Picker for the cheat sheet.
- *
- * It lists every command the course teaches, not just the ones already learned:
- * seeing what is still ahead is part of the map. The pending ones are shown but
- * cannot be picked — the sheet is a reminder of what you know, not a spoiler.
+ * Picker for the cheat sheet. Every essential command is selectable: the sheet
+ * is a reminder of what is at hand, and none of it is locked behind lessons.
  * The download takes the lot, because a printed sheet has no such problem.
  */
 function CommandPicker({
-  learned,
   picked,
   open,
   onToggle,
   onOpenChange,
 }: {
-  learned: EssentialCommand[]
   picked: string[]
   open: boolean
   onToggle: (name: string) => void
   onOpenChange: (open: boolean) => void
 }) {
-  const pending = COMMANDS.filter((command) => !learned.includes(command))
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] gap-0 overflow-y-auto border-primary/50 shadow-[var(--neon-glow-strong)] sm:max-w-3xl">
@@ -239,7 +217,7 @@ function CommandPicker({
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {learned.map((cmd) => (
+          {COMMANDS.map((cmd) => (
             <CommandChip
               key={cmd.name}
               command={cmd}
@@ -248,22 +226,6 @@ function CommandPicker({
             />
           ))}
         </div>
-
-        {pending.length > 0 && (
-          <>
-            <div className="my-5 flex items-center gap-3">
-              <span className="text-xs font-medium text-muted-foreground">
-                Aún no los has visto
-              </span>
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {pending.map((cmd) => (
-                <LockedChip key={cmd.name} command={cmd} />
-              ))}
-            </div>
-          </>
-        )}
       </DialogContent>
     </Dialog>
   )

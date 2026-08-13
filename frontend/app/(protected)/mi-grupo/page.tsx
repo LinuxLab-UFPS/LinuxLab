@@ -1,11 +1,14 @@
-import Link from "next/link"
-import { Users, GraduationCap, Target } from "lucide-react"
+import { Users, GraduationCap } from "lucide-react"
+import { GroupActivityCard } from "@/components/student/group-activity-card"
 import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function MyGroupPage() {
   await requireServerRole(["student", "admin"])
-  const { group } = await listMyGroupActivities().catch(() => ({ group: null }))
+  const { group, activities } = await listMyGroupActivities().catch(() => ({
+    group: null,
+    activities: [],
+  }))
 
   return (
     <div className="min-h-full pb-24">
@@ -53,23 +56,22 @@ export default async function MyGroupPage() {
               </div>
             </div>
 
-            {/* Las actividades del curso viven con las demás, no aquí. */}
-            <Link
-              href="/activities"
-              className="group mt-5 flex items-center gap-3 rounded-2xl border border-border bg-card p-5 transition-colors hover:border-amber-500/50"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
-                <Target className="h-5 w-5" />
-              </span>
-              <span className="min-w-0">
-                <span className="block font-medium text-foreground transition-colors group-hover:text-amber-400">
-                  Actividades del curso
-                </span>
-                <span className="mt-0.5 block text-sm text-muted-foreground">
-                  Las que publicó tu docente están al final de la página de Actividades.
-                </span>
-              </span>
-            </Link>
+            {/* Las actividades del curso, aquí mismo: solo las del grupo. */}
+            <h3 className="mt-8 mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Actividades del curso ({activities.length})
+            </h3>
+
+            {activities.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Tu curso todavía no tiene actividades publicadas.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {activities.map((activity) => (
+                  <GroupActivityCard key={activity.id} activity={activity} />
+                ))}
+              </div>
+            )}
           </>
         )}
       </section>

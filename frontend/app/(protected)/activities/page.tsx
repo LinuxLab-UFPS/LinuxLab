@@ -28,11 +28,13 @@ export default async function ActivitiesPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-6">
+      {/* Las del curso van primero: son las que el docente asignó y las que
+          llevan nota. El banco del temario queda después. */}
+      {group && <GroupActivitiesSection activities={activities} />}
+
+      <section className="mx-auto max-w-7xl px-6 pt-10 border-t border-border">
         <ActivityBrowser activities={getActivities()} />
       </section>
-
-      {group && <GroupActivitiesSection activities={activities} />}
     </div>
   )
 }
