@@ -34,6 +34,7 @@ function serializeGroup(group, studentCount, activityCount) {
     studentCount: studentCount ?? 0,
     enabledTopics: [],
     activityCount: activityCount ?? 0,
+    groupDir: group.group_dir ?? null,
   }
 }
 

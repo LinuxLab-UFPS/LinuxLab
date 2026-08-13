@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { BookOpen, Plus, Search } from "lucide-react"
+import { BookOpen, FolderOpen, Plus, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ActionButton } from "@/components/shared/action-button"
 import { StatTabs } from "@/components/shared/stat-tabs"
@@ -145,8 +145,8 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-16">ID</TableHead>
-              <TableHead>Curso</TableHead>
+              <TableHead>Grupo</TableHead>
+              <TableHead className="w-56">Directorio de trabajo</TableHead>
               <TableHead className="w-28">Estudiantes</TableHead>
               <TableHead className="w-28">Actividades</TableHead>
               <TableHead className="w-32">Creado</TableHead>
@@ -156,11 +156,6 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
           <TableBody>
             {pageRows.map((group) => (
               <TableRow key={group.id}>
-                <TableCell>
-                  <span className="inline-flex min-w-9 items-center justify-center rounded-md bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground">
-                    #{group.id}
-                  </span>
-                </TableCell>
                 <TableCell>
                   <Link href={`/groups/${group.id}`} className="group block whitespace-normal">
                     <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
@@ -172,6 +167,14 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                       </span>
                     )}
                   </Link>
+                </TableCell>
+                <TableCell>
+                  {group.groupDir && (
+                    <span className="inline-flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                      <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+                      grupos/{group.groupDir}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="font-mono text-sm text-foreground">
                   {group.studentCount}

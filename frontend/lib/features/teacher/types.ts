@@ -9,6 +9,8 @@ export interface Group {
   enabledTopics: number[]
   studentCount: number
   activityCount: number
+  /** Directorio del grupo dentro del home del docente: grupos/<group_dir>. */
+  groupDir?: string
 }
 
 export interface Enrollment {
