@@ -1,0 +1,35 @@
+# Un solo origen para todo el laboratorio.
+#
+# La infraestructura de la U asigna una URL publica por puerto, pero solo hay
+# una para el frontend (PORT_0). Este proxy se queda con ese puerto y reparte
+# por ruta, de modo que el navegador ve una unica direccion: la del frontend.
+#
+# Eso ademas resuelve dos cosas de gratis: CORS no interviene (mismo origen) y
+# la cookie de sesion (`SameSite: lax`) viaja sin condiciones.
+#
+# No termina TLS: de eso se encarga el proxy de la U, que mapea el dominio a
+# este puerto. Aqui dentro todo es HTTP plano por la red de contenedores.
+
+:3000 {
+	# `/terminal` es la pagina de Next Y el WebSocket del backend: el mismo
+	# camino para dos destinos. Lo que los separa es la cabecera de upgrade,
+	# que solo trae el socket. Sin este matcher habria que elegir, y elegir
+	# rompe la terminal o rompe la pagina que la contiene.
+	@terminal_ws {
+		path /terminal
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	handle @terminal_ws {
+		reverse_proxy backend:3000
+	}
+
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# Todo lo demas es la aplicacion, incluida la pagina /terminal.
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

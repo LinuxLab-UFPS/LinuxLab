@@ -97,8 +97,11 @@ services:
     networks: [internal, external]
     mem_limit: 192m
     cpu_shares: 1024
+    # Loopback y no 0.0.0.0: el proxy lo alcanza por la red de contenedores y
+    # deploy-server.sh sigue pudiendo consultar /api/health, pero desde fuera
+    # del servidor este puerto ya no existe.
     ports:
-      - "${PORT_1:-3000}:3000"
+      - "127.0.0.1:${PORT_1:-3000}:3000"
     env_file: ../backend/.env
     environment:
       NODE_ENV: ${NODE_ENV:-production}
@@ -123,8 +126,6 @@ services:
     networks: [external]
     mem_limit: 96m
     cpu_shares: 256
-    ports:
-      - "${PORT_0:-3001}:3000"
     environment:
       # La URL publica del backend se incrusta en el build (NEXT_PUBLIC_*):
       # se fija en local con deploy/build-local.sh --url ANTES de compilar.
@@ -132,6 +133,25 @@ services:
       BACKEND_URL: http://backend:3000
       HOSTNAME: "0.0.0.0"
     depends_on:
+      - backend
+    restart: unless-stopped
+    logging: *logging
+
+  # Da una sola URL publica a todo: reparte por ruta entre el frontend y el
+  # backend, asi que la infraestructura solo tiene que asignar PORT_0. Vive en
+  # `external` porque ahi estan los dos a los que reenvia.
+  proxy:
+    image: docker.io/library/caddy:2-alpine
+    container_name: linuxlab-proxy
+    networks: [external]
+    mem_limit: 64m
+    cpu_shares: 256
+    ports:
+      - "${PORT_0:-3001}:3000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro,Z
+    depends_on:
+      - frontend
       - backend
     restart: unless-stopped
     logging: *logging

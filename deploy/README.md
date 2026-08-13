@@ -35,15 +35,22 @@ Ambos son **idempotentes** (re-ejecutables sin duplicar nada).
   `http://`. Las URLs que asigne el admin deben ser `https`. La verificación
   local con `http://localhost:PORT_0` sí funciona (el navegador trata
   localhost como contexto seguro).
-- **Dos puertos públicos**: `PORT_0` → frontend (3001) y `PORT_1` → backend
-  (3000; API + WebSocket de la terminal). El admin asigna una URL por puerto.
-- **Opción ideal (si el admin puede)**: una sola URL con proxy por path
-  (`/` → frontend, `/api` y `/terminal` → backend). Entonces:
-  `NEXT_PUBLIC_BACKEND_URL=<misma URL>` (sin puerto del backend publicado,
-  CORS no interviene).
-- **Opción de subdominios**: si el admin da dos URLs del mismo dominio
-  (p. ej. `lab.ufps.edu.co` y `api.lab.ufps.edu.co`), la cookie `SameSite: lax`
-  funciona igual; el CORS se restringe con `CORS_ORIGIN` en `backend/.env`.
+- **Un solo puerto público**: `PORT_0`. Lo ocupa el contenedor `proxy`
+  (Caddy, `deploy/Caddyfile`), que reparte por ruta: `/api` y el WebSocket de
+  la terminal van al backend, y todo lo demás al frontend. El admin solo tiene
+  que asignar una URL, la del frontend, y ésa sirve para todo.
+- **`NEXT_PUBLIC_BACKEND_URL` = esa misma URL.** Al quedar todo en el mismo
+  origen, CORS no interviene y la cookie `SameSite: lax` viaja sin condiciones.
+- **`PORT_1` deja de ser público**: el backend se publica en `127.0.0.1` para
+  que `deploy-server.sh` pueda consultar `/api/health`, pero desde fuera del
+  servidor ya no existe.
+- **El proxy de la U tiene que dejar pasar el upgrade de WebSocket** hacia
+  `PORT_0`. Es lo único que depende de ellos: sin eso el login y las
+  actividades funcionan, pero la terminal no conecta.
+- **Ojo con `/terminal`**: es a la vez la página de Next y la ruta del
+  WebSocket del backend. El `Caddyfile` los separa por la cabecera de upgrade,
+  que solo trae el socket. Cualquier proxy que se ponga delante tiene que
+  respetar eso.
 
 ## Config en el servidor
 
@@ -64,7 +71,8 @@ Ambos son **idempotentes** (re-ejecutables sin duplicar nada).
 | `backend` | 192 MB |
 | `postgres` | 192 MB |
 | `frontend` | 96 MB |
-| **Total** | **864 MB** (margen ~160 MB para el host) |
+| `proxy` | 64 MB |
+| **Total** | **928 MB** (margen ~96 MB para el host) |
 
 ## Operación diaria
 
