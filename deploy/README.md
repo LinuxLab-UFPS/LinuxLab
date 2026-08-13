@@ -6,11 +6,15 @@ y se cargan con `podman load`. El servidor nunca compila.
 
 ## Instalación — 2 scripts, sin comandos sueltos
 
+Siempre se envía el **paquete completo** de las 3 imágenes, y el servidor hace
+`down`/`up` para aplicar: baja lo existente (los volúmenes persisten) y recrea
+todo con las imágenes recién cargadas.
+
 ```bash
 # TU MAQUINA (donde hay RAM): construye, empaqueta y (opcional) transfiere
 bash deploy/build-local.sh --host usuario@servidor
 
-# SERVIDOR: carga, red interna, up, salud, seeds y admin
+# SERVIDOR: carga, baja lo viejo, levanta, salud, seeds y admin
 bash deploy/deploy-server.sh --admin-email admin@ufps.edu.co
 ```
 
@@ -18,7 +22,7 @@ bash deploy/deploy-server.sh --admin-email admin@ufps.edu.co
 ```bash
 # TU MAQUINA: fija la URL ANTES de compilar (se incrusta en el bundle) y envía
 bash deploy/build-local.sh --url https://api.lab.ufps.edu.co --host usuario@servidor
-# SERVIDOR: recarga la imagen nueva y recrea el frontend
+# SERVIDOR: recarga el paquete y aplica con down/up
 bash deploy/deploy-server.sh
 ```
 
@@ -92,6 +96,9 @@ volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 
 ## Solución de problemas
 
+- **Seeds fallan con "Can't reach database server"**: `DATABASE_URL` en
+  `backend/.env` **sin comillas** (podman `--env-file` no las procesa como
+  docker-compose); verificar con `podman exec linuxlab-backend env | grep DATABASE_URL`.
 - **`migrate` reintenta hasta 20 veces**: si falla, revisar `backend/.env`
   (`DATABASE_URL` y `DB_PASSWORD` deben coincidir) y que postgres esté arriba.
 - **El entorno no crea cuentas**: `podman logs linuxlab-backend` (worker de

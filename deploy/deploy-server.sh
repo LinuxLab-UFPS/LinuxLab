@@ -2,9 +2,9 @@
 #
 # LinuxLab - desplegar en el servidor (Podman rootless).
 #
-# Carga las imagenes empaquetadas por build-local.sh, crea la red interna,
-# levanta el stack, espera la salud, siembra el temario y crea el admin.
-# El servidor nunca compila: las imagenes vienen construidas de fuera.
+# Carga las imagenes empaquetadas por build-local.sh, baja lo existente y
+# levanta el stack completo, espera la salud, siembra el temario y crea el
+# admin. El servidor nunca compila: las imagenes vienen construidas de fuera.
 #
 # Uso:
 #   bash deploy/deploy-server.sh                                # todo
@@ -68,36 +68,7 @@ command -v podman-compose >/dev/null 2>&1 || die "podman-compose no esta instala
 log "Repo: $REPO"
 log "podman-compose: $(podman-compose --version 2>/dev/null | head -1 || echo '?')"
 
-# ---- 1. Cargar imagenes ----------------------------------------------------
-if $SKIP_LOAD; then
-  log "Omitiendo podman load (--skip-load)."
-else
-  [ -f "$IMAGE_FILE" ] || die "No se encuentra $IMAGE_FILE. Ejecuta deploy/build-local.sh (con --host) o usa --skip-load si ya cargaste las imagenes."
-  log "Cargando imagenes desde $IMAGE_FILE ..."
-  case "$IMAGE_FILE" in
-    *.gz) run "gunzip -c '$IMAGE_FILE' | podman load" ;;
-    *)    run "podman load -i '$IMAGE_FILE'" ;;
-  esac
-fi
-
-# ---- 2. Verificar los 3 tags -----------------------------------------------
-for img in "${IMAGES[@]}"; do
-  if podman image exists "$img:latest"; then
-    log "Imagen $img:latest OK"
-  else
-    die "Falta la imagen $img:latest. Ejecuta deploy/build-local.sh y carga el tar (o revisa los tags con podman images)."
-  fi
-done
-
-# ---- 3. Red interna aislada -----------------------------------------------
-if podman network inspect "$INTERNAL_NET" >/dev/null 2>&1; then
-  log "Red interna '$INTERNAL_NET' ya existe."
-else
-  log "Creando red interna aislada '$INTERNAL_NET' (--internal)..."
-  run "podman network create --internal $INTERNAL_NET"
-fi
-
-# ---- 4. Config -------------------------------------------------------------
+# ---- 1. Config (antes de tocar el stack) -----------------------------------
 BACKEND_ENV="$REPO/backend/.env"
 if [ ! -f "$BACKEND_ENV" ]; then
   log "Creando backend/.env desde el ejemplo..."
@@ -119,11 +90,48 @@ if [ ! -f "$REPO/frontend/.env.local" ]; then
   warn "No existe frontend/.env.local en este repo. Se fija en la maquina de build (build-local.sh --url); el bundle ya trae la URL incrustada."
 fi
 
-# ---- 5. Up -----------------------------------------------------------------
+# ---- 2. Cargar imagenes ----------------------------------------------------
+if $SKIP_LOAD; then
+  log "Omitiendo podman load (--skip-load)."
+else
+  [ -f "$IMAGE_FILE" ] || die "No se encuentra $IMAGE_FILE. Ejecuta deploy/build-local.sh (con --host) o usa --skip-load si ya cargaste las imagenes."
+  log "Cargando imagenes desde $IMAGE_FILE ..."
+  case "$IMAGE_FILE" in
+    *.gz) run "gunzip -c '$IMAGE_FILE' | podman load" ;;
+    *)    run "podman load -i '$IMAGE_FILE'" ;;
+  esac
+fi
+
+# ---- 3. Verificar los 3 tags -----------------------------------------------
+for img in "${IMAGES[@]}"; do
+  if podman image exists "$img:latest"; then
+    log "Imagen $img:latest OK"
+  else
+    die "Falta la imagen $img:latest. Ejecuta deploy/build-local.sh y carga el tar (o revisa los tags con podman images)."
+  fi
+done
+
+# ---- 4. Red interna aislada -----------------------------------------------
+if podman network inspect "$INTERNAL_NET" >/dev/null 2>&1; then
+  log "Red interna '$INTERNAL_NET' ya existe."
+else
+  log "Creando red interna aislada '$INTERNAL_NET' (--internal)..."
+  run "podman network create --internal $INTERNAL_NET"
+fi
+
+# ---- 5. Bajar lo existente -------------------------------------------------
+# down antes de up: recrea el conjunto completo con las imagenes recien
+# cargadas y evita el bloqueo de dependencias de podman-compose (--requires).
+# Los volumenes (pgdata, homes, claves) persisten; migrate e init son
+# idempotentes en cada up.
+log "Bajando el stack existente (los volumenes persisten)..."
+run "podman-compose $COMPOSE down"
+
+# ---- 6. Up -----------------------------------------------------------------
 log "Levantando el stack..."
 run "podman-compose $COMPOSE up -d"
 
-# ---- 6. Espera de salud ----------------------------------------------------
+# ---- 7. Espera de salud ----------------------------------------------------
 if ! $DRY_RUN; then
   PORT="${PORT_1:-3000}"
   log "Esperando que el backend responda en :$PORT/api/health..."
@@ -139,7 +147,7 @@ if ! $DRY_RUN; then
   [ "$ok" -eq 1 ] || warn "El backend no respondio en 150s (revisa podman logs linuxlab-backend)."
 fi
 
-# ---- 7. Seeds --------------------------------------------------------------
+# ---- 8. Seeds --------------------------------------------------------------
 if $SKIP_SEEDS; then
   log "Omitiendo seeds (--skip-seeds)."
 else
@@ -149,7 +157,7 @@ else
   done
 fi
 
-# ---- 8. Bootstrap del admin ------------------------------------------------
+# ---- 9. Bootstrap del admin ------------------------------------------------
 if ! $DRY_RUN && [ -z "$ADMIN_EMAIL" ]; then
   read -r -p "Correo del administrador inicial (Enter para omitir): " ADMIN_EMAIL
 fi
@@ -162,7 +170,7 @@ else
   log "Sin admin por ahora: usa deploy/bootstrap-admin.js cuando quieras."
 fi
 
-# ---- 9. Resumen ------------------------------------------------------------
+# ---- 10. Resumen -----------------------------------------------------------
 log "Listo. Contenedores del stack:"
 podman ps --filter "name=linuxlab" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
 log "Logs: podman-compose $COMPOSE logs -f"

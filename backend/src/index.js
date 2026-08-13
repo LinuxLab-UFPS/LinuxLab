@@ -57,6 +57,12 @@ app.get('/', (_req, res) => {
     res.json({ message: 'LinuxLab API' });
 });
 
+// Ruta de salud: la usan el healthcheck del compose y el deploy-server.sh.
+// Esta al margen de morgan (skip) para no ensuciar el log.
+app.get('/api/health', (_req, res) => {
+    res.json({ status: 'ok' });
+});
+
 const server = app.listen(PORT, () => {
     logger.info(`Server running at http://localhost:${PORT}`);
 });
