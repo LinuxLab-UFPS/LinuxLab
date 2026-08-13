@@ -151,6 +151,7 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
         group_dir: groupDir || null,
         group_name: groupName || null,
         teacher_username: teacherUsername || null,
+        priority: 1,
       },
     })
   }

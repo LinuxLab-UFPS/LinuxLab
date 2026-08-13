@@ -152,7 +152,7 @@ async function ensureOwnAccount(userId) {
     data: { user_id: user.id, linux_username: username, linux_provisioned: false },
   })
   await prisma.userProvisioningJob.create({
-    data: { user_id: user.id, username },
+    data: { user_id: user.id, username, priority: 10 },
   })
   return { created: true, username }
 }

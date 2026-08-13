@@ -245,6 +245,7 @@ async function enrollStudentsInGroup({ groupId, students, groupDir, groupName, t
         group_dir: groupDir || null,
         group_name: groupName || null,
         teacher_username: teacherUsername || null,
+        priority: 1,
       }))
     if (jobs.length > 0) await db.userProvisioningJob.createMany({ data: jobs })
   }

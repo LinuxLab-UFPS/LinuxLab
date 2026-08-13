@@ -45,13 +45,53 @@ ssh-keygen -A >/dev/null 2>&1
 
 # Re-aplicar sudoers
 cat > /etc/sudoers.d/labadmin << 'EOF'
-labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su
+labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su, /bin/sh
 labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py
 EOF
 chmod 440 /etc/sudoers.d/labadmin
 
 echo "[entrypoint] Configurando aislamiento de procesos..."
 mount -o remount,hidepid=2 /proc 2>/dev/null || true
+
+echo "[entrypoint] Habilitando limites de CPU por estudiante (cgroups v2)..."
+
+# El techo de CPU por estudiante (10% de 1 CPU) vive en un cgroup por usuario.
+# Docker monta /sys/fs/cgroup como read-only por defecto; con CAP_SYS_ADMIN se
+# puede remontar como rw. Si el host no lo permite, se cae gracilmente y el
+# fallback nice+ulimit del Nivel 1 protege igual.
+if mount -o remount,rw /sys/fs/cgroup 2>/dev/null; then
+  mkdir -p /sys/fs/cgroup/linuxlab
+  # Controlador cpu disponible para los sub-cgroups que crea createStudent.
+  echo "+cpu" > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null || true
+  # Cgroups para los docentes y usuarios de nivel superior.
+  for d in /home/*/; do
+    [ -d "$d" ] || continue
+    u=$(basename "$d")
+    mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
+    echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max" 2>/dev/null || true
+  done
+  # Cgroups para los estudiantes que ya existen (los nuevos los crea
+  # createStudent al aprovisionar).
+  for d in /home/*/grupos/*/*/; do
+    [ -d "$d" ] || continue
+    u=$(basename "$d")
+    mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
+    echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max" 2>/dev/null || true
+  done
+  echo "[entrypoint] cgroups v2 rw: limites de CPU por usuario activos"
+else
+  echo "[entrypoint] cgroups v2 sin permisos: fallback a nice + ulimit"
+fi
+
+echo "[entrypoint] Habilitando cuotas de disco por estudiante..."
+
+# Cuota de 20 MB por estudiante (la aplica createStudent con setquota). Depende
+# de que el filesystem del host soporte quotas; si no, se sigue sin limite.
+if quotacheck -cum /home 2>/dev/null && quotaon /home 2>/dev/null; then
+  echo "[entrypoint] cuotas de disco habilitadas en /home"
+else
+  echo "[entrypoint] cuotas de disco no disponibles (host sin soporte)"
+fi
 
 echo "[entrypoint] Iniciando SSH..."
 mkdir -p /run/sshd

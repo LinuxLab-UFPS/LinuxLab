@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y \
     sudo \
     python3-minimal \
     openssh-server \
+    quota \
     && apt-get remove -y wget curl 2>/dev/null || true \
     && rm -rf /var/lib/apt/lists/*
 
@@ -33,13 +34,13 @@ RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   
 # `ulimit -u` es el que importa: el servidor de despliegue concede 512 procesos
 # al proyecto ENTERO, no a cada estudiante. Con 512 por cabeza, uno solo podia
 # agotar el presupuesto y tumbar tambien el backend y el frontend. Un estudiante
-# trabajando usa 3, asi que 32 le sobra para tuberias y deja el fork bomb en 32
-# procesos en vez de en 512.
+# trabajando usa 3, asi que 16 le sobra para tuberias y deja el fork bomb en 16
+# procesos: menos capacidad de monopolizar la CPU del laboratorio.
 #
 # TMOUT cierra las terminales inactivas a los 15 minutos. Va `readonly` para que
 # no se pueda desactivar, y es lo que hace que el cupo de sesiones rinda: quien
 # se va a almorzar libera su sitio sin tener que cerrar nada.
-RUN printf '\nulimit -u 32\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+RUN printf '\nulimit -u 16\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Identidad LinuxLab en la terminal (prompt rojo + saludo ambar).
 COPY scripts/linuxlab-shell.sh /etc/linuxlab-shell.sh

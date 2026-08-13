@@ -52,11 +52,16 @@ services:
     # 10 MB por estudiante con vim abierto, o sea ~48 simultaneos. Los demas
     # contenedores consumen lo mismo con uno o con cien.
     mem_limit: 512m
+    # Techo de CPU del laboratorio: medio nucleo. Un `while true` de un
+    # estudiante no puede degradar al backend ni al frontend. Dentro del
+    # laboratorio, el cgroup por usuario (10%) y el ulimit -u 16 reparten.
+    cpus: 0.5
     cpu_shares: 512
     cap_add:
       - SYS_ADMIN
     security_opt:
       - apparmor=unconfined
+    restart: unless-stopped
     depends_on:
       init:
         condition: service_completed_successfully
@@ -77,6 +82,7 @@ services:
       context: ./backend
     mem_limit: 256m
     cpu_shares: 1024
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,6 +116,7 @@ services:
       context: ./frontend
     mem_limit: 128m
     cpu_shares: 256
+    restart: unless-stopped
     depends_on:
       - backend
     ports:

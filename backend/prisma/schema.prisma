@@ -272,6 +272,8 @@ model UserProvisioningJob {
   retries          Int      @default(0)
   maxRetries       Int      @default(3)
   error            String?  @db.Text
+  /// Orden jerarquico: docentes (10) antes que estudiantes (1).
+  priority         Int      @default(0)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
@@ -305,6 +307,8 @@ model GroupProvisioningJob {
   retries          Int      @default(0)
   maxRetries       Int      @default(3)
   error            String?  @db.Text
+  /// Orden jerarquico: entre docentes (10) y estudiantes (1).
+  priority         Int      @default(5)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 
@@ -328,6 +332,9 @@ model GroupTeardownJob {
   retries          Int      @default(0)
   maxRetries       Int      @default(3)
   error            String?  @db.Text
+  /// claimJobs ordena por priority en TODAS las tablas de jobs: el teardown
+  /// lleva la columna con 0 (orden cronologico puro).
+  priority         Int      @default(0)
   created_at       DateTime @default(now())
   updated_at       DateTime @updatedAt
 

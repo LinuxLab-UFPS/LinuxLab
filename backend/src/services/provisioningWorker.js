@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { createGroup, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./linuxContainerService")
+const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./linuxContainerService")
 const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
@@ -18,7 +18,9 @@ async function claimJobs(tableName) {
        SELECT id FROM (
          SELECT id FROM ${tableName}
          WHERE status = 'pending' AND retries < "maxRetries"
-         ORDER BY created_at ASC
+         -- Orden jerarquico: docentes (10) antes que grupos (5) antes que
+         -- estudiantes (1). La prioridad vive en el dato, no en el codigo.
+         ORDER BY priority DESC, created_at ASC
          LIMIT $1
          FOR UPDATE SKIP LOCKED
        ) AS picked
@@ -47,6 +49,10 @@ async function processGroupJobs() {
   await runPool(jobs, async (job) => {
     try {
       await createGroup(job.teacher_username, job.group_dir, job.group_name)
+      // El docente se hace dueno del directorio y entra al grupo Unix. Es
+      // idempotente: si el docente aun no esta provisionado, no hace nada y
+      // provisionTeacherAccount lo repara cuando lo cree.
+      await syncTeacherGroups(job.teacher_username)
       await prisma.groupProvisioningJob.update({
         where: { id: job.id },
         data: { status: "completed" },

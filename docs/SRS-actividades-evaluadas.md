@@ -321,19 +321,24 @@ Medido en el contenedor: **28 MB en reposo**, **3,3 MB** por sesión de bash y
 | Límite | Valor | Frena |
 |---|---|---|
 | `mem_limit` del entorno | 512 MB | ~48 estudiantes simultáneos |
+| `cpus` del entorno | 0.5 núcleos | un `while true` no degrada al backend/frontend |
+| CPU por estudiante (cgroup v2) | 10% de 1 CPU | un estudiante no acapara el laboratorio (fallback: `nice 10`) |
+| Cuota de disco por estudiante | 20 MB (`setquota`, host-dependiente) | llenar el disco del curso |
 | `MaxSessions` del sshd | 100 | el techo de terminales abiertas |
-| `ulimit -u` | 32 procesos | fork bombs |
+| `ulimit -u` | 16 procesos | fork bombs y acaparamiento de CPU |
 | `ulimit -f` | 15 MB | archivos individuales enormes |
 | `ulimit -v` | 256 MB | un proceso que se coma la RAM |
 | `TMOUT` | 900 s, readonly | sesiones abiertas para siempre |
 | `pkill -u` | al cerrar la terminal | procesos huérfanos |
+| `restart: unless-stopped` | backend, entorno, frontend | el laboratorio vuelve solo tras reinicio |
 
 Tres de esos valores tienen una historia que conviene no perder:
 
-- **`ulimit -u` bajó de 512 a 32.** Los 512 del servidor son del proyecto entero,
-  así que con 512 por estudiante uno solo podía agotarlos y tumbar también el
-  backend y el frontend. Con 32 sobra para trabajar y el fork bomb se queda en
-  su propia sesión.
+- **`ulimit -u` bajó de 512 a 32 y luego a 16.** Los 512 del servidor son del
+  proyecto entero, así que con 512 por estudiante uno solo podía agotarlos y
+  tumbar también el backend y el frontend. Con 16 sobra para trabajar (bash +
+  vim + una tubería o dos) y el fork bomb se queda en su propia sesión con
+  menos capacidad de monopolizar la CPU.
 - **`MaxSessions` subió de 10 a 100.** Es el valor por defecto de OpenSSH y cada
   terminal abierta ocupa un canal sobre la única conexión SSH del backend. Con
   10, el estudiante once no abría terminal por mucha memoria que sobrara.
@@ -343,24 +348,30 @@ Tres de esos valores tienen una historia que conviene no perder:
 `TMOUT` es lo que hace que el cupo rinda: quien deja la terminal abierta y se va
 libera su sitio a los quince minutos sin tener que cerrar nada.
 
+**La CPU se reparte en tres capas:**
+
+1. **`cpus: 0.5`** capa el contenedor del laboratorio a medio núcleo: el backend
+   y el frontend nunca compiten con un estudiante por CPU.
+2. **Cgroup v2 por usuario** (10% de 1 CPU cada uno): dentro del laboratorio,
+   cada estudiante tiene un techo propio; cinco trabajando a tope usan el 0.5
+   completo sin que ninguno le quite al otro. Se activa remontando
+   `/sys/fs/cgroup` como rw en el entrypoint (requiere `CAP_SYS_ADMIN`, ya
+   presente); si el host no lo permite, se cae grácilmente al Nivel 1.
+3. **Nivel 1 (fallback):** `nice -n 10` en cada sesión + `ulimit -u 16`: los
+   estudiantes corren a prioridad baja y con pocos procesos, de modo que un
+   `while true` degrada solo su propia sesión.
+
+**La cuota de disco** (20 MB por estudiante) la aplica `createStudent` con
+`setquota`; el entrypoint intenta habilitar quotas en `/home`. Depende de que
+el filesystem del host soporte quotas (`usrquota`); si no, se sigue sin límite
+pero el sistema no se rompe.
+
 **Lo que sigue pendiente:**
 
-1. **No hay cuota de disco por estudiante.** `ulimit -f` limita el tamaño de *un*
-   archivo, no el total. Con 3 a 5 GB de presupuesto no es la urgencia que sería
-   con menos espacio, pero un estudiante puede seguir llenando lo que haya y
-   dejar a la clase sin poder guardar.
-
-2. **No hay techo de CPU.** `cpu_shares` sólo reparte cuando hay contención. Un
-   `while true` degrada a todo el curso. Falta `cpus:` en el compose.
-
-3. **Los `ulimit` viven en `/etc/bash.bashrc`.** Aplican porque el único camino de
+1. **Los `ulimit` viven en `/etc/bash.bashrc`.** Aplican porque el único camino de
    entrada es bash interactivo, y está verificado. Pero el sitio correcto es
    `/etc/security/limits.conf`, donde los aplica el kernel al hacer login sin
    depender de qué shell arranque.
-
-4. **No hay política `restart:` en el compose.** Si el servidor se reinicia, el
-   laboratorio no vuelve solo. `restart: unless-stopped` en `backend`, `entorno`
-   y `frontend`.
 
 ## 10. Archivos
 

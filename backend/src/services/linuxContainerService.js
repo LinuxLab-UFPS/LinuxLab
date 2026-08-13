@@ -4,6 +4,10 @@ const logger = require("../lib/logger")
 
 const ACCOUNT_STORE = "/var/lib/linuxlab"
 
+//: Cuota de disco por estudiante (KB) y techo de CPU por cgroup (10% de 1 CPU).
+const QUOTA_KB = 20480
+const CPU_MAX = "10000 100000"
+
 let snapshotQueue = Promise.resolve()
 
 async function snapshotAccounts() {
@@ -36,6 +40,16 @@ async function execChecked(command, description) {
   return result
 }
 
+/** True si el home del estudiante le pertenece (uid coincide). */
+async function homeOwnedBy(username, teacherUsername, groupDir) {
+  const home = `/home/${teacherUsername}/grupos/${groupDir}/${username}`
+  const { code, stdout } = await sshClient.execCommand(`stat -c %u ${home} 2>/dev/null`)
+  if (code !== 0) return false
+  const idRes = await sshClient.execCommand(`id -u ${username} 2>/dev/null`)
+  if (idRes.code !== 0) return false
+  return stdout.trim() === idRes.stdout.trim()
+}
+
 async function createTeacher(teacherUsername) {
   const root = `/home/${teacherUsername}`
   const home = `${root}/home`
@@ -53,6 +67,40 @@ async function createTeacher(teacherUsername) {
   }
 }
 
+/**
+ * El docente se hace dueno de los directorios de sus grupos activos y se une
+ * al grupo Unix de cada uno. `createGroup` ya no depende de que el docente
+ * exista (crea el directorio como root:grp); la transferencia de ownership
+ * ocurre aqui, cuando el docente esta provisionado.
+ */
+async function syncTeacherGroups(teacherUsername) {
+  const account = await prisma.linuxAccount.findUnique({
+    where: { linux_username: teacherUsername },
+    select: { user_id: true },
+  })
+  if (!account) return
+
+  const groups = await prisma.group.findMany({
+    where: { teacher_id: account.user_id, archived: false, group_dir: { not: null } },
+    select: { id: true, group_dir: true },
+  })
+
+  for (const group of groups) {
+    const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
+    const path = `/home/${teacherUsername}/grupos/${group.group_dir}`
+    await sshClient.execCommand(
+      `sudo usermod -aG ${groupName} ${teacherUsername} 2>/dev/null; ` +
+      `sudo chown ${teacherUsername}:${groupName} ${path} 2>/dev/null || true`,
+    )
+  }
+  logger.info({ teacherUsername, groups: groups.length }, "Teacher synced to group directories")
+}
+
+/**
+ * Crea el directorio del grupo y el grupo Unix. No depende del docente: el
+ * directorio nace como root:grp y la transferencia al docente la hace
+ * `syncTeacherGroups` cuando el docente existe.
+ */
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
   try {
@@ -60,9 +108,8 @@ async function createGroup(teacherUsername, groupDir, groupName) {
       await execChecked(`sudo groupadd ${groupName}`, `groupadd(${groupName})`)
     }
     await execChecked(
-      `sudo usermod -aG ${groupName} ${teacherUsername} && ` +
       `sudo mkdir -p ${path} && ` +
-      `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
+      `sudo chown root:${groupName} ${path} && ` +
       `sudo chmod 2751 ${path}`,
       `createGroup(${groupName})`,
     )
@@ -71,15 +118,40 @@ async function createGroup(teacherUsername, groupDir, groupName) {
   }
 }
 
+/**
+ * Crea el estudiante y su home dentro del directorio del grupo. Es
+ * idempotente: si el usuario ya existe (intento previo fallido a mitad),
+ * repara permisos y re-aplica el endurecimiento (cuota de disco y cgroup).
+ *
+ * Si el chown falla no se deja un home root:root colgado: el directorio vacio
+ * se borra y el worker reintenta en el siguiente ciclo.
+ */
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
   try {
-    await execChecked(
-      `sudo mkdir -p ${home} && ` +
-      `sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} && ` +
-      `sudo chown ${studentUsername}:${groupName} ${home} && ` +
-      `sudo chmod 2750 ${home}`,
-      `createStudent(${studentUsername})`,
+    if (!(await groupExists(groupName))) {
+      throw new Error(
+        `El grupo Unix ${groupName} no existe: el job del grupo debe correr antes que este`,
+      )
+    }
+    try {
+      await execChecked(
+        `sudo mkdir -p ${home} && ` +
+        `(sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} 2>/dev/null || true) && ` +
+        `sudo chown ${studentUsername}:${groupName} ${home} && ` +
+        `sudo chmod 2750 ${home}`,
+        `createStudent(${studentUsername})`,
+      )
+    } catch (err) {
+      await sshClient.execCommand(`sudo rmdir ${home} 2>/dev/null || true`)
+      throw err
+    }
+    // Endurecimiento (gracioso: si el host no lo soporta, no rompe nada):
+    // cuota de disco de 20 MB y cgroup de CPU al 10% por estudiante.
+    await sshClient.execCommand(
+      `sudo sh -c 'mkdir -p /sys/fs/cgroup/linuxlab/${studentUsername} 2>/dev/null; ` +
+      `echo ${CPU_MAX} > /sys/fs/cgroup/linuxlab/${studentUsername}/cpu.max 2>/dev/null; ` +
+      `setquota -u ${studentUsername} 0 ${QUOTA_KB} 0 0 /home 2>/dev/null; true'`,
     )
   } finally {
     await snapshotAccounts()
@@ -106,6 +178,20 @@ async function teardownGroup({ teacherUsername, groupDir, groupName, usernames }
   }
 }
 
+/**
+ * Repara la ownership del directorio de un grupo (idempotente): debe ser del
+ * docente, que ademas queda en el grupo Unix para poder leer el trabajo de sus
+ * estudiantes. Usado por el reconcile para corregir directorios que nacieron
+ * como root:grp cuando el docente no estaba provisionado aun.
+ */
+async function repairGroupOwnership(teacherUsername, groupDir, groupName) {
+  const path = `/home/${teacherUsername}/grupos/${groupDir}`
+  await sshClient.execCommand(
+    `sudo usermod -aG ${groupName} ${teacherUsername} 2>/dev/null; ` +
+    `sudo chown ${teacherUsername}:${groupName} ${path} 2>/dev/null || true`,
+  )
+}
+
 async function provisionTeacherAccount(linuxAccountId, username) {
   if (!await userExists(username)) {
     await createTeacher(username)
@@ -113,6 +199,7 @@ async function provisionTeacherAccount(linuxAccountId, username) {
   if (!(await userExists(username))) {
     throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
   }
+  await syncTeacherGroups(username)
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
     data: { linux_provisioned: true },
@@ -120,11 +207,11 @@ async function provisionTeacherAccount(linuxAccountId, username) {
 }
 
 async function provisionStudentAccount(linuxAccountId, username, teacherUsername, groupDir, groupName) {
-  if (!await userExists(username)) {
-    await createStudent(teacherUsername, groupDir, groupName, username)
-  }
-  if (!(await userExists(username))) {
-    throw new Error(`Verification failed: user ${username} does not exist after provisioning`)
+  // createStudent es idempotente: tambien repara el caso de un intento previo
+  // que dejo al usuario creado con el home roto.
+  await createStudent(teacherUsername, groupDir, groupName, username)
+  if (!(await homeOwnedBy(username, teacherUsername, groupDir))) {
+    throw new Error(`Verification failed: home of ${username} is not owned by the user`)
   }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
@@ -132,8 +219,22 @@ async function provisionStudentAccount(linuxAccountId, username, teacherUsername
   })
 }
 
+/**
+ * Abre la sesion interactiva del estudiante. Corre a prioridad baja (nice 10)
+ * y, si el cgroup per-user existe, mueve el shell ahi (techo de CPU al 10%).
+ * Sin cgroup (docente, o host sin soporte), el nice + el cpus del compose lo
+ * protegen.
+ *
+ * El write al cgroup va guardado con `[ -d ]`: si el directorio no existe, el
+ * fallo de la redireccion lo reportaria el propio sh a la terminal (no se
+ * suprime con 2>/dev/null). El guard evita el mensaje.
+ */
 async function openPtySession(username) {
-  return sshClient.createExecStream(`sudo su - ${username}`)
+  return sshClient.createExecStream(
+    `sudo sh -c 'if [ -d /sys/fs/cgroup/linuxlab/${username} ]; then ` +
+    `echo $$ > /sys/fs/cgroup/linuxlab/${username}/cgroup.procs 2>/dev/null; fi; ` +
+    `exec nice -n 10 su - ${username}'`,
+  )
 }
 
 function closePtySession(stream) {
@@ -145,7 +246,10 @@ function closePtySession(stream) {
 module.exports = {
   userExists,
   groupExists,
+  homeOwnedBy,
   createTeacher,
+  syncTeacherGroups,
+  repairGroupOwnership,
   createGroup,
   createStudent,
   teardownGroup,
