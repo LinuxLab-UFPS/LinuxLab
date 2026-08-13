@@ -21,8 +21,17 @@ const { startWorker } = require('./services/provisioningWorker');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS restringido a origenes explicitos (CORS_ORIGIN, separados por coma).
+// Con el navegador en el mismo origen (proxy por path) CORS no interviene;
+// con subdominios, aqui se lista el del frontend. Las peticiones sin Origin
+// (curl, server-side) se permiten.
+const CORS_ORIGIN = (process.env.CORS_ORIGIN || "http://localhost:3001")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 app.use(cors({
-    origin: true,
+    origin: (origin, cb) => cb(null, !origin || CORS_ORIGIN.includes(origin)),
     credentials: true,
 }));
 

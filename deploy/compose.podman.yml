@@ -6,8 +6,10 @@
 #  · sin cap_add/security_opt (rootless no los permite; los fallbacks del
 #    entrypoint del entorno cubren hidepid/cgroups)
 #  · depends_on simple (sin condition: service_healthy): migrate con retry
+#  · image: en vez de build: — las imagenes se construyen FUERA del servidor
+#    (deploy/build-local.sh) y se cargan con podman load (deploy/deploy-server.sh)
 #
-# Uso (desde la raiz del repo):
+# Uso (desde la raiz del repo, en el servidor):
 #   podman network create --internal linuxlab_internal
 #   podman-compose -p linuxlab -f deploy/compose.podman.yml up -d
 
@@ -31,8 +33,7 @@ x-health-backend: &health-backend
 
 services:
   migrate:
-    build:
-      context: ../backend
+    image: linuxlab-backend:latest
     container_name: linuxlab-migrate
     networks: [internal]
     depends_on:
@@ -62,6 +63,7 @@ services:
     image: postgres:16-alpine
     container_name: linuxlab-postgres
     networks: [internal]
+    mem_limit: 192m
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
@@ -73,12 +75,11 @@ services:
     logging: *logging
 
   entorno:
-    build:
-      context: ../entorno
+    image: linuxlab-entorno:latest
     hostname: linuxlab
     container_name: linuxlab-entorno
     networks: [internal]
-    mem_limit: 512m
+    mem_limit: 384m
     cpus: 0.5
     cpu_shares: 512
     depends_on:
@@ -91,11 +92,10 @@ services:
     logging: *logging
 
   backend:
-    build:
-      context: ../backend
+    image: linuxlab-backend:latest
     container_name: linuxlab-backend
     networks: [internal, external]
-    mem_limit: 256m
+    mem_limit: 192m
     cpu_shares: 1024
     ports:
       - "${PORT_1:-3000}:3000"
@@ -118,18 +118,17 @@ services:
     logging: *logging
 
   frontend:
-    build:
-      context: ../frontend
+    image: linuxlab-frontend:latest
     container_name: linuxlab-frontend
     networks: [external]
-    mem_limit: 128m
+    mem_limit: 96m
     cpu_shares: 256
     ports:
       - "${PORT_0:-3001}:3000"
     environment:
       # La URL publica del backend se incrusta en el build (NEXT_PUBLIC_*):
-      # se define en frontend/.env.local antes de construir. Este BACKEND_URL
-      # es para las llamadas server-side de Next dentro de la red.
+      # se fija en local con deploy/build-local.sh --url ANTES de compilar.
+      # Este BACKEND_URL es para las llamadas server-side de Next dentro de la red.
       BACKEND_URL: http://backend:3000
       HOSTNAME: "0.0.0.0"
     depends_on:

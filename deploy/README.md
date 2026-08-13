@@ -1,44 +1,66 @@
 # Despliegue de LinuxLab en el servidor de la U (Podman)
 
 Stack completo en **Podman rootless** (4.9) con **podman-compose** (1.0.6).
-Validado en el servidor: red interna con egress bloqueado, internet para
-imágenes y puertos públicos `PORT_0`/`PORT_1`.
+Las imágenes se construyen **fuera del servidor** (no tiene RAM para el build)
+y se cargan con `podman load`. El servidor nunca compila.
 
-## Instalación (automatizada)
+## Instalación — 2 scripts, sin comandos sueltos
 
 ```bash
-# 1. Clonar/copiar el repositorio y entrar
-git clone <repo> LinuxLab && cd LinuxLab
+# TU MAQUINA (donde hay RAM): construye, empaqueta y (opcional) transfiere
+bash deploy/build-local.sh --host usuario@servidor
 
-# 2. Ejecutar el instalador (hace todo: red interna, config, build, up,
-#    salud, seeds y bootstrap del admin)
-bash deploy/install.sh
-
-# 3. O con flags para no interactivo y con la URL publica del backend
-bash deploy/install.sh --admin-email admin@ufps.edu.co --backend-url https://api.lab.ufps.edu.co
-
-# 4. Sin URL publica aun, el instalador usa localhost (verificacion sin dominios)
-#    y avisa que al asignarse la URL hay que re-ejecutar con --backend-url.
-
-# 5. Antes de ejecutar por primera vez se puede revisar qué hará:
-bash deploy/install.sh --dry-run
+# SERVIDOR: carga, red interna, up, salud, seeds y admin
+bash deploy/deploy-server.sh --admin-email admin@ufps.edu.co
 ```
 
-El instalador es **idempotente** (re-ejecutarlo actualiza config, imágenes y
-seeds sin duplicar nada). La URL pública del backend se incrusta en el build
-del frontend: si cambia, re-ejecutar con `--backend-url` para reconstruir.
+**Cada vez que cambie la URL pública** (go-live):
+```bash
+# TU MAQUINA: fija la URL ANTES de compilar (se incrusta en el bundle) y envía
+bash deploy/build-local.sh --url https://api.lab.ufps.edu.co --host usuario@servidor
+# SERVIDOR: recarga la imagen nueva y recrea el frontend
+bash deploy/deploy-server.sh
+```
+
+Ambos son **idempotentes** (re-ejecutables sin duplicar nada).
 
 ## Coordinación con el administrador (antes del go-live)
 
+- **HTTPS obligatorio**: en producción la cookie de sesión es `secure`
+  (`NODE_ENV=production`), y ningún navegador guarda cookies `secure` por
+  `http://`. Las URLs que asigne el admin deben ser `https`. La verificación
+  local con `http://localhost:PORT_0` sí funciona (el navegador trata
+  localhost como contexto seguro).
 - **Dos puertos públicos**: `PORT_0` → frontend (3001) y `PORT_1` → backend
-  (3000; la API **y** el WebSocket de la terminal). Notificar al admin para
-  que asigne las URLs.
-- **SameSite**: la cookie de sesión es `SameSite: lax`; las URLs del frontend
-  y del backend deben ser **subdominios del mismo dominio** (o una sola URL con
-  proxy por path: `/` → frontend, `/api` y `/terminal` → backend). Con dominios
-  distintos la terminal falla con 401.
-- `NEXT_PUBLIC_BACKEND_URL` (la URL pública del backend) se incrusta en el
-  build: se define en `frontend/.env.local` **antes** de ejecutar el instalador.
+  (3000; API + WebSocket de la terminal). El admin asigna una URL por puerto.
+- **Opción ideal (si el admin puede)**: una sola URL con proxy por path
+  (`/` → frontend, `/api` y `/terminal` → backend). Entonces:
+  `NEXT_PUBLIC_BACKEND_URL=<misma URL>` (sin puerto del backend publicado,
+  CORS no interviene).
+- **Opción de subdominios**: si el admin da dos URLs del mismo dominio
+  (p. ej. `lab.ufps.edu.co` y `api.lab.ufps.edu.co`), la cookie `SameSite: lax`
+  funciona igual; el CORS se restringe con `CORS_ORIGIN` en `backend/.env`.
+
+## Config en el servidor
+
+- `backend/.env` → se crea desde el ejemplo con `deploy-server.sh` (genera el
+  `JWT_SECRET` solo); completar Firebase y `CORS_ORIGIN`.
+- `frontend/.env.local` → **se crea en la máquina de build** (está en
+  `.gitignore`): `NEXT_PUBLIC_FIREBASE_*` (SDK web) + `NEXT_PUBLIC_BACKEND_URL`
+  (fijada por `build-local.sh --url`).
+- `export DB_PASSWORD=<clave>` antes de `deploy-server.sh` (el compose la lee
+  del entorno; debe coincidir con la de `DATABASE_URL`).
+- Red interna: `deploy-server.sh` la crea con `--internal` si no existe.
+
+## Memoria (presupuesto del servidor: 1 GB)
+
+| Servicio | Límite |
+|---|---|
+| `entorno` | 384 MB |
+| `backend` | 192 MB |
+| `postgres` | 192 MB |
+| `frontend` | 96 MB |
+| **Total** | **864 MB** (margen ~160 MB para el host) |
 
 ## Operación diaria
 
@@ -52,8 +74,8 @@ podman-compose -p linuxlab -f deploy/compose.podman.yml up -d  # levantar
 podman volume ls | grep linuxlab                       # volúmenes de data
 ```
 
-**Respaldos**: responsabilidad de la institución. LinuxLab conserva su estado
-en postgres (cuentas, actividades, calificaciones) y en los volúmenes
+**Respaldos**: responsabilidad de la institución. El estado vive en postgres
+(cuentas, actividades, calificaciones) y en los volúmenes
 `linuxlab_entorno_home` y `linuxlab_entorno_etc`; ante una pérdida de
 volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 
@@ -71,16 +93,16 @@ volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 ## Solución de problemas
 
 - **`migrate` reintenta hasta 20 veces**: si falla, revisar `backend/.env`
-  (`DATABASE_URL`) y que postgres esté arriba.
-- **El entorno no crea cuentas**: revisar `podman logs linuxlab-backend`
-  (worker de aprovisionamiento; los jobs se ordenan por prioridad docente →
-  grupo → estudiante).
-- **La terminal no abre (401)**: revisar las URLs públicas (SameSite) y que
-  `frontend/.env.local` tenga la URL pública correcta (reconstruir si cambió).
+  (`DATABASE_URL` y `DB_PASSWORD` deben coincidir) y que postgres esté arriba.
+- **El entorno no crea cuentas**: `podman logs linuxlab-backend` (worker de
+  aprovisionamiento; los jobs se ordenan por prioridad docente → grupo →
+  estudiante).
+- **La terminal no abre (401)**: revisar HTTPS/URLs (cookie `secure` +
+  `SameSite: lax`) y que `NEXT_PUBLIC_BACKEND_URL` se haya fijado con
+  `--url` antes del build (reconstruir con `build-local.sh`).
 - **Backend no lee `/ssh/ssh_key`**: `podman exec -it linuxlab-init chmod 644 /ssh/ssh_key`.
 - **Tras un reinicio del host el stack no vuelve solo**: coordinar con el
-  administrador (linger o un unit systemd a nivel sistema); el compose usa
-  `restart: unless-stopped`, que en rootless depende de la sesión.
+  administrador (linger o un unit systemd a nivel sistema).
 
 ## Delta de aislamiento en rootless
 
