@@ -3,10 +3,12 @@
 import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { ChevronRight, Calendar, Send } from "lucide-react"
+import { ArrowLeft, Loader2, Send } from "lucide-react"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
+import { ActionButton } from "@/components/shared/action-button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -28,6 +30,29 @@ const MAX_SCORE = 100
 function toLocalInputValue(iso: string): string {
   const d = new Date(iso)
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
+
+/** Bloque del formulario: cabecera con su título y el cuerpo debajo. */
+function Seccion({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description?: React.ReactNode
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-xl border border-table-line bg-card">
+      <div className="border-b border-table-line px-5 py-4">
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        {description && (
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{description}</p>
+        )}
+      </div>
+      <div className="space-y-5 p-5">{children}</div>
+    </section>
+  )
 }
 
 function NewActivityPage() {
@@ -140,284 +165,210 @@ function NewActivityPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
-        <div className="px-6 py-4">
-          {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-            <Link href="/home" className="hover:text-foreground transition-colors">
-              Mis Grupos
-            </Link>
-            <ChevronRight className="w-4 h-4" />
-            <Link href={`/groups/${groupId}`} className="hover:text-foreground transition-colors">
-              Grupo
-            </Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-foreground">
-              {editing ? "Editar Actividad" : "Nueva Actividad"}
-            </span>
-          </nav>
+  if (loadingDetail) {
+    return (
+      <div className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-20 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Cargando la actividad…
+      </div>
+    )
+  }
 
-          {/* Title and actions */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-foreground">
-              {editing ? "Editar actividad" : "Crear nueva actividad"}
-            </h1>
-            <div className="flex items-center gap-3">
-              <Link href={`/groups/${groupId}`}>
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-                  Cancelar
-                </Button>
-              </Link>
-              <Button
-                onClick={handlePublish}
-                disabled={publishing || loadingDetail}
-                className="border border-primary/40 bg-primary/15 text-primary shadow-none hover:bg-primary/25"
+  return (
+    <div data-section="actividades" className="mx-auto max-w-3xl px-6 py-8">
+      <ActionButton tone="neutral" href={`/groups/${groupId}`}>
+        <ArrowLeft className="h-4 w-4" />
+        Volver al curso
+      </ActionButton>
+
+      <div className="mb-8 mt-9">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          {editing ? "Editar actividad" : "Nueva actividad"}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Describe el trabajo y define cómo se valida. Al guardar queda disponible para
+          todos los estudiantes del curso.
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        <Seccion title="Información general">
+          <div className="space-y-2">
+            <Label htmlFor="activityName" className="text-muted-foreground">
+              Nombre de la actividad
+            </Label>
+            <Input
+              id="activityName"
+              value={activityName}
+              onChange={(e) => {
+                setActivityName(e.target.value)
+                setTitleError(null)
+              }}
+              placeholder="Ej: Script de respaldo"
+              maxLength={255}
+              className="border-table-line"
+            />
+            {titleError && <p className="text-xs text-danger">{titleError}</p>}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Tema asociado</Label>
+              <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+                <SelectTrigger className="w-full border-table-line">
+                  <SelectValue placeholder="Seleccionar tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  {syllabus.map((topic) => (
+                    <SelectItem key={topic.number} value={String(topic.number)}>
+                      {topic.number}. {topic.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Puntuación</Label>
+              {/* La escala es fija, así que se muestra en vez de pedirse. */}
+              <div className="flex h-9 items-center rounded-md border border-table-line bg-secondary/40 px-3 font-mono text-sm text-muted-foreground">
+                {MAX_SCORE} pts
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="dueDate" className="text-muted-foreground">
+                Fecha y hora de cierre
+              </Label>
+              <Input
+                id="dueDate"
+                type="datetime-local"
+                value={dueDate}
+                min={minDateTime}
+                onChange={(e) => {
+                  setDueDate(e.target.value)
+                  setDateError(null)
+                }}
+                className="border-table-line [color-scheme:dark]"
+              />
+              {dateError && <p className="text-xs text-danger">{dateError}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-muted-foreground">Política de calificación</Label>
+              <Select
+                value={gradingPolicy}
+                onValueChange={(v) => setGradingPolicy(v as "best_score" | "latest_score")}
               >
-                <Send className="w-4 h-4 mr-2" />
-                {publishing
-                  ? "Guardando…"
-                  : editing
-                    ? "Guardar cambios"
-                    : "Publicar actividad"}
-              </Button>
+                <SelectTrigger className="w-full border-table-line">
+                  <SelectValue placeholder="Política de calificación" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="best_score">Mejor intento</SelectItem>
+                  <SelectItem value="latest_score">Último intento</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
-      </header>
+        </Seccion>
 
-      {/* Formulario centrado */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-3xl px-6 py-8 space-y-8">
-          {error && (
-            <div className="text-sm text-danger bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
-                {error}
-              </div>
-            )}
-
-            {/* Section 1: General Information */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 pb-2 border-b border-border">
-                <div className="w-6 h-6 bg-primary/10 border border-primary/30 flex items-center justify-center text-xs font-medium text-primary">
-                  1
-                </div>
-                <h2 className="text-lg font-medium text-foreground">Información general</h2>
-              </div>
-
-              <div className="grid gap-5">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Nombre de la actividad
-                  </label>
-                  <Input
-                    value={activityName}
-                    onChange={(e) => {
-                      setActivityName(e.target.value)
-                      setTitleError(null)
-                    }}
-                    placeholder="Ej: Tarea: Script de backup"
-                    maxLength={255}
-                    className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20"
-                  />
-                  {titleError && <p className="text-xs text-danger">{titleError}</p>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Tema asociado</label>
-                    <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                      <SelectTrigger className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20">
-                        <SelectValue placeholder="Seleccionar tema" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {syllabus.map((topic) => (
-                          <SelectItem
-                            key={topic.number}
-                            value={String(topic.number)}
-                            className="focus:bg-primary/10 focus:text-foreground"
-                          >
-                            {topic.number}. {topic.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Puntuación máxima</label>
-                    <div className="flex h-9 items-center rounded-md border border-border bg-secondary/30 px-3 text-sm font-mono text-foreground">
-                      {MAX_SCORE} pts
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      La escala de calificación va de 0 a 100.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Fecha y hora de cierre
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="datetime-local"
-                        value={dueDate}
-                        min={minDateTime}
-                        onChange={(e) => {
-                          setDueDate(e.target.value)
-                          setDateError(null)
-                        }}
-                        className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20 [color-scheme:dark]"
-                      />
-                      <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    </div>
-                    {dateError && <p className="text-xs text-danger">{dateError}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Política de calificación
-                    </label>
-                    <Select
-                      value={gradingPolicy}
-                      onValueChange={(v) =>
-                        setGradingPolicy(v as "best_score" | "latest_score")
-                      }
-                    >
-                      <SelectTrigger className="bg-secondary/30 border-border focus:border-primary/50 focus:ring-primary/20">
-                        <SelectValue placeholder="Política de calificación" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        <SelectItem
-                          value="best_score"
-                          className="focus:bg-primary/10 focus:text-foreground"
-                        >
-                          Mejor intento
-                        </SelectItem>
-                        <SelectItem
-                          value="latest_score"
-                          className="focus:bg-primary/10 focus:text-foreground"
-                        >
-                          Último intento
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Section 2: Instructions */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 pb-2 border-b border-border">
-                <div className="w-6 h-6 bg-primary/10 border border-primary/30 flex items-center justify-center text-xs font-medium text-primary">
-                  2
-                </div>
-                <h2 className="text-lg font-medium text-foreground">Instrucciones</h2>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Describe la actividad para los estudiantes
-                </label>
-                <textarea
-                  value={instructions}
-                  onChange={(e) => {
-                    setInstructions(e.target.value)
-                    setDescError(null)
-                  }}
-                  placeholder="Escribe las instrucciones de la actividad..."
-                  maxLength={2000}
-                  className="w-full min-h-[160px] resize-y rounded-md border border-border bg-secondary/30 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-primary/20 focus:outline-none"
-                />
-                {descError && <p className="text-xs text-danger">{descError}</p>}
-              </div>
-            </section>
-
-            {/* Section 3: Evaluation */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 pb-2 border-b border-border">
-                <div className="w-6 h-6 bg-primary/10 border border-primary/30 flex items-center justify-center text-xs font-medium text-primary">
-                  3
-                </div>
-                <h2 className="text-lg font-medium text-foreground">Validación</h2>
-              </div>
-
-              <div className="flex items-center gap-2 p-1 bg-secondary/40 border border-border rounded-md w-fit">
-                <button
-                  onClick={() => setEvaluationType("atomic")}
-                  className={cn(
-                    "px-4 py-1.5 text-sm font-medium rounded transition-all",
-                    evaluationType === "atomic"
-                      ? "bg-card border border-border shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Aserciones atómicas
-                </button>
-                <button
-                  onClick={() => setEvaluationType("manual")}
-                  className={cn(
-                    "px-4 py-1.5 text-sm font-medium rounded transition-all",
-                    evaluationType === "manual"
-                      ? "bg-card border border-border shadow-sm text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Revisión manual
-                </button>
-              </div>
-
-              {evaluationType === "atomic" ? (
-                <>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Define cómo se valida la actividad agregando aserciones del catálogo.
-                    El sistema las ejecuta sobre el entorno del estudiante cuando este
-                    solicita la validación, sin necesidad de escribir scripts. El valor
-                    de la actividad ({MAX_SCORE} pts) se reparte entre las aserciones.
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Las rutas de las aserciones son relativas a la carpeta de trabajo
-                    de la actividad: escribe solo el archivo o directorio que se va a
-                    verificar (ej: <code className="font-mono text-foreground">informe.txt</code>).
-                  </p>
-                  <CheckBuilder
-                    checks={checks}
-                    onChange={setChecks}
-                    activityValue={MAX_SCORE}
-                    distributeEvenly={distributeEvenly}
-                    onDistributeChange={setDistributeEvenly}
-                  />
-                </>
-              ) : (
-                <div className="bg-secondary/20 border border-border rounded-md p-4 space-y-2">
-                  <p className="text-sm text-foreground font-medium">
-                    El docente revisa y califica manualmente
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    El estudiante podrá enviar su trabajo desde la vista de la actividad.
-                    Recibirás el aviso en el{" "}
-                    <Link
-                      href={`/groups/${groupId}/tracking`}
-                      className="text-primary hover:underline"
-                    >
-                      panel de seguimiento
-                    </Link>{" "}
-                    y podrás revisarlo, asignar la calificación y dar retroalimentación
-                    de forma manual.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    La actividad tendrá un valor de{" "}
-                    <span className="font-medium text-foreground">{MAX_SCORE} pts</span>{" "}
-                    asignados directamente por ti.
-                  </p>
-                </div>
-              )}
-            </section>
+        <Seccion
+          title="Enunciado"
+          description="Lo que el estudiante lee junto a la terminal cuando abre la actividad."
+        >
+          <div className="space-y-2">
+            <Textarea
+              value={instructions}
+              onChange={(e) => {
+                setInstructions(e.target.value)
+                setDescError(null)
+              }}
+              rows={7}
+              placeholder="Escribe las instrucciones de la actividad…"
+              maxLength={2000}
+              className="resize-y border-table-line"
+            />
+            {descError && <p className="text-xs text-danger">{descError}</p>}
           </div>
+        </Seccion>
+
+        <Seccion
+          title="Validación"
+          description={
+            evaluationType === "atomic"
+              ? `El laboratorio ejecuta las aserciones sobre el entorno del estudiante cuando este pide validar, sin escribir ningún script. Los ${MAX_SCORE} pts se reparten entre ellas.`
+              : "Tú revisas y calificas cada entrega."
+          }
+        >
+          {/* Un riel con las dos modalidades: la elegida se levanta sobre el fondo. */}
+          <div className="inline-flex items-center gap-1.5 rounded-xl bg-foreground/[0.08] p-1.5">
+            {(
+              [
+                ["atomic", "Aserciones atómicas"],
+                ["manual", "Revisión manual"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setEvaluationType(value)}
+                className={cn(
+                  "h-9 rounded-lg px-3.5 text-sm font-medium transition-colors",
+                  evaluationType === value
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {evaluationType === "atomic" ? (
+            <>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Las rutas son relativas a la carpeta de trabajo de la actividad: escribe
+                solo el archivo o directorio que se va a verificar (ej:{" "}
+                <code className="font-mono text-foreground">informe.txt</code>).
+              </p>
+              <CheckBuilder
+                checks={checks}
+                onChange={setChecks}
+                activityValue={MAX_SCORE}
+                distributeEvenly={distributeEvenly}
+                onDistributeChange={setDistributeEvenly}
+              />
+            </>
+          ) : (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              El estudiante envía su trabajo desde la vista de la actividad y el aviso te
+              llega al{" "}
+              <Link
+                href={`/groups/${groupId}/tracking`}
+                className="text-primary hover:underline"
+              >
+                panel de seguimiento
+              </Link>
+              , donde asignas los {MAX_SCORE} pts y la retroalimentación.
+            </p>
+          )}
+        </Seccion>
+      </div>
+
+      {error && (
+        <p className="mt-6 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
+      <div className="mt-8 flex items-center gap-3">
+        <ActionButton tone="amber" onClick={handlePublish} disabled={publishing}>
+          <Send className="h-4 w-4" />
+          {publishing ? "Guardando…" : editing ? "Guardar cambios" : "Publicar actividad"}
+        </ActionButton>
+        <ActionButton tone="neutral" href={`/groups/${groupId}`}>
+          Cancelar
+        </ActionButton>
       </div>
     </div>
   )
