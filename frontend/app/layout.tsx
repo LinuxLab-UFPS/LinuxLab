@@ -14,7 +14,6 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   title: 'LinuxLab UFPS - Plataforma de Aprendizaje',
   description: 'Plataforma de aprendizaje interactiva para la administración de sistemas Linux',
-  generator: 'v0.app',
   icons: {
     icon: [
       {

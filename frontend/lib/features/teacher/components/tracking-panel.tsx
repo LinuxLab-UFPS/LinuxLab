@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Users, BarChart3, CheckCircle2, Search, ChevronDown } from "lucide-react"
+import { Users, BarChart3, CheckCircle2, Search } from "lucide-react"
 import { Input } from "@shared/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
 import { MetricCard } from "@shared/components/metric-card"
 import { StatusIndicator, ProgressBar } from "@shared/components/progress-indicators"
 import { StudentProgressDialog } from "@/lib/features/teacher/components/student-progress-dialog"
@@ -27,11 +28,17 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
     setDialogOpen(true)
   }
 
-  const filteredStudents = summary.rows.filter(
-    (row) =>
+  const filteredStudents = summary.rows.filter((row) => {
+    const matchesQuery =
       row.student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       row.student.code.includes(searchQuery)
-  )
+    if (!matchesQuery) return false
+    // El filtro de tema revisa el estado de ese tema en la fila: si el tema no
+    // esta habilitado para el estudiante (sin entrada), la fila no califica.
+    if (selectedTopic === "all") return true
+    const status = row.topicStatus[Number(selectedTopic)]
+    return status !== undefined && status !== "not-started"
+  })
 
   return (
     <div className="p-6 space-y-6">
@@ -45,21 +52,19 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
 
       {/* Filter Bar */}
       <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative">
-          <select
-            value={selectedTopic}
-            onChange={(e) => setSelectedTopic(e.target.value)}
-            className="appearance-none bg-card border border-border px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">Todos los temas</option>
+        <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+          <SelectTrigger className="w-auto min-w-[200px] bg-card">
+            <SelectValue placeholder="Todos los temas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los temas</SelectItem>
             {topics.map((topic) => (
-              <option key={topic.number} value={topic.number}>
+              <SelectItem key={topic.number} value={String(topic.number)}>
                 {topic.number}. {topic.title}
-              </option>
+              </SelectItem>
             ))}
-          </select>
-          <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-        </div>
+          </SelectContent>
+        </Select>
 
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

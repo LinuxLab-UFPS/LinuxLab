@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { Plus, Trash2, ShieldCheck, Loader2 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
+import { Checkbox } from "@shared/components/ui/checkbox"
 import type { ActivityCheck, CatalogEntry } from "@/lib/features/teacher/types"
 
 export type { ActivityCheck }
@@ -117,11 +119,10 @@ export function CheckBuilder({
           </span>
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={distributeEvenly}
-            onChange={(e) => onDistributeChange(e.target.checked)}
-            className="h-4 w-4 accent-primary"
+            onCheckedChange={(next) => onDistributeChange(next === true)}
+            className="h-4 w-4"
           />
           <span className="text-muted-foreground">Distribuir puntaje equitativamente</span>
         </label>
@@ -138,17 +139,21 @@ export function CheckBuilder({
                   {index + 1}
                 </span>
                 {/* Type selector */}
-                <select
+                <Select
                   value={check.type}
-                  onChange={(e) => updateCheck(check.id, { type: e.target.value, params: {} })}
-                  className="h-9 flex-1 rounded-md border border-table-line bg-card px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  onValueChange={(type) => updateCheck(check.id, { type, params: {} })}
                 >
-                  {catalog.map((c) => (
-                    <option key={c.type} value={c.type}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-9 flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {catalog.map((c) => (
+                      <SelectItem key={c.type} value={c.type}>
+                        {c.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {/* Points */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   <input
