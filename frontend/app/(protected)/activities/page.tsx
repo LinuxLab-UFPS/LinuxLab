@@ -1,6 +1,6 @@
-import { getActivities } from "@/lib/features/shared/activities"
-import { ActivityBrowser } from "@/components/student/activity-browser"
-import { GroupActivitiesSection } from "@/components/student/group-activities-section"
+import { getActivities } from "@shared/lib/content/activities"
+import { ActivityBrowser } from "@/lib/features/student/components/activity-browser"
+import { GroupActivitiesSection } from "@/lib/features/student/components/group-activities-section"
 import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 

@@ -1,5 +1,5 @@
 import { listAuditLog } from "@/lib/features/teacher/data"
-import { AuditTable } from "@/components/teacher/audit-table"
+import { AuditTable } from "@/lib/features/teacher/components/audit-table"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function AuditLogPage() {

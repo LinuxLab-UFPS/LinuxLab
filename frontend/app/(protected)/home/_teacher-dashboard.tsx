@@ -1,6 +1,6 @@
 "use client"
 
-import { GroupsTable } from "@/components/teacher/groups-table"
+import { GroupsTable } from "@/lib/features/teacher/components/groups-table"
 import { useAuth } from "@/lib/features/auth/context"
 import { useGroups } from "@/lib/api/queries"
 

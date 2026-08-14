@@ -1,25 +1,25 @@
-import { SiteHeader } from "@/components/student/site-header"
-import { GroupSidebar } from "@/components/student/group-sidebar"
-import { GroupBody } from "@/components/student/group-body"
-import { ContentArea } from "@/components/student/content-area"
-import { GroupTerminal } from "@/components/shared/group-terminal"
-import { syllabus, getTopicBySlug } from "@/lib/features/shared/temario"
+import { SiteHeader } from "@/lib/features/student/components/site-header"
+import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
+import { GroupBody } from "@/lib/features/student/components/group-body"
+import { ContentArea } from "@/lib/features/student/components/content-area"
+import { GroupTerminal } from "@shared/components/group-terminal"
+import { syllabus, getTopicBySlug } from "@shared/lib/content/temario"
 import {
   getTopicContentMeta,
   getSubtopicMarkdown,
   getLessonNeighbours,
   getTopicLessons,
   getSearchIndex,
-} from "@/lib/features/shared/lessons"
-import { getSimulators } from "@/lib/features/shared/simulators"
-import { parseLessonBlocks } from "@/lib/features/shared/lesson-blocks"
+} from "@shared/lib/content/lessons"
+import { getSimulators } from "@shared/lib/content/simulators"
+import { parseLessonBlocks } from "@shared/lib/content/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { requireServerRole } from "@/lib/features/auth/session"
-import { TerminalUIProvider } from "@/components/shared/terminal-ui"
+import { TerminalUIProvider } from "@shared/components/terminal-ui"
 import {
   ReadingProgressProvider,
   ReadingProgressBar,
-} from "@/components/shared/reading-progress"
+} from "@shared/components/reading-progress"
 
 export default async function GroupPage({
   searchParams,

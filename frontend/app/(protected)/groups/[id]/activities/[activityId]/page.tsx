@@ -1,9 +1,9 @@
 import Link from "next/link"
 import { ArrowLeft, Pencil, ListChecks, FolderOpen } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ActionButton } from "@/components/shared/action-button"
+import { Button } from "@shared/components/ui/button"
+import { ActionButton } from "@shared/components/action-button"
 import { getGroupActivity } from "@/lib/features/teacher/data"
-import { getTopic } from "@/lib/features/shared/temario"
+import { getTopic } from "@shared/lib/content/temario"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 

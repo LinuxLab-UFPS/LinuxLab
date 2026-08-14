@@ -1,7 +1,7 @@
 "use client"
 
-import { EnvironmentPanel } from "@/components/admin/environment-panel"
-import { RoleGuard } from "@/components/shared/role-guard"
+import { EnvironmentPanel } from "@/lib/features/admin/components/environment-panel"
+import { RoleGuard } from "@shared/components/role-guard"
 
 export default function EntornoPage() {
   return (

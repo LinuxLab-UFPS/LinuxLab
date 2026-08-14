@@ -1,5 +1,5 @@
-import { getSimulators } from "@/lib/features/shared/simulators"
-import { SimulatorCard } from "@/components/student/simulator-card"
+import { getSimulators } from "@shared/lib/content/simulators"
+import { SimulatorCard } from "@/lib/features/student/components/simulator-card"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function SimulatorsPage() {

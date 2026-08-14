@@ -13,14 +13,14 @@ import {
   Plus,
   Search,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { RoleGuard } from "@/components/shared/role-guard"
-import { StatTabs } from "@/components/shared/stat-tabs"
-import { ActionButton } from "@/components/shared/action-button"
-import { GroupStudents } from "@/components/teacher/group-students"
-import { AddStudentDialog } from "@/components/teacher/add-student-dialog"
-import { Input } from "@/components/ui/input"
-import { GroupActivities } from "@/components/teacher/group-activities"
+import { Button } from "@shared/components/ui/button"
+import { RoleGuard } from "@shared/components/role-guard"
+import { StatTabs } from "@shared/components/stat-tabs"
+import { ActionButton } from "@shared/components/action-button"
+import { GroupStudents } from "@/lib/features/teacher/components/group-students"
+import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
+import { Input } from "@shared/components/ui/input"
+import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import {
   addStudent,
 } from "@/lib/features/teacher/data"

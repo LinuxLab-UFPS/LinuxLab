@@ -1,10 +1,10 @@
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { TrackingPanel } from "@/components/teacher/tracking-panel"
+import { Button } from "@shared/components/ui/button"
+import { TrackingPanel } from "@/lib/features/teacher/components/tracking-panel"
 import { getGroup } from "@/lib/features/teacher/data"
 import { getGroupProgress } from "@/lib/features/teacher/data"
-import { getTopic } from "@/lib/features/shared/temario"
+import { getTopic } from "@shared/lib/content/temario"
 import type { Topic } from "@/lib/features/student/types"
 import { requireServerRole } from "@/lib/features/auth/session"
 

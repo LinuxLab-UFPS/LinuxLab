@@ -3,14 +3,14 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Send, Users } from "lucide-react"
-import { ActionButton } from "@/components/shared/action-button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Stepper, type Step } from "@/components/shared/stepper"
-import { StudentManager, type DraftStudent } from "@/components/teacher/student-manager"
+import { ActionButton } from "@shared/components/action-button"
+import { Input } from "@shared/components/ui/input"
+import { Label } from "@shared/components/ui/label"
+import { Textarea } from "@shared/components/ui/textarea"
+import { Stepper, type Step } from "@shared/components/stepper"
+import { StudentManager, type DraftStudent } from "@/lib/features/teacher/components/student-manager"
 import { createGroup } from "@/lib/features/teacher/data"
-import { RoleGuard } from "@/components/shared/role-guard"
+import { RoleGuard } from "@shared/components/role-guard"
 
 const PASOS: Step[] = [
   { id: "curso", label: "Información" },

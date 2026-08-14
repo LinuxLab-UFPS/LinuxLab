@@ -5,23 +5,23 @@ import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Loader2, Send } from "lucide-react"
 import { toast } from "sonner"
-import { ActionButton } from "@/components/shared/action-button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+import { ActionButton } from "@shared/components/action-button"
+import { Input } from "@shared/components/ui/input"
+import { Label } from "@shared/components/ui/label"
+import { Textarea } from "@shared/components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { CheckBuilder, type ActivityCheck } from "@/components/teacher/check-builder"
-import { cn } from "@/lib/utils"
-import { syllabus } from "@/lib/features/shared/temario"
+} from "@shared/components/ui/select"
+import { CheckBuilder, type ActivityCheck } from "@/lib/features/teacher/components/check-builder"
+import { cn } from "@shared/lib/utils"
+import { syllabus } from "@shared/lib/content/temario"
 import { createActivity, updateActivity, getGroupActivity } from "@/lib/features/teacher/data"
 import type { CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
-import { RoleGuard } from "@/components/shared/role-guard"
+import { RoleGuard } from "@shared/components/role-guard"
 
 /** La escala de calificacion es fija: 0 a 100. */
 const MAX_SCORE = 100

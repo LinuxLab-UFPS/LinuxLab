@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
-import { ROUTE_RULES } from "@/lib/config/route-rules"
+import { ROUTE_RULES } from "@shared/lib/rules"
 import { env } from "@/lib/config/env"
 import type { Role } from "@/lib/models/auth"
 import type { RouteRule } from "@/lib/models/content"

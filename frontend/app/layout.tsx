@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import { Onest, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { ThemeProvider } from '@/components/shared/theme-provider'
+import { ThemeProvider } from '@shared/components/theme-provider'
 import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
-import { Toaster } from '@/components/ui/sonner'
+import { Toaster } from '@shared/components/ui/sonner'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
