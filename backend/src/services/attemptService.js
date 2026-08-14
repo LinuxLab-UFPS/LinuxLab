@@ -1,31 +1,41 @@
 const prisma = require("../../prisma/client")
 const { NotFoundError } = require("../lib/errors")
+const { runInTransaction } = require("../lib/transaction")
 
 /**
  * Registra un intento de actividad. El numero de intento sale de contar los
  * intentos previos del estudiante en esa actividad (la definicion o la
  * publicacion de curso, segun el caso).
  *
- * NOTA: el conteo + alta no es atomico (una carrera puede producir dos
- * intentos con el mismo numero); la serializacion se resuelve en la fase B4.
+ * El conteo + alta viven en una transaccion que bloquea la fila del estudiante
+ * (FOR UPDATE): dos evaluaciones concurrentes del mismo estudiante se
+ * serializan en el lock y no pueden producir dos intentos con el mismo numero.
+ * Estudiantes distintos no se bloquean entre si.
  */
 async function recordAttempt({ activityDefinitionId, groupActivityId, studentUserId, passed, score, results }) {
-  const countWhere = groupActivityId
-    ? { group_activity_id: groupActivityId, student_id: studentUserId }
-    : { activity_definition_id: activityDefinitionId, student_id: studentUserId }
+  return runInTransaction(async (tx) => {
+    const countWhere = groupActivityId
+      ? { group_activity_id: groupActivityId, student_id: studentUserId }
+      : { activity_definition_id: activityDefinitionId, student_id: studentUserId }
 
-  const attemptNumber = await prisma.activityAttempt.count({ where: countWhere })
+    // Serializa los intentos de este estudiante: la segunda transaccion espera
+    // a que la primera confirme antes de contar de nuevo. El nombre de la
+    // tabla es `"User"` (Prisma no la mapea, la usa tal cual).
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${studentUserId} FOR UPDATE`
 
-  return prisma.activityAttempt.create({
-    data: {
-      activity_definition_id: activityDefinitionId,
-      group_activity_id: groupActivityId ?? null,
-      student_id: studentUserId,
-      attempt_number: attemptNumber + 1,
-      passed,
-      score,
-      results,
-    },
+    const attemptNumber = await tx.activityAttempt.count({ where: countWhere })
+
+    return tx.activityAttempt.create({
+      data: {
+        activity_definition_id: activityDefinitionId,
+        group_activity_id: groupActivityId ?? null,
+        student_id: studentUserId,
+        attempt_number: attemptNumber + 1,
+        passed,
+        score,
+        results,
+      },
+    })
   })
 }
 

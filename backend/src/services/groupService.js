@@ -283,26 +283,26 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
     }
   }
 
-  await prisma.$transaction([
+  await runInTransaction(async (tx) => {
     // El teardown hizo userdel de cada estudiante, asi que su cuenta Linux ya
     // no existe. Sin bajar esta marca la matricula en un grupo nuevo no encola
     // aprovisionamiento (ver enrollmentService) y el estudiante se queda para
     // siempre sin cuenta con la que abrir la terminal.
-    prisma.linuxAccount.updateMany({
+    await tx.linuxAccount.updateMany({
       where: { user_id: { in: studentIds } },
       data: { linux_provisioned: false },
-    }),
-    prisma.enrollment.deleteMany({ where: { group_id: groupId } }),
-    prisma.groupProvisioningJob.deleteMany({ where: { group_id: groupId } }),
-    prisma.groupTeardownJob.deleteMany({ where: { group_id: groupId } }),
+    })
+    await tx.enrollment.deleteMany({ where: { group_id: groupId } })
+    await tx.groupProvisioningJob.deleteMany({ where: { group_id: groupId } })
+    await tx.groupTeardownJob.deleteMany({ where: { group_id: groupId } })
     // El group_id es opcional aqui: se desliga en vez de borrarse para no
     // perder el rastro de las cuentas que si se llegaron a crear.
-    prisma.userProvisioningJob.updateMany({
+    await tx.userProvisioningJob.updateMany({
       where: { group_id: groupId },
       data: { group_id: null },
-    }),
-    prisma.group.delete({ where: { id: groupId } }),
-  ])
+    })
+    await tx.group.delete({ where: { id: groupId } })
+  })
 
   logger.info({ groupId, teacherUserId }, "Group deleted")
 }

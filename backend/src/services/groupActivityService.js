@@ -7,6 +7,7 @@ const checkCatalog = require("./checkCatalogService")
 const { activityInputSchema, serializeGroupActivity } = require("../dtos/activityDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { audit } = require("./auditService")
+const { runInTransaction } = require("../lib/transaction")
 
 /** Normaliza la modalidad que manda el frontend ("atomic") a la de la base. */
 function normalizeEvaluationType(value) {
@@ -149,35 +150,50 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(input ?? {})
 
-  const activity = await prisma.activityDefinition.create({
-    data: {
-      title,
-      instructions,
-      topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
-      difficulty: "basic",
-      source: "teacher",
-      evaluation_type: evaluationType,
-      checks: { create: checks },
-    },
-    select: { id: true, topic_number: true, difficulty: true },
-  })
+  // La definicion y la publicacion nacen juntas: si una de las dos falla, la
+  // transaccion deshace la otra (no pueden quedar huerfanas).
+  const { activity, groupActivity } = await runInTransaction(async (tx) => {
+    const activity = await tx.activityDefinition.create({
+      data: {
+        title,
+        instructions,
+        topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+        difficulty: "basic",
+        kind: "activity",
+        activity_type: "workshop",
+        evaluation_type: evaluationType,
+        max_score: maxScore,
+        source: "teacher",
+        active: true,
+        created_by: teacherUserId,
+      },
+    })
 
-  const workdir = generateWorkdir(title, activity.id)
-  const groupActivity = await prisma.groupActivity.create({
-    data: {
-      group_id: group.id,
-      activity_definition_id: activity.id,
-      title,
-      instructions,
-      workdir,
-      evaluation_type: evaluationType,
-      checks,
-      max_score: maxScore,
-      grading_policy: gradingPolicy,
-      required: true,
-      enabled: true,
-      due_at: dueAt,
-    },
+    // La carpeta de trabajo nace del id de la publicacion: se genera antes de
+    // crearla para poder guardarla en el mismo registro.
+    const groupActivityId = randomUUID()
+    const workdir = generateWorkdir(title, groupActivityId)
+
+    const groupActivity = await tx.groupActivity.create({
+      data: {
+        id: groupActivityId,
+        group_id: group.id,
+        activity_definition_id: activity.id,
+        title,
+        instructions,
+        activity_type: "workshop",
+        evaluation_type: evaluationType,
+        max_score: maxScore,
+        checks,
+        attempt_limit: null,
+        grading_policy: gradingPolicy,
+        required: true,
+        enabled: true,
+        due_at: dueAt,
+        workdir,
+      },
+    })
+    return { activity, groupActivity }
   })
 
   audit({
@@ -231,30 +247,33 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     validateActivityInput(body)
 
   // La definicion del docente es 1:1 con la publicacion: se mantiene en
-  // sincronia para que el listado y el detalle sigan mostrando lo mismo.
-  if (ga.definition) {
-    await prisma.activityDefinition.update({
-      where: { id: ga.definition.id },
+  // sincronia para que el listado y el detalle sigan mostrando lo mismo. Los
+  // dos updates son atomicos: si el segundo falla, el primero se deshace.
+  const updated = await runInTransaction(async (tx) => {
+    if (ga.definition) {
+      await tx.activityDefinition.update({
+        where: { id: ga.definition.id },
+        data: {
+          title,
+          instructions,
+          topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+          evaluation_type: evaluationType,
+        },
+      })
+    }
+
+    return tx.groupActivity.update({
+      where: { id: ga.id },
       data: {
         title,
         instructions,
-        topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
         evaluation_type: evaluationType,
+        checks,
+        grading_policy: gradingPolicy,
+        due_at: dueAt,
       },
+      include: { definition: { select: { topic_number: true, difficulty: true } } },
     })
-  }
-
-  const updated = await prisma.groupActivity.update({
-    where: { id: ga.id },
-    data: {
-      title,
-      instructions,
-      evaluation_type: evaluationType,
-      checks,
-      grading_policy: gradingPolicy,
-      due_at: dueAt,
-    },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
   })
 
   audit({
