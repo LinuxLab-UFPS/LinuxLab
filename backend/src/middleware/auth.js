@@ -1,20 +1,20 @@
 const jwt = require("jsonwebtoken")
-
-const JWT_SECRET = process.env.JWT_SECRET
+const config = require("../config/env")
+const { AppError } = require("../lib/errors")
 
 function authMiddleware(req, res, next) {
-  const token = req.cookies?.token
+  const token = req.cookies?.[config.jwt.cookieName]
 
   if (!token) {
-    return res.status(401).json({ error: "Unauthorized: session not found" })
+    return next(new AppError("Sesión no encontrada", 401, "UNAUTHORIZED"))
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, config.jwt.secret)
     req.user = decoded
     next()
   } catch {
-    return res.status(401).json({ error: "Unauthorized: invalid or expired session" })
+    next(new AppError("Sesión inválida o expirada", 401, "UNAUTHORIZED"))
   }
 }
 

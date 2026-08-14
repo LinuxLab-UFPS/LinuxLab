@@ -1,6 +1,10 @@
-require('dotenv/config');
+// config/env.js carga dotenv y valida las variables requeridas al boot. Debe
+// ser el primer require para que todo lo demas arranque con configuracion
+// verificada (JWT_SECRET y DATABASE_URL obligatorios).
+const config = require('./config/env');
 
 const express = require('express');
+const { randomUUID } = require('crypto');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -19,25 +23,26 @@ const setupGateway = require('./gateway');
 const { startWorker } = require('./services/provisioningWorker');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // CORS restringido a origenes explicitos (CORS_ORIGIN, separados por coma).
 // Con el navegador en el mismo origen (proxy por path) CORS no interviene;
 // con subdominios, aqui se lista el del frontend. Las peticiones sin Origin
 // (curl, server-side) se permiten.
-const CORS_ORIGIN = (process.env.CORS_ORIGIN || "http://localhost:3001")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean)
-
 app.use(cors({
-    origin: (origin, cb) => cb(null, !origin || CORS_ORIGIN.includes(origin)),
+    origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
 }));
 
 app.use(morgan('[:date[clf]] [:method] :url :status :res[content-length] - :response-time ms', {
     skip: (req) => req.url === "/" || req.url === "/api/health" || req.url.startsWith("/terminal"),
 }));
+
+// Request ID: lo usan los logs del errorHandler para correlacionar una
+// respuesta con su causa en el log.
+app.use((req, _res, next) => {
+    req.id = randomUUID().slice(0, 8);
+    next();
+});
 
 app.use(express.json());
 app.use(express.text({ type: ['text/plain', 'text/csv'] }));
@@ -63,8 +68,8 @@ app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
 });
 
-const server = app.listen(PORT, () => {
-    logger.info(`Server running at http://localhost:${PORT}`);
+const server = app.listen(config.port, () => {
+    logger.info(`Server running at http://localhost:${config.port}`);
 });
 
 setupGateway(server);

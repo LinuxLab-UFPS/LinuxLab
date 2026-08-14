@@ -6,17 +6,9 @@ const prisma = require("../../prisma/client")
 const authMiddleware = require("../middleware/auth")
 const enrollmentService = require("../services/enrollmentService")
 const logger = require("../lib/logger")
+const config = require("../config/env")
 
 const router = express.Router()
-const JWT_SECRET = process.env.JWT_SECRET
-
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  path: "/",
-}
 
 const USER_INCLUDE = {
   linuxAccount: {
@@ -52,11 +44,11 @@ router.post("/firebase", async (req, res) => {
   try {
     const { idToken } = req.body
     if (!idToken) {
-      return res.status(400).json({ error: "Token required" })
+      return res.status(400).json({ error: "Se requiere el token de acceso", code: "VALIDATION_ERROR" })
     }
 
     if (!firebaseApp) {
-      return res.status(500).json({ error: "Firebase is not configured on the server" })
+      return res.status(500).json({ error: "Firebase no está configurado en el servidor", code: "INTERNAL_ERROR" })
     }
 
     const auth = getAuth(firebaseApp)
@@ -64,7 +56,7 @@ router.post("/firebase", async (req, res) => {
     const { email, name, uid, picture } = decoded
 
     if (!email) {
-      return res.status(400).json({ error: "Email is required" })
+      return res.status(400).json({ error: "Se requiere un correo electrónico", code: "VALIDATION_ERROR" })
     }
 
     // if (!email.endsWith("@ufps.edu.co")) {
@@ -77,11 +69,11 @@ router.post("/firebase", async (req, res) => {
     })
 
     if (!user) {
-      return res.status(401).json({ error: "User not registered on the platform" })
+      return res.status(401).json({ error: "El usuario no está registrado en la plataforma", code: "UNAUTHORIZED" })
     }
 
     if (!user.active) {
-      return res.status(403).json({ error: "Account deactivated. Contact the administrator." })
+      return res.status(403).json({ error: "Cuenta desactivada. Contacta al administrador.", code: "FORBIDDEN" })
     }
 
     // Al archivar un grupo (fin de semestre) las matriculas pasan a 'archived'
@@ -90,6 +82,7 @@ router.post("/firebase", async (req, res) => {
     if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
       return res.status(403).json({
         error: "No te encuentras registrado en ningún grupo de laboratorio",
+        code: "FORBIDDEN",
       })
     }
 
@@ -103,22 +96,24 @@ router.post("/firebase", async (req, res) => {
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role, name: user.name },
-      JWT_SECRET,
-      { expiresIn: "7d" },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn },
     )
 
-    res.cookie("token", token, COOKIE_OPTIONS)
+    res.cookie(config.jwt.cookieName, token, config.jwt.cookie)
 
     res.json({ user: serializeUser(user) })
   } catch (error) {
     if (error.code === "auth/id-token-expired") {
-      return res.status(401).json({ error: "Google session expired" })
+      return res.status(401).json({ error: "La sesión de Google expiró", code: "UNAUTHORIZED" })
     }
     if (error.code === "auth/argument-error") {
-      return res.status(400).json({ error: "Invalid token" })
+      return res.status(400).json({ error: "Token inválido", code: "VALIDATION_ERROR" })
     }
+    // El detalle del error de Firebase/BD no debe llegar al cliente: se
+    // registra en el log y se responde con un mensaje generico.
     logger.error({ err: error }, "Firebase auth error")
-    res.status(500).json({ error: error?.message || "Authentication error" })
+    res.status(500).json({ error: "Error al iniciar sesión", code: "INTERNAL_ERROR" })
   }
 })
 
@@ -129,31 +124,32 @@ router.get("/me", authMiddleware, async (req, res) => {
       include: USER_INCLUDE,
     })
     if (!user) {
-      res.clearCookie("token", { path: "/" })
-      return res.status(401).json({ error: "User not found" })
+      res.clearCookie(config.jwt.cookieName, { path: "/" })
+      return res.status(401).json({ error: "Usuario no encontrado", code: "UNAUTHORIZED" })
     }
     if (!user.active) {
-      res.clearCookie("token", { path: "/" })
-      return res.status(403).json({ error: "Account deactivated" })
+      res.clearCookie(config.jwt.cookieName, { path: "/" })
+      return res.status(403).json({ error: "Cuenta desactivada", code: "FORBIDDEN" })
     }
     // Misma regla que en el login: una sesion JWT dura 7 dias y puede seguir
     // viva despues de que se archive el grupo del estudiante.
     if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
-      res.clearCookie("token", { path: "/" })
+      res.clearCookie(config.jwt.cookieName, { path: "/" })
       return res.status(403).json({
         error: "No te encuentras registrado en ningún grupo de laboratorio",
+        code: "FORBIDDEN",
       })
     }
     res.json({ user: serializeUser(user) })
   } catch (error) {
     logger.error({ err: error }, "Auth me error")
-    res.status(500).json({ error: "Error getting session" })
+    res.status(500).json({ error: "Error al obtener la sesión", code: "INTERNAL_ERROR" })
   }
 })
 
 router.post("/logout", authMiddleware, (_req, res) => {
-  res.clearCookie("token", { path: "/" })
-  res.json({ message: "Session closed" })
+  res.clearCookie(config.jwt.cookieName, { path: "/" })
+  res.json({ message: "Sesión cerrada" })
 })
 
 module.exports = router

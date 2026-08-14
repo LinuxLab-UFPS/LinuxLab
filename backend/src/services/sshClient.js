@@ -1,16 +1,27 @@
 const { Client } = require("ssh2")
 const fs = require("fs")
+const config = require("../config/env")
 
 let _conn = null
 let _ready = false
 let _connecting = null
 const _activeAborts = new Set()
 
+let privateKey
+try {
+  privateKey = fs.readFileSync(config.ssh.keyPath)
+} catch (err) {
+  // La llave vive montada en el contenedor; si falta, el proceso puede
+  // arrancar igual (auth/health no la necesitan) y el error se ve al primer
+  // uso real del entorno. Lanzar aqui tumbaría el boot entero.
+  console.error(`SSH private key not found at ${config.ssh.keyPath}: ${err.message}`)
+}
+
 const SSH_CONFIG = {
-  host: process.env.SSH_HOST || "entorno",
-  port: parseInt(process.env.SSH_PORT || "22"),
-  username: process.env.SSH_USER || "labadmin",
-  privateKey: fs.readFileSync(process.env.SSH_KEY_PATH || "/ssh/ssh_key"),
+  host: config.ssh.host,
+  port: config.ssh.port,
+  username: config.ssh.username,
+  ...(privateKey ? { privateKey } : {}),
   readyTimeout: 10000,
   keepaliveInterval: 30000,
   keepaliveCountMax: 3,

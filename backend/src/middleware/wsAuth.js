@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken")
-
-const JWT_SECRET = process.env.JWT_SECRET
+const config = require("../config/env")
 
 function parseCookies(request) {
   const cookies = {}
@@ -15,14 +14,14 @@ function parseCookies(request) {
 
 function wsAuth(request) {
   const cookies = parseCookies(request)
-  const token = cookies.token
+  const token = cookies[config.jwt.cookieName]
 
   if (!token) {
     return { error: "Unauthorized: session not found" }
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET)
+    const decoded = jwt.verify(token, config.jwt.secret)
     return { user: decoded }
   } catch {
     return { error: "Unauthorized: invalid or expired session" }

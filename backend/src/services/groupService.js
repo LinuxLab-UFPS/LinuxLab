@@ -49,7 +49,14 @@ async function ensureTeacherRole(userId, tx = prisma) {
   return teacher
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 async function getGroupAccess({ groupId, teacherUserId, role, tx = prisma }) {
+  // Un id que no es UUID hace fallar el cast en Postgres con un error crudo de
+  // 500; aqui se traduce a un 404 limpio.
+  if (!UUID_REGEX.test(groupId)) {
+    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+  }
   const group = await tx.group.findUnique({ where: { id: groupId } })
   if (!group) {
     throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
@@ -288,6 +295,45 @@ async function getGroup({ groupId, teacherUserId, role }) {
 }
 
 /**
+ * Jobs de aprovisionamiento de los estudiantes de un grupo. Exige el mismo
+ * control de acceso que el resto de los endpoints por grupo: sin la
+ * verificacion, cualquier docente podria leer la informacion personal
+ * (nombre, correo, codigo, estado de la cuenta) de los estudiantes de cursos
+ * ajenos iterando ids de grupo.
+ */
+async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
+  await getGroupAccess({ groupId, teacherUserId, role })
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: { group_id: groupId },
+    select: { student: { select: { id: true } } },
+  })
+  const userIds = enrollments.map((enrollment) => enrollment.student.id)
+  const jobs = await prisma.userProvisioningJob.findMany({
+    where: { user_id: { in: userIds } },
+    include: {
+      user: {
+        select: { name: true, email: true, code: true },
+      },
+    },
+    orderBy: { created_at: "desc" },
+  })
+  return jobs.map((job) => ({
+    id: job.id,
+    username: job.username,
+    status: job.status,
+    retries: job.retries,
+    error: job.error,
+    student: {
+      name: job.user.name,
+      email: job.user.email,
+      code: job.user.code ?? null,
+    },
+    createdAt: job.created_at,
+  }))
+}
+
+/**
  * Archiva un grupo (fin de semestre) y deja de ser usable al instante:
  * - El grupo queda desactivado y sus matriculas pasan a 'archived' (historico).
  * - Las cuentas Linux de los estudiantes se borran de la base: su usuario en
@@ -442,6 +488,7 @@ module.exports = {
   listGroups,
   getGroup,
   getGroupAccess,
+  listGroupProvisioningJobs,
   archiveGroup,
   deleteGroup,
   serializeGroup,

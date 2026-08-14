@@ -2,7 +2,6 @@ const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
 const activityService = require("../services/activityService")
 const reconcileService = require("../services/reconcileService")
-const prisma = require("../../prisma/client")
 const asyncHandler = require("../utils/asyncHandler")
 
 const createGroup = asyncHandler(async (req, res) => {
@@ -84,33 +83,13 @@ const listStudents = asyncHandler(async (req, res) => {
 })
 
 const listProvisioningJobs = asyncHandler(async (req, res) => {
-  const enrollments = await prisma.enrollment.findMany({
-    where: { group_id: req.params.id },
-    select: { student: { select: { id: true } } },
-  })
-  const userIds = enrollments.map((enrollment) => enrollment.student.id)
-  const jobs = await prisma.userProvisioningJob.findMany({
-    where: { user_id: { in: userIds } },
-    include: {
-      user: {
-        select: { name: true, email: true, code: true },
-      },
-    },
-    orderBy: { created_at: "desc" },
-  })
-  res.json(jobs.map((job) => ({
-    id: job.id,
-    username: job.username,
-    status: job.status,
-    retries: job.retries,
-    error: job.error,
-    student: {
-      name: job.user.name,
-      email: job.user.email,
-      code: job.user.code ?? null,
-    },
-    createdAt: job.created_at,
-  })))
+  res.json(
+    await groupService.listGroupProvisioningJobs({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
 })
 
 const reconcileGroup = asyncHandler(async (req, res) => {
