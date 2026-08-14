@@ -1,6 +1,7 @@
 const { Client } = require("ssh2")
 const fs = require("fs")
 const config = require("../config/env")
+const logger = require("../lib/logger")
 
 let _conn = null
 let _ready = false
@@ -14,7 +15,7 @@ try {
   // La llave vive montada en el contenedor; si falta, el proceso puede
   // arrancar igual (auth/health no la necesitan) y el error se ve al primer
   // uso real del entorno. Lanzar aqui tumbaría el boot entero.
-  console.error(`SSH private key not found at ${config.ssh.keyPath}: ${err.message}`)
+  logger.warn(`SSH private key not found at ${config.ssh.keyPath}: ${err.message}`)
 }
 
 const SSH_CONFIG = {
