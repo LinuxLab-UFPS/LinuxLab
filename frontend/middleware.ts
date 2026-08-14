@@ -5,7 +5,8 @@ import { adminRules } from "@/lib/features/admin/rules"
 import { teacherRules } from "@/lib/features/teacher/rules"
 import { studentRules } from "@/lib/features/student/rules"
 import { sharedRules } from "@/lib/features/shared/rules"
-import type { RouteRule } from "@/lib/features/shared/types"
+import type { Role } from "@/lib/models/auth"
+import type { RouteRule } from "@/lib/models/content"
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "linuxlab-jwt-secret-2026",
@@ -49,7 +50,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
-    const role = payload.role as string
+    const role = payload.role as Role
     if (!rule.roles.includes(role)) {
       return NextResponse.redirect(new URL("/unauthorized", request.url))
     }

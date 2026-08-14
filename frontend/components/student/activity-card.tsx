@@ -1,11 +1,8 @@
 import Link from "next/link"
 import { BookOpen, ListChecks, Target } from "lucide-react"
 import { cn } from "@/lib/utils"
-import {
-  DIFFICULTY_CLASS,
-  DIFFICULTY_LABEL,
-  type Activity,
-} from "@/lib/features/shared/activities"
+import { DIFFICULTY_CLASS, DIFFICULTY_LABEL } from "@/lib/features/shared/activities"
+import type { ActivityListing } from "@/lib/models/activities"
 
 const GLOW =
   "hover:border-amber-500/50 hover:shadow-[0_0_10px_rgba(245,158,11,0.45),0_0_30px_rgba(245,158,11,0.3)]"
@@ -23,7 +20,7 @@ export function ActivityCard({
   completed = false,
   compact = false,
 }: {
-  activity: Activity
+  activity: ActivityListing
   completed?: boolean
   compact?: boolean
 }) {

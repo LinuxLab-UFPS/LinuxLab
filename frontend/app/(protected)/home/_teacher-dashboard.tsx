@@ -1,23 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { listGroups } from "@/lib/features/teacher/data"
 import { GroupsTable } from "@/components/teacher/groups-table"
 import { useAuth } from "@/lib/features/auth/context"
-import type { Group } from "@/lib/features/teacher/types"
+import { useGroups } from "@/lib/api/queries"
 
 export function TeacherDashboard() {
   const { user } = useAuth()
-  const [groups, setGroups] = useState<Group[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    listGroups()
-      .then(setGroups)
-      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar cursos"))
-      .finally(() => setLoading(false))
-  }, [])
+  const groupsQuery = useGroups()
+  const groups = groupsQuery.data ?? []
+  const loading = groupsQuery.isLoading
+  const error = groupsQuery.error
 
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-10">
@@ -36,7 +28,7 @@ export function TeacherDashboard() {
 
       {error && (
         <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
+          {error instanceof Error ? error.message : "Error al cargar cursos"}
         </div>
       )}
 

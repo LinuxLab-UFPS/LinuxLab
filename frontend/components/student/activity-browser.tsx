@@ -11,11 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ActivityGrid } from "@/components/student/activity-grid"
-import {
-  DIFFICULTY_LABEL,
-  type Activity,
-  type Difficulty,
-} from "@/lib/features/shared/activities"
+import { DIFFICULTY_LABEL } from "@/lib/features/shared/activities"
+import type { ActivityListing, Difficulty } from "@/lib/models/activities"
 
 const TODOS = "all"
 
@@ -40,7 +37,7 @@ export function ActivityBrowser({
   activities,
   children,
 }: {
-  activities: Activity[]
+  activities: ActivityListing[]
   /** Lo que se pinta entre los filtros y el catálogo (las del curso). */
   children?: React.ReactNode
 }) {

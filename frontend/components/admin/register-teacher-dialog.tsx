@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Plus } from "lucide-react"
 
 interface RegisterTeacherDialogProps {
-  onRegister: (name: string, email: string) => Promise<void>
+  onRegister: (name: string, email: string) => Promise<unknown>
   submitting: boolean
 }
 

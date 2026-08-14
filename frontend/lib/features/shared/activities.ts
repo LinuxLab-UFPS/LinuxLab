@@ -1,4 +1,5 @@
 import { syllabus } from "./temario"
+import type { ActivityListing, Difficulty } from "@/lib/models/activities"
 
 /**
  * Activities registry.
@@ -12,8 +13,6 @@ import { syllabus } from "./temario"
  * This holds the presentation (title, difficulty, topic tag); what each activity
  * checks lives in the database, keyed by the same `slug`.
  */
-export type Difficulty = "basic" | "intermediate" | "advanced"
-
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   basic: "Fácil",
   intermediate: "Intermedio",
@@ -91,7 +90,7 @@ const RAW = [
   },
 ]
 
-export const activities: Activity[] = RAW.map((a) => {
+export const activities: ActivityListing[] = RAW.map((a) => {
   const topic = syllabus.find((t) => t.number === a.topicNumber)
   return {
     ...a,
@@ -101,15 +100,15 @@ export const activities: Activity[] = RAW.map((a) => {
   }
 })
 
-export function getActivities(): Activity[] {
+export function getActivities(): ActivityListing[] {
   return activities
 }
 
-export function getActivity(slug: string): Activity | undefined {
+export function getActivity(slug: string): ActivityListing | undefined {
   return activities.find((a) => a.slug === slug)
 }
 
 /** The activities a topic advertises, rendered as cards inside its lesson. */
-export function getActivitiesForTopic(topicNumber: number): Activity[] {
+export function getActivitiesForTopic(topicNumber: number): ActivityListing[] {
   return activities.filter((a) => a.topicNumber === topicNumber)
 }

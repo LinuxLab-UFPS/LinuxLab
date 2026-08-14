@@ -1,154 +1,29 @@
-import type { Role, EnrollmentStudent } from "@/lib/features/auth/types"
-
-export interface Group {
-  id: string
-  name: string
-  description: string
-  createdAt: string
-  archived: boolean
-  enabledTopics: number[]
-  studentCount: number
-  activityCount: number
-  /** Directorio del grupo dentro del home del docente: grupos/<group_dir>. */
-  groupDir?: string
-}
-
-export interface Enrollment {
-  id: string
-  groupId: string
-  student: EnrollmentStudent
-  enrolledAt: string
-}
-
-export type CreateGroupInput = {
-  name: string
-  description: string
-  students: { name: string; email: string; code: string }[]
-}
-
-export type ActivitySource = "bank" | "teacher"
-
-export type Difficulty = "basic" | "intermediate" | "advanced"
-
-export type EvaluationType = "atomic" | "manual"
-
-/** Un campo de formulario de una asercion del catalogo. */
-export interface CatalogField {
-  key: string
-  label: string
-  placeholder?: string
-}
-
-/** Una asercion del catalogo, servida por GET /api/activities/catalog. */
-export interface CatalogEntry {
-  type: string
-  label: string
-  hint: string
-  fields: CatalogField[]
-}
-
-export interface ActivityCheck {
-  id: string
-  type: string
-  params: Record<string, string>
-  points: number
-}
-
-export interface Activity {
-  id: string
-  title: string
-  topicNumber: number
-  source: ActivitySource
-  difficulty?: Difficulty
-  instructions: string
-  maxScore: number
-  dueDate?: string
-  required: boolean
-  evaluationType: EvaluationType
-  gradingPolicy?: "best_score" | "latest_score"
-  /** Carpeta de trabajo autogenerada (`~/actividades/<workdir>/`). */
-  workdir?: string
-  checks: ActivityCheck[]
-  uses?: number
-}
-
-export type CreateActivityInput = Omit<Activity, "id" | "uses">
-
-export interface AuditEntry {
-  id: number
-  timestamp: string
-  userName: string
-  email: string
-  role: Role
-  group: string
-  action: string
-  /** Objeto sobre el que se actuó (actividad, tema...). Se resalta aparte. */
-  target?: string
-}
-
-export type ProgressStatus = "completed" | "in-progress" | "not-started" | "overdue"
-
-export interface StudentProgress {
-  student: EnrollmentStudent
-  topicStatus: Record<number, ProgressStatus>
-  progress: number
-  lastActivity: string
-  /** Actividades entregadas sobre las habilitadas en el curso. */
-  activitiesDone?: number
-  activitiesTotal?: number
-  /** Promedio de puntuación de las entregas, en escala 0-5. */
-  averageScore?: number
-}
-
-export interface GroupProgressSummary {
-  enrolledCount: number
-  averageProgress: number
-  completedToday: number
-  activeNow: number
-  rows: StudentProgress[]
-}
-
-export interface TopicProgress {
-  topicNumber: number
-  title: string
-  completed: number
-  total: number
-  avgScore: number
-}
-
-export type GradeStatus = "completed" | "pending" | "not-started"
-
-export interface Grade {
-  id: string
-  activityName: string
-  topicTitle: string
-  source: ActivitySource
-  score: number | null
-  maxScore: number
-  status: GradeStatus
-  date?: string
-  evaluation?: "auto" | "manual"
-}
-
-export interface StudentGroupDetail {
-  student: EnrollmentStudent
-  groupName: string
-  enrolledAt: string
-  lastActive: string
-  overallProgress: number
-  topicProgress: TopicProgress[]
-  recentGrades: Grade[]
-  grades: Grade[]
-}
-
-export type ProvisioningStatus = "pending" | "processing" | "completed" | "failed"
-
-export interface ProvisioningJobSummary {
-  id: string
-  username: string | null
-  status: ProvisioningStatus
-  retries: number
-  error: string | null
-  student: { name: string; email: string; code: string | null }
-  createdAt: string
-}
+export type {
+  Activity,
+  ActivityCheck,
+  ActivitySource,
+  CatalogEntry,
+  CatalogField,
+  CreateActivityInput,
+  Difficulty,
+  EvaluationType,
+  GradingPolicy,
+} from "@/lib/models/activities"
+export type { AuditEntry } from "@/lib/models/audit"
+export type {
+  CreateGroupInput,
+  Enrollment,
+  Grade,
+  GradeStatus,
+  Group,
+  GroupProgressSummary,
+  ProgressStatus,
+  StudentGroupDetail,
+  StudentProgress,
+  TopicProgress,
+} from "@/lib/models/groups"
+export type {
+  ProvisioningJobSummary,
+  ProvisioningStatus,
+} from "@/lib/models/provisioning"
+export type { EnrollmentStudent } from "@/lib/models/auth"

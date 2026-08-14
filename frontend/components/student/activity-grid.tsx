@@ -2,10 +2,10 @@
 
 import { ActivityCard } from "@/components/student/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
-import type { Activity } from "@/lib/features/shared/activities"
+import type { ActivityListing } from "@/lib/models/activities"
 
 /** The catalog grid: four per row, each card knowing whether it is done. */
-export function ActivityGrid({ activities }: { activities: Activity[] }) {
+export function ActivityGrid({ activities }: { activities: ActivityListing[] }) {
   const { passed } = usePassedActivities()
 
   if (activities.length === 0) {

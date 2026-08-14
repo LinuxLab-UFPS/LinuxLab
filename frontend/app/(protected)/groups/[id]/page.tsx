@@ -1,22 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
+import { useQueryClient, useMutation } from "@tanstack/react-query"
 import {
   ArrowLeft,
   BookOpen,
   Loader2,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  CircleDashed,
   Target,
   Users,
   Plus,
   Search,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { RoleGuard } from "@/components/shared/role-guard"
 import { StatTabs } from "@/components/shared/stat-tabs"
@@ -27,67 +23,46 @@ import { Input } from "@/components/ui/input"
 import { GroupActivities } from "@/components/teacher/group-activities"
 import {
   addStudent,
-  getGroup,
-  getGroupProgress,
-  listGroupActivities,
-  listStudents,
 } from "@/lib/features/teacher/data"
-import type { Activity, Group, GroupProgressSummary } from "@/lib/features/teacher/types"
-import type { EnrollmentStudent } from "@/lib/features/auth/types"
-
-const EMPTY_PROGRESS: GroupProgressSummary = {
-  enrolledCount: 0,
-  averageProgress: 0,
-  completedToday: 0,
-  activeNow: 0,
-  rows: [],
-}
+import { queryKeys, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
+import type { EnrollmentStudent } from "@/lib/models/auth"
 
 type Tab = "estudiantes" | "actividades"
 
 function GroupDetailContent() {
   const params = useParams<{ id: string }>()
   const id = params?.id ?? ""
+  const queryClient = useQueryClient()
   const [tab, setTab] = useState<Tab>("estudiantes")
-
-  const [group, setGroup] = useState<Group | null>(null)
-  const [progress, setProgress] = useState<GroupProgressSummary>(EMPTY_PROGRESS)
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [students, setStudents] = useState<EnrollmentStudent[]>([])
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
-  const [addBusy, setAddBusy] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!id) return
-    Promise.all([
-      getGroup(id),
-      getGroupProgress(id),
-      listGroupActivities(id),
-      listStudents(id),
-    ])
-      .then(([g, prog, acts, enrolled]) => {
-        setGroup(g)
-        setProgress(prog)
-        setActivities(acts)
-        setStudents(enrolled)
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Error al cargar el curso"))
-      .finally(() => setLoading(false))
-  }, [id])
+  const groupQuery = useGroup(id)
+  const studentsQuery = useGroupStudents(id)
+  const activitiesQuery = useGroupActivities(id)
+  const progress = useGroupProgress(id)
 
-  // Las cuentas se crean en segundo plano: mientras alguna falte, se refresca.
-  useEffect(() => {
-    if (!id || students.length === 0) return
-    if (students.every((s) => s.linuxProvisioned)) return
-    const interval = setInterval(() => {
-      listStudents(id).then(setStudents).catch(() => {})
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [id, students])
+  const group = groupQuery.data ?? null
+  const loading = groupQuery.isLoading
+  const error = groupQuery.error
+
+  // El resumen del curso refresca al matricular: cambia el conteo de estudiantes.
+  const addStudentMutation = useMutation({
+    mutationFn: (student: Omit<EnrollmentStudent, "id">) => addStudent(id, student),
+    onSuccess: (created) => {
+      queryClient.setQueryData(queryKeys.groupStudents(id), (prev: EnrollmentStudent[] = []) => [
+        ...prev,
+        created,
+      ])
+      queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })
+      setAdding(false)
+      setAddError(null)
+    },
+    onError: (e: unknown) => {
+      setAddError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
+    },
+  })
 
   if (loading) {
     return (
@@ -105,27 +80,13 @@ function GroupDetailContent() {
         </div>
         <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          {error || "Este curso no existe o aún no tiene datos."}
+          {error instanceof Error ? error.message : "Este curso no existe o aún no tiene datos."}
         </p>
         <Link href="/home">
           <Button variant="outline">Volver a Cursos</Button>
         </Link>
       </div>
     )
-  }
-
-  const submitStudent = async (student: Omit<EnrollmentStudent, "id">) => {
-    setAddBusy(true)
-    setAddError(null)
-    try {
-      const created = await addStudent(id, student)
-      setStudents((prev) => [...prev, created])
-      setAdding(false)
-    } catch (e) {
-      setAddError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
-    } finally {
-      setAddBusy(false)
-    }
   }
 
   const tabs = (
@@ -225,18 +186,18 @@ function GroupDetailContent() {
       </div>
 
       {tab === "estudiantes" ? (
-        <GroupStudents students={students} summary={progress} query={query} />
+        <GroupStudents students={studentsQuery.data ?? []} summary={progress} query={query} />
       ) : (
         <div data-section="actividades">
-          <GroupActivities activities={activities} query={query} groupId={id} />
+          <GroupActivities activities={activitiesQuery.data ?? []} query={query} groupId={id} />
         </div>
       )}
 
       <AddStudentDialog
         open={adding}
-        busy={addBusy}
+        busy={addStudentMutation.isPending}
         error={addError}
-        onSubmit={submitStudent}
+        onSubmit={(student) => addStudentMutation.mutate(student)}
         onOpenChange={(open) => {
           setAdding(open)
           if (!open) setAddError(null)

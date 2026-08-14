@@ -3,6 +3,7 @@ import { Onest, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/shared/theme-provider'
 import { AuthProvider } from '@/lib/features/auth/context'
+import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -47,8 +48,10 @@ export default function RootLayout({
           enableSystem={false}
         >
           <AuthProvider>
-            {children}
-            <Toaster richColors position="top-right" />
+            <QueryProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
