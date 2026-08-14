@@ -6,9 +6,9 @@ const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { registerStudentSchema } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-// const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
+const { groupNameOf } = require("../utils/groupName")
+const accessService = require("./accessService")
+const { EMAIL_REGEX, PRIORITIES } = require("../lib/constants")
 
 function validateEmail(email) {
   if (!email?.trim()) {
@@ -25,17 +25,6 @@ function validateEmail(email) {
   //   )
   // }
   return normalized
-}
-
-async function ensureGroupAccess({ groupId, teacherUserId, role, tx = prisma }) {
-  const group = await tx.group.findUnique({ where: { id: groupId } })
-  if (!group) {
-    throw new AppError("Grupo no encontrado", 404)
-  }
-  if (role !== "admin" && group.teacher_id !== teacherUserId) {
-    throw new AppError("No tienes permiso sobre este grupo", 403)
-  }
-  return group
 }
 
 async function ensureStudentExists({ email, name, code, tx = prisma }) {
@@ -113,9 +102,9 @@ async function registerStudent(args) {
   }
 
   const { groupId, name, email, code, teacherUserId, role, tx } = args
-  const group = await ensureGroupAccess({ groupId, teacherUserId, role, tx })
+  const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
   const groupDir = group.group_dir || undefined
-  const groupName = groupDir ? `grp_${groupId.replace(/-/g, "").substring(0, 8)}` : undefined
+  const groupName = groupDir ? groupNameOf(groupId) : undefined
   const teacherAccount = await tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
   return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
 }
@@ -163,7 +152,7 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
         group_dir: groupDir || null,
         group_name: groupName || null,
         teacher_username: teacherUsername || null,
-        priority: 1,
+        priority: PRIORITIES.STUDENT,
       },
     })
   }
@@ -180,8 +169,70 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
   }
 }
 
+/**
+ * Matricula un lote de estudiantes en un grupo (creacion de curso con
+ * estudiantes). Es la misma maquinaria que la matricula individual
+ * (enrollOne), con el resumen por fila del contrato de respuesta:
+ * los errores de una fila no tumban el lote.
+ */
+async function enrollMany({ groupId, students, groupDir, groupName, teacherUsername, tx = prisma }) {
+  const result = {
+    total: students.length,
+    registered: 0,
+    skipped: 0,
+    errors: [],
+  }
+  const seenEmails = new Set()
+
+  for (let i = 0; i < students.length; i++) {
+    const row = students[i] ?? {}
+    const email = row.email?.trim().toLowerCase()
+    if (!email || !EMAIL_REGEX.test(email)) {
+      result.errors.push({
+        row: i + 1,
+        email: email || null,
+        error: "El formato del correo electrónico no es válido",
+      })
+      continue
+    }
+    if (seenEmails.has(email)) {
+      result.skipped += 1
+      continue
+    }
+    seenEmails.add(email)
+
+    try {
+      const outcome = await enrollOne({
+        groupId,
+        name: row.name,
+        email,
+        code: row.code,
+        groupDir,
+        groupName,
+        teacherUsername,
+        tx,
+      })
+      if (outcome.enrolled) {
+        result.registered += 1
+      } else {
+        result.skipped += 1
+      }
+    } catch (err) {
+      if (err instanceof AppError && err.statusCode === 409) {
+        // Rol en conflicto (p.ej. el correo pertenece a un docente): error de
+        // fila, el resto del lote sigue.
+        result.errors.push({ row: i + 1, email, error: err.message })
+      } else {
+        throw err
+      }
+    }
+  }
+
+  return result
+}
+
 async function listByGroup({ groupId, teacherUserId, role }) {
-  await ensureGroupAccess({ groupId, teacherUserId, role })
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
@@ -280,6 +331,7 @@ async function importCsv({ groupId, csvText, teacherUserId, role }) {
 module.exports = {
   registerStudent,
   enrollOne,
+  enrollMany,
   ensureStudentExists,
   importCsv,
   listByGroup,

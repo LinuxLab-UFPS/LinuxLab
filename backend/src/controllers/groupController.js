@@ -1,6 +1,7 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
 const reconcileService = require("../services/reconcileService")
+const accessService = require("../services/accessService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const createGroup = asyncHandler(async (req, res) => {
@@ -92,7 +93,7 @@ const listProvisioningJobs = asyncHandler(async (req, res) => {
 })
 
 const reconcileGroup = asyncHandler(async (req, res) => {
-  await groupService.getGroupAccess({
+  await accessService.ensureGroupAccess({
     groupId: req.params.id,
     teacherUserId: req.user.id,
     role: req.user.role,

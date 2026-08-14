@@ -16,14 +16,14 @@ const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
  * (las comprobaciones del temario backfilled las usan).
  */
 function resolveRuta(params, workdir) {
-  const salida = {}
-  for (const [clave, valor] of Object.entries(params ?? {})) {
-    salida[clave] =
-      clave === "ruta" && typeof valor === "string" && valor.trim() && !valor.startsWith("/")
-        ? `actividades/${workdir}/${valor}`
-        : valor
+  const output = {}
+  for (const [key, value] of Object.entries(params ?? {})) {
+    output[key] =
+      key === "ruta" && typeof value === "string" && value.trim() && !value.startsWith("/")
+        ? `actividades/${workdir}/${value}`
+        : value
   }
-  return salida
+  return output
 }
 
 /**
@@ -144,7 +144,7 @@ async function checkForStudent(studentUserId, groupActivityId) {
     throw new AppError("La actividad no tiene aserciones que evaluar", 409, "CONFLICT")
   }
 
-  const account = await linuxAccountService.cuentaDelEstudiante(studentUserId)
+  const account = await linuxAccountService.getStudentAccount(studentUserId)
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },

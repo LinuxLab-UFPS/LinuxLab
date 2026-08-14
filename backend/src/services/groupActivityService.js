@@ -2,7 +2,7 @@ const { randomUUID } = require("crypto")
 const prisma = require("../../prisma/client")
 const logger = require("../lib/logger")
 const { AppError, NotFoundError } = require("../lib/errors")
-const groupService = require("./groupService")
+const accessService = require("./accessService")
 const checkCatalog = require("./checkCatalogService")
 const { activityInputSchema, serializeGroupActivity } = require("../dtos/activityDtos")
 const { parseOrThrow } = require("../dtos/common")
@@ -145,7 +145,7 @@ function validateActivityInput(body) {
  * best_score).
  */
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
-  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(input ?? {})
 
@@ -201,7 +201,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
  * de partida (la politica queda congelada tras el primer intento).
  */
 async function updateGroupActivity({ groupId, activityId, teacherUserId, role, input }) {
-  const group = await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: group.id },
@@ -271,7 +271,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
 
 /** Las actividades publicadas en el grupo, para la pestaña de su curso. */
 async function listGroupActivities({ groupId, teacherUserId, role }) {
-  await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const rows = await prisma.groupActivity.findMany({
     where: { group_id: groupId },
     include: { definition: { select: { topic_number: true, difficulty: true } } },
@@ -281,7 +281,7 @@ async function listGroupActivities({ groupId, teacherUserId, role }) {
 }
 
 async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
-  await groupService.getGroupAccess({ groupId, teacherUserId, role })
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
     include: { definition: { select: { topic_number: true, difficulty: true } } },

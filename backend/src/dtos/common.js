@@ -1,5 +1,6 @@
 const { z } = require("zod")
 const { ValidationError } = require("../lib/errors")
+const { EMAIL_REGEX } = require("../lib/constants")
 
 /**
  * Valida `data` contra un schema zod y traduce el primer error a un
@@ -14,8 +15,6 @@ function parseOrThrow(schema, data) {
   }
   return result.data
 }
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /** Correo obligatorio, normalizado a minusculas, con el mismo formato historico. */
 const emailField = z

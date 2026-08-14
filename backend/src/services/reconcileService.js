@@ -7,11 +7,11 @@ const {
   homeOwnedBy,
   repairGroupOwnership,
 } = require("./containerService")
+const { groupNameOf: groupNameFromId } = require("../utils/groupName")
+const { PRIORITIES } = require("../lib/constants")
 
 function groupNameOf(group) {
-  return group.group_dir
-    ? `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
-    : null
+  return group.group_dir ? groupNameFromId(group.id) : null
 }
 
 /**
@@ -40,7 +40,7 @@ async function reconcileAll() {
         data: {
           user_id: teacher.linuxAccount.user_id,
           username: teacher.linuxAccount.linux_username,
-          priority: 10,
+          priority: PRIORITIES.TEACHER,
         },
       })
     } catch (err) {
@@ -67,7 +67,7 @@ async function reconcileAll() {
             group_dir: group.group_dir,
             group_name: groupName,
             teacher_username: teacherUsername,
-            priority: 5,
+            priority: PRIORITIES.GROUP,
           },
         })
       } else {
@@ -115,7 +115,7 @@ async function reconcileAll() {
           group_dir: group.group_dir,
           group_name: groupName,
           teacher_username: teacherUsername,
-          priority: 1,
+          priority: PRIORITIES.STUDENT,
         },
       })
     } catch (err) {
@@ -156,7 +156,7 @@ async function reconcileGroup({ groupId }) {
           group_dir: group.group_dir,
           group_name: groupName,
           teacher_username: teacherUsername,
-          priority: 5,
+          priority: PRIORITIES.GROUP,
         },
       })
     }
@@ -192,7 +192,7 @@ async function reconcileGroup({ groupId }) {
           group_dir: group.group_dir,
           group_name: groupName,
           teacher_username: teacherUsername,
-          priority: 1,
+          priority: PRIORITIES.STUDENT,
         },
       })
     } catch (err) {

@@ -12,7 +12,7 @@ const USERNAME = /^[a-z_][a-z0-9_-]{0,31}$/
  * para preparar el directorio de trabajo: si la matricula no vale para una cosa,
  * tampoco vale para la otra.
  */
-async function cuentaDelEstudiante(studentUserId) {
+async function getStudentAccount(studentUserId) {
   if (!(await enrollmentService.hasActiveEnrollment(studentUserId))) {
     throw new AuthorizationError("No estás inscrito en ningún curso activo")
   }
@@ -30,4 +30,4 @@ async function cuentaDelEstudiante(studentUserId) {
   return account
 }
 
-module.exports = { cuentaDelEstudiante, USERNAME }
+module.exports = { getStudentAccount, USERNAME }

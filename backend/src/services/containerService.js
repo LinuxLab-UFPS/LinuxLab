@@ -87,7 +87,7 @@ async function syncTeacherGroups(teacherUsername) {
   })
 
   for (const group of groups) {
-    const groupName = `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
+    const groupName = groupNameOf(group.id)
     const path = `/home/${teacherUsername}/grupos/${group.group_dir}`
     await sshClient.execCommand(
       `sudo usermod -aG ${groupName} ${teacherUsername} 2>/dev/null; ` +

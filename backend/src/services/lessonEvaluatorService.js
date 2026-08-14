@@ -20,18 +20,18 @@ const EVAL_TIMEOUT_MS = 20000
  * peticion, que es lo que importa.
  */
 function personalize(params, student) {
-  const valores = { $codigo: student.code, $correo: student.email }
-  const salida = {}
-  for (const [clave, valor] of Object.entries(params ?? {})) {
-    salida[clave] =
-      typeof valor === "string"
-        ? Object.entries(valores).reduce(
-            (texto, [token, real]) => texto.split(token).join(real),
-            valor,
+  const replacements = { $codigo: student.code, $correo: student.email }
+  const output = {}
+  for (const [key, value] of Object.entries(params ?? {})) {
+    output[key] =
+      typeof value === "string"
+        ? Object.entries(replacements).reduce(
+            (text, [token, real]) => text.split(token).join(real),
+            value,
           )
-        : valor
+        : value
   }
-  return salida
+  return output
 }
 
 /** Los tokens que hay que poder resolver antes de evaluar. */
@@ -83,7 +83,7 @@ async function evaluate({ slug, studentUserId }) {
     throw new AppError("La actividad no tiene aserciones que evaluar", 409, "CONFLICT")
   }
 
-  const account = await linuxAccountService.cuentaDelEstudiante(studentUserId)
+  const account = await linuxAccountService.getStudentAccount(studentUserId)
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
@@ -168,7 +168,7 @@ async function resetSandbox({ slug, studentUserId, force = false }) {
     throw new AppError("Esta actividad no tiene archivos que preparar", 409, "CONFLICT")
   }
 
-  const account = await linuxAccountService.cuentaDelEstudiante(studentUserId)
+  const account = await linuxAccountService.getStudentAccount(studentUserId)
   const payload = JSON.stringify({ ...activity.setup, slug: activity.slug, force })
 
   const { stdout, stderr, code } = await sshClient.execCommand(

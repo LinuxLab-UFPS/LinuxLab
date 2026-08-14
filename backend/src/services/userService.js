@@ -81,7 +81,7 @@ async function register(args) {
     data: {
       user_id: user.id,
       username: linuxUsername,
-      priority: 10,
+      priority: PRIORITIES.TEACHER,
     },
   })
   return serializeTeacher(user)
