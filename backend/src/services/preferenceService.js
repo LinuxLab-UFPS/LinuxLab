@@ -1,13 +1,10 @@
-const express = require("express")
 const prisma = require("../../prisma/client")
-const authMiddleware = require("../middleware/auth")
 const { preferencesSchema } = require("../dtos/preferenceDtos")
 const { parseOrThrow } = require("../dtos/common")
 
-const router = express.Router()
-
-router.put("/", authMiddleware, async (req, res) => {
-  const parsed = parseOrThrow(preferencesSchema, req.body ?? {})
+/** Aplica las preferencias enviadas (solo las que vienen) y devuelve las vigentes. */
+async function update(userId, body) {
+  const parsed = parseOrThrow(preferencesSchema, body ?? {})
 
   const data = {}
   if (parsed.terminalFontSize !== undefined) data.terminal_font_size = parsed.terminalFontSize
@@ -15,19 +12,19 @@ router.put("/", authMiddleware, async (req, res) => {
   if (parsed.theme !== undefined) data.theme = parsed.theme
 
   const prefs = await prisma.userPreference.upsert({
-    where: { user_id: req.user.id },
+    where: { user_id: userId },
     update: data,
     create: {
-      user_id: req.user.id,
+      user_id: userId,
       ...data,
     },
   })
 
-  res.json({
+  return {
     terminalFontSize: prefs.terminal_font_size,
     terminalFontFamily: prefs.terminal_font_family,
     theme: prefs.theme,
-  })
-})
+  }
+}
 
-module.exports = router
+module.exports = { update }

@@ -1,6 +1,8 @@
 const express = require("express")
-const teacherMiddleware = require("../middleware/teacher")
+const requireRoles = require("../middleware/requireRoles")
+const teacherMiddleware = requireRoles("teacher", "admin")
 const groupController = require("../controllers/groupController")
+const activityController = require("../controllers/activityController")
 
 const router = express.Router()
 
@@ -19,9 +21,9 @@ router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 
 // Actividades del curso (docente)
-router.get("/:id/activities", groupController.listGroupActivities)
-router.post("/:id/activities", groupController.createGroupActivity)
-router.get("/:id/activities/:activityId", groupController.getGroupActivity)
-router.patch("/:id/activities/:activityId", groupController.updateGroupActivity)
+router.get("/:id/activities", activityController.listGroupActivities)
+router.post("/:id/activities", activityController.createGroupActivity)
+router.get("/:id/activities/:activityId", activityController.getGroupActivity)
+router.patch("/:id/activities/:activityId", activityController.updateGroupActivity)
 
 module.exports = router

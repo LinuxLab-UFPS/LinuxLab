@@ -6,7 +6,7 @@ const {
   groupExists,
   homeOwnedBy,
   repairGroupOwnership,
-} = require("./linuxContainerService")
+} = require("./containerService")
 
 function groupNameOf(group) {
   return group.group_dir

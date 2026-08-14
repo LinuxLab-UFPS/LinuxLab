@@ -2,8 +2,8 @@ const { randomUUID } = require("crypto")
 const { Role } = require("@prisma/client")
 const prisma = require("../../prisma/client")
 const enrollmentService = require("./enrollmentService")
-const provisioningWorker = require("./provisioningWorker")
-const linuxContainerService = require("./linuxContainerService")
+const provisioningWorker = require("./provisioningWorkerService")
+const containerService = require("./containerService")
 const logger = require("../lib/logger")
 const { AppError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
@@ -422,7 +422,7 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
 
   if (teacherAccount?.linux_username && group.group_dir) {
     try {
-      await linuxContainerService.teardownGroup({
+      await containerService.teardownGroup({
         teacherUsername: teacherAccount.linux_username,
         groupDir: group.group_dir,
         groupName,

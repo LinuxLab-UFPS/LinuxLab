@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken")
 const config = require("../config/env")
+const authService = require("../services/authService")
 const { AppError } = require("../lib/errors")
 
 function authMiddleware(req, res, next) {
@@ -10,8 +10,7 @@ function authMiddleware(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret)
-    req.user = decoded
+    req.user = authService.verifyToken(token)
     next()
   } catch {
     next(new AppError("Sesión inválida o expirada", 401, "UNAUTHORIZED"))

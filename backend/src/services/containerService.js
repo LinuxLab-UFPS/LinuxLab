@@ -1,6 +1,7 @@
-const sshClient = require("./sshClient")
+const sshClient = require("./sshService")
 const prisma = require("../../prisma/client")
 const logger = require("../lib/logger")
+const { AppError } = require("../lib/errors")
 
 const ACCOUNT_STORE = "/var/lib/linuxlab"
 
@@ -243,6 +244,29 @@ function closePtySession(stream) {
   }
 }
 
+/**
+ * Mata los procesos del usuario en el entorno: es lo que hay detrás de
+ * "Reset terminal". El pkill corre con sudo y el fallo se ignora (si el
+ * usuario no tiene procesos vivos, no hay nada que hacer).
+ */
+async function resetTerminal(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { linuxAccount: true },
+  })
+
+  if (!user?.linuxAccount?.linux_username) {
+    throw new AppError("No tienes cuenta Linux configurada", 400, "VALIDATION_ERROR")
+  }
+
+  const username = user.linuxAccount.linux_username
+
+  await sshClient.execCommand(`sudo su -c "pkill -u ${username}" 2>/dev/null || true`)
+
+  logger.info({ username }, "Terminal reset")
+  return { ok: true }
+}
+
 module.exports = {
   userExists,
   groupExists,
@@ -257,4 +281,5 @@ module.exports = {
   provisionStudentAccount,
   openPtySession,
   closePtySession,
+  resetTerminal,
 }

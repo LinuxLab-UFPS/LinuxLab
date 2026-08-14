@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken")
 const config = require("../config/env")
+const authService = require("../services/authService")
 
 function parseCookies(request) {
   const cookies = {}
@@ -21,8 +21,7 @@ function wsAuth(request) {
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwt.secret)
-    return { user: decoded }
+    return { user: authService.verifyToken(token) }
   } catch {
     return { error: "Unauthorized: invalid or expired session" }
   }

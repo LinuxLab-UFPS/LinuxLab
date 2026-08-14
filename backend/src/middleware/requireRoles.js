@@ -1,4 +1,4 @@
-const authMiddleware = require("./auth")
+const authMiddleware = require("./authMiddleware")
 const { AuthorizationError } = require("../lib/errors")
 
 function requireRoles(...allowedRoles) {

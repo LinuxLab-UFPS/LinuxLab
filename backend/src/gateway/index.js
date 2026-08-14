@@ -1,8 +1,8 @@
 const { WebSocketServer } = require("ws")
-const wsAuth = require("./middleware/wsAuth")
-const prisma = require("../prisma/client")
-const linuxContainerService = require("./services/linuxContainerService")
-const enrollmentService = require("./services/enrollmentService")
+const wsAuth = require("./wsAuthMiddleware")
+const prisma = require("../../prisma/client")
+const containerService = require("../services/containerService")
+const enrollmentService = require("../services/enrollmentService")
 
 function setupGateway(server) {
   const wss = new WebSocketServer({ server, path: "/terminal" })
@@ -66,7 +66,7 @@ function setupGateway(server) {
     }
 
     try {
-      stream = await linuxContainerService.openPtySession(user.linuxAccount.linux_username)
+      stream = await containerService.openPtySession(user.linuxAccount.linux_username)
     } catch (err) {
       ws.close(4001, `Container error: ${err.message}`)
       return

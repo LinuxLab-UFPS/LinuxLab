@@ -140,4 +140,9 @@ function publicCatalog() {
   return CATALOG.map(({ type, label, hint, fields }) => ({ type, label, hint, fields }))
 }
 
-module.exports = { CATALOG, isKnown, validatorOf, publicCatalog }
+/** El catalogo de aserciones que puede usar el docente al crear actividades. */
+function getCatalog() {
+  return publicCatalog()
+}
+
+module.exports = { CATALOG, isKnown, validatorOf, publicCatalog, getCatalog }

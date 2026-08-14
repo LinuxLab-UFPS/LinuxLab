@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const sshClient = require("./sshClient")
+const sshClient = require("./sshService")
 const { Role } = require("@prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
 

@@ -1,5 +1,5 @@
 const express = require("express")
-const authMiddleware = require("../middleware/auth")
+const authMiddleware = require("../middleware/authMiddleware")
 const requireRoles = require("../middleware/requireRoles")
 const activityController = require("../controllers/activityController")
 

@@ -1,6 +1,5 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
-const activityService = require("../services/activityService")
 const reconcileService = require("../services/reconcileService")
 const asyncHandler = require("../utils/asyncHandler")
 
@@ -102,49 +101,6 @@ const reconcileGroup = asyncHandler(async (req, res) => {
   res.json(outcome)
 })
 
-const listGroupActivities = asyncHandler(async (req, res) => {
-  res.json(
-    await activityService.listGroupActivities({
-      groupId: req.params.id,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    }),
-  )
-})
-
-const createGroupActivity = asyncHandler(async (req, res) => {
-  const activity = await activityService.createGroupActivity({
-    groupId: req.params.id,
-    teacherUserId: req.user.id,
-    role: req.user.role,
-    input: req.body,
-  })
-  res.status(201).json(activity)
-})
-
-const getGroupActivity = asyncHandler(async (req, res) => {
-  res.json(
-    await activityService.getGroupActivity({
-      groupId: req.params.id,
-      activityId: req.params.activityId,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-    }),
-  )
-})
-
-const updateGroupActivity = asyncHandler(async (req, res) => {
-  res.json(
-    await activityService.updateGroupActivity({
-      groupId: req.params.id,
-      activityId: req.params.activityId,
-      teacherUserId: req.user.id,
-      role: req.user.role,
-      input: req.body,
-    }),
-  )
-})
-
 module.exports = {
   createGroup,
   listGroups,
@@ -156,8 +112,4 @@ module.exports = {
   listStudents,
   listProvisioningJobs,
   reconcileGroup,
-  listGroupActivities,
-  createGroupActivity,
-  getGroupActivity,
-  updateGroupActivity,
 }

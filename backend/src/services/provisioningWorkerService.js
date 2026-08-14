@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./linuxContainerService")
+const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./containerService")
 const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
