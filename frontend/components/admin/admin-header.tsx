@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LogOut, ScrollText, TerminalSquare, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -46,6 +46,7 @@ const NAV = [
  *  an ADMIN tag next to the logo. */
 export function AdminHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, signOut } = useAuth()
 
   return (
@@ -106,7 +107,7 @@ export function AdminHeader() {
               <DropdownMenuItem
                 onClick={async () => {
                   await signOut()
-                  window.location.href = "/"
+                  router.push("/")
                 }}
                 className="cursor-pointer"
               >

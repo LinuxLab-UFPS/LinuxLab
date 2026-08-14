@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   SquareTerminal,
   Target,
@@ -49,6 +49,7 @@ export function SiteHeader({
   searchItems: SearchItem[]
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, signOut } = useAuth()
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -152,7 +153,7 @@ export function SiteHeader({
               <DropdownMenuItem
                 onClick={async () => {
                   await signOut()
-                  window.location.href = "/"
+                  router.push("/")
                 }}
                 className="cursor-pointer"
               >

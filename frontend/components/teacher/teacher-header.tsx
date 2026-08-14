@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { BookOpen, LogOut, TerminalSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -39,6 +39,7 @@ const NAV = [
  *  with a DOCENTE tag next to the logo and the teacher's own nav. */
 export function TeacherHeader() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, signOut } = useAuth()
 
   return (
@@ -99,7 +100,7 @@ export function TeacherHeader() {
               <DropdownMenuItem
                 onClick={async () => {
                   await signOut()
-                  window.location.href = "/"
+                  router.push("/")
                 }}
                 className="cursor-pointer"
               >

@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api/client"
+import { env } from "@/lib/config/env"
 import type { Role, Session } from "@/lib/features/auth/types"
 
 /**
@@ -57,9 +58,7 @@ export async function getServerSession(): Promise<Session | null> {
 
   try {
     const { jwtVerify } = await import("jose")
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "linuxlab-jwt-secret-2026",
-    )
+    const secret = new TextEncoder().encode(env.jwtSecret)
     const { payload } = await jwtVerify(token, secret)
     return {
       user: {

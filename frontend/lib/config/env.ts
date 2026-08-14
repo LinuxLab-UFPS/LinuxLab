@@ -1,23 +1,12 @@
 /**
- * Typed, lazy access to environment variables.
+ * Acceso tipado y central a las variables de entorno.
  *
- * Nothing here is wired yet: the runtime (database, terminal gateway, auth) is
- * deferred. These are placeholders so the rest of the code can reference config
- * without scattering `process.env` lookups. They do NOT throw on missing values;
- * when the backend is implemented, switch the relevant ones to `requireEnv`.
- *
- * See `.env.example` for the full list.
+ * `NEXT_PUBLIC_*` queda incrustado al compilar; el resto se lee en el arranque.
+ * Esta es la unica fuente de configuracion del frontend: nadie mas debe leer
+ * `process.env` directamente.
  */
-
 export const env = {
-  /** PostgreSQL connection string (future). */
-  databaseUrl: process.env.DATABASE_URL ?? "",
-  /** WebSocket URL of the terminal gateway to the shared Linux server (future). */
-  terminalGatewayUrl: process.env.TERMINAL_GATEWAY_URL ?? "",
-  /** Secret used to sign session tokens (future). */
-  authSecret: process.env.AUTH_SECRET ?? "",
-  /** Backend API URL as the browser sees it. NEXT_PUBLIC_* queda incrustado al
-   *  compilar, asi que este valor es el del build, no el del arranque. */
+  /** Backend API URL as the browser sees it. */
   backendUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000",
   /**
    * Backend API URL as the server sees it, leido en el arranque. En Docker el
@@ -35,8 +24,12 @@ export const env = {
    * lesson videos fall back to the local public/temario files if present.
    */
   videoBaseUrl: (process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? "").replace(/\/$/, ""),
-  /** JWT secret for token verification (middleware). */
-  jwtSecret: process.env.JWT_SECRET ?? "linuxlab-jwt-secret-2026",
+  /**
+   * JWT secret para verificar las sesiones (middleware y server components).
+   * Debe ser el MISMO del backend. Sin valor, la verificacion falla cerrado
+   * (todo redirige a "/"); el .env.local lo define en desarrollo.
+   */
+  jwtSecret: process.env.JWT_SECRET ?? "",
   nodeEnv: process.env.NODE_ENV ?? "development",
 } as const
 
