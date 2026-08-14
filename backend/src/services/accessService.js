@@ -10,8 +10,6 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  * endpoints por grupo pasan por aqui.
  */
 async function ensureGroupAccess({ groupId, teacherUserId, role, tx = prisma }) {
-  // Un id que no es UUID hace fallar el cast en Postgres con un error crudo de
-  // 500; aqui se traduce a un 404 limpio.
   if (!UUID_REGEX.test(groupId)) {
     throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
   }

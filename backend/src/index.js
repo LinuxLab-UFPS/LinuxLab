@@ -1,6 +1,3 @@
-// config/env.js carga dotenv y valida las variables requeridas al boot. Debe
-// ser el primer require para que todo lo demas arranque con configuracion
-// verificada (JWT_SECRET y DATABASE_URL obligatorios).
 const config = require('./config/env');
 
 const app = require('./app');
@@ -37,8 +34,6 @@ async function shutdown(signal) {
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 
-// Un rechazo sin cazar o una excepcion no capturada no deben dejar el proceso
-// en un estado desconocido: se registran y se apaga de forma ordenada.
 process.on('unhandledRejection', (reason) => {
     logger.error({ err: reason }, 'Unhandled promise rejection');
     shutdown('unhandledRejection');

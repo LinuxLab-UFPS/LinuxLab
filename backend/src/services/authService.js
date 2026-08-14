@@ -37,8 +37,7 @@ async function loginWithIdToken({ idToken }) {
     if (error.code === "auth/argument-error") {
       throw new AppError("Token inválido", 400, "VALIDATION_ERROR")
     }
-    // El detalle del error de Firebase no debe llegar al cliente: se registra
-    // en el log y se responde con un mensaje generico.
+
     logger.error({ err: error }, "Firebase auth error")
     throw new AppError("Error al iniciar sesión", 500, "INTERNAL_ERROR")
   }
@@ -61,9 +60,6 @@ async function loginWithIdToken({ idToken }) {
     throw new AppError("Cuenta desactivada. Contacta al administrador.", 403, "FORBIDDEN")
   }
 
-  // Al archivar un grupo (fin de semestre) las matriculas pasan a 'archived'
-  // y se borra la cuenta Linux. Sin matricula activa el estudiante no tiene
-  // nada que hacer en la plataforma.
   if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
     throw new AppError("No te encuentras registrado en ningún grupo de laboratorio", 403, "FORBIDDEN")
   }

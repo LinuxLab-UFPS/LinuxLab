@@ -16,13 +16,8 @@ const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
 
-// Cabeceras de seguridad basicas (CSP, X-Content-Type-Options, etc.).
 app.use(helmet());
 
-// CORS restringido a origenes explicitos (CORS_ORIGIN, separados por coma).
-// Con el navegador en el mismo origen (proxy por path) CORS no interviene;
-// con subdominios, aqui se lista el del frontend. Las peticiones sin Origin
-// (curl, server-side) se permiten.
 app.use(cors({
     origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
@@ -32,14 +27,11 @@ app.use(morgan('[:date[clf]] [:method] :url :status :res[content-length] - :resp
     skip: (req) => req.url === "/" || req.url === "/api/health" || req.url.startsWith("/terminal"),
 }));
 
-// Request ID: lo usan los logs del errorHandler para correlacionar una
-// respuesta con su causa en el log.
 app.use((req, _res, next) => {
     req.id = randomUUID().slice(0, 8);
     next();
 });
 
-// Limites de body: un CSV de matricula puede crecer, pero no sin tope.
 app.use(express.json({ limit: "256kb" }));
 app.use(express.text({ type: ['text/plain', 'text/csv'], limit: "1mb" }));
 app.use(cookieParser());
@@ -56,14 +48,10 @@ app.get('/', (_req, res) => {
     res.json({ message: 'LinuxLab API' });
 });
 
-// Ruta de salud: la usan el healthcheck del compose y el deploy-server.sh.
-// Esta al margen de morgan (skip) para no ensuciar el log.
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
 });
 
-// Cualquier ruta que no matchee responde JSON, no el HTML por defecto de
-// Express. Debe ir despues de las rutas reales y antes del errorHandler.
 app.use((_req, res) => {
     res.status(404).json({ error: "Ruta no encontrada", code: "NOT_FOUND" });
 });
