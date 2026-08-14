@@ -277,11 +277,20 @@ function parseCsvRows(csvText) {
   if (!csvText?.trim()) {
     throw new AppError("El contenido CSV está vacío", 400)
   }
-  return parse(csvText, {
+  const rows = parse(csvText, {
     columns: ["nombre", "email", "codigo"],
+    from: 1,
     skip_empty_lines: true,
     trim: true,
   })
+  // El frontend exige el encabezado nombre,email,codigo: se valida aqui (un
+  // archivo sin el encabezado se rechazaria en silencio y perderia su primera
+  // fila) y la fila del encabezado no cuenta como estudiante.
+  const header = rows[0] ?? {}
+  if (String(header.email ?? "").trim().toLowerCase() !== "email") {
+    throw new AppError("El archivo debe tener el encabezado nombre,email,codigo", 400)
+  }
+  return rows.slice(1)
 }
 
 async function importCsv({ groupId, csvText, teacherUserId, role }) {

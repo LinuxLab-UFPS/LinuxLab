@@ -31,7 +31,6 @@ model User {
   gradedSubmissions     ActivitySubmission[]   @relation("SubmissionGraders")
   auditEvents           ActivityAuditEvent[]   @relation("AuditEvents")
   createdDefinitions    ActivityDefinition[]   @relation("ActivityCreators")
-  provisioningJobs      ProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
   preferences           UserPreference?
 }
@@ -242,22 +241,6 @@ model Enrollment {
 
   @@unique([student_id, group_id])
   @@map("enrollments")
-}
-
-model ProvisioningJob {
-  id         String   @id @default(uuid()) @db.Uuid
-  user_id    String   @db.Uuid @map("user_id")
-  user       User     @relation(fields: [user_id], references: [id])
-  username   String   @db.VarChar(32)
-  status     String   @default("pending")
-  retries    Int      @default(0)
-  maxRetries Int      @default(3) @map("max_retries")
-  error      String?  @db.Text
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt @map("updated_at")
-
-  @@index([status, retries])
-  @@map("provisioning_jobs")
 }
 
 model UserProvisioningJob {

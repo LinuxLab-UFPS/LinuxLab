@@ -38,9 +38,10 @@ subfase se da por completa cuando cumple los requisitos que le corresponden
   de `lib/features/teacher/data.ts` permanecen intactos.
 - Tests automatizados (decisión del dueño del proyecto).
 - Rediseño visual o estético de pantallas.
-- Migraciones de esquema de base de datos (ninguna fase ejecuta
-  `prisma migrate`; la eliminación del modelo muerto `ProvisioningJob` queda
-  pendiente de aprobación explícita porque requeriría migración).
+- Migraciones de esquema de base de datos (las fases no introdujeron ninguna;
+  la eliminación del modelo muerto `ProvisioningJob` se ejecutó con aprobación
+  explícita: migración `20260814205122_drop_unused_provisioning_job`, tabla
+  vacía, sin pérdida de datos).
 - Cambios en `docker-compose.yml` y `deploy/`.
 - Contratos compartidos entre frontend y backend: **no existe paquete `shared/`**.
   Cada capa define y mantiene sus propios DTOs (ver §4.3).
@@ -366,7 +367,7 @@ Reglas del frontend:
 | RNF-MNT-2 | Cero duplicación de: EMAIL_REGEX, prioridades, `grp_*`, access checks, verify JWT, serialización de jobs, flujo de matrícula. |
 | RNF-MNT-3 | Ningún archivo de servicio nuevo > ~300 líneas; `activityService.js` descompuesto. |
 | RNF-MNT-4 | Identificadores en inglés; mensajes en español. |
-| RNF-MNT-5 | Código muerto eliminado (`createShellStream`, `closePtySession`); el modelo `ProvisioningJob` queda pendiente de aprobación por requerir migración. |
+| RNF-MNT-5 | Código muerto eliminado (`createShellStream`, `closePtySession`) y modelo `ProvisioningJob` removido con migración aprobada (tabla vacía). |
 | RNF-MNT-6 | Scripts de prisma (seeds/respaldo) movidos a `scripts/` con nombres en inglés. |
 
 ### 6.4 Compatibilidad — RNF-COMP
