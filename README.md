@@ -1,5 +1,7 @@
 # LinuxLab UFPS
 
+[![Deploy to Production](https://github.com/LinuxLab-UFPS/LinuxLab/actions/workflows/deploy.yml/badge.svg)](https://github.com/LinuxLab-UFPS/LinuxLab/actions/workflows/deploy.yml)
+
 Laboratorio virtual de Linux para la asignatura de Sistemas Operativos de la
 Universidad Francisco de Paula Santander. La plataforma reúne en un mismo lugar el
 material teórico del temario, una terminal Linux accesible desde el navegador y
@@ -120,12 +122,12 @@ Ambos sobreviven a `stop`, `restart` y al reinicio del host.
             └── <estudiante>/   → 2750 estudiante:grp_xxx (setgid)
 ```
 
-| Rol | Cómo se crea | Directorio | Permisos |
-|---|---|---|---|
-| **labadmin** | Imagen + entrypoint (authorized_keys) | `/home/labadmin/` | 700 |
-| **docente** | `provisionTeacherAccount` → `createTeacher` | `/home/<docente>/{home,grupos}` | 751/750 |
-| **grupo** | `createGroup` (job con prioridad) | `/home/<docente>/grupos/<grp_dir>/` | 2751 (setgid) |
-| **estudiante** | `provisionStudentAccount` → `createStudent` | `.../grupos/<grp_dir>/<usuario>/` | 2750 (setgid) |
+| Rol            | Cómo se crea                                | Directorio                          | Permisos      |
+| -------------- | ------------------------------------------- | ----------------------------------- | ------------- |
+| **labadmin**   | Imagen + entrypoint (authorized_keys)       | `/home/labadmin/`                   | 700           |
+| **docente**    | `provisionTeacherAccount` → `createTeacher` | `/home/<docente>/{home,grupos}`     | 751/750       |
+| **grupo**      | `createGroup` (job con prioridad)           | `/home/<docente>/grupos/<grp_dir>/` | 2751 (setgid) |
+| **estudiante** | `provisionStudentAccount` → `createStudent` | `.../grupos/<grp_dir>/<usuario>/`   | 2750 (setgid) |
 
 - **Setgid (`2xxx`)**: los archivos creados dentro heredan el grupo del curso
   (`grp_xxx`), no el grupo primario de quien los crea.
@@ -222,19 +224,19 @@ nunca se interpolan en la línea de comandos.
 
 ## Límites de recursos
 
-| Límite | Valor | Frena |
-|---|---|---|
-| `mem_limit` del entorno | 512 MB | ~48 estudiantes simultáneos |
-| `cpus` del entorno | 0.5 núcleos | un `while true` no degrada al backend/frontend |
-| CPU por usuario (cgroup v2) | 10% de 1 CPU | un estudiante no acapara el laboratorio |
-| Cuota de disco por estudiante | 20 MB (`setquota`) | llenar el disco del curso |
-| `MaxSessions` del sshd | 100 | techo de terminales abiertas |
-| `ulimit -u` | 16 procesos | fork bombs y acaparamiento de CPU |
-| `ulimit -f` | 15 MB | archivos individuales enormes |
-| `ulimit -v` | 256 MB | un proceso que se coma la RAM |
-| `TMOUT` | 900 s, readonly | sesiones abiertas para siempre |
-| `pkill -u` | al cerrar la terminal | procesos huérfanos |
-| `restart: unless-stopped` | backend, entorno, frontend | el laboratorio vuelve solo tras reinicio |
+| Límite                        | Valor                      | Frena                                          |
+| ----------------------------- | -------------------------- | ---------------------------------------------- |
+| `mem_limit` del entorno       | 512 MB                     | ~48 estudiantes simultáneos                    |
+| `cpus` del entorno            | 0.5 núcleos                | un `while true` no degrada al backend/frontend |
+| CPU por usuario (cgroup v2)   | 10% de 1 CPU               | un estudiante no acapara el laboratorio        |
+| Cuota de disco por estudiante | 20 MB (`setquota`)         | llenar el disco del curso                      |
+| `MaxSessions` del sshd        | 100                        | techo de terminales abiertas                   |
+| `ulimit -u`                   | 16 procesos                | fork bombs y acaparamiento de CPU              |
+| `ulimit -f`                   | 15 MB                      | archivos individuales enormes                  |
+| `ulimit -v`                   | 256 MB                     | un proceso que se coma la RAM                  |
+| `TMOUT`                       | 900 s, readonly            | sesiones abiertas para siempre                 |
+| `pkill -u`                    | al cerrar la terminal      | procesos huérfanos                             |
+| `restart: unless-stopped`     | backend, entorno, frontend | el laboratorio vuelve solo tras reinicio       |
 
 La CPU se reparte en tres capas: el `cpus` del contenedor aísla el laboratorio
 de los demás servicios; el cgroup por usuario da a cada estudiante un techo
