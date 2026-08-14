@@ -1,7 +1,9 @@
 const prisma = require("../../prisma/client")
-const sshClient = require("./sshClient")
+const sshClient = require("./sshService")
 const { Role } = require("@prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
+const { groupNameOf } = require("../utils/groupName")
+const { PRIORITIES } = require("../lib/constants")
 
 /** Cuentas del sistema dentro del contenedor, sin las de servicio. */
 async function containerUsers() {
@@ -21,10 +23,6 @@ async function containerGroups() {
 async function dirExists(path) {
   const { code } = await sshClient.execCommand(`test -d "${path}"`)
   return code === 0
-}
-
-function groupNameOf(group) {
-  return `grp_${group.id.replace(/-/g, "").substring(0, 8)}`
 }
 
 /**
@@ -152,7 +150,7 @@ async function ensureOwnAccount(userId) {
     data: { user_id: user.id, linux_username: username, linux_provisioned: false },
   })
   await prisma.userProvisioningJob.create({
-    data: { user_id: user.id, username, priority: 10 },
+    data: { user_id: user.id, username, priority: PRIORITIES.TEACHER },
   })
   return { created: true, username }
 }
