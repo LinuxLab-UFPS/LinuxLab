@@ -8,6 +8,9 @@ const logger = require("../lib/logger")
 const { AppError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { createLinuxAccountsUnique } = require("../utils/linuxUsername")
+const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
+const { parseOrThrow } = require("../dtos/common")
+const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -20,22 +23,6 @@ function generateGroupDir(name, groupId) {
     .substring(0, 20)
   const shortId = groupId.replace(/-/g, "").substring(0, 8)
   return `grp_${slug}_${shortId}`
-}
-
-function serializeGroup(group, studentCount, activityCount) {
-  return {
-    id: group.id,
-    name: group.name,
-    description: group.description ?? "",
-    archived: group.archived,
-    createdAt: group.created_at,
-    teacherId: group.teacher_id,
-    teacherName: group.teacher?.name ?? null,
-    studentCount: studentCount ?? 0,
-    enabledTopics: [],
-    activityCount: activityCount ?? 0,
-    groupDir: group.group_dir ?? null,
-  }
 }
 
 async function ensureTeacherRole(userId, tx = prisma) {
@@ -74,19 +61,21 @@ async function createGroup(args) {
 
   const { name, description, students, teacherUserId, tx } = args
   const db = tx
-  if (!name?.trim()) {
-    throw new AppError("El nombre del grupo es requerido", 400, "VALIDATION_ERROR")
-  }
+  const parsed = parseOrThrow(createGroupSchema, {
+    name,
+    description,
+    students: Array.isArray(students) ? students : [],
+  })
   await ensureTeacherRole(teacherUserId, db)
 
   const groupId = randomUUID()
-  const groupDir = generateGroupDir(name, groupId)
+  const groupDir = generateGroupDir(parsed.name, groupId)
   const groupName = `grp_${groupId.replace(/-/g, "").substring(0, 8)}`
   const group = await db.group.create({
     data: {
       id: groupId,
-      name: name.trim(),
-      description: description?.trim() || null,
+      name: parsed.name,
+      description: parsed.description?.trim() || null,
       teacher_id: teacherUserId,
       group_dir: groupDir,
     },
@@ -111,7 +100,7 @@ async function createGroup(args) {
 
   const enrollment = await enrollStudentsInGroup({
     groupId: group.id,
-    students: Array.isArray(students) ? students : [],
+    students: parsed.students,
     groupDir,
     groupName,
     teacherUsername: teacherAccount?.linux_username,
@@ -318,19 +307,7 @@ async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
     },
     orderBy: { created_at: "desc" },
   })
-  return jobs.map((job) => ({
-    id: job.id,
-    username: job.username,
-    status: job.status,
-    retries: job.retries,
-    error: job.error,
-    student: {
-      name: job.user.name,
-      email: job.user.email,
-      code: job.user.code ?? null,
-    },
-    createdAt: job.created_at,
-  }))
+  return jobs.map(serializeGroupUserJob)
 }
 
 /**
@@ -491,5 +468,4 @@ module.exports = {
   listGroupProvisioningJobs,
   archiveGroup,
   deleteGroup,
-  serializeGroup,
 }

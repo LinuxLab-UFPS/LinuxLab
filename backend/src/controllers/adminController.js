@@ -3,6 +3,7 @@ const reconcileService = require("../services/reconcileService")
 const environmentService = require("../services/environmentService")
 const asyncHandler = require("../utils/asyncHandler")
 const prisma = require("../../prisma/client")
+const { serializeTeacherUserJob } = require("../dtos/provisioningDtos")
 
 const listTeachers = asyncHandler(async (req, res) => {
   const { search, status } = req.query
@@ -52,18 +53,7 @@ const listTeacherProvisioningJobs = asyncHandler(async (req, res) => {
     },
     orderBy: { created_at: "desc" },
   })
-  res.json(jobs.map((job) => ({
-    id: job.id,
-    username: job.username,
-    status: job.status,
-    retries: job.retries,
-    error: job.error,
-    teacher: {
-      name: job.user.name,
-      email: job.user.email,
-    },
-    createdAt: job.created_at,
-  })))
+  res.json(jobs.map(serializeTeacherUserJob))
 })
 
 module.exports = {

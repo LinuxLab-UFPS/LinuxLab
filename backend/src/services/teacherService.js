@@ -3,9 +3,9 @@ const prisma = require("../../prisma/client")
 const { sanitizeUsername } = require("../utils/sanitizeUsername")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-// const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
+const { registerTeacherSchema } = require("../dtos/userDtos")
+const { parseOrThrow } = require("../dtos/common")
+const { serializeTeacher } = require("../dtos/userDtos")
 
 const TEACHER_SELECT = {
   id: true,
@@ -18,17 +18,6 @@ const TEACHER_SELECT = {
       linux_provisioned: true,
     },
   },
-}
-
-function serializeTeacher(user) {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    active: user.active,
-    linuxUsername: user.linuxAccount?.linux_username ?? null,
-    linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
-  }
 }
 
 async function findAll(filters = {}) {
@@ -53,26 +42,17 @@ async function findAll(filters = {}) {
 }
 
 async function register(args) {
-  if (!args.tx) return runInTransaction((tx) => register({ ...args, tx }))
+  // La validacion de forma (nombre y email) ocurre antes de abrir la
+  // transaccion: es un error del cliente (400), no requiere conexion.
+  const parsed = parseOrThrow(registerTeacherSchema, { name: args.name, email: args.email })
 
-  const { name, email, tx } = args
+  if (!args.tx) {
+    return runInTransaction((tx) => register({ name: parsed.name, email: parsed.email, tx }))
+  }
+
+  const { tx } = args
   const db = tx
-  if (!name?.trim()) {
-    throw new AppError("El nombre del docente es requerido", 400)
-  }
-  if (!email?.trim()) {
-    throw new AppError("El correo electrónico es requerido", 400)
-  }
-
-  const normalizedEmail = email.toLowerCase().trim()
-
-  if (!EMAIL_REGEX.test(normalizedEmail)) {
-    throw new AppError("El formato del correo electrónico no es válido", 400)
-  }
-
-  // if (!normalizedEmail.endsWith(INSTITUTIONAL_DOMAIN)) {
-  //   throw new ServiceError("Solo se permiten correos institucionales @ufps.edu.co", 400)
-  // }
+  const normalizedEmail = parsed.email
 
   const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
   if (existing) {
@@ -83,7 +63,7 @@ async function register(args) {
 
   const user = await db.user.create({
     data: {
-      name: name.trim(),
+      name: parsed.name,
       email: normalizedEmail,
       role: Role.teacher,
       active: true,
@@ -127,4 +107,4 @@ async function toggleActive(id, tx) {
   return serializeTeacher(updated)
 }
 
-module.exports = { findAll, register, toggleActive, serializeTeacher }
+module.exports = { findAll, register, toggleActive }

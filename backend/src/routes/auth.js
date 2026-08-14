@@ -7,6 +7,9 @@ const authMiddleware = require("../middleware/auth")
 const enrollmentService = require("../services/enrollmentService")
 const logger = require("../lib/logger")
 const config = require("../config/env")
+const { idTokenSchema } = require("../dtos/authDtos")
+const { parseOrThrow } = require("../dtos/common")
+const { serializeUser } = require("../dtos/userDtos")
 
 const router = express.Router()
 
@@ -20,33 +23,12 @@ const USER_INCLUDE = {
   preferences: true,
 }
 
-function serializeUser(user) {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-    googleId: user.google_id,
-    active: user.active,
-    linuxUsername: user.linuxAccount?.linux_username ?? null,
-    linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
-    preferences: user.preferences
-      ? {
-          terminalFontSize: user.preferences.terminal_font_size,
-          terminalFontFamily: user.preferences.terminal_font_family,
-          theme: user.preferences.theme,
-        }
-      : null,
-  }
-}
-
 router.post("/firebase", async (req, res) => {
-  try {
-    const { idToken } = req.body
-    if (!idToken) {
-      return res.status(400).json({ error: "Se requiere el token de acceso", code: "VALIDATION_ERROR" })
-    }
+  // Fuera del try: un idToken invalido es un error del cliente (400) y debe
+  // pasar por el errorHandler, no caer en el 500 generico del catch.
+  const { idToken } = parseOrThrow(idTokenSchema, req.body ?? {})
 
+  try {
     if (!firebaseApp) {
       return res.status(500).json({ error: "Firebase no está configurado en el servidor", code: "INTERNAL_ERROR" })
     }
@@ -103,8 +85,7 @@ router.post("/firebase", async (req, res) => {
     res.cookie(config.jwt.cookieName, token, config.jwt.cookie)
 
     res.json({ user: serializeUser(user) })
-  } catch (error) {
-    if (error.code === "auth/id-token-expired") {
+  } catch (error) {    if (error.code === "auth/id-token-expired") {
       return res.status(401).json({ error: "La sesión de Google expiró", code: "UNAUTHORIZED" })
     }
     if (error.code === "auth/argument-error") {

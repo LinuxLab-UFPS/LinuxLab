@@ -4,6 +4,8 @@ const prisma = require("../../prisma/client")
 const { createLinuxAccountWithUniqueUsername } = require("../utils/linuxUsername")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
+const { registerStudentSchema } = require("../dtos/groupDtos")
+const { parseOrThrow } = require("../dtos/common")
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 // const INSTITUTIONAL_DOMAIN = "@ufps.edu.co"
@@ -98,7 +100,17 @@ function serializeStudent(user) {
 }
 
 async function registerStudent(args) {
-  if (!args.tx) return runInTransaction((tx) => registerStudent({ ...args, tx }))
+  // Se valida fuera de la transaccion: un email o codigo invalido es un error
+  // del cliente (400) y no tiene sentido gastar una conexion en el.
+  const parsed = parseOrThrow(registerStudentSchema, {
+    name: args.name,
+    email: args.email,
+    code: args.code,
+  })
+
+  if (!args.tx) {
+    return runInTransaction((tx) => registerStudent({ ...args, name: parsed.name, email: parsed.email, code: parsed.code, tx }))
+  }
 
   const { groupId, name, email, code, teacherUserId, role, tx } = args
   const group = await ensureGroupAccess({ groupId, teacherUserId, role, tx })

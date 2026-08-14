@@ -6,6 +6,8 @@ const { AppError, NotFoundError, AuthorizationError } = require("../lib/errors")
 const enrollmentService = require("./enrollmentService")
 const groupService = require("./groupService")
 const checkCatalog = require("./checkCatalog")
+const { activityInputSchema, serializeGroupActivity } = require("../dtos/activityDtos")
+const { parseOrThrow } = require("../dtos/common")
 
 /** El evaluador vive dentro de la imagen del entorno, en ruta fija. */
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
@@ -343,31 +345,6 @@ function buildChecks(list, { evaluationType, maxScore }) {
   return checks
 }
 
-/** La forma que espera el frontend para la tabla de actividades de un curso. */
-function serializeGroupActivity(ga, definition) {
-  return {
-    id: ga.id,
-    title: ga.title,
-    topicNumber: definition?.topic_number ?? 0,
-    source: "teacher",
-    difficulty: definition?.difficulty ?? "basic",
-    instructions: ga.instructions ?? "",
-    maxScore: ga.max_score,
-    dueDate: ga.due_at?.toISOString(),
-    required: ga.required,
-    evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
-    gradingPolicy: ga.grading_policy,
-    workdir: ga.workdir,
-    checks: (ga.checks ?? []).map((c) => ({
-      id: c.id,
-      type: c.type,
-      params: c.params,
-      points: c.points,
-    })),
-    uses: 0,
-  }
-}
-
 /** Registra un evento de auditoria; un fallo aqui nunca tumba la operacion. */
 async function audit({ userId, groupId, eventType, target, metadata }) {
   try {
@@ -388,37 +365,32 @@ async function audit({ userId, groupId, eventType, target, metadata }) {
 /**
  * Validacion comun de la configuracion de una actividad de grupo, usada por la
  * creacion y la edicion. Devuelve los valores ya validados y normalizados.
+ *
+ * La forma (titulo, instrucciones, politica, tema) la valida zod en
+ * activityInputSchema; las aserciones dependen del catalogo y el puntaje
+ * repartido, y las valida buildChecks.
  */
 function validateActivityInput(body) {
-  const title = body.title?.trim()
-  if (!title) throw new AppError("El nombre de la actividad es requerido", 400, "VALIDATION_ERROR")
-  if (title.length > 255) {
-    throw new AppError("El nombre de la actividad no puede superar los 255 caracteres", 400, "VALIDATION_ERROR")
-  }
+  const parsed = parseOrThrow(activityInputSchema, body ?? {})
 
-  const instructions = body.instructions?.trim() || null
-  if (instructions && instructions.length > 2000) {
-    throw new AppError("La descripción no puede superar los 2000 caracteres", 400, "VALIDATION_ERROR")
-  }
+  const title = parsed.title
+  const instructions = parsed.instructions || null
 
   // Toda actividad vale 100 puntos (escala 0-100). No se lee del cuerpo: lo
   // unico que se valida es que el puntaje repartido entre las aserciones no
   // supere ese valor (ver buildChecks).
   const maxScore = 100
 
-  const gradingPolicy = body.gradingPolicy ?? "best_score"
-  if (!["best_score", "latest_score"].includes(gradingPolicy)) {
-    throw new AppError("La política de calificación no es válida", 400, "VALIDATION_ERROR")
-  }
+  const gradingPolicy = parsed.gradingPolicy
 
-  const evaluationType = normalizeEvaluationType(body.evaluationType ?? "automatic")
+  const evaluationType = normalizeEvaluationType(parsed.evaluationType ?? "automatic")
   if (!["automatic", "manual"].includes(evaluationType)) {
     throw new AppError("La modalidad de evaluación no es válida", 400, "VALIDATION_ERROR")
   }
 
   let dueAt = null
-  if (body.dueDate) {
-    dueAt = new Date(body.dueDate)
+  if (parsed.dueDate) {
+    dueAt = new Date(parsed.dueDate)
     if (Number.isNaN(dueAt.getTime())) {
       throw new AppError("La fecha de cierre no es válida", 400, "VALIDATION_ERROR")
     }
@@ -427,8 +399,8 @@ function validateActivityInput(body) {
     }
   }
 
-  const topicNumber = Number(body.topicNumber)
-  const checks = buildChecks(body.checks, { evaluationType, maxScore })
+  const topicNumber = Number(parsed.topicNumber)
+  const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
   return { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks }
 }
