@@ -1,4 +1,5 @@
 const prisma = require("../../prisma/client")
+const { Prisma } = require("@prisma/client")
 const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./containerService")
 const logger = require("../lib/logger")
 
@@ -10,23 +11,34 @@ const CYCLE_TIMEOUT = 90000
 let intervalHandle = null
 let isRunning = false
 
+/**
+ * Las tablas de jobs son un conjunto cerrado de constantes internas (nunca
+ * llegan de una peticion), asi que interpolar el nombre como identificador es
+ * seguro; el limite y los datos si van parametrizados.
+ */
+const JOB_TABLES = {
+  groups: "group_provisioning_jobs",
+  users: "user_provisioning_jobs",
+  teardowns: "group_teardown_jobs",
+}
+
 async function claimJobs(tableName) {
-  return prisma.$queryRawUnsafe(
-    `UPDATE ${tableName}
-     SET status = 'processing', updated_at = NOW()
-     WHERE id IN (
-       SELECT id FROM (
-         SELECT id FROM ${tableName}
-         WHERE status = 'pending' AND retries < "maxRetries"
-         -- Orden jerarquico: docentes (10) antes que grupos (5) antes que
-         -- estudiantes (1). La prioridad vive en el dato, no en el codigo.
-         ORDER BY priority DESC, created_at ASC
-         LIMIT $1
-         FOR UPDATE SKIP LOCKED
-       ) AS picked
-     )
-     RETURNING *`,
-    BATCH_SIZE,
+  return prisma.$queryRaw(
+    Prisma.sql`
+      UPDATE ${Prisma.raw(tableName)}
+      SET status = 'processing', updated_at = NOW()
+      WHERE id IN (
+        SELECT id FROM (
+          SELECT id FROM ${Prisma.raw(tableName)}
+          WHERE status = 'pending' AND retries < "maxRetries"
+          -- Orden jerarquico: docentes (10) antes que grupos (5) antes que
+          -- estudiantes (1). La prioridad vive en el dato, no en el codigo.
+          ORDER BY priority DESC, created_at ASC
+          LIMIT ${BATCH_SIZE}
+          FOR UPDATE SKIP LOCKED
+        ) AS picked
+      )
+      RETURNING *`,
   )
 }
 
@@ -44,7 +56,7 @@ async function runPool(items, worker) {
 }
 
 async function processGroupJobs() {
-  const jobs = await claimJobs("group_provisioning_jobs")
+  const jobs = await claimJobs(JOB_TABLES.groups)
 
   await runPool(jobs, async (job) => {
     try {
@@ -75,7 +87,7 @@ async function processGroupJobs() {
 }
 
 async function processUserJobs() {
-  const jobs = await claimJobs("user_provisioning_jobs")
+  const jobs = await claimJobs(JOB_TABLES.users)
 
   await runPool(jobs, async (job) => {
     try {
@@ -112,7 +124,7 @@ async function processUserJobs() {
 }
 
 async function processTeardownJobs() {
-  const jobs = await claimJobs("group_teardown_jobs")
+  const jobs = await claimJobs(JOB_TABLES.teardowns)
 
   await runPool(jobs, async (job) => {
     try {

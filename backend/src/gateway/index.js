@@ -15,8 +15,7 @@ function setupGateway(server) {
   const heartbeat = startHeartbeat(wss)
   wss.on("close", () => stopHeartbeat(heartbeat))
 
-  wss.on("connection", (ws, request) => {
-    ws.isAlive = true
+  wss.on("connection", (ws, request) => {    ws.isAlive = true
     ws.on("pong", () => {
       ws.isAlive = true
     })
@@ -148,6 +147,13 @@ function setupGateway(server) {
       if (stream) stream.destroy()
     })
   })
+
+  /** Cierra el WebSocketServer y detiene el heartbeat (shutdown ordenado). */
+  return function close() {
+    stopHeartbeat(heartbeat)
+    for (const client of wss.clients) client.terminate()
+    wss.close()
+  }
 }
 
 module.exports = setupGateway

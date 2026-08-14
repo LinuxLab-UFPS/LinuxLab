@@ -2,6 +2,7 @@ const express = require("express")
 const { randomUUID } = require("crypto")
 const cookieParser = require("cookie-parser")
 const cors = require("cors")
+const helmet = require("helmet")
 const morgan = require("morgan")
 const config = require("./config/env")
 const authRoutes = require("./routes/authRoutes")
@@ -14,6 +15,9 @@ const groupActivityRoutes = require("./routes/groupActivityRoutes")
 const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
+
+// Cabeceras de seguridad basicas (CSP, X-Content-Type-Options, etc.).
+app.use(helmet());
 
 // CORS restringido a origenes explicitos (CORS_ORIGIN, separados por coma).
 // Con el navegador en el mismo origen (proxy por path) CORS no interviene;
@@ -35,8 +39,9 @@ app.use((req, _res, next) => {
     next();
 });
 
-app.use(express.json());
-app.use(express.text({ type: ['text/plain', 'text/csv'] }));
+// Limites de body: un CSV de matricula puede crecer, pero no sin tope.
+app.use(express.json({ limit: "256kb" }));
+app.use(express.text({ type: ['text/plain', 'text/csv'], limit: "1mb" }));
 app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);

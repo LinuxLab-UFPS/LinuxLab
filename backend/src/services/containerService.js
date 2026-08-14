@@ -238,12 +238,6 @@ async function openPtySession(username) {
   )
 }
 
-function closePtySession(stream) {
-  if (stream && typeof stream.destroy === "function") {
-    stream.destroy()
-  }
-}
-
 /**
  * Mata los procesos del usuario en el entorno: es lo que hay detrás de
  * "Reset terminal". El pkill corre con sudo y el fallo se ignora (si el
@@ -280,6 +274,5 @@ module.exports = {
   provisionTeacherAccount,
   provisionStudentAccount,
   openPtySession,
-  closePtySession,
   resetTerminal,
 }

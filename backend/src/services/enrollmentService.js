@@ -18,12 +18,6 @@ function validateEmail(email) {
   if (!EMAIL_REGEX.test(normalized)) {
     throw new AppError(`El formato del correo electrónico no es válido: ${email}`, 400)
   }
-  // if (!normalized.endsWith(INSTITUTIONAL_DOMAIN)) {
-  //   throw new ServiceError(
-  //     `Solo se permiten correos institucionales ${INSTITUTIONAL_DOMAIN}: ${email}`,
-  //     400,
-  //   )
-  // }
   return normalized
 }
 
