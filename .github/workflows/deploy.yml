@@ -56,9 +56,9 @@ jobs:
 
       - name: Deploy
         env:
-          HOST: ${{ vars.HOST }}
-          SSH_PORT: ${{ vars.SSH_PORT }}
-          PORT_0: ${{ vars.PORT_0 }}
-          PORT_1: ${{ vars.PORT_1 }}
+          HOST: ${{ secrets.HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          PORT_0: ${{ secrets.PORT_0 }}
+          PORT_1: ${{ secrets.PORT_1 }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: bash deploy/update.sh --key ~/.ssh/deploy_key --backend-env backend.env
