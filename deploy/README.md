@@ -6,6 +6,9 @@ y se cargan con `podman load`. El servidor nunca compila.
 
 ## Instalación — 2 scripts, sin comandos sueltos
 
+> **Solo para la primera instalación.** Una vez levantado, cada cambio se
+> aplica con un solo script (ver la sección siguiente).
+
 Siempre se envía el **paquete completo** de las 3 imágenes, y el servidor hace
 `down`/`up` para aplicar: baja lo existente (los volúmenes persisten) y recrea
 todo con las imágenes recién cargadas.
@@ -27,6 +30,69 @@ bash deploy/deploy-server.sh
 ```
 
 Ambos son **idempotentes** (re-ejecutables sin duplicar nada).
+
+## Actualización — un solo script
+
+Después de la primera instalación, cada cambio se despliega con **un solo
+comando** desde la máquina de desarrollo:
+
+```bash
+bash deploy/update.sh
+```
+
+Ese script hace todo vía SSH (construye y empaqueta las imágenes, las
+transfiere, hace `git pull` en el servidor y aplica `down`/`up`) **sin sembrar,
+sin crear admin y sin tocar la configuración**. Lee la configuración de
+`deploy/.deploy.env` (gitignoreado: host, puertos, `DB_PASSWORD`); cualquier
+flag lo sobreescribe:
+
+```bash
+bash deploy/update.sh --url https://lab.ufps.edu.co    # cambia la URL pública
+bash deploy/update.sh --host usuario@ip --push          # otro host y/o empujar main
+```
+
+El trabajo remoto lo hace `deploy/update-server.sh`, que también puede
+ejecutarse a mano en el servidor.
+
+### Gestionar el `backend/.env` desde fuera (CI)
+
+Por defecto `update.sh` **no toca** el `backend/.env` del servidor (es la
+configuración de runtime, creada en la instalación inicial). Con el flag
+`--backend-env <archivo>` se puede gestionar desde GitHub: el archivo se
+valida (las 5 claves requeridas: `DATABASE_URL`, `JWT_SECRET`,
+`FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`), se
+transfiere y se usa en el despliegue:
+
+```bash
+bash deploy/update.sh --backend-env backend.env
+```
+
+El servidor también valida `backend/.env` antes del `down/up` (red de
+seguridad: un env roto jamás se aplica). **Restricciones**:
+
+- `JWT_SECRET` debe ser estable entre deploys (si cambia, se invalidan todas
+  las sesiones). En CI vive como secret con el valor actual del servidor.
+- `DATABASE_URL`/`DB_PASSWORD` están acopladas al volumen de postgres (el
+  password se fija al crearlo): cambiarlas no cambia la BD, rompería el stack.
+  En los secrets quedan los valores actuales y no se tocan.
+
+### GitHub Actions (por cada push a `main`)
+
+`.github/workflows/deploy.yml` repite el flujo de `update.sh` en un runner:
+genera `frontend/.env.local` y `backend.env` desde los secrets, instala la
+deploy key y ejecuta `deploy/update.sh --key ~/.ssh/deploy_key --backend-env backend.env`.
+
+Secretos/variables a crear en **Settings → Secrets and variables → Actions**:
+
+- **Variables**: `HOST` (usuario@servidor), `SSH_PORT`, `PORT_0`, `PORT_1`.
+- **Secrets**: `DEPLOY_SSH_KEY` (clave privada del servidor), `DB_PASSWORD`,
+  `DATABASE_URL`, `JWT_SECRET`, `FIREBASE_*` (6, del `backend/.env` del
+  servidor, la private key sin comillas), `NEXT_PUBLIC_BACKEND_URL`,
+  `NEXT_PUBLIC_VIDEO_BASE_URL` (opcional) y los 8 `NEXT_PUBLIC_FIREBASE_*`.
+- Los valores se copian una sola vez: `ssh usuario@servidor "cat ~/LinuxLab/backend/.env"`
+  (backend) y el `frontend/.env.local` local (frontend).
+- La deploy key puede ser el PEM personal o un par dedicado solo para CI
+  (recomendado: revocable sin tocar la clave personal).
 
 ## Coordinación con el administrador (antes del go-live)
 
@@ -60,7 +126,8 @@ Ambos son **idempotentes** (re-ejecutables sin duplicar nada).
   `.gitignore`): `NEXT_PUBLIC_FIREBASE_*` (SDK web) + `NEXT_PUBLIC_BACKEND_URL`
   (fijada por `build-local.sh --url`).
 - `export DB_PASSWORD=<clave>` antes de `deploy-server.sh` (el compose la lee
-  del entorno; debe coincidir con la de `DATABASE_URL`).
+  del entorno; debe coincidir con la de `DATABASE_URL`). Para `update.sh`, la
+  clave va en `deploy/.deploy.env` (local, gitignoreado).
 - Red interna: `deploy-server.sh` la crea con `--internal` si no existe.
 
 ## Memoria (presupuesto del servidor: 1 GB)

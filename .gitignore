@@ -47,6 +47,9 @@ scripts/backups/
 # Artefactos del despliegue
 imagenes.tar.gz
 
+# Configuracion local del despliegue (credenciales del servidor)
+deploy/.deploy.env
+
 # Claves privadas (nunca al repo)
 *.pem
 *_rsa
