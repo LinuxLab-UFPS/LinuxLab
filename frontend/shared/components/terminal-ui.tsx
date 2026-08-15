@@ -41,6 +41,6 @@ export function useTerminalUI(): TerminalUIValue {
 export function LessonContainer({ children }: { children: React.ReactNode }) {
   const { open } = useTerminalUI()
   return (
-    <div className={cn("max-w-none px-4 pb-16 pt-6", open && COMPACT_PROSE)}>{children}</div>
+    <div className={cn("max-w-none px-4 pb-16 pt-11", open && COMPACT_PROSE)}>{children}</div>
   )
 }
