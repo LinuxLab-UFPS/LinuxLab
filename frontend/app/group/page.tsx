@@ -16,6 +16,7 @@ import { parseLessonBlocks } from "@shared/lib/content/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { requireServerRole } from "@/lib/features/auth/session"
 import { TerminalUIProvider } from "@shared/components/terminal-ui"
+import { LessonLoadingProvider } from "@shared/components/lesson-loading"
 import {
   ReadingProgressProvider,
   ReadingProgressBar,
@@ -53,6 +54,7 @@ export default async function GroupPage({
     <LessonProgressProvider>
       <ReadingProgressProvider>
         <TerminalUIProvider>
+         <LessonLoadingProvider>
           {/* `min-h-screen` y no `h-screen`: el documento tiene que poder crecer
               para que el scroll sea el de la ventana. Antes la altura estaba
               clavada al viewport y las unicas zonas que respondian a la rueda
@@ -81,6 +83,7 @@ export default async function GroupPage({
               <GroupTerminal />
             </GroupBody>
           </div>
+         </LessonLoadingProvider>
         </TerminalUIProvider>
       </ReadingProgressProvider>
     </LessonProgressProvider>

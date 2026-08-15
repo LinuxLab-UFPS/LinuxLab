@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import { useSetReadingProgress } from "@shared/components/reading-progress"
+import { LessonLoadingOverlay } from "@shared/components/lesson-loading"
 
 /** Below this the lesson counts as read. Reaching an exact 100% is fiddly. */
 const READ_AT = 95
@@ -73,7 +74,8 @@ export function LessonScrollArea({
   }, [topicNumber, subtopicId, markRead, setProgress])
 
   return (
-    <main className="flex min-w-0 flex-1 flex-col bg-background">
+    <main className="relative flex min-w-0 flex-1 flex-col bg-background">
+      <LessonLoadingOverlay />
       <div ref={contentRef} className="flex-1">
         {children}
       </div>

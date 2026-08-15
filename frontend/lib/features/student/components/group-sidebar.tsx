@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useLessonLoading } from "@shared/components/lesson-loading"
 import { CheckCircle2, ChevronRight, Circle, Home } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { syllabus } from "@shared/lib/content/temario"
@@ -33,6 +34,10 @@ export function GroupSidebar({
   groupName,
 }: GroupSidebarProps) {
   const { isLessonDone, isTopicDone } = useCourseProgress(topicLessons)
+
+  // La navegacion sale de aqui para poder mostrar el spinner en la columna
+  // del contenido mientras el servidor devuelve la leccion.
+  const { go } = useLessonLoading()
 
   const doneCount = syllabus.filter((t) => isTopicDone(t.number)).length
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
@@ -72,6 +77,11 @@ export function GroupSidebar({
                 <li key={topic.slug}>
                   <Link
                     href={`/group?tema=${topic.slug}`}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey) return
+                      e.preventDefault()
+                      go(`/group?tema=${topic.slug}`)
+                    }}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
                       isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
@@ -123,6 +133,11 @@ export function GroupSidebar({
                           <li key={sub.id}>
                             <Link
                               href={`/group?tema=${topic.slug}&sub=${sub.id}`}
+                              onClick={(e) => {
+                                if (e.metaKey || e.ctrlKey || e.shiftKey) return
+                                e.preventDefault()
+                                go(`/group?tema=${topic.slug}&sub=${sub.id}`)
+                              }}
                               className={cn(
                                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
                                 activeSub
