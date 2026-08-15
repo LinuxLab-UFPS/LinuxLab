@@ -119,15 +119,20 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
         }
 
         if (!abierta) {
-          term.write("\r\n\x1b[31mNo se pudo conectar con la terminal. Recarga la página.\x1b[0m\r\n")
+          term.write("\r\n\x1b[31mNo se pudo conectar con la terminal.\x1b[0m\r\n")
+          term.write("\x1b[90mRecarga la página para volver a intentarlo.\x1b[0m\r\n")
           return
         }
 
-        if (event.code !== 1000) {
-          term.write(`\r\n\x1b[33mConexión cerrada (${event.code}). ${event.reason || "¿El servidor está corriendo?"}\x1b[0m\r\n`)
-        } else {
-          term.write("\r\n\x1b[33mConexión cerrada.\x1b[0m\r\n")
-        }
+        // La sesion estuvo viva y se cerro. El mensaje de antes preguntaba si
+        // el servidor estaba corriendo, y casi nunca era eso: lo normal es
+        // haber salido de la pestaña, haber escrito `exit` o que saltara el
+        // cierre por inactividad. Decirlo y ofrecer la salida vale mas que un
+        // codigo de error.
+        const motivo = event.reason && event.reason.trim() ? event.reason.trim() : null
+        term.write("\r\n\x1b[33mLa sesión de la terminal se cerró.\x1b[0m\r\n")
+        if (motivo) term.write(`\x1b[90m${motivo}\x1b[0m\r\n`)
+        term.write("\x1b[90mPulsa «Reset terminal» para abrir una nueva.\x1b[0m\r\n")
       }
     }
 
