@@ -1,5 +1,5 @@
 import { Users, GraduationCap } from "lucide-react"
-import { GroupActivityCard } from "@/components/student/group-activity-card"
+import { GroupActivityCard } from "@/lib/features/student/components/group-activity-card"
 import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 

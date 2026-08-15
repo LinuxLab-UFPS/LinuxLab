@@ -1,28 +1,11 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
+import type { ActivityCheckResult, LessonActivity } from "@/lib/models/activities"
 
-export interface CheckResult {
-  id: string
-  type: string
-  params: Record<string, string>
-  points: number
-  passed: boolean
-  detail: string
-}
-
-export interface CheckedActivity {
-  slug: string
-  /** La actividad prepara archivos y por tanto se pueden rehacer. */
-  hasSetup: boolean
-  title: string
-  instructions: string | null
-  maxScore: number
-  checks: { id: string; type: string; params: Record<string, string>; points: number }[]
-  lastAttempt: { passed: boolean; score: number; results: CheckResult[]; at: string } | null
-}
+export type { ActivityCheckResult as CheckResult, LessonActivity } from "@/lib/models/activities"
 
 /** Como se lee cada asercion del catalogo en la pantalla del estudiante. */
 const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
@@ -49,93 +32,92 @@ export function describeCheck(type: string, params: Record<string, string>): str
  * the session, never from the request.
  */
 export function useActivityCheck(slug: string) {
-  const [activity, setActivity] = useState<CheckedActivity | null>(null)
-  const [results, setResults] = useState<CheckResult[] | null>(null)
-  const [passed, setPassed] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [checking, setChecking] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
+  const queryKey = ["lesson-activity", slug] as const
 
-  useEffect(() => {
-    let alive = true
-    setLoading(true)
-    apiFetch<CheckedActivity>(`/api/activities/${slug}`)
-      .then((data) => {
-        if (!alive) return
-        setActivity(data)
-        if (data.lastAttempt) {
-          setResults(data.lastAttempt.results)
-          setPassed(data.lastAttempt.passed)
-        }
-        // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
-        // si ya existían, así que volver a entrar no borra lo que llevaba.
-        if (data.hasSetup) {
-          apiFetch(`/api/activities/${slug}/reset`, {
-            method: "POST",
-            body: JSON.stringify({ force: false }),
-          }).catch(() => {})
-        }
-      })
-      .catch((e) => {
-        if (alive) setError(e instanceof Error ? e.message : "No se pudo cargar la práctica")
-      })
-      .finally(() => {
-        if (alive) setLoading(false)
-      })
-    return () => {
-      alive = false
-    }
-  }, [slug])
+  const activityQuery = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const data = await apiFetch<LessonActivity>(`/api/activities/${slug}`)
+      // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
+      // si ya existían, así que volver a entrar no borra lo que llevaba.
+      if (data.hasSetup) {
+        apiFetch(`/api/activities/${slug}/reset`, {
+          method: "POST",
+          body: JSON.stringify({ force: false }),
+        }).catch(() => {})
+      }
+      return data
+    },
+    enabled: Boolean(slug),
+  })
 
-  const [resetting, setResetting] = useState(false)
+  const checkMutation = useMutation({
+    mutationFn: () =>
+      apiFetch<{ passed: boolean; results: ActivityCheckResult[] }>(
+        `/api/activities/${slug}/check`,
+        { method: "POST" },
+      ),
+    onSuccess: (outcome) => {
+      // El ultimo intento visto por la pantalla pasa a ser el de esta
+      // comprobacion, sin recargar la actividad.
+      queryClient.setQueryData<LessonActivity>(queryKey, (prev) =>
+        prev
+          ? {
+              ...prev,
+              lastAttempt: {
+                passed: outcome.passed,
+                score: 0,
+                results: outcome.results,
+                at: new Date().toISOString(),
+              },
+            }
+          : prev,
+      )
+    },
+  })
 
-  /** Devuelve el árbol de la actividad a su estado inicial. */
-  const reset = useCallback(async () => {
-    setResetting(true)
-    setError(null)
-    try {
-      await apiFetch(`/api/activities/${slug}/reset`, {
+  const resetMutation = useMutation({
+    mutationFn: () =>
+      apiFetch(`/api/activities/${slug}/reset`, {
         method: "POST",
         body: JSON.stringify({ force: true }),
-      })
-      setResults(null)
-      setPassed(false)
+      }),
+    onSuccess: () => {
+      queryClient.setQueryData<LessonActivity>(queryKey, (prev) =>
+        prev ? { ...prev, lastAttempt: null } : prev,
+      )
       // Reiniciar borra la carpeta y crea otra en su lugar. Una shell que
       // estuviera dentro se queda en el directorio viejo, que ya no figura en
       // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo
       // que se escriba ahí no llega a la carpeta nueva. El Ctrl+C limpia la
       // línea a medias que hubiera antes de mandar el `cd`.
       sendToTerminal("\x03cd ~\n")
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudieron preparar los archivos")
-    } finally {
-      setResetting(false)
-    }
-  }, [slug])
+    },
+  })
 
-  const check = useCallback(async () => {
-    setChecking(true)
-    setError(null)
-    try {
-      const outcome = await apiFetch<{ passed: boolean; results: CheckResult[] }>(
-        `/api/activities/${slug}/check`,
-        { method: "POST" },
-      )
-      setResults(outcome.results)
-      setPassed(outcome.passed)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo comprobar tu entorno")
-    } finally {
-      setChecking(false)
-    }
-  }, [slug])
+  const activity = activityQuery.data ?? null
+  const error =
+    activityQuery.error ??
+    checkMutation.error ??
+    resetMutation.error ??
+    null
 
-  /** Antes del primer intento se listan las aserciones sin veredicto. */
-  const rows: CheckResult[] =
-    results ?? (activity?.checks ?? []).map((c) => ({ ...c, passed: false, detail: "" }))
+  // Antes del primer intento se listan las aserciones sin veredicto.
+  const rows: ActivityCheckResult[] =
+    activity?.lastAttempt?.results ??
+    (activity?.checks ?? []).map((c) => ({ ...c, passed: false, detail: "" }))
 
   return {
-    activity, rows, evaluated: results !== null, passed,
-    loading, checking, error, check, reset, resetting,
+    activity,
+    rows,
+    evaluated: activity?.lastAttempt !== null && activity?.lastAttempt !== undefined,
+    passed: activity?.lastAttempt?.passed ?? false,
+    loading: activityQuery.isLoading,
+    checking: checkMutation.isPending,
+    resetting: resetMutation.isPending,
+    error: error instanceof Error ? error.message : null,
+    check: () => checkMutation.mutate(),
+    reset: () => resetMutation.mutate(),
   }
 }

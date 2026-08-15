@@ -1,7 +1,7 @@
 "use client"
 
-import { TeachersTable } from "@/components/admin/teachers-table"
-import { RoleGuard } from "@/components/shared/role-guard"
+import { TeachersTable } from "@/lib/features/admin/components/teachers-table"
+import { RoleGuard } from "@shared/components/role-guard"
 import { useAuth } from "@/lib/features/auth/context"
 
 export default function DocentesPage() {

@@ -1,80 +1,53 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useQueryClient, useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
-import type { TeacherListItem, TeacherProvisioningJobSummary } from "./types"
-import type { TeacherFilters } from "./api"
+import { queryKeys, useTeachers as useTeachersQuery, useTeacherProvisioningJobs } from "@/lib/api/queries"
 import * as adminData from "./data"
+import type { TeacherFilters } from "./api"
+import type { TeacherListItem } from "./types"
 
 export function useTeachers(filters?: TeacherFilters) {
-  const [teachers, setTeachers] = useState<TeacherListItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [provisioningJobs, setProvisioningJobs] = useState<TeacherProvisioningJobSummary[]>([])
+  const queryClient = useQueryClient()
+  const teachersQuery = useTeachersQuery(filters)
+  const jobsQuery = useTeacherProvisioningJobs()
 
-  const fetchTeachers = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await adminData.listTeachers(filters)
-      setTeachers(data)
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Error al cargar docentes"
-      toast.error(message)
-    } finally {
-      setLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters?.search, filters?.status])
-
-  useEffect(() => {
-    fetchTeachers()
-  }, [fetchTeachers])
-
-  const fetchJobs = useCallback(async () => {
-    const data = await adminData.listTeacherProvisioningJobs()
-    setProvisioningJobs(data)
-  }, [])
-
-  useEffect(() => {
-    fetchJobs()
-  }, [fetchJobs])
-
-  useEffect(() => {
-    if (provisioningJobs.length === 0) return
-    const allSettled = provisioningJobs.every(
-      (job) => job.status === "completed" || job.status === "failed"
-    )
-    if (allSettled) return
-    const interval = setInterval(fetchJobs, 5000)
-    return () => clearInterval(interval)
-  }, [provisioningJobs, fetchJobs])
-
-  const register = useCallback(async (name: string, email: string) => {
-    setSubmitting(true)
-    try {
-      const newTeacher = await adminData.registerTeacher({ name, email })
-      setTeachers((prev) => [...prev, newTeacher])
+  const registerMutation = useMutation({
+    mutationFn: (input: { name: string; email: string }) => adminData.registerTeacher(input),
+    onSuccess: (newTeacher) => {
+      queryClient.setQueryData(
+        queryKeys.teachers(filters),
+        (prev: TeacherListItem[] = []) => [...prev, newTeacher],
+      )
       toast.success("Docente registrado exitosamente")
-      fetchJobs()
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Error al registrar docente"
-      toast.error(message)
-      throw e
-    } finally {
-      setSubmitting(false)
-    }
-  }, [fetchJobs])
+      queryClient.invalidateQueries({ queryKey: queryKeys.teacherJobs })
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Error al registrar docente")
+    },
+  })
 
-  const toggleStatus = useCallback(async (id: string) => {
-    try {
-      const updated = await adminData.toggleTeacherStatus(id)
-      setTeachers((prev) => prev.map((t) => (t.id === id ? updated : t)))
+  const toggleMutation = useMutation({
+    mutationFn: (id: string) => adminData.toggleTeacherStatus(id),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(
+        queryKeys.teachers(filters),
+        (prev: TeacherListItem[] = []) =>
+          prev?.map((t) => (t.id === updated.id ? updated : t)) ?? [],
+      )
       toast.success(updated.active ? "Docente reactivado" : "Docente dado de baja")
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Error al cambiar estado"
-      toast.error(message)
-    }
-  }, [])
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof Error ? e.message : "Error al cambiar estado")
+    },
+  })
 
-  return { teachers, loading, submitting, register, toggleStatus, provisioningJobs }
+  return {
+    teachers: teachersQuery.data ?? [],
+    loading: teachersQuery.isLoading,
+    provisioningJobs: jobsQuery.data ?? [],
+    submitting: registerMutation.isPending,
+    register: (name: string, email: string) => registerMutation.mutateAsync({ name, email }),
+    toggleStatus: (id: string) => toggleMutation.mutateAsync(id),
+  }
 }

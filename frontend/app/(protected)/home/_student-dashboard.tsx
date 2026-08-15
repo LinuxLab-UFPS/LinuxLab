@@ -1,6 +1,6 @@
-import { HomeHero } from "@/components/student/home-hero"
-import { TopicGrid } from "@/components/student/topic-grid"
-import { getTopicLessons, getTopicPreviews } from "@/lib/features/shared/lessons"
+import { HomeHero } from "@/lib/features/student/components/home-hero"
+import { TopicGrid } from "@/lib/features/student/components/topic-grid"
+import { getTopicLessons, getTopicPreviews } from "@shared/lib/content/lessons"
 
 /** Student landing: hero on top, the topic catalogue below. */
 export function StudentDashboard() {

@@ -69,7 +69,7 @@ async function snapshot() {
 
   const courses = []
   for (const group of groups) {
-    const groupName = groupNameOf(group)
+    const groupName = groupNameOf(group.id)
     const teacher = group.teacher.linuxAccount?.linux_username ?? null
     const path = teacher && group.group_dir
       ? `/home/${teacher}/grupos/${group.group_dir}`

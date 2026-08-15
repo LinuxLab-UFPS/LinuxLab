@@ -3,7 +3,7 @@
 import { useCallback } from "react"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
-import type { TopicLessons } from "@/lib/features/shared/lessons"
+import type { TopicLessons } from "@shared/lib/content/lessons"
 
 /**
  * How far the student actually got through the course.

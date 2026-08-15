@@ -35,9 +35,13 @@ export function LessonProgressProvider({ children }: { children: React.ReactNode
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
+    // Lectura unica de localStorage al montar (patron aceptado).
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) setRead(new Set(JSON.parse(raw) as string[]))
+      if (raw) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setRead(new Set(JSON.parse(raw) as string[]))
+      }
     } catch {
       // Unavailable or corrupt storage: start from scratch rather than break.
     }

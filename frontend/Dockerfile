@@ -4,11 +4,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-COPY tsconfig.json next.config.mjs postcss.config.mjs .env.local ./
+COPY tsconfig.json next.config.mjs postcss.config.mjs .env.local middleware.ts ./
 
 COPY app/ app/
-COPY components/ components/
 COPY lib/ lib/
+COPY shared/ shared/
 COPY content/ content/
 COPY public/ public/
 

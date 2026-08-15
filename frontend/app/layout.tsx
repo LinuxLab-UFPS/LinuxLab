@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import { Onest, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
-import { ThemeProvider } from '@/components/shared/theme-provider'
+import { ThemeProvider } from '@shared/components/theme-provider'
 import { AuthProvider } from '@/lib/features/auth/context'
-import { Toaster } from '@/components/ui/sonner'
+import { QueryProvider } from '@/lib/api/query-provider'
+import { Toaster } from '@shared/components/ui/sonner'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -13,7 +14,6 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono"
 export const metadata: Metadata = {
   title: 'LinuxLab UFPS - Plataforma de Aprendizaje',
   description: 'Plataforma de aprendizaje interactiva para la administración de sistemas Linux',
-  generator: 'v0.app',
   icons: {
     icon: [
       {
@@ -47,8 +47,10 @@ export default function RootLayout({
           enableSystem={false}
         >
           <AuthProvider>
-            {children}
-            <Toaster richColors position="top-right" />
+            <QueryProvider>
+              {children}
+              <Toaster richColors position="top-right" />
+            </QueryProvider>
           </AuthProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}

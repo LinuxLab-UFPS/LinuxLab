@@ -30,13 +30,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#1b2433] p-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-xl px-8 py-10">
-        <div className="w-16 h-16 mx-auto mb-6 bg-primary/10 rounded-xl flex items-center justify-center">
-          <Terminal className="w-8 h-8 text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card px-8 py-10 shadow-xl">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10">
+          <Terminal className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold text-[#1c2128] text-center">Linux Lab UFPS</h1>
-        <p className="text-[#5b626b] mt-2 text-center text-sm">
+        <h1 className="text-center text-2xl font-bold text-foreground">Linux Lab UFPS</h1>
+        <p className="mt-2 text-center text-sm text-muted-foreground">
           Laboratorio Virtual de Linux para Sistemas Operativos
         </p>
 
@@ -45,7 +45,7 @@ export default function LoginPage() {
             type="button"
             disabled={loading || signingIn}
             onClick={handleGoogleSignIn}
-            className="w-full h-11 rounded-md bg-white border border-[#e2e5ea] text-[#1c2128] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-input bg-background font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -69,11 +69,11 @@ export default function LoginPage() {
           </button>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">{error}</p>
+            <p className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
           )}
         </div>
 
-        <p className="mt-6 text-xs text-[#5b626b] text-center">
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           Acceso exclusivo para estudiantes y docentes de la UFPS
         </p>
       </div>

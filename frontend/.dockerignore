@@ -1,0 +1,6 @@
+node_modules
+.next
+.git
+*.md
+tsconfig.tsbuildinfo
+bun.lock

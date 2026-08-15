@@ -1,54 +1,18 @@
 import { apiFetch } from "@/lib/api/client"
+import type {
+  GroupActivityDetail,
+  GroupCheckOutcome,
+  MyGroupOverview,
+} from "@/lib/models/activities"
 
-export interface MyGroup {
-  id: string
-  name: string
-  description: string
-  teacherName: string
-}
-
-export interface GroupActivitySummary {
-  id: string
-  title: string
-  description: string
-  topicNumber: number
-  checksCount: number
-  passed: boolean
-  lastScore: number | null
-}
-
-export interface MyGroupOverview {
-  group: MyGroup | null
-  activities: GroupActivitySummary[]
-}
-
-export interface GroupActivityDetail {
-  id: string
-  title: string
-  instructions: string
-  workdir: string
-  dueAt: string | null
-  evaluationType: "atomic" | "manual"
-  maxScore: number
-  checksCount: number
-  lastAttempt: { passed: boolean; score: number } | null
-}
-
-export interface GroupCheckResult {
-  id: string
-  type: string
-  params: Record<string, string>
-  points: number
-  passed: boolean
-  detail: string
-}
-
-export interface GroupCheckOutcome {
-  passed: boolean
-  score: number
-  maxScore: number
-  results: GroupCheckResult[]
-}
+export type {
+  ActivityCheckResult as GroupCheckResult,
+  GroupActivityDetail,
+  GroupActivitySummary,
+  GroupCheckOutcome,
+  MyGroup,
+  MyGroupOverview,
+} from "@/lib/models/activities"
 
 export async function listMyGroupActivities(): Promise<MyGroupOverview> {
   return apiFetch<MyGroupOverview>("/api/group-activities/mine")

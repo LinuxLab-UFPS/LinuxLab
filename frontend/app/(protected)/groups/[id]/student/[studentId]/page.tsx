@@ -1,11 +1,11 @@
-import { Fragment } from "react"
 import Link from "next/link"
-import { ChevronLeft, User, Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { CircularProgress } from "@/components/shared/progress-indicators"
-import { cn } from "@/lib/utils"
+import { ChevronLeft, User, Calendar, Clock, AlertCircle } from "lucide-react"
+import { Button } from "@shared/components/ui/button"
+import { CircularProgress } from "@shared/components/progress-indicators"
+import { cn } from "@shared/lib/utils"
 import { getStudentGroupDetail } from "@/lib/features/teacher/data"
 import { requireServerRole } from "@/lib/features/auth/session"
+import { GradesTable } from "@/lib/features/teacher/components/grades-table"
 
 export default async function StudentDetailPage({
   params,
@@ -208,108 +208,7 @@ export default async function StudentDetailPage({
             </div>
           </div>
 
-          {/* Grades Table */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              Calificaciones
-            </h3>
-            <div className="border border-border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-card border-b border-border">
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Actividad
-                      </th>
-                      <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[100px]">
-                        Tipo
-                      </th>
-                      <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[120px]">
-                        Puntuación
-                      </th>
-                      <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[120px]">
-                        Estado
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      let currentTopic = ""
-                      return detail.grades.map((grade) => {
-                        const showHeader = grade.topicTitle !== currentTopic
-                        currentTopic = grade.topicTitle
-                        return (
-                          <Fragment key={grade.id}>
-                            {showHeader && (
-                              <tr className="bg-secondary/30">
-                                <td colSpan={4} className="px-4 py-2 text-xs font-medium text-muted-foreground">
-                                  {grade.topicTitle}
-                                </td>
-                              </tr>
-                            )}
-                            <tr className="border-b border-border/50 hover:bg-card/50 transition-colors">
-                              <td className="px-4 py-2.5">
-                                <span className="text-sm">{grade.activityName}</span>
-                              </td>
-                              <td className="px-4 py-2.5">
-                                <span
-                                  className={cn(
-                                    "text-xs px-1.5 py-0.5",
-                                    grade.source === "bank"
-                                      ? "bg-primary/20 text-primary"
-                                      : "bg-secondary text-muted-foreground"
-                                  )}
-                                >
-                                  {grade.source === "bank" ? "Bank" : "Teacher"}
-                                </span>
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                {grade.score !== null ? (
-                                  <span className="font-mono text-sm">
-                                    <span
-                                      className={cn(
-                                        grade.score >= 80
-                                          ? "text-success"
-                                          : grade.score >= 50
-                                            ? "text-warning"
-                                            : "text-danger"
-                                      )}
-                                    >
-                                      {grade.score}
-                                    </span>
-                                    <span className="text-muted-foreground">/{grade.maxScore}</span>
-                                  </span>
-                                ) : (
-                                  <span className="text-muted-foreground text-sm">—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-2.5 text-center">
-                                {grade.status === "completed" && (
-                                  <span className="inline-flex items-center gap-1 text-xs text-success">
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    Completada
-                                  </span>
-                                )}
-                                {grade.status === "pending" && (
-                                  <span className="inline-flex items-center gap-1 text-xs text-warning">
-                                    <Clock className="w-3 h-3" />
-                                    Pendiente
-                                  </span>
-                                )}
-                                {grade.status === "not-started" && (
-                                  <span className="text-xs text-muted-foreground">Sin iniciar</span>
-                                )}
-                              </td>
-                            </tr>
-                          </Fragment>
-                        )
-                      })
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          <GradesTable grades={detail.grades} />
 
           {/* Summary */}
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">

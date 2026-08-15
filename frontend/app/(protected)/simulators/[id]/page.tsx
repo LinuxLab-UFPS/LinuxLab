@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
-import { getSimulator } from "@/lib/features/shared/simulators"
-import { SimulatorPlayer } from "@/components/student/simulator-player"
+import { getSimulator } from "@shared/lib/content/simulators"
+import { SimulatorPlayer } from "@/lib/features/student/components/simulator-player"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function SimulatorPlayPage({
