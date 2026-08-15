@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     grep \
     findutils \
     procps \
+    tree \
     passwd \
     sudo \
     python3-minimal \
@@ -27,6 +28,17 @@ RUN apt-get update && apt-get install -y \
 # Script simulado de systemctl
 RUN printf '#!/bin/bash\nCOMMAND=$1\nSERVICE=$2\ncase "$COMMAND" in\n  start)   echo "Started $SERVICE"  ;;\n  stop)    echo "Stopped $SERVICE"  ;;\n  status)  echo "$SERVICE is active (simulated)" ;;\n  enable)  echo "Enabled $SERVICE"  ;;\n  disable) echo "Disabled $SERVICE" ;;\n  restart) echo "Restarted $SERVICE" ;;\n  *)       echo "Usage: systemctl {start|stop|status|enable|disable|restart} service" ;;\nesac' > /usr/local/bin/systemctl \
     && chmod +x /usr/local/bin/systemctl
+
+# `tree` acotado al home del estudiante.
+#
+# El comando lo pide la leccion de navegacion, pero suelto es un recorredor de
+# arbol: `tree /` pasea por todo el contenedor y `tree /home` enumera quien mas
+# existe. Los permisos ya frenan la lectura del trabajo ajeno, pero no el paseo.
+# Este envoltorio va en /usr/local/bin, que precede a /usr/bin en el PATH, asi
+# que es el que se ejecuta. Resuelve cada ruta y rechaza lo que caiga fuera del
+# home; el resto lo pasa tal cual al binario de verdad.
+COPY scripts/tree-acotado.sh /usr/local/bin/tree
+RUN chmod 755 /usr/local/bin/tree && chown root:root /usr/local/bin/tree
 
 # Limites de recursos por usuario
 # Limites de cada sesion de estudiante.
