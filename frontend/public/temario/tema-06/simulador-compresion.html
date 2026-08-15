@@ -1,0 +1,701 @@
+<!doctype html>
+<title>Escritorio comprimido · LinuxLab</title>
+<style>
+:root {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --blue:   #58A6FF;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg);overflow:hidden}
+body{
+  display:flex;flex-direction:column;
+  color:var(--text);font-family:var(--mono);overflow:hidden;
+  width:100vw;height:100vh;background:var(--bg);position:relative;
+}
+
+/* ---------- cabecera (misma de los demas simuladores) ---------- */
+.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px;z-index:50}
+.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
+.logo-name .wh{color:var(--bright);filter:none}
+.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
+.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0}
+.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
+.dot.done{background:var(--green)}
+.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
+.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
+.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+
+/* ---------- escritorio ----------
+   Los planos inclinados son tres degradados sobre un fondo plano: da la
+   sensacion de fondo de escritorio sin cargar ninguna imagen. */
+.desk{
+  position:relative;flex:1;min-height:0;overflow:hidden;
+  background:
+    linear-gradient(155deg,transparent 58%,rgba(255,0,48,.16) 58.2%),
+    linear-gradient(200deg,transparent 62%,rgba(163,113,247,.14) 62.2%),
+    linear-gradient(120deg,#121A2B 0%,#1A1230 55%,#2A1020 100%);
+}
+
+/* ---------- iconos del escritorio ---------- */
+.icons{position:absolute;left:26px;top:26px;display:flex;flex-direction:column;gap:20px}
+.icon{width:96px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
+.icon-art{width:52px;height:60px;display:flex;align-items:center;justify-content:center}
+.icon-name{font-size:11px;color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.icon-size{font-size:10px;color:#B9C6D6;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+
+/* ---------- ventanas ---------- */
+.win{
+  position:absolute;background:var(--surf);border:1px solid var(--border);
+  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+.win[hidden]{display:none}
+.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-dot{width:11px;height:11px;border-radius:50%}
+.win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+
+/* terminal */
+#w-term{left:calc(50% - 40px);top:34px;width:560px;height:330px}
+.console{background:#0B0E14;padding:12px 14px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.log{white-space:pre-wrap;line-height:1.5}
+.log.ok{color:var(--green)}
+.log.bad{color:var(--red)}
+.log.note{color:var(--muted)}
+.log.echo{color:var(--text)}
+.prompt{display:flex;align-items:center;gap:7px;font-size:13px;flex-shrink:0;padding:0 14px 12px;background:#0B0E14}
+.ps1{color:var(--green);font-weight:700;flex-shrink:0}
+.typed{color:var(--bright);white-space:pre}
+.caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
+@keyframes blink{50%{opacity:0}}
+
+/* instrucciones */
+#w-txt{left:34px;top:200px;width:430px;height:290px}
+.txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:16px 18px;font-size:12.5px;line-height:1.6}
+.paso{display:flex;gap:9px;margin-bottom:13px;transition:opacity .3s}
+.paso-n{flex-shrink:0;font-weight:700;color:#8A8A99}
+.paso.pend{opacity:.38}
+.paso.done{opacity:.5}
+.paso.done .paso-t{text-decoration:line-through;text-decoration-color:#12A150;color:#12A150}
+.paso.cur .paso-t{font-weight:700}
+.txt-nota{margin-top:16px;padding-top:11px;border-top:1px solid #E3E3EA;font-size:11px;color:#70707E;line-height:1.5}
+
+/* correo */
+#w-mail{right:32px;bottom:96px;width:430px;height:300px}
+.mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px;font-size:12px;gap:0}
+.mail-row{display:flex;gap:8px;padding:7px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
+.mail-row b{color:#1A1A1F;font-weight:600}
+.mail-adj{flex:1;min-height:0;padding:11px 2px;display:flex;flex-direction:column;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;background:#EEF1F6;border:1px solid #D8DDE6;border-radius:5px;padding:5px 10px;font-size:11.5px;color:#1A1A1F}
+.chip.malo{background:#FDECEE;border-color:#F5C2C7;color:#A3111F}
+.mail-vacio{font-size:11.5px;color:#9A9AA6}
+.mail-aviso{font-size:11.5px;color:#A3111F;line-height:1.45}
+.mail-pie{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid #E8E8EE}
+.btn-mail{border:none;border-radius:5px;padding:7px 15px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;background:#1A73E8;color:#fff}
+.btn-mail.sec{background:#EEF1F6;color:#1A1A1F;border:1px solid #D8DDE6;font-weight:400}
+.btn-mail:disabled{opacity:.4;cursor:not-allowed}
+/* Los iconos que no hacen nada se ven apagados a proposito: asi no se intenta
+   usarlos y se entiende que el correo solo sirve para adjuntar y enviar. */
+.mail-inertes{display:flex;gap:12px;margin-left:auto;opacity:.3;font-size:14px;pointer-events:none;user-select:none}
+
+/* elegir adjunto */
+.picker{position:absolute;inset:0;background:rgba(10,12,18,.55);display:flex;align-items:center;justify-content:center;z-index:20}
+.picker[hidden]{display:none}
+.picker-box{background:#FBFBFD;color:#1A1A1F;border-radius:8px;width:280px;max-height:220px;overflow-y:auto;padding:10px;box-shadow:0 14px 34px rgba(0,0,0,.45)}
+.picker-t{font-size:11px;color:#70707E;padding:4px 6px 8px}
+.picker-it{display:flex;justify-content:space-between;gap:10px;width:100%;background:none;border:none;text-align:left;font-family:var(--mono);font-size:12px;padding:7px 6px;border-radius:5px;cursor:pointer;color:#1A1A1F}
+.picker-it:hover{background:#EEF1F6}
+.picker-it small{color:#8A8A99}
+
+/* ---------- dock ---------- */
+.dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
+.dock-btn{width:46px;height:46px;border-radius:11px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .15s,border-color .2s}
+.dock-btn:hover{transform:translateY(-3px)}
+.dock-btn[data-abierta="true"]{border-color:var(--red)}
+.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--red)}
+.dock-btn:disabled{cursor:default;opacity:.75}
+.dock-btn:disabled:hover{transform:none}
+
+/* ---------- fin ---------- */
+.fin{position:absolute;inset:0;background:rgba(6,8,13,.9);display:flex;align-items:center;justify-content:center;z-index:60}
+.fin[hidden]{display:none}
+.fin-box{text-align:center;max-width:420px;padding:30px}
+.fin-t{font-size:20px;font-weight:700;color:var(--green);margin-bottom:10px}
+.fin-p{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:22px}
+.fin-btns{display:flex;gap:10px;justify-content:center}
+</style>
+
+<div class="hdr">
+  <div class="logo-box">&gt;_</div>
+  <div class="logo-name">Linux<span class="wh">Lab</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-obj">
+    <span class="hdr-eyebrow">Objetivo</span>
+    <span class="hdr-goal" id="goal">&nbsp;</span>
+  </div>
+  <div class="hdr-dots" id="dots"></div>
+  <span class="hdr-n" id="counter">1 / 3</span>
+  <button class="restart-btn" id="restart">Reiniciar</button>
+</div>
+
+<div class="desk" id="desk">
+  <div class="icons" id="icons"></div>
+
+  <!-- terminal: no se cierra, es donde se trabaja -->
+  <div class="win" id="w-term">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <span class="win-dot" style="background:#FFBD2E"></span>
+      <span class="win-dot" style="background:#27C93F"></span>
+      <span class="win-title">estudiante@linuxlab: ~/taller</span>
+    </div>
+    <div class="console" id="consola"></div>
+    <div class="prompt">
+      <span class="ps1">$</span>
+      <span><span class="typed" id="typed"></span><span class="caret"></span></span>
+    </div>
+  </div>
+
+  <!-- instrucciones -->
+  <div class="win" id="w-txt">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <span class="win-dot" style="background:#FFBD2E"></span>
+      <span class="win-dot" style="background:#27C93F"></span>
+      <span class="win-title">desafios.txt</span>
+    </div>
+    <div class="txt-body" id="pasos"></div>
+  </div>
+
+  <!-- correo -->
+  <div class="win" id="w-mail" hidden>
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <span class="win-dot" style="background:#FFBD2E"></span>
+      <span class="win-dot" style="background:#27C93F"></span>
+      <span class="win-title">Nuevo mensaje</span>
+    </div>
+    <div class="mail-body">
+      <div class="mail-row"><b>Para:</b> coordinacion@linuxlab.edu</div>
+      <div class="mail-row"><b>Asunto:</b> <span id="mail-asunto">Entrega</span></div>
+      <div class="mail-adj" id="mail-adj"></div>
+      <div class="mail-pie">
+        <button class="btn-mail" id="mail-enviar">Enviar</button>
+        <button class="btn-mail sec" id="mail-adjuntar">Adjuntar</button>
+        <span class="mail-inertes">A🖉 🔗 😊 🖼 🗑</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="picker" id="picker" hidden>
+    <div class="picker-box">
+      <div class="picker-t">Elige un archivo de ~/taller</div>
+      <div id="picker-lista"></div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="dock-btn" id="d-mail" title="Correo">✉️</button>
+    <button class="dock-btn" id="d-txt" title="Desafíos" data-abierta="true">📋</button>
+    <button class="dock-btn" id="d-term" title="Terminal (siempre abierta)" data-abierta="true" disabled>&gt;_</button>
+  </div>
+
+  <div class="fin" id="fin" hidden>
+    <div class="fin-box">
+      <div class="fin-t">Entrega enviada</div>
+      <div class="fin-p" id="fin-p"></div>
+      <div class="fin-btns">
+        <button class="restart-btn" id="fin-again">Otra vez</button>
+        <button class="restart-btn" id="fin-exit">Salir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   NOMBRES
+   Cambian en cada partida para que no se memorice la respuesta,
+   igual que el reparto al azar de la actividad del logo. El orden
+   de los desafios NO cambia: se encadenan.
+   ============================================================ */
+const CARPETAS = ["informe", "practica", "entrega", "proyecto"];
+const SUELTOS  = ["notas", "borrador", "resumen", "apuntes"];
+const RESPALDOS = ["respaldo", "copia", "historico"];
+const INTRUSOS = ["clave.txt", "password.txt", "token.txt"];
+
+const alAzar = (xs) => xs[Math.floor(Math.random() * xs.length)];
+
+/** Tamaños en bytes; se muestran con la unidad que les toque. */
+function tam(bytes) {
+  if (bytes >= 1048576) return (bytes / 1048576).toFixed(1) + " MB";
+  if (bytes >= 1024) return Math.round(bytes / 1024) + " KB";
+  return bytes + " B";
+}
+
+/** Lo que encoge un tar.gz de texto. No es exacto ni pretende serlo: es
+ *  el orden de magnitud que el estudiante vera en un `ls -l` de verdad. */
+const RATIO = 0.27;
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let fs, nombres, paso, enviado;
+
+function nuevaPartida() {
+  nombres = {
+    carpeta: alAzar(CARPETAS),
+    respaldo: alAzar(RESPALDOS) + ".tar.gz",
+    intruso: alAzar(INTRUSOS),
+    suelto: alAzar(SUELTOS) + ".txt",
+  };
+
+  const hojas = ["datos.csv", "lectura.md", nombres.suelto];
+  fs = {};
+  // La carpeta del desafio 1, con su peso repartido entre los archivos.
+  fs[nombres.carpeta] = { tipo: "dir", hijos: hojas.slice(), bytes: 1_200_000 };
+  hojas.forEach((h, i) => {
+    fs[nombres.carpeta + "/" + h] = { tipo: "file", bytes: [520_000, 410_000, 270_000][i] };
+  });
+  // El respaldo del desafio 2 ya viene comprimido. Lleva dentro una carpeta,
+  // como cualquier tar de verdad: extraerlo deja un directorio, no un puñado
+  // de archivos sueltos por el sitio.
+  nombres.raizRespaldo = nombres.respaldo.replace(".tar.gz", "");
+  fs[nombres.respaldo] = {
+    tipo: "file",
+    bytes: 240_000,
+    raiz: nombres.raizRespaldo,
+    dentro: ["config.yml", "registro.log", nombres.intruso],
+    pesos: { "config.yml": 140_000, "registro.log": 520_000, [nombres.intruso]: 90_000 },
+  };
+
+  paso = 0;
+  enviado = null;
+}
+
+/** Lo que hay en la raiz de ~/taller (no las hojas de las carpetas). */
+const enRaiz = () => Object.keys(fs).filter((k) => !k.includes("/"));
+
+/* ============================================================
+   DESAFIOS
+   Cada uno sabe cuando esta hecho mirando el estado, no vigilando
+   comandos: asi cualquier camino valido cuenta, tambien el que no
+   se nos ocurrio.
+   ============================================================ */
+function desafios() {
+  return [
+    {
+      objetivo: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz`,
+      texto: `El correo no admite carpetas. Empaqueta y comprime ${nombres.carpeta}/ en un solo archivo .tar.gz.`,
+      hecho: () =>
+        enRaiz().some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
+    },
+    {
+      objetivo: `Mira dentro de ${nombres.respaldo} y extráelo`,
+      texto: `Llegó ${nombres.respaldo}. Lista su contenido antes de abrirlo y luego extráelo.`,
+      hecho: () => Boolean(fs[nombres.respaldo] && fs[nombres.respaldo].extraido),
+    },
+    {
+      objetivo: `Quita ${nombres.intruso}, vuelve a comprimir y envíalo`,
+      texto: `Ese respaldo trae ${nombres.intruso}, que no debe salir de aquí. Bórralo, vuelve a comprimir lo demás y envía el resultado por correo.`,
+      hecho: () => Boolean(enviado && enviado.limpio),
+    },
+  ];
+}
+
+/* ============================================================
+   SHELL
+   Juego de comandos acotado a proposito, y anunciado en pantalla:
+   un simulador que acepta a medias una bandera miente mas de lo
+   que ensena.
+   ============================================================ */
+function log(texto, clase) {
+  const d = document.createElement("div");
+  d.className = "log" + (clase ? " " + clase : "");
+  d.textContent = texto;
+  $("consola").appendChild(d);
+  $("consola").scrollTop = $("consola").scrollHeight;
+}
+
+const AYUDA = [
+  "Comandos disponibles en esta práctica:",
+  "  ls [-l]                    lista lo que hay",
+  "  tar -czf <salida> <origen> empaqueta y comprime",
+  "  tar -tzf <archivo>         lista el contenido sin extraer",
+  "  tar -xzf <archivo>         extrae",
+  "  rm [-r] <ruta>             borra",
+  "  clear                      limpia la consola",
+];
+
+function cmdLs(args) {
+  const largo = args.includes("-l");
+  const items = enRaiz().sort();
+  if (items.length === 0) return log("(vacío)", "note");
+  items.forEach((n) => {
+    const e = fs[n];
+    const marca = e.tipo === "dir" ? "/" : "";
+    log(largo ? `${tam(e.bytes).padStart(8)}  ${n}${marca}` : `${n}${marca}`, "echo");
+  });
+}
+
+function cmdTar(args) {
+  const bandera = args.find((a) => a.startsWith("-"));
+  if (!bandera) return log("tar: falta la operación (-czf, -tzf o -xzf)", "bad");
+  const resto = args.filter((a) => !a.startsWith("-"));
+
+  if (bandera.includes("c")) {
+    if (!bandera.includes("z")) return log("tar: sin -z el archivo no queda comprimido", "bad");
+    const salida = resto[0];
+    const origenes = resto.slice(1).map((o) => o.replace(/\/$/, ""));
+    if (!salida || origenes.length === 0)
+      return log("tar: uso: tar -czf <salida.tar.gz> <origen>", "bad");
+    if (!salida.endsWith(".tar.gz") && !salida.endsWith(".tgz"))
+      return log("tar: el nombre de salida debería terminar en .tar.gz", "bad");
+    const falta = origenes.find((o) => !fs[o]);
+    if (falta) return log(`tar: ${falta}: no existe`, "bad");
+
+    // Lo que entra al paquete: los archivos de cada carpeta y los sueltos que
+    // se nombren. Se guarda el nombre a secas para poder comprobar despues si
+    // el intruso sigue dentro.
+    let crudo = 0;
+    const hojas = [];
+    const carpetas = [];
+    origenes.forEach((o) => {
+      const e = fs[o];
+      crudo += e.bytes;
+      if (e.tipo === "dir") {
+        carpetas.push(o);
+        e.hijos.forEach((h) => hojas.push(h));
+      } else {
+        hojas.push(o);
+      }
+    });
+    fs[salida] = {
+      tipo: "file",
+      bytes: Math.round(crudo * RATIO),
+      dentro: hojas,
+      raiz: carpetas.length === 1 ? carpetas[0] : null,
+      deLaCarpeta: carpetas.length === 1 ? carpetas[0] : null,
+    };
+    log(`${salida} creado · ${tam(crudo)} → ${tam(fs[salida].bytes)}`, "ok");
+    return;
+  }
+
+  if (bandera.includes("t")) {
+    const a = fs[resto[0]];
+    if (!a || !a.dentro) return log(`tar: ${resto[0] || ""}: no es un archivo tar`, "bad");
+    a.listado = true;
+    if (a.raiz) log("  " + a.raiz + "/", "echo");
+    a.dentro.forEach((n) => log("  " + (a.raiz ? a.raiz + "/" : "") + n, "echo"));
+    return;
+  }
+
+  if (bandera.includes("x")) {
+    const nombre = resto[0];
+    const a = fs[nombre];
+    if (!a || !a.dentro) return log(`tar: ${nombre || ""}: no es un archivo tar`, "bad");
+    a.extraido = true;
+    const raiz = a.raiz;
+    if (raiz) fs[raiz] = { tipo: "dir", hijos: a.dentro.slice(), bytes: 0 };
+    a.dentro.forEach((n) => {
+      const peso = (a.pesos && a.pesos[n]) || 100_000;
+      fs[raiz ? raiz + "/" + n : n] = { tipo: "file", bytes: peso };
+      if (raiz) fs[raiz].bytes += peso;
+    });
+    log(`extraído: ${raiz ? raiz + "/" : ""}${a.dentro.join(", ")}`, "ok");
+    return;
+  }
+
+  log(`tar: operación no reconocida en "${bandera}"`, "bad");
+}
+
+function cmdRm(args) {
+  const recursivo = args.some((a) => a.startsWith("-") && a.includes("r"));
+  const objetivo = args.find((a) => !a.startsWith("-"));
+  if (!objetivo) return log("rm: falta el archivo", "bad");
+  const clave = objetivo.replace(/\/$/, "").replace(/^\.\//, "");
+  const e = fs[clave];
+  if (!e) return log(`rm: ${objetivo}: no existe`, "bad");
+  if (e.tipo === "dir" && !recursivo) return log(`rm: ${objetivo}: es un directorio (usa -r)`, "bad");
+  if (e.tipo === "dir") Object.keys(fs).forEach((k) => k.startsWith(clave + "/") && delete fs[k]);
+  // Si colgaba de una carpeta, esa carpeta deja de listarlo y de pesarlo: es lo
+  // que hace que volver a comprimirla de el resultado que se espera.
+  if (clave.includes("/")) {
+    const [padre, hoja] = [clave.slice(0, clave.indexOf("/")), clave.slice(clave.indexOf("/") + 1)];
+    if (fs[padre] && fs[padre].tipo === "dir") {
+      fs[padre].hijos = fs[padre].hijos.filter((n) => n !== hoja);
+      fs[padre].bytes -= e.bytes;
+    }
+  }
+  delete fs[clave];
+  log(`${objetivo} eliminado`, "ok");
+}
+
+function ejecutar(linea) {
+  const partes = linea.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return;
+  const [cmd, ...args] = partes;
+  log("$ " + linea, "echo");
+
+  switch (cmd) {
+    case "ls": cmdLs(args); break;
+    case "tar": cmdTar(args); break;
+    case "rm": cmdRm(args); break;
+    case "help": AYUDA.forEach((l) => log(l, "note")); break;
+    case "clear": $("consola").innerHTML = ""; break;
+    case "cd": log("cd: en esta práctica solo se trabaja en ~/taller", "note"); break;
+    default:
+      log(`${cmd}: no disponible aquí. Escribe "help" para ver los comandos.`, "bad");
+  }
+  revisar();
+}
+
+/* ============================================================
+   CORREO
+   ============================================================ */
+const LIMITE = 400_000;
+let adjunto = null;
+
+function pintarCorreo() {
+  const zona = $("mail-adj");
+  zona.innerHTML = "";
+  if (!adjunto) {
+    const p = document.createElement("div");
+    p.className = "mail-vacio";
+    p.textContent = "Sin archivos adjuntos.";
+    zona.appendChild(p);
+  } else {
+    const e = fs[adjunto];
+    const chip = document.createElement("div");
+    const pesa = e ? e.bytes : 0;
+    chip.className = "chip" + (pesa > LIMITE ? " malo" : "");
+    chip.textContent = `📎 ${adjunto} · ${tam(pesa)}`;
+    zona.appendChild(chip);
+  }
+  const aviso = document.createElement("div");
+  aviso.className = "mail-vacio";
+  aviso.textContent = `Tamaño máximo del adjunto: ${tam(LIMITE)}`;
+  zona.appendChild(aviso);
+  $("mail-enviar").disabled = !adjunto;
+}
+
+function avisarCorreo(texto) {
+  const zona = $("mail-adj");
+  const p = document.createElement("div");
+  p.className = "mail-aviso";
+  p.textContent = texto;
+  zona.appendChild(p);
+}
+
+function abrirPicker() {
+  const lista = $("picker-lista");
+  lista.innerHTML = "";
+  enRaiz().sort().forEach((n) => {
+    const b = document.createElement("button");
+    b.className = "picker-it";
+    b.innerHTML = `<span>${fs[n].tipo === "dir" ? "📁" : "📄"} ${n}</span><small>${
+      fs[n].tipo === "dir" ? "carpeta" : tam(fs[n].bytes)
+    }</small>`;
+    b.addEventListener("click", () => {
+      $("picker").hidden = true;
+      // Adjuntar una carpeta es el rechazo que da sentido al primer desafio:
+      // el correo no sabe de directorios, por eso hay que empaquetar.
+      if (fs[n].tipo === "dir") {
+        adjunto = null;
+        pintarCorreo();
+        avisarCorreo(`No se pueden adjuntar carpetas. Comprime ${n}/ en un .tar.gz primero.`);
+        return;
+      }
+      adjunto = n;
+      pintarCorreo();
+    });
+    lista.appendChild(b);
+  });
+  $("picker").hidden = false;
+}
+
+function enviar() {
+  const e = fs[adjunto];
+  if (!e) return;
+  if (e.bytes > LIMITE) {
+    pintarCorreo();
+    avisarCorreo(`El adjunto pesa ${tam(e.bytes)} y el máximo son ${tam(LIMITE)}. Comprímelo.`);
+    return;
+  }
+  // Lo que se pide es el respaldo rehecho, no cualquier paquete: tiene que
+  // llevar lo que venia dentro y no llevar al intruso. Sin la primera mitad,
+  // el paquete del primer desafio —que tampoco lo lleva— colaba.
+  const dentro = e.dentro || [];
+  const debidos = ["config.yml", "registro.log"];
+  const completo = debidos.every((n) => dentro.includes(n));
+  const limpio = completo && !dentro.includes(nombres.intruso);
+  if (!limpio) {
+    pintarCorreo();
+    avisarCorreo(
+      dentro.includes(nombres.intruso)
+        ? `Ese paquete todavía lleva ${nombres.intruso} dentro.`
+        : `Ese no es el respaldo. Envía ${nombres.raizRespaldo}/ una vez rehecho.`,
+    );
+    return;
+  }
+  enviado = { nombre: adjunto, limpio: true };
+  revisar();
+}
+
+/* ============================================================
+   PROGRESO
+   ============================================================ */
+function revisar() {
+  const lista = desafios();
+  while (paso < lista.length && lista[paso].hecho()) {
+    log("✓ " + lista[paso].objetivo, "ok");
+    paso++;
+  }
+  pintar();
+  if (paso >= lista.length) terminar();
+}
+
+function pintar() {
+  const lista = desafios();
+  $("goal").textContent = paso < lista.length ? lista[paso].objetivo : "Completado";
+  $("counter").textContent = `${Math.min(paso + 1, lista.length)} / ${lista.length}`;
+
+  $("dots").innerHTML = "";
+  lista.forEach((_, i) => {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < paso ? " done" : i === paso ? " cur" : "");
+    $("dots").appendChild(d);
+  });
+
+  const cont = $("pasos");
+  cont.innerHTML = "";
+  lista.forEach((d, i) => {
+    const fila = document.createElement("div");
+    fila.className = "paso " + (i < paso ? "done" : i === paso ? "cur" : "pend");
+    fila.innerHTML = `<span class="paso-n">${i + 1}.</span><span class="paso-t"></span>`;
+    fila.querySelector(".paso-t").textContent = d.texto;
+    cont.appendChild(fila);
+  });
+  const nota = document.createElement("div");
+  nota.className = "txt-nota";
+  nota.textContent =
+    "En esta práctica funcionan ls, tar, rm y clear. Escribe help en la terminal para ver el detalle.";
+  cont.appendChild(nota);
+
+  pintarIconos();
+}
+
+function pintarIconos() {
+  const cont = $("icons");
+  cont.innerHTML = "";
+  enRaiz().sort().slice(0, 4).forEach((n) => {
+    const e = fs[n];
+    const it = document.createElement("div");
+    it.className = "icon";
+    it.innerHTML =
+      `<div class="icon-art" style="font-size:38px">${e.tipo === "dir" ? "📁" : "🗜️"}</div>` +
+      `<div class="icon-name"></div><div class="icon-size">${tam(e.bytes)}</div>`;
+    it.querySelector(".icon-name").textContent = n;
+    cont.appendChild(it);
+  });
+}
+
+function terminar() {
+  $("fin-p").textContent =
+    `Enviaste ${enviado.nombre}. Empaquetaste una carpeta, miraste dentro de un ` +
+    `paquete antes de abrirlo y rehiciste uno sin lo que no debía salir.`;
+  $("fin").hidden = false;
+}
+
+/* ============================================================
+   ENTRADA
+   ============================================================ */
+let tecleado = "";
+
+document.addEventListener("keydown", (ev) => {
+  if (!$("fin").hidden || !$("picker").hidden) return;
+  if (ev.key === "Enter") {
+    const linea = tecleado;
+    tecleado = "";
+    $("typed").textContent = "";
+    ejecutar(linea);
+    return;
+  }
+  if (ev.key === "Backspace") {
+    tecleado = tecleado.slice(0, -1);
+  } else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) {
+    tecleado += ev.key;
+  } else {
+    return;
+  }
+  ev.preventDefault();
+  $("typed").textContent = tecleado;
+});
+
+/* ---------- dock ---------- */
+function alternar(idVentana, idBoton) {
+  const v = $(idVentana);
+  v.hidden = !v.hidden;
+  $(idBoton).dataset.abierta = String(!v.hidden);
+}
+$("d-mail").addEventListener("click", () => {
+  alternar("w-mail", "d-mail");
+  if (!$("w-mail").hidden) pintarCorreo();
+});
+$("d-txt").addEventListener("click", () => alternar("w-txt", "d-txt"));
+
+$("mail-adjuntar").addEventListener("click", abrirPicker);
+$("mail-enviar").addEventListener("click", enviar);
+$("picker").addEventListener("click", (ev) => {
+  if (ev.target === $("picker")) $("picker").hidden = true;
+});
+
+function reiniciar() {
+  nuevaPartida();
+  adjunto = null;
+  tecleado = "";
+  $("typed").textContent = "";
+  $("consola").innerHTML = "";
+  $("fin").hidden = true;
+  $("picker").hidden = true;
+  $("mail-asunto").textContent = "Entrega";
+  log("Escribe help para ver los comandos disponibles.", "note");
+  pintarCorreo();
+  pintar();
+}
+
+$("restart").addEventListener("click", reiniciar);
+$("fin-again").addEventListener("click", reiniciar);
+$("fin-exit").addEventListener("click", () =>
+  window.parent.postMessage({ action: "close-simulator" }, "*"),
+);
+
+reiniciar();
+
+// Gancho de pruebas: el arnes de Node necesita empujar el estado sin DOM.
+if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+  globalThis.__api = {
+    ejecutar, enviar, reiniciar, desafios,
+    fs: () => fs, nombres: () => nombres, paso: () => paso,
+    adjuntar: (n) => { adjunto = n; },
+  };
+}
+</script>

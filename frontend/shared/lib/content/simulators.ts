@@ -43,6 +43,14 @@ const RAW = [
     topicNumber: 5,
     file: "simulador-permisos.html",
   },
+  {
+    id: "escritorio-comprimido",
+    title: "Escritorio comprimido",
+    description:
+      "Un escritorio con una terminal y un correo que no admite carpetas. Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la entrega.",
+    topicNumber: 6,
+    file: "simulador-compresion.html",
+  },
 ]
 
 export const simulators: Simulator[] = RAW.map((s) => {
