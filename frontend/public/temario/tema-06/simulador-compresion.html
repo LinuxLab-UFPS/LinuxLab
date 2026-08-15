@@ -47,22 +47,23 @@ body{
 .desk{
   position:relative;flex:1;min-height:0;overflow:hidden;
   background:
-    linear-gradient(155deg,transparent 58%,rgba(255,0,48,.16) 58.2%),
-    linear-gradient(200deg,transparent 62%,rgba(163,113,247,.14) 62.2%),
-    linear-gradient(120deg,#121A2B 0%,#1A1230 55%,#2A1020 100%);
+    linear-gradient(158deg,transparent 54%,rgba(255,0,48,.20) 54.2%),
+    linear-gradient(202deg,transparent 70%,rgba(255,0,48,.11) 70.2%),
+    linear-gradient(130deg,#170B12 0%,#2A0E1B 48%,#3E1122 100%);
 }
 
 /* ---------- iconos del escritorio ---------- */
-.icons{position:absolute;left:26px;top:26px;display:flex;flex-direction:column;gap:20px}
-.icon{width:96px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center}
-.icon-art{width:52px;height:60px;display:flex;align-items:center;justify-content:center}
-.icon-name{font-size:11px;color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.icons{position:absolute;left:3%;top:4%;width:34%;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start}
+.icon{width:104px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.icon-art{width:52px;height:52px}
+.icon-art svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.icon-name{font-size:10px;color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .icon-size{font-size:10px;color:#B9C6D6;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
 /* ---------- ventanas ---------- */
 .win{
   position:absolute;background:var(--surf);border:1px solid var(--border);
-  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;
+  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0;
   box-shadow:0 18px 40px rgba(0,0,0,.5);
 }
 .win[hidden]{display:none}
@@ -70,8 +71,9 @@ body{
 .win-dot{width:11px;height:11px;border-radius:50%}
 .win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
 
-/* terminal */
-#w-term{left:calc(50% - 40px);top:34px;width:560px;height:330px}
+/* Cada ventana en su cuadrante: arriba izquierda los desafios, arriba derecha
+   la terminal, abajo derecha el correo. Abrir y cerrar no las mueve de sitio. */
+#w-term{left:44%;top:7%;width:53%;height:77%}
 .console{background:#0B0E14;padding:12px 14px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
 .log{white-space:pre-wrap;line-height:1.5}
 .log.ok{color:var(--green)}
@@ -84,8 +86,7 @@ body{
 .caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
 @keyframes blink{50%{opacity:0}}
 
-/* instrucciones */
-#w-txt{left:34px;top:200px;width:430px;height:290px}
+#w-txt{left:3%;top:54%;width:34%;height:34%}
 .txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:16px 18px;font-size:12.5px;line-height:1.6}
 .paso{display:flex;gap:9px;margin-bottom:13px;transition:opacity .3s}
 .paso-n{flex-shrink:0;font-weight:700;color:#8A8A99}
@@ -95,23 +96,23 @@ body{
 .paso.cur .paso-t{font-weight:700}
 .txt-nota{margin-top:16px;padding-top:11px;border-top:1px solid #E3E3EA;font-size:11px;color:#70707E;line-height:1.5}
 
-/* correo */
-#w-mail{right:32px;bottom:96px;width:430px;height:300px}
-.mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px;font-size:12px;gap:0}
-.mail-row{display:flex;gap:8px;padding:7px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
+#w-mail{left:3%;top:22%;width:34%;height:30%}
+.mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 14px;font-size:12px;gap:0}
+.mail-row{display:flex;gap:8px;padding:5px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
 .mail-row b{color:#1A1A1F;font-weight:600}
-.mail-adj{flex:1;min-height:0;padding:11px 2px;display:flex;flex-direction:column;gap:8px}
+.mail-adj{flex:1;min-height:0;overflow-y:auto;padding:9px 2px;display:flex;flex-direction:column;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;background:#EEF1F6;border:1px solid #D8DDE6;border-radius:5px;padding:5px 10px;font-size:11.5px;color:#1A1A1F}
 .chip.malo{background:#FDECEE;border-color:#F5C2C7;color:#A3111F}
 .mail-vacio{font-size:11.5px;color:#9A9AA6}
 .mail-aviso{font-size:11.5px;color:#A3111F;line-height:1.45}
-.mail-pie{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid #E8E8EE}
+.mail-pie{display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #E8E8EE}
 .btn-mail{border:none;border-radius:5px;padding:7px 15px;font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;background:#1A73E8;color:#fff}
 .btn-mail.sec{background:#EEF1F6;color:#1A1A1F;border:1px solid #D8DDE6;font-weight:400}
 .btn-mail:disabled{opacity:.4;cursor:not-allowed}
 /* Los iconos que no hacen nada se ven apagados a proposito: asi no se intenta
    usarlos y se entiende que el correo solo sirve para adjuntar y enviar. */
-.mail-inertes{display:flex;gap:12px;margin-left:auto;opacity:.3;font-size:14px;pointer-events:none;user-select:none}
+.mail-inertes{display:flex;gap:13px;margin-left:auto;opacity:.28;pointer-events:none}
+.mail-inertes svg{width:17px;height:17px;display:block}
 
 /* elegir adjunto */
 .picker{position:absolute;inset:0;background:rgba(10,12,18,.55);display:flex;align-items:center;justify-content:center;z-index:20}
@@ -123,13 +124,20 @@ body{
 .picker-it small{color:#8A8A99}
 
 /* ---------- dock ---------- */
+@media (max-width:860px){
+  .icons{left:3%;top:3%;width:94%}
+  #w-mail{left:3%;top:22%;width:94%;height:24%}
+  #w-txt{left:3%;top:50%;width:94%;height:24%}
+  #w-term{left:3%;top:22%;width:94%;height:52%}
+}
+
 .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
-.dock-btn{width:46px;height:46px;border-radius:11px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .15s,border-color .2s}
-.dock-btn:hover{transform:translateY(-3px)}
-.dock-btn[data-abierta="true"]{border-color:var(--red)}
-.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--red)}
-.dock-btn:disabled{cursor:default;opacity:.75}
+.dock-btn{width:50px;height:50px;border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
+.dock-btn:hover{transform:translateY(-4px)}
+.dock-btn:disabled{cursor:default}
 .dock-btn:disabled:hover{transform:none}
+.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-7px;left:22%;width:56%;height:3px;border-radius:2px;background:#E8912F}
+.dock-btn svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.5))}
 
 /* ---------- fin ---------- */
 .fin{position:absolute;inset:0;background:rgba(6,8,13,.9);display:flex;align-items:center;justify-content:center;z-index:60}
@@ -197,7 +205,11 @@ body{
       <div class="mail-pie">
         <button class="btn-mail" id="mail-enviar">Enviar</button>
         <button class="btn-mail sec" id="mail-adjuntar">Adjuntar</button>
-        <span class="mail-inertes">A🖉 🔗 😊 🖼 🗑</span>
+        <span class="mail-inertes" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1A1A1F" stroke-width="1.6" stroke-linecap="round"><path d="M8 6h8M12 6v12M9 18h6"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1A1A1F" stroke-width="1.6" stroke-linecap="round"><path d="M10 13.5a3.5 3.5 0 0 0 5 0l2.5-2.5a3.5 3.5 0 1 0-5-5L11 7.5"/><path d="M14 10.5a3.5 3.5 0 0 0-5 0L6.5 13a3.5 3.5 0 1 0 5 5l1.5-1.5"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1A1A1F" stroke-width="1.6" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="m5 16 4.5-4.5L13 15l3-2.5 3 3"/></svg>
+        </span>
       </div>
     </div>
   </div>
@@ -210,9 +222,28 @@ body{
   </div>
 
   <div class="dock">
-    <button class="dock-btn" id="d-mail" title="Correo">✉️</button>
-    <button class="dock-btn" id="d-txt" title="Desafíos" data-abierta="true">📋</button>
-    <button class="dock-btn" id="d-term" title="Terminal (siempre abierta)" data-abierta="true" disabled>&gt;_</button>
+    <button class="dock-btn" id="d-mail" title="Correo">
+      <svg viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="#2FB0F0"/>
+        <rect x="13" y="21" width="38" height="24" rx="3" fill="#fff"/>
+        <path d="M14 23.5 32 36l18-12.5" fill="none" stroke="#2FB0F0" stroke-width="3.4" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button class="dock-btn" id="d-txt" title="Desafíos" data-abierta="true">
+      <svg viewBox="0 0 64 64">
+        <rect x="9" y="5" width="46" height="54" rx="5" fill="#F7FAFF"/>
+        <rect x="9" y="5" width="46" height="9" rx="4.5" fill="#3E7FC1"/>
+        <path d="M19 25h26M19 33h26M19 41h17" stroke="#7FA6CC" stroke-width="3.2" stroke-linecap="round"/>
+        <rect x="9" y="52" width="46" height="7" rx="3.5" fill="#E8912F"/>
+      </svg>
+    </button>
+    <button class="dock-btn" id="d-term" title="Terminal (siempre abierta)" data-abierta="true" disabled>
+      <svg viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="#1E222B"/>
+        <path d="m19 24 9 8-9 8" fill="none" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 41h12" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 
   <div class="fin" id="fin" hidden>
@@ -230,6 +261,26 @@ body{
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
+
+/* ============================================================
+   ICONOS
+   Trazo plano, del mismo grosor y con la paleta de la plataforma. Los emoji
+   dependian de la fuente del sistema y cada maquina los dibujaba distinto.
+   ============================================================ */
+const SVG = {
+  carpeta:
+    '<svg viewBox="0 0 64 64">' +
+    '<path d="M5 13a4 4 0 0 1 4-4h15.5l5 6H55a4 4 0 0 1 4 4v5H5z" fill="#C98A2E"/>' +
+    '<path d="M5 22h54a4 4 0 0 1 4 4.4l-3.4 24A5 5 0 0 1 54.7 55H9.3a5 5 0 0 1-5-4.6L1 26.4A4 4 0 0 1 5 22z" fill="#F0B454"/>' +
+    "</svg>",
+  paquete:
+    '<svg viewBox="0 0 64 64">' +
+    '<path d="M16 5h22l14 14v36a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V9a4 4 0 0 1 4-4z" fill="#4C8DF6"/>' +
+    '<path d="M38 5l14 14H41a3 3 0 0 1-3-3z" fill="#A8C6FA"/>' +
+    '<rect x="27" y="19" width="10" height="28" rx="2" fill="#EAF1FE"/>' +
+    '<path d="M30 24h4M30 30h4M30 36h4" stroke="#4C8DF6" stroke-width="2.6" stroke-linecap="round"/>' +
+    "</svg>",
+};
 
 /* ============================================================
    NOMBRES
@@ -487,7 +538,7 @@ function pintarCorreo() {
     const chip = document.createElement("div");
     const pesa = e ? e.bytes : 0;
     chip.className = "chip" + (pesa > LIMITE ? " malo" : "");
-    chip.textContent = `📎 ${adjunto} · ${tam(pesa)}`;
+    chip.textContent = `${adjunto} · ${tam(pesa)}`;
     zona.appendChild(chip);
   }
   const aviso = document.createElement("div");
@@ -511,9 +562,10 @@ function abrirPicker() {
   enRaiz().sort().forEach((n) => {
     const b = document.createElement("button");
     b.className = "picker-it";
-    b.innerHTML = `<span>${fs[n].tipo === "dir" ? "📁" : "📄"} ${n}</span><small>${
+    b.innerHTML = `<span></span><small>${
       fs[n].tipo === "dir" ? "carpeta" : tam(fs[n].bytes)
     }</small>`;
+    b.querySelector("span").textContent = n;
     b.addEventListener("click", () => {
       $("picker").hidden = true;
       // Adjuntar una carpeta es el rechazo que da sentido al primer desafio:
@@ -594,12 +646,6 @@ function pintar() {
     fila.querySelector(".paso-t").textContent = d.texto;
     cont.appendChild(fila);
   });
-  const nota = document.createElement("div");
-  nota.className = "txt-nota";
-  nota.textContent =
-    "En esta práctica funcionan ls, tar, rm y clear. Escribe help en la terminal para ver el detalle.";
-  cont.appendChild(nota);
-
   pintarIconos();
 }
 
@@ -611,7 +657,7 @@ function pintarIconos() {
     const it = document.createElement("div");
     it.className = "icon";
     it.innerHTML =
-      `<div class="icon-art" style="font-size:38px">${e.tipo === "dir" ? "📁" : "🗜️"}</div>` +
+      `<div class="icon-art">${e.tipo === "dir" ? SVG.carpeta : SVG.paquete}</div>` +
       `<div class="icon-name"></div><div class="icon-size">${tam(e.bytes)}</div>`;
     it.querySelector(".icon-name").textContent = n;
     cont.appendChild(it);
