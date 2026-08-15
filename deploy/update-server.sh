@@ -141,6 +141,24 @@ fi
 if $SKIP_SEEDS; then
   log "Omitiendo seeds (--skip-seeds)."
 else
+  # Que el backend responda NO significa que la base tenga el esquema:
+  # /api/health es una sonda de vida y no la consulta. Con una base vacia,
+  # `migrate` tarda mas y las semillas llegaban antes que las tablas.
+  # Aqui se espera al contenedor de migraciones, que es de una sola pasada.
+  log "Esperando a que 'migrate' termine..."
+  migrado=0
+  for _ in $(seq 1 60); do
+    estado="$(podman inspect -f '{{.State.Status}}:{{.State.ExitCode}}' linuxlab-migrate 2>/dev/null || echo 'ausente:')"
+    case "$estado" in
+      exited:0) migrado=1; break ;;
+      exited:*) warn "migrate termino con error ($estado); se omiten las seeds"; break ;;
+    esac
+    sleep 5
+  done
+
+  if [ "$migrado" -ne 1 ]; then
+    warn "No se pudo confirmar que las migraciones terminaran; se omiten las seeds."
+  else
   log "Sembrando las actividades del temario..."
   for seed in seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines seed-actividad-mensaje seed-actividad-permisos-archivo seed-actividad-cerrar-proyecto seed-comprobacion-ficha seed-comprobacion-logo seed-comprobacion-solo-lectura; do
     if run "podman exec linuxlab-backend node prisma/$seed.js"; then
@@ -149,6 +167,7 @@ else
       warn "  fallo: $seed (se continua)"
     fi
   done
+  fi
 fi
 
 # ---- 8. Resumen ------------------------------------------------------------
