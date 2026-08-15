@@ -155,6 +155,8 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 | `zip -rq paquete.zip carpeta` | Empaqueta y comprime en formato zip |
 | `unzip paquete.zip` | Extrae un zip |
 
+<!-- SIMULATOR: escritorio-comprimido -->
+
 ---
 
 **Fuentes**

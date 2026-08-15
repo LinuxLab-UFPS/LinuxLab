@@ -12,6 +12,7 @@ import {
   FolderTree,
   SquarePen,
   Stamp,
+  FileArchive,
   Users,
 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
@@ -39,6 +40,7 @@ const SIMULATOR_ICONS: Record<string, React.ComponentType<{ className?: string }
   "travesia-del-arbol": FolderTree,
   "retos-de-vi": SquarePen,
   "filtro-de-permisos": Stamp,
+  "escritorio-comprimido": FileArchive,
 }
 
 /** The black top bar: logo, nav, search, theme toggle and profile. */

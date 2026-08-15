@@ -2,6 +2,7 @@ import type { ComponentType } from "react"
 import { BookOpen } from "lucide-react"
 import { ContentCard } from "@/lib/features/student/components/content-card"
 import {
+  SimulatorCompressionIllustration,
   SimulatorPermissionsIllustration,
   SimulatorTreeIllustration,
   SimulatorViIllustration,
@@ -13,6 +14,7 @@ const ILLUSTRATION: Record<string, ComponentType> = {
   "travesia-del-arbol": SimulatorTreeIllustration,
   "retos-de-vi": SimulatorViIllustration,
   "filtro-de-permisos": SimulatorPermissionsIllustration,
+  "escritorio-comprimido": SimulatorCompressionIllustration,
 }
 
 /** A simulator as a green ContentCard, used on the simulators page and embedded
