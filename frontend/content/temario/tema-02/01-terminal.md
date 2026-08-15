@@ -10,7 +10,7 @@ En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal:
 
 **Terminal de escritorio:** Es una aplicación dentro del entorno gráfico que abre una ventana con la línea de comandos. Según la distribución que uses, la encuentras buscando "terminal" en el menú de aplicaciones. En Ubuntu se llama GNOME Terminal, en KDE es Konsole. Todas hacen lo mismo.
 
-**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas <kbd>Ctrl + Alt + F2</kbd> hasta <kbd>F6</kbd>. Cada una es una sesión completamente separada. Para volver al entorno gráfico usas <kbd>Ctrl + Alt + F1</kbd> o <kbd>F7</kbd> dependiendo del sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
+**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F2</kbd> hasta <kbd>F6</kbd>. Cada una es una sesión completamente separada. Para volver al entorno gráfico usas <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F1</kbd> o <kbd>F7</kbd> dependiendo del sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
 
 En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona igual que cualquiera de las dos anteriores.
 

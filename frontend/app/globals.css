@@ -267,22 +267,25 @@
   color: var(--primary) !important;
 }
 
-/* Teclas del teclado dentro de una leccion: <kbd>F12</kbd>, <kbd>Ctrl + Alt + T</kbd>.
-   El chip toma el rojo de la marca; la caja (radio, padding, tipografia) la pone
-   el componente kbd en markdown.tsx. */
+/* Teclas del teclado dentro de una leccion: <kbd>F12</kbd>, <kbd>Ctrl</kbd>.
+   La caja (radio, padding, tipografia) la pone el componente kbd en markdown.tsx.
+
+   Van en gris y no en el rojo de la marca. Una tecla no es un comando ni un
+   aviso: es una pieza de hardware que se menciona de pasada, y en rojo brillante
+   secuestraba la lectura del parrafo. Es la convencion de MDN o GitHub. El borde
+   inferior mas grueso es lo unico que las hace parecer una tecla fisica. */
 .lesson-kbd {
-  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  color: var(--primary);
-  box-shadow: var(--neon-border-shadow);
+  border-color: #e5e7eb;
+  border-bottom-color: #d1d5db;
+  background: #f3f4f6;
+  color: #1f2937;
 }
 
-/* Sobre el fondo oscuro el rojo de marca se apaga, asi que la tecla usa el mismo
-   rojo brillante del prompt de la terminal. */
 .dark .lesson-kbd {
-  border-color: rgba(255, 84, 112, 0.45);
-  background: rgba(255, 84, 112, 0.12);
-  color: #ff5470;
+  border-color: rgba(255, 255, 255, 0.13);
+  border-bottom-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
+  color: #e5e7eb;
 }
 
 /* ============================================================

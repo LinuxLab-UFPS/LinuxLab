@@ -78,7 +78,7 @@ const components: Components = {
   // el rojo de la plataforma; los colores y el halo viven en `.lesson-kbd`
   // porque cambian entre tema claro y oscuro.
   kbd: ({ children }) => (
-    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
+    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border border-b-2 px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
       {children}
     </kbd>
   ),
