@@ -214,24 +214,6 @@ function ServerUnit({ y, accent }: { y: number; accent?: boolean }) {
   )
 }
 
-/** 10. Servicios y demonios — a server stack with a gear. */
-function Services() {
-  return (
-    <Svg>
-      <ServerUnit y={22} />
-      <ServerUnit y={48} accent />
-      <ServerUnit y={74} />
-      <circle cx="140" cy="84" r="11" fill="none" stroke={RED} strokeWidth="2.4" />
-      <circle cx="140" cy="84" r="3.5" fill={RED} />
-      <path
-        d="M140 71 v-5 M140 102 v-5 M153 84 h5 M122 84 h5 M149 75 l4 -4 M127 97 l4 -4 M149 93 l4 4 M127 71 l4 4"
-        stroke={RED}
-        strokeWidth="2"
-      />
-    </Svg>
-  )
-}
-
 /** 11. Shell scripting — a script window with a shebang and braces. */
 function Scripting() {
   return (
@@ -247,17 +229,6 @@ function Scripting() {
   )
 }
 
-/** 12. Instalación de paquetes — a package box with a download arrow. */
-function Packages() {
-  return (
-    <Svg>
-      <path d="M100 40 l30 15 v26 l-30 15 l-30 -15 v-26 z" fill="none" stroke={LINE} strokeWidth="2.5" />
-      <path d="M70 55 l30 15 l30 -15 M100 70 v36" stroke={BASE} strokeWidth="1.8" />
-      <path d="M100 20 v18 M92 32 l8 8 l8 -8" stroke={RED} strokeWidth="2.8" />
-    </Svg>
-  )
-}
-
 const ILLUSTRATIONS: Record<number, ComponentType> = {
   1: IntroLinux,
   2: TerminalTopic,
@@ -268,9 +239,7 @@ const ILLUSTRATIONS: Record<number, ComponentType> = {
   7: Search,
   8: Users,
   9: Processes,
-  10: Services,
-  11: Scripting,
-  12: Packages,
+  10: Scripting,
 }
 
 /** The illustration for a topic number, defaulting to the terminal one. */
