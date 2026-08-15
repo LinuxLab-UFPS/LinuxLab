@@ -3,10 +3,9 @@
 import { useQuery } from "@tanstack/react-query"
 import * as teacherData from "@/lib/features/teacher/data"
 import * as adminData from "@/lib/features/admin/data"
-import type { GroupProgressSummary, Group } from "@/lib/models/groups"
+import type { GroupProgressSummary } from "@/lib/models/groups"
 import type { EnrollmentStudent } from "@/lib/models/auth"
-import type { Activity } from "@/lib/models/activities"
-import type { TeacherListItem, TeacherProvisioningJobSummary } from "@/lib/features/admin/types"
+import type { TeacherProvisioningJobSummary } from "@/lib/features/admin/types"
 import { EMPTY_PROGRESS } from "@/lib/models/groups"
 
 export const queryKeys = {

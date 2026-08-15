@@ -53,7 +53,11 @@ export function EssentialCommands({ className }: { className?: string }) {
   const [picking, setPicking] = useState(false)
 
   useEffect(() => {
+    // Patron aceptado: sincronizar estado con localStorage una sola vez al
+    // montar (la regla del setState en effects no aplica a lecturas unicas).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPicked(read<string[]>(PICK_KEY, []))
+     
     setHidden(read<boolean>(HIDDEN_KEY, false))
   }, [])
 

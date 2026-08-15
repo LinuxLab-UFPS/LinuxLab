@@ -55,12 +55,18 @@ export function TerminalWorkspace({
   const [hidden, setHidden] = useState<boolean | null>(null)
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(HIDDEN_KEY)
-      setHidden(stored === null ? true : stored === "true")
-    } catch {
-      setHidden(true)
-    }
+    // Lectura unica de localStorage al montar (patron aceptado).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHidden(
+      (() => {
+        try {
+          const stored = localStorage.getItem(HIDDEN_KEY)
+          return stored === null ? true : stored === "true"
+        } catch {
+          return true
+        }
+      })(),
+    )
   }, [])
 
   const setHiddenPersisted = useCallback((next: boolean) => {

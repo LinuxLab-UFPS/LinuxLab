@@ -97,7 +97,6 @@ export interface LessonRef {
 export function getLessonSequence(): LessonRef[] {
   const refs: LessonRef[] = []
   for (const topic of syllabus) {
-    const activities = getActivitiesForTopic(topic.number).length
     const meta = getTopicContentMeta(topic.number)
     const base = {
       topicNumber: topic.number,

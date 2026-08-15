@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ChevronLeft, User, Calendar, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { ChevronLeft, User, Calendar, Clock, AlertCircle } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { CircularProgress } from "@shared/components/progress-indicators"
 import { cn } from "@shared/lib/utils"

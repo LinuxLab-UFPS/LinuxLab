@@ -14,7 +14,9 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
-  // Avoid hydration mismatch: render a placeholder until mounted.
+  // Avoid hydration mismatch: render a placeholder until mounted. Este es el
+  // patron documentado de next-themes para el flag de hidratacion.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), [])
 
   const isDark = resolvedTheme === "dark"

@@ -5,7 +5,6 @@ import type { Grade } from "@/lib/models/groups"
 
 /** Tabla de calificaciones de un estudiante, agrupada por tema. */
 export function GradesTable({ grades }: { grades: Grade[] }) {
-  let currentTopic = ""
   return (
     <div className="space-y-4">
       <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
@@ -31,9 +30,9 @@ export function GradesTable({ grades }: { grades: Grade[] }) {
               </tr>
             </thead>
             <tbody>
-              {grades.map((grade) => {
-                const showHeader = grade.topicTitle !== currentTopic
-                currentTopic = grade.topicTitle
+              {grades.map((grade, index) => {
+                const showHeader =
+                  index === 0 || grades[index - 1].topicTitle !== grade.topicTitle
                 return (
                   <Fragment key={grade.id}>
                     {showHeader && (

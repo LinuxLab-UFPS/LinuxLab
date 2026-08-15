@@ -124,19 +124,22 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       termRef.current = null
       wsRef.current = null
     }
+    // El terminal nace una sola vez con los valores iniciales de tamaño y
+    // fuente; los cambios posteriores los aplican los effects de abajo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Actualizar fontSize en vivo
   useEffect(() => {
     if (termRef.current) {
-      (termRef.current as any).options.fontSize = fontSize
+      termRef.current.options.fontSize = fontSize
     }
   }, [fontSize])
 
   // Actualizar fontFamily en vivo
   useEffect(() => {
     if (termRef.current) {
-      (termRef.current as any).options.fontFamily = fontFamily
+      termRef.current.options.fontFamily = fontFamily
     }
   }, [fontFamily])
 
