@@ -18,10 +18,15 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{height:100%;background:var(--bg);overflow:hidden}
+/* Mismo escalado que los demas simuladores: el cuerpo se maqueta a 1/1.3 del
+   viewport y se amplia despues. Sin esto, este se veia notablemente mas
+   pequeno que el de permisos o el de vi puestos uno al lado del otro. */
 body{
   display:flex;flex-direction:column;
   color:var(--text);font-family:var(--mono);overflow:hidden;
-  width:100vw;height:100vh;background:var(--bg);position:relative;
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+  background:var(--bg);position:relative;
 }
 
 /* ---------- cabecera (misma de los demas simuladores) ---------- */
@@ -86,18 +91,28 @@ body{
 .caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
 @keyframes blink{50%{opacity:0}}
 
-#w-txt{left:3%;top:54%;width:34%;height:34%}
-.txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:1.8vmin 2vmin;font-size:clamp(9.5px,1.2vmin + 3px,13px);line-height:1.6}
-.txt-titulo{font-size:clamp(11px,1.4vmin + 3px,14.5px);font-weight:700;color:#1A1A1F;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #E3E3EA}
-.paso{display:flex;gap:9px;margin-bottom:13px;transition:opacity .3s}
-.paso-n{flex-shrink:0;font-weight:700;color:#8A8A99}
-.paso.pend{opacity:.38}
-.paso.done{opacity:.5}
-.paso.done .paso-t{text-decoration:line-through;text-decoration-color:#12A150;color:#12A150}
-.paso.cur .paso-t{font-weight:700}
+#w-txt{left:3%;top:47%;width:34%;height:44%}
+/* Aspecto de editor: canaleta con numeros y la linea activa resaltada. Se
+   distingue de un vistazo del correo, que es papel blanco, y el estudiante sabe
+   cual de las dos esta mirando sin leer el titulo. */
+.txt-body{
+  background:#1E222A;color:var(--text);flex:1;min-height:0;overflow-y:auto;scrollbar-gutter:stable;
+  padding:9px 0;font-size:clamp(9.5px,1.2vmin + 3px,13px);line-height:1.55;
+}
+.gutter{display:grid;grid-template-columns:clamp(24px,3.2vmin,36px) 1fr;gap:11px;padding-right:20px}
+.txt-titulo{color:var(--muted);padding-bottom:9px;border-bottom:1px solid #2A2F3A;margin-bottom:8px}
+.txt-titulo::before{content:"#";text-align:right;color:#3E4552}
+.linea{padding:6px 0 6px 0;border-left:2px solid transparent;transition:background .3s}
+.linea .ln{text-align:right;color:#3E4552;user-select:none}
+.linea.cur{background:rgba(255,255,255,.05);border-left-color:var(--green)}
+.linea.cur .ln{color:var(--green)}
+.linea.cur .paso-t{color:var(--bright)}
+.linea.pend{opacity:.42}
+.linea.done{opacity:.6}
+.linea.done .paso-t{text-decoration:line-through;text-decoration-color:var(--green);color:var(--green)}
 .txt-nota{margin-top:16px;padding-top:11px;border-top:1px solid #E3E3EA;font-size:11px;color:#70707E;line-height:1.5}
 
-#w-mail{left:3%;top:22%;width:34%;height:30%}
+#w-mail{left:3%;top:19%;width:34%;height:26%}
 .mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:1.2vmin 1.6vmin;font-size:clamp(9.5px,1.15vmin + 3px,12.5px);gap:0}
 .mail-row{display:flex;gap:8px;padding:5px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
 .mail-row b{color:#1A1A1F;font-weight:600}
@@ -134,6 +149,22 @@ body{
   user-select:none;pointer-events:none;
 }
 .marca span{color:var(--bright);filter:none}
+
+/* ---------- portada (misma de los otros simuladores) ---------- */
+.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:40;padding:24px}
+.overlay[hidden]{display:none}
+.play{
+  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
+  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
+  font-family:var(--mono);line-height:1;
+}
+/* El triangulo tiene el peso a la izquierda y descentra a ojo. */
+.play .tri{display:block;transform:translateX(3px)}
+.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
+.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
+.overlay p{font-size:12px;color:var(--muted);max-width:430px;text-align:center;line-height:1.7}
 
 .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
 .dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
@@ -270,6 +301,16 @@ body{
     </button>
   </div>
 
+  <div class="overlay" id="overlay">
+    <button class="play" id="play"><span class="tri">&#9654;</span></button>
+    <h2>Escritorio comprimido</h2>
+    <p>
+      Un escritorio con una terminal y un correo que no admite carpetas.
+      Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la
+      entrega sin lo que no debía salir.
+    </p>
+  </div>
+
   <div class="fin" id="fin" hidden>
     <div class="fin-box">
       <div class="fin-t">Entrega enviada</div>
@@ -379,7 +420,7 @@ function desafios() {
   return [
     {
       objetivo: `Comprime ${nombres.carpeta}/ en un .tar.gz`,
-      texto: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz con tar. El correo no admite carpetas.`,
+      texto: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz con tar. Envialo por un correo.`,
       hecho: () =>
         enRaiz().some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
     },
@@ -664,13 +705,17 @@ function pintar() {
   const cont = $("pasos");
   cont.innerHTML = "";
   const titulo = document.createElement("div");
-  titulo.className = "txt-titulo";
-  titulo.textContent = "Objetivos";
+  titulo.className = "gutter txt-titulo";
+  const t = document.createElement("span");
+  t.textContent = "Objetivos";
+  titulo.appendChild(t);
   cont.appendChild(titulo);
+
   lista.forEach((d, i) => {
     const fila = document.createElement("div");
-    fila.className = "paso " + (i < paso ? "done" : i === paso ? "cur" : "pend");
-    fila.innerHTML = `<span class="paso-n">${i + 1}.</span><span class="paso-t"></span>`;
+    fila.className = "gutter linea " + (i < paso ? "done" : i === paso ? "cur" : "pend");
+    fila.innerHTML = '<span class="ln"></span><span class="paso-t"></span>';
+    fila.querySelector(".ln").textContent = String(i + 1);
     fila.querySelector(".paso-t").textContent = d.texto;
     cont.appendChild(fila);
   });
@@ -705,7 +750,7 @@ function terminar() {
 let tecleado = "";
 
 document.addEventListener("keydown", (ev) => {
-  if (!$("fin").hidden || !$("picker").hidden) return;
+  if (!$("fin").hidden || !$("picker").hidden || !$("overlay").hidden) return;
   if (ev.key === "Enter") {
     const linea = tecleado;
     tecleado = "";
@@ -752,12 +797,14 @@ function reiniciar() {
   $("consola").innerHTML = "";
   $("fin").hidden = true;
   $("picker").hidden = true;
+  $("overlay").hidden = false;
   $("mail-asunto").textContent = "Entrega";
   log("Escribe help para ver los comandos disponibles.", "note");
   pintarCorreo();
   pintar();
 }
 
+$("play").addEventListener("click", () => { $("overlay").hidden = true; });
 $("restart").addEventListener("click", reiniciar);
 $("fin-again").addEventListener("click", reiniciar);
 $("fin-exit").addEventListener("click", () =>
