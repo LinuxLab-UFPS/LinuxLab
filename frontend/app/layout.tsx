@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@shared/components/ui/sonner'
 import { TooltipProvider } from '@shared/components/ui/tooltip'
+import { DevRoleSwitcher } from '@/components/dev/role-switcher'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -42,16 +43,24 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${onest.variable} ${geistMono.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased">
+        {/* `disableTransitionOnChange`: el cambio de tema es instantaneo. Habia
+            un crossfade de 0.28s sobre todos los colores y se notaba como un
+            barrido lento; ademas obligaba a cada elemento de la pagina a animar
+            sus colores tambien al pasar el raton. Los componentes que quieren
+            transicion la declaran ellos con `transition-colors`. */}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
+          disableTransitionOnChange
         >
           <AuthProvider>
             <QueryProvider>
               <TooltipProvider delayDuration={150}>
                 {children}
                 <Toaster richColors position="top-right" />
+                {/* DEV: selector de rol para el bypass de auth. Null en producción. */}
+                <DevRoleSwitcher />
               </TooltipProvider>
             </QueryProvider>
           </AuthProvider>
