@@ -4,11 +4,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Terminal } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
+import { notify } from "@shared/lib/toast"
 
 export default function LoginPage() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
   const [signingIn, setSigningIn] = useState(false)
 
   useEffect(() => {
@@ -18,12 +18,11 @@ export default function LoginPage() {
   }, [user, router])
 
   const handleGoogleSignIn = async () => {
-    setError(null)
     setSigningIn(true)
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo iniciar sesión.")
+      notify.error(err, "No se pudo iniciar sesión.")
     } finally {
       setSigningIn(false)
     }
@@ -67,10 +66,6 @@ export default function LoginPage() {
             </svg>
             {signingIn ? "Iniciando sesión…" : "Iniciar sesión con Google"}
           </button>
-
-          {error && (
-            <p className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
-          )}
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">

@@ -6,6 +6,7 @@ import { cn } from "@shared/lib/utils"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
 import { useTeachers } from "@/lib/features/admin/hooks"
+import { useTeacherProvisioningToast } from "@/lib/features/admin/use-teacher-provisioning-toast"
 import { RegisterTeacherDialog } from "./register-teacher-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import { Input } from "@shared/components/ui/input"
@@ -62,6 +63,8 @@ export function TeachersTable() {
   )
 
   const { teachers, loading, submitting, register, toggleStatus, provisioningJobs } = useTeachers(filters)
+
+  useTeacherProvisioningToast(provisioningJobs)
 
   const jobByEmail = useMemo(() => {
     const map = new Map<string, (typeof provisioningJobs)[number]>()

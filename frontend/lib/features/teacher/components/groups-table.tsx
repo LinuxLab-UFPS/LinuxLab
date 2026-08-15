@@ -25,6 +25,7 @@ import {
 } from "@/lib/features/teacher/components/confirm-course-dialog"
 import type { Group } from "@/lib/features/teacher/types"
 import { deactivateGroup, deleteGroup } from "@/lib/features/teacher/data"
+import { notifyPromise } from "@shared/lib/toast"
 
 type Tab = "activos" | "desactivados"
 
@@ -35,7 +36,6 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const [tab, setTab] = useState<Tab>("activos")
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
-  const [error, setError] = useState<string | null>(null)
   /** Curso y acción destructiva esperando confirmación. */
   const [confirming, setConfirming] = useState<{ group: Group; action: CourseAction } | null>(
     null,
@@ -61,29 +61,29 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
   const runConfirmed = async () => {
     if (!confirming) return
     const { group, action } = confirming
-    setError(null)
     setBusy(true)
-    try {
+    const done = await notifyPromise(
+      action === "deactivate" ? deactivateGroup(group.id) : deleteGroup(group.id),
+      {
+        loading: action === "deactivate" ? "Desactivando el curso…" : "Eliminando el curso…",
+        success: action === "deactivate" ? "Curso desactivado" : "Curso eliminado",
+        error:
+          action === "deactivate"
+            ? "No se pudo desactivar el curso."
+            : "No se pudo eliminar el curso.",
+      },
+    )
+    if (done.ok) {
       if (action === "deactivate") {
-        await deactivateGroup(group.id)
         setGroups((prev) =>
           prev.map((g) => (g.id === group.id ? { ...g, archived: true } : g)),
         )
       } else {
-        await deleteGroup(group.id)
         setGroups((prev) => prev.filter((g) => g.id !== group.id))
       }
-      setConfirming(null)
-    } catch (e) {
-      const fallback =
-        action === "deactivate"
-          ? "No se pudo desactivar el curso."
-          : "No se pudo eliminar el curso."
-      setError(e instanceof Error ? e.message : fallback)
-      setConfirming(null)
-    } finally {
-      setBusy(false)
     }
+    setConfirming(null)
+    setBusy(false)
   }
 
   return (
@@ -133,12 +133,6 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
           Crear nuevo curso
         </ActionButton>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </div>
-      )}
 
       <TablePanel>
         <Table>

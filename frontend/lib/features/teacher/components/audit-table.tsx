@@ -21,6 +21,7 @@ import type { AuditEntry } from "@/lib/features/teacher/types"
 import type { Role } from "@/lib/features/auth/types"
 import { clearAuditLog } from "@/lib/features/teacher/data"
 import { ActionButton } from "@shared/components/action-button"
+import { notifyPromise } from "@shared/lib/toast"
 
 const PAGE_SIZE = 8
 
@@ -65,7 +66,6 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   const [desde, setDesde] = useState("")
   const [hasta, setHasta] = useState("")
   const [page, setPage] = useState(1)
-  const [error, setError] = useState<string | null>(null)
 
   const filtered = entries.filter((e) => {
     const q = search.toLowerCase()
@@ -82,12 +82,11 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   const handleClear = async () => {
-    setError(null)
-    try {
-      await clearAuditLog()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo borrar la bitácora.")
-    }
+    await notifyPromise(clearAuditLog(), {
+      loading: "Borrando la bitácora…",
+      success: "Bitácora borrada",
+      error: "No se pudo borrar la bitácora.",
+    })
   }
 
   return (
@@ -147,12 +146,6 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
           </ActionButton>
         </div>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </div>
-      )}
 
       <TablePanel>
         <Table>

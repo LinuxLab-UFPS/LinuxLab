@@ -1,8 +1,10 @@
 "use client"
 
+import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
+import { notify } from "@shared/lib/toast"
 import type { ActivityCheckResult, LessonActivity } from "@/lib/models/activities"
 
 export type { ActivityCheckResult as CheckResult, LessonActivity } from "@/lib/models/activities"
@@ -93,8 +95,29 @@ export function useActivityCheck(slug: string) {
       // que se escriba ahí no llega a la carpeta nueva. El Ctrl+C limpia la
       // línea a medias que hubiera antes de mandar el `cd`.
       sendToTerminal("\x03cd ~\n")
+      notify.success("Archivos reiniciados")
     },
   })
+
+  // Los errores de la actividad, la comprobación y el reinicio se avisan por
+  // toast; la pantalla no vuelve a pintar ninguna caja de error.
+  useEffect(() => {
+    if (activityQuery.isError) {
+      notify.error(activityQuery.error, "No se pudo cargar la actividad.")
+    }
+  }, [activityQuery.isError, activityQuery.error])
+
+  useEffect(() => {
+    if (checkMutation.isError) {
+      notify.error(checkMutation.error, "No se pudo comprobar la actividad.")
+    }
+  }, [checkMutation.isError, checkMutation.error])
+
+  useEffect(() => {
+    if (resetMutation.isError) {
+      notify.error(resetMutation.error, "No se pudieron reiniciar los archivos.")
+    }
+  }, [resetMutation.isError, resetMutation.error])
 
   const activity = activityQuery.data ?? null
   const error =

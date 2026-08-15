@@ -17,6 +17,7 @@ import { TablePanel, TableEmptyState } from "@shared/components/data-table"
 import { ActionButton } from "@shared/components/action-button"
 import { StatTabs } from "@shared/components/stat-tabs"
 import { parseStudentCsv } from "@shared/lib/csv"
+import { notify } from "@shared/lib/toast"
 
 export type StudentSource = "manual" | "csv"
 
@@ -63,10 +64,7 @@ export function StudentManager({
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
-  const [formError, setFormError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
-  const [summary, setSummary] = useState<string | null>(null)
-  const [rejected, setRejected] = useState<Rejected[]>([])
   const fileInput = useRef<HTMLInputElement>(null)
 
   const emails = new Set(students.map((s) => emailKey(s.email)))
@@ -78,21 +76,20 @@ export function StudentManager({
 
   const addManual = (e: React.FormEvent) => {
     e.preventDefault()
-    setFormError(null)
     if (!name.trim() || !email.trim() || !code.trim()) {
-      setFormError("Nombre, correo y código son obligatorios.")
+      notify.error(null, "Nombre, correo y código son obligatorios.")
       return
     }
     if (!EMAIL.test(email.trim())) {
-      setFormError("El correo no tiene un formato válido.")
+      notify.error(null, "El correo no tiene un formato válido.")
       return
     }
     if (emails.has(emailKey(email))) {
-      setFormError(`Ya agregaste el correo ${email.trim()}.`)
+      notify.error(null, `Ya agregaste el correo ${email.trim()}.`)
       return
     }
     if (codes.has(codeKey(code))) {
-      setFormError(`Ya agregaste el código ${code.trim()}.`)
+      notify.error(null, `Ya agregaste el código ${code.trim()}.`)
       return
     }
     onAdd({ name: name.trim(), email: email.trim(), code: code.trim(), source: "manual" })
@@ -102,18 +99,10 @@ export function StudentManager({
   }
 
   const importCsv = async (file: File) => {
-    setSummary(null)
-    setRejected([])
     try {
       const rows = parseStudentCsv(await file.text())
       if (rows.length === 0) {
-        setRejected([
-          {
-            line: 0,
-            email: "",
-            reason: "El archivo está vacío o le falta el encabezado nombre,email,codigo",
-          },
-        ])
+        notify.error(null, "El archivo está vacío o le falta el encabezado nombre,email,codigo")
         return
       }
 
@@ -158,10 +147,14 @@ export function StudentManager({
       const parts = [`${accepted.length} agregado(s)`]
       if (dupes) parts.push(`${dupes} duplicado(s)`)
       if (invalid) parts.push(`${invalid} inválido(s)`)
-      setSummary(parts.join(", "))
-      setRejected(bad)
+      notify.success(parts.join(", "), {
+        description:
+          bad.length > 0
+            ? bad.map((b) => `línea ${b.line}: ${b.email} — ${b.reason}`).join(" · ")
+            : undefined,
+      })
     } catch {
-      setRejected([{ line: 0, email: "", reason: "No se pudo leer el archivo" }])
+      notify.error(null, "No se pudo leer el archivo")
     }
   }
 
@@ -232,12 +225,6 @@ export function StudentManager({
             </div>
           </div>
 
-          {formError && (
-            <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {formError}
-            </p>
-          )}
-
           <ActionButton tone="primary" type="submit">
             <UserPlus className="h-4 w-4" />
             Agregar estudiante
@@ -287,38 +274,6 @@ export function StudentManager({
               Seleccionar archivo
             </ActionButton>
           </div>
-
-          {summary && (
-            <p className="rounded-md border border-table-line px-3 py-2 text-sm text-muted-foreground">
-              {summary}
-            </p>
-          )}
-
-          {rejected.length > 0 && (
-            <div className="rounded-xl border border-danger/25">
-              <p className="border-b border-danger/25 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-danger">
-                Filas no agregadas
-              </p>
-              <ul className="max-h-44 divide-y divide-table-line overflow-y-auto">
-                {rejected.map((row, i) => (
-                  <li
-                    key={`${row.line}-${i}`}
-                    className="flex items-center justify-between gap-4 px-4 py-2 text-sm"
-                  >
-                    <span className="min-w-0 truncate text-foreground">
-                      {row.line > 0 && (
-                        <span className="mr-2 font-mono text-xs text-muted-foreground">
-                          línea {row.line}
-                        </span>
-                      )}
-                      {row.email || "—"}
-                    </span>
-                    <span className="shrink-0 text-xs text-danger">{row.reason}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
 

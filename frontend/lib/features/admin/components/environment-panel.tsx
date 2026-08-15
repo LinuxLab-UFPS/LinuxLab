@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AlertCircle, CheckCircle2, Loader2, RefreshCw, TerminalSquare } from "lucide-react"
-import { toast } from "sonner"
 import { cn } from "@shared/lib/utils"
 import { apiFetch } from "@/lib/api/client"
+import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
 import { TablePanel, TableEmptyState } from "@shared/components/data-table"
 import {
@@ -85,12 +85,11 @@ export function EnvironmentPanel() {
   const [data, setData] = useState<Snapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(() => {
     return apiFetch<Snapshot>("/api/admin/environment")
       .then(setData)
-      .catch((e) => setError(e instanceof Error ? e.message : "No se pudo leer el entorno"))
+      .catch((e) => notify.error(e, "No se pudo leer el entorno"))
       .finally(() => setLoading(false))
   }, [])
 
@@ -100,15 +99,13 @@ export function EnvironmentPanel() {
 
   const run = async (action: string, path: string, done: (r: never) => string) => {
     setBusy(action)
-    try {
-      const result = await apiFetch<never>(path, { method: "POST" })
-      toast.success(done(result))
-      await load()
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "La operación falló")
-    } finally {
-      setBusy(null)
-    }
+    const result = await notifyPromise(apiFetch<never>(path, { method: "POST" }), {
+      loading: "Ejecutando la operación…",
+      success: (r) => done(r),
+      error: "La operación falló",
+    })
+    if (result.ok) await load()
+    setBusy(null)
   }
 
   if (loading) {
@@ -119,10 +116,14 @@ export function EnvironmentPanel() {
     )
   }
 
-  if (error || !data) {
+  if (!data) {
     return (
-      <div className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-        {error ?? "Sin datos"}
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-table-line py-20">
+        <p className="text-sm text-muted-foreground">No se pudo leer el entorno.</p>
+        <ActionButton tone="neutral" onClick={load}>
+          <RefreshCw className="h-4 w-4" />
+          Reintentar
+        </ActionButton>
       </div>
     )
   }

@@ -6,6 +6,7 @@ import { cn } from "@shared/lib/utils"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
 import { Checkbox } from "@shared/components/ui/checkbox"
+import { notify } from "@shared/lib/toast"
 import type { ActivityCheck, CatalogEntry } from "@/lib/features/teacher/types"
 
 export type { ActivityCheck }
@@ -42,8 +43,11 @@ export function CheckBuilder({
         if (!alive) return
         setCatalog(entries)
       })
-      .catch(() => {
-        if (alive) setError("No se pudo cargar el catálogo de aserciones")
+      .catch((e) => {
+        if (alive) {
+          setError("No se pudo cargar el catálogo de aserciones")
+          notify.error(e, "No se pudo cargar el catálogo de aserciones")
+        }
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -102,9 +106,9 @@ export function CheckBuilder({
 
   if (error || catalog.length === 0) {
     return (
-      <div className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
+      <p className="rounded-md px-3 py-2 text-sm text-muted-foreground">
         {error ?? "El catálogo de aserciones está vacío"}
-      </div>
+      </p>
     )
   }
 

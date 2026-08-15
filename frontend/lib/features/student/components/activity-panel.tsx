@@ -39,7 +39,7 @@ export function ActivityPanel({
   /** Where the course continues after that lesson. */
   next?: LessonRef | null
 }) {
-  const { activity: data, rows, evaluated, passed, loading, checking, error, check, reset, resetting } =
+  const { activity: data, rows, evaluated, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
   return (
@@ -104,11 +104,6 @@ export function ActivityPanel({
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        {error && (
-          <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
         <div className="flex items-center gap-2">
           <ActionButton
             tone={passed ? "emerald" : "amber"}

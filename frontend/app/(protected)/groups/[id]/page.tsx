@@ -26,6 +26,8 @@ import {
 } from "@/lib/features/teacher/data"
 import { queryKeys, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
 import type { EnrollmentStudent } from "@/lib/models/auth"
+import { notify } from "@shared/lib/toast"
+import { useProvisioningProgress } from "@/lib/features/teacher/use-provisioning-progress"
 
 type Tab = "estudiantes" | "actividades"
 
@@ -36,12 +38,13 @@ function GroupDetailContent() {
   const [tab, setTab] = useState<Tab>("estudiantes")
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
-  const [addError, setAddError] = useState<string | null>(null)
 
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
   const activitiesQuery = useGroupActivities(id)
   const progress = useGroupProgress(id)
+
+  useProvisioningProgress(id, studentsQuery.data)
 
   const group = groupQuery.data ?? null
   const loading = groupQuery.isLoading
@@ -57,10 +60,10 @@ function GroupDetailContent() {
       ])
       queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })
       setAdding(false)
-      setAddError(null)
+      notify.success("Estudiante agregado")
     },
     onError: (e: unknown) => {
-      setAddError(e instanceof Error ? e.message : "No se pudo agregar el estudiante.")
+      notify.error(e, "No se pudo agregar el estudiante.")
     },
   })
 
@@ -165,10 +168,7 @@ function GroupDetailContent() {
             <ActionButton
               tone="primary"
               className="ml-auto"
-              onClick={() => {
-                setAddError(null)
-                setAdding(true)
-              }}
+              onClick={() => setAdding(true)}
             >
               <Plus className="h-4 w-4" />
               Agregar estudiante
@@ -196,12 +196,8 @@ function GroupDetailContent() {
       <AddStudentDialog
         open={adding}
         busy={addStudentMutation.isPending}
-        error={addError}
         onSubmit={(student) => addStudentMutation.mutate(student)}
-        onOpenChange={(open) => {
-          setAdding(open)
-          if (!open) setAddError(null)
-        }}
+        onOpenChange={setAdding}
       />
 
     </div>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { RotateCcw } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { resetTerminal } from "@/lib/features/terminal/settings"
+import { notify } from "@shared/lib/toast"
 
 const FONTS = [
   { label: "Menlo (default)", value: "Menlo, Monaco, 'Courier New', monospace" },
@@ -29,8 +30,9 @@ export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, on
     try {
       await resetTerminal()
       onReset?.()
-    } catch {
-      // error silencioso
+      notify.success("Terminal reiniciado")
+    } catch (e) {
+      notify.error(e, "No se pudo reiniciar la terminal")
     }
     setResetting(false)
   }

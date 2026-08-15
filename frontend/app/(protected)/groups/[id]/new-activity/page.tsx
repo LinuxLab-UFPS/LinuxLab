@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, Loader2, Send } from "lucide-react"
-import { toast } from "sonner"
+import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
@@ -72,10 +72,6 @@ function NewActivityPage() {
   const [checks, setChecks] = useState<ActivityCheck[]>([])
   const [distributeEvenly, setDistributeEvenly] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(Boolean(editId))
-  const [error, setError] = useState<string | null>(null)
-  const [titleError, setTitleError] = useState<string | null>(null)
-  const [descError, setDescError] = useState<string | null>(null)
-  const [dateError, setDateError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
 
   // Modo edicion: se carga la actividad publicada y se rellena el formulario.
@@ -94,8 +90,8 @@ function NewActivityPage() {
         setChecks(activity.checks.map((c) => ({ id: c.id, type: c.type, params: c.params, points: c.points })))
         setDistributeEvenly(false)
       })
-      .catch(() => {
-        if (alive) setError("No se pudo cargar la actividad para editar")
+      .catch((e) => {
+        if (alive) notify.error(e, "No se pudo cargar la actividad para editar")
       })
       .finally(() => {
         if (alive) setLoadingDetail(false)
@@ -111,57 +107,54 @@ function NewActivityPage() {
   const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
 
   const handlePublish = async () => {
-    setError(null)
-    setTitleError(null)
-    setDescError(null)
-    setDateError(null)
-
     let hasError = false
     const title = activityName.trim()
     if (!title) {
-      setTitleError("El nombre de la actividad es requerido")
+      notify.error(null, "El nombre de la actividad es requerido")
       hasError = true
     } else if (title.length > 255) {
-      setTitleError("El nombre no puede superar los 255 caracteres")
+      notify.error(null, "El nombre no puede superar los 255 caracteres")
       hasError = true
     }
     if (instructions.length > 2000) {
-      setDescError("La descripción no puede superar los 2000 caracteres")
+      notify.error(null, "La descripción no puede superar los 2000 caracteres")
       hasError = true
     }
     if (dueDate && new Date(dueDate) <= new Date()) {
-      setDateError("La fecha de cierre debe ser posterior a la fecha actual")
+      notify.error(null, "La fecha de cierre debe ser posterior a la fecha actual")
       hasError = true
     }
     if (hasError) return
 
     setPublishing(true)
-    try {
-      const input: CreateActivityInput = {
-        title,
-        topicNumber: Number(selectedTopic) || 0,
-        source: "teacher",
-        instructions,
-        maxScore: MAX_SCORE,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        required: true,
-        evaluationType,
-        gradingPolicy,
-        checks,
-      }
-      if (editId) {
-        await updateActivity(groupId, editId, input)
-        toast.success("Actividad actualizada")
-        router.push(`/groups/${groupId}/activities/${editId}`)
-      } else {
-        await createActivity(groupId, input)
-        toast.success("Actividad publicada")
-        router.push(`/groups/${groupId}`)
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo guardar la actividad.")
-    } finally {
+    const input: CreateActivityInput = {
+      title,
+      topicNumber: Number(selectedTopic) || 0,
+      source: "teacher",
+      instructions,
+      maxScore: MAX_SCORE,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      required: true,
+      evaluationType,
+      gradingPolicy,
+      checks,
+    }
+    if (editId) {
+      const updated = await notifyPromise(updateActivity(groupId, editId, input), {
+        loading: "Guardando cambios…",
+        success: "Actividad actualizada",
+        error: "No se pudo guardar la actividad.",
+      })
       setPublishing(false)
+      if (updated.ok) router.push(`/groups/${groupId}/activities/${editId}`)
+    } else {
+      const created = await notifyPromise(createActivity(groupId, input), {
+        loading: "Publicando actividad…",
+        success: "Actividad publicada",
+        error: "No se pudo guardar la actividad.",
+      })
+      setPublishing(false)
+      if (created.ok) router.push(`/groups/${groupId}`)
     }
   }
 
@@ -200,15 +193,11 @@ function NewActivityPage() {
             <Input
               id="activityName"
               value={activityName}
-              onChange={(e) => {
-                setActivityName(e.target.value)
-                setTitleError(null)
-              }}
+              onChange={(e) => setActivityName(e.target.value)}
               placeholder="Ej: Script de respaldo"
               maxLength={255}
               className="border-table-line"
             />
-            {titleError && <p className="text-xs text-danger">{titleError}</p>}
           </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -245,13 +234,9 @@ function NewActivityPage() {
                 type="datetime-local"
                 value={dueDate}
                 min={minDateTime}
-                onChange={(e) => {
-                  setDueDate(e.target.value)
-                  setDateError(null)
-                }}
+                onChange={(e) => setDueDate(e.target.value)}
                 className="border-table-line [color-scheme:dark]"
               />
-              {dateError && <p className="text-xs text-danger">{dateError}</p>}
             </div>
 
             <div className="space-y-2">
@@ -279,16 +264,12 @@ function NewActivityPage() {
           <div className="space-y-2">
             <Textarea
               value={instructions}
-              onChange={(e) => {
-                setInstructions(e.target.value)
-                setDescError(null)
-              }}
+              onChange={(e) => setInstructions(e.target.value)}
               rows={7}
               placeholder="Escribe las instrucciones de la actividad…"
               maxLength={2000}
               className="resize-y border-table-line"
             />
-            {descError && <p className="text-xs text-danger">{descError}</p>}
           </div>
         </Seccion>
 
@@ -354,12 +335,6 @@ function NewActivityPage() {
           )}
         </Seccion>
       </div>
-
-      {error && (
-        <p className="mt-6 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error}
-        </p>
-      )}
 
       <div className="mt-8 flex items-center gap-3">
         <ActionButton tone="amber" onClick={handlePublish} disabled={publishing}>
