@@ -47,18 +47,18 @@ body{
 .desk{
   position:relative;flex:1;min-height:0;overflow:hidden;
   background:
-    linear-gradient(158deg,transparent 54%,rgba(255,0,48,.20) 54.2%),
-    linear-gradient(202deg,transparent 70%,rgba(255,0,48,.11) 70.2%),
-    linear-gradient(130deg,#170B12 0%,#2A0E1B 48%,#3E1122 100%);
+    linear-gradient(158deg,transparent 54%,rgba(163,113,247,.24) 54.2%),
+    linear-gradient(202deg,transparent 70%,rgba(120,80,200,.18) 70.2%),
+    linear-gradient(130deg,#1B1030 0%,#2E1550 47%,#45208A 100%);
 }
 
 /* ---------- iconos del escritorio ---------- */
 .icons{position:absolute;left:3%;top:4%;width:34%;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start}
-.icon{width:104px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
-.icon-art{width:52px;height:52px}
+.icon{width:clamp(100px,11vmin,118px);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.icon-art{width:clamp(34px,4.8vmin,54px);height:clamp(34px,4.8vmin,54px)}
 .icon-art svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
-.icon-name{font-size:10px;color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-.icon-size{font-size:10px;color:#B9C6D6;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.icon-name{font-size:clamp(8.5px,1vmin + 2px,10.5px);color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.icon-size{font-size:clamp(8px,0.95vmin + 2px,10px);color:#B9C6D6;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 
 /* ---------- ventanas ---------- */
 .win{
@@ -67,28 +67,28 @@ body{
   box-shadow:0 18px 40px rgba(0,0,0,.5);
 }
 .win[hidden]{display:none}
-.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
 .win-dot{width:11px;height:11px;border-radius:50%}
-.win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.win-title{flex:1;text-align:center;font-size:clamp(9px,1.05vmin + 2px,11.5px);color:var(--muted)}
 
 /* Cada ventana en su cuadrante: arriba izquierda los desafios, arriba derecha
    la terminal, abajo derecha el correo. Abrir y cerrar no las mueve de sitio. */
 #w-term{left:44%;top:7%;width:53%;height:77%}
-.console{background:#0B0E14;padding:12px 14px;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.console{background:#0B0E14;padding:1.4vmin 1.6vmin;font-size:clamp(9.5px,1.25vmin + 3px,13px);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
 .log{white-space:pre-wrap;line-height:1.5}
 .log.ok{color:var(--green)}
 .log.bad{color:var(--red)}
 .log.note{color:var(--muted)}
 .log.echo{color:var(--text)}
-.prompt{display:flex;align-items:center;gap:7px;font-size:13px;flex-shrink:0;padding:0 14px 12px;background:#0B0E14}
+.prompt{display:flex;align-items:center;gap:7px;font-size:clamp(10px,1.3vmin + 3px,13.5px);flex-shrink:0;padding:0 1.6vmin 1.4vmin;background:#0B0E14}
 .ps1{color:var(--green);font-weight:700;flex-shrink:0}
 .typed{color:var(--bright);white-space:pre}
 .caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
 @keyframes blink{50%{opacity:0}}
 
 #w-txt{left:3%;top:54%;width:34%;height:34%}
-.txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:16px 18px;font-size:12.5px;line-height:1.6}
-.txt-titulo{font-size:14px;font-weight:700;color:#1A1A1F;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #E3E3EA}
+.txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:1.8vmin 2vmin;font-size:clamp(9.5px,1.2vmin + 3px,13px);line-height:1.6}
+.txt-titulo{font-size:clamp(11px,1.4vmin + 3px,14.5px);font-weight:700;color:#1A1A1F;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #E3E3EA}
 .paso{display:flex;gap:9px;margin-bottom:13px;transition:opacity .3s}
 .paso-n{flex-shrink:0;font-weight:700;color:#8A8A99}
 .paso.pend{opacity:.38}
@@ -98,7 +98,7 @@ body{
 .txt-nota{margin-top:16px;padding-top:11px;border-top:1px solid #E3E3EA;font-size:11px;color:#70707E;line-height:1.5}
 
 #w-mail{left:3%;top:22%;width:34%;height:30%}
-.mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 14px;font-size:12px;gap:0}
+.mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:1.2vmin 1.6vmin;font-size:clamp(9.5px,1.15vmin + 3px,12.5px);gap:0}
 .mail-row{display:flex;gap:8px;padding:5px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
 .mail-row b{color:#1A1A1F;font-weight:600}
 .mail-adj{flex:1;min-height:0;overflow-y:auto;padding:9px 2px;display:flex;flex-direction:column;gap:8px}
@@ -125,15 +125,18 @@ body{
 .picker-it small{color:#8A8A99}
 
 /* ---------- dock ---------- */
-@media (max-width:860px){
-  .icons{left:3%;top:3%;width:94%}
-  #w-mail{left:3%;top:22%;width:94%;height:24%}
-  #w-txt{left:3%;top:50%;width:94%;height:24%}
-  #w-term{left:3%;top:22%;width:94%;height:52%}
+/* El guiño: vive en el cuadrante de la terminal, detras de ella. */
+.marca{
+  position:absolute;left:44%;top:7%;width:53%;height:77%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(26px,5.2vmin,54px);font-weight:700;letter-spacing:.04em;
+  color:var(--red);filter:drop-shadow(0 0 24px rgba(255,0,48,.5));
+  user-select:none;pointer-events:none;
 }
+.marca span{color:var(--bright);filter:none}
 
 .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
-.dock-btn{width:50px;height:50px;border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
+.dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
 .dock-btn:hover{transform:translateY(-4px)}
 .dock-btn:disabled{cursor:default}
 .dock-btn:disabled:hover{transform:none}
@@ -147,6 +150,23 @@ body{
 .fin-t{font-size:20px;font-weight:700;color:var(--green);margin-bottom:10px}
 .fin-p{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:22px}
 .fin-btns{display:flex;gap:10px;justify-content:center}
+/* Poco sitio (pantalla pequeña o zoom fuerte): en vez de encoger las ventanas
+   hasta que no quepa nada, se apilan con un alto minimo util y el escritorio se
+   desplaza. Vale mas hacer scroll que leer una terminal de tres lineas.
+   Va al final y con selectores de ID a proposito: un `#w-term` de arriba le
+   ganaria a un `.win` de aqui por especificidad. */
+@media (max-width:860px), (max-height:520px){
+  .desk{display:block;overflow-y:auto;padding:14px 14px 96px}
+  .icons{position:static;width:auto;margin-bottom:14px}
+  .marca{display:none}
+  #w-term,#w-txt,#w-mail{
+    position:static;left:auto;right:auto;top:auto;width:auto;margin-bottom:13px;
+  }
+  #w-term{height:min(300px,52vh);min-height:210px}
+  #w-txt{height:auto;min-height:190px}
+  #w-mail{height:auto;min-height:220px}
+  .dock{position:fixed;bottom:12px}
+}
 </style>
 
 <div class="hdr">
@@ -164,6 +184,9 @@ body{
 
 <div class="desk" id="desk">
   <div class="icons" id="icons"></div>
+
+  <!-- Debajo de la terminal, para quien se le ocurra cerrarla. -->
+  <div class="marca" aria-hidden="true">Linux<span>Lab</span></div>
 
   <!-- terminal: no se cierra, es donde se trabaja -->
   <div class="win" id="w-term">
@@ -238,7 +261,7 @@ body{
         <rect x="9" y="52" width="46" height="7" rx="3.5" fill="#E8912F"/>
       </svg>
     </button>
-    <button class="dock-btn" id="d-term" title="Terminal (siempre abierta)" data-abierta="true" disabled>
+    <button class="dock-btn" id="d-term" title="Terminal" data-abierta="true">
       <svg viewBox="0 0 64 64">
         <rect width="64" height="64" rx="15" fill="#1E222B"/>
         <path d="m19 24 9 8-9 8" fill="none" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -355,19 +378,19 @@ const enRaiz = () => Object.keys(fs).filter((k) => !k.includes("/"));
 function desafios() {
   return [
     {
-      objetivo: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz`,
-      texto: `El correo no admite carpetas. Empaqueta y comprime ${nombres.carpeta}/ en un solo archivo .tar.gz.`,
+      objetivo: `Comprime ${nombres.carpeta}/ en un .tar.gz`,
+      texto: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz con tar. El correo no admite carpetas.`,
       hecho: () =>
         enRaiz().some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
     },
     {
-      objetivo: `Mira dentro de ${nombres.respaldo} y extráelo`,
-      texto: `Llegó ${nombres.respaldo}. Lista su contenido antes de abrirlo y luego extráelo.`,
+      objetivo: `Lista y extrae ${nombres.respaldo}`,
+      texto: `Lista el contenido de ${nombres.respaldo} antes de abrirlo y extráelo.`,
       hecho: () => Boolean(fs[nombres.respaldo] && fs[nombres.respaldo].extraido),
     },
     {
-      objetivo: `Quita ${nombres.intruso}, vuelve a comprimir y envíalo`,
-      texto: `Ese respaldo trae ${nombres.intruso}, que no debe salir de aquí. Bórralo, vuelve a comprimir lo demás y envía el resultado por correo.`,
+      objetivo: `Elimina ${nombres.intruso}, recomprime y envía`,
+      texto: `Elimina ${nombres.intruso}, vuelve a comprimir ${nombres.raizRespaldo}/ y envíalo por correo.`,
       hecho: () => Boolean(enviado && enviado.limpio),
     },
   ];
@@ -712,6 +735,8 @@ $("d-mail").addEventListener("click", () => {
   if (!$("w-mail").hidden) pintarCorreo();
 });
 $("d-txt").addEventListener("click", () => alternar("w-txt", "d-txt"));
+// La terminal tambien se cierra. Detras no hay escritorio vacio: esta la marca.
+$("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
 
 $("mail-adjuntar").addEventListener("click", abrirPicker);
 $("mail-enviar").addEventListener("click", enviar);

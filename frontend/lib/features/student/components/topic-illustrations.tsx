@@ -258,6 +258,38 @@ function Packages() {
   )
 }
 
+/** Simulador de compresion: tres hojas que entran en un paquete y se envian. */
+export function SimulatorCompressionIllustration() {
+  const GREEN = "#34d399"
+  return (
+    <Svg>
+      {/* las hojas sueltas, escalonadas */}
+      {[0, 1, 2].map((i) => (
+        <path
+          key={i}
+          d={`M${34 + i * 7} ${30 + i * 9} h26 l8 8 v28 h-34 Z`}
+          stroke={i === 2 ? LINE : BASE}
+          strokeWidth="1.8"
+          opacity={i === 2 ? 1 : 0.55}
+        />
+      ))}
+
+      {/* la flecha: lo de la izquierda cabe en lo de la derecha */}
+      <path d="M92 60 h22" stroke={GREEN} strokeWidth="2.4" />
+      <path d="M108 54 l7 6 l-7 6" stroke={GREEN} strokeWidth="2.4" />
+
+      {/* el paquete, con su cinta */}
+      <path d="M124 42 h44 v40 h-44 Z" stroke={LINE} strokeWidth="2" />
+      <path d="M124 54 h44" stroke={BASE} strokeWidth="1.6" />
+      <path d="M141 42 v40 M151 42 v40" stroke={BASE} strokeWidth="1.6" opacity="0.6" />
+
+      {/* el sobre: el motivo por el que se comprime */}
+      <path d="M132 92 h28 v18 h-28 Z" stroke={RED} strokeWidth="2" />
+      <path d="M132 92 l14 10 l14 -10" stroke={RED} strokeWidth="2" />
+    </Svg>
+  )
+}
+
 const ILLUSTRATIONS: Record<number, ComponentType> = {
   1: IntroLinux,
   2: TerminalTopic,
