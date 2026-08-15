@@ -78,11 +78,16 @@ export function GroupStudents({
                         <span className="text-sm text-muted-foreground">Sin cuenta</span>
                       )}
                     </TableCell>
+                    {/* La barra y su porcentaje en la misma linea: apilados, la
+                        barra quedaba descolgada de la altura del resto de la fila
+                        y el numero flotando debajo. */}
                     <TableCell>
-                      <NeonProgress value={progress?.progress ?? 0} className="w-28" />
-                      <span className="mt-1 block font-mono text-xs text-primary">
-                        {progress?.progress ?? 0}%
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <NeonProgress value={progress?.progress ?? 0} className="w-24" />
+                        <span className="shrink-0 font-mono text-xs text-primary">
+                          {progress?.progress ?? 0}%
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="font-mono text-sm text-amber-500">
                       {progress?.activitiesDone ?? 0}/{progress?.activitiesTotal ?? 0}
