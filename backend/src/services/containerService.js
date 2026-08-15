@@ -254,8 +254,23 @@ async function resetTerminal(userId) {
   }
 
   const username = user.linuxAccount.linux_username
+  if (!/^[a-z_][a-z0-9_-]{0,31}$/.test(username)) {
+    throw new AppError("El nombre de tu cuenta no es válido", 500, "INTERNAL_ERROR")
+  }
 
-  await sshClient.execCommand(`sudo su -c "pkill -u ${username}" 2>/dev/null || true`)
+  // `pkill` señala y vuelve: no espera a que los procesos mueran. La interfaz
+  // reabre la terminal en cuanto responde esta llamada, asi que la sesion nueva
+  // entraba mientras la vieja seguia agonizando y a veces caia en el mismo
+  // barrido. De ahi que recargar la pagina funcionara —tarda lo suyo— y el
+  // boton no.
+  //
+  // Aqui se espera a que no quede ninguno, con un KILL para los que se resistan,
+  // de modo que cuando esto responde la cuenta esta limpia de verdad.
+  await sshClient.execCommand(
+    `sudo su -c 'pkill -u ${username};` +
+    ` for i in 1 2 3 4 5 6 7 8 9 10; do pgrep -u ${username} >/dev/null || break; sleep 0.2; done;` +
+    ` pkill -KILL -u ${username} 2>/dev/null; true' 2>/dev/null || true`,
+  )
 
   logger.info({ username }, "Terminal reset")
   return { ok: true }
