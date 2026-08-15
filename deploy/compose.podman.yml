@@ -131,6 +131,9 @@ services:
       # se fija en local con deploy/build-local.sh --url ANTES de compilar.
       # Este BACKEND_URL es para las llamadas server-side de Next dentro de la red.
       BACKEND_URL: http://backend:3000
+      # Debe coincidir con el JWT_SECRET del backend: el middleware edge
+      # verifica las sesiones que firma el backend.
+      JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       HOSTNAME: "0.0.0.0"
     depends_on:
       - backend

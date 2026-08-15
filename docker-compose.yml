@@ -126,6 +126,9 @@ services:
       # El navegador entra por el puerto publicado; el servidor de Next habla
       # con el backend por la red interna.
       BACKEND_URL: http://backend:3000
+      # Debe coincidir con el JWT_SECRET del backend: el middleware edge
+      # verifica las sesiones que firma el backend.
+      JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       HOSTNAME: "0.0.0.0"
     networks:
       - external
