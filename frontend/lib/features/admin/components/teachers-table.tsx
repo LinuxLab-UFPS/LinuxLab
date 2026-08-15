@@ -1,15 +1,17 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Loader2, Search, Terminal, Users, X } from "lucide-react"
+import { Loader2, Search, Terminal, UserCheck, UserX, Users, X } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
 import { useTeachers } from "@/lib/features/admin/hooks"
+import { useTeacherProvisioningToast } from "@/lib/features/admin/use-teacher-provisioning-toast"
 import { RegisterTeacherDialog } from "./register-teacher-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
 import { Input } from "@shared/components/ui/input"
 import { StatusBadge } from "@shared/components/status-badge"
+import { IconAction } from "@shared/components/icon-action"
 import {
   Select,
   SelectContent,
@@ -31,7 +33,6 @@ import {
   TablePagination,
 } from "@shared/components/data-table"
 import { StatTabs } from "@shared/components/stat-tabs"
-import { ActionButton } from "@shared/components/action-button"
 
 type StatusFilter = "all" | "active" | "inactive"
 
@@ -62,6 +63,8 @@ export function TeachersTable() {
   )
 
   const { teachers, loading, submitting, register, toggleStatus, provisioningJobs } = useTeachers(filters)
+
+  useTeacherProvisioningToast(provisioningJobs)
 
   const jobByEmail = useMemo(() => {
     const map = new Map<string, (typeof provisioningJobs)[number]>()
@@ -123,14 +126,12 @@ export function TeachersTable() {
               className="border-table-line pl-9 pr-8"
             />
             {searchInput && (
-              <button
-                type="button"
+              <IconAction
+                label="Limpiar búsqueda"
+                icon={X}
                 onClick={() => setSearchInput("")}
-                aria-label="Limpiar búsqueda"
-                className="absolute right-2 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
+                className="absolute right-1.5 top-1/2 -translate-y-1/2"
+              />
             )}
           </div>
 
@@ -160,7 +161,6 @@ export function TeachersTable() {
 
         <RegisterTeacherDialog onRegister={register} submitting={submitting} />
       </div>
-
       {loading ? (
         <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -227,12 +227,11 @@ export function TeachersTable() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <ActionButton
-                          tone={teacher.active ? "amber" : "emerald"}
+                        <IconAction
+                          label={teacher.active ? "Dar de baja" : "Activar"}
+                          icon={teacher.active ? UserX : UserCheck}
                           onClick={() => handleToggle(teacher)}
-                        >
-                          {teacher.active ? "Desactivar" : "Activar"}
-                        </ActionButton>
+                        />
                       </TableCell>
                     </TableRow>
                   )

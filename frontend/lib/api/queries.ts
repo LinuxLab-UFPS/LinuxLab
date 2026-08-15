@@ -1,11 +1,12 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import * as teacherData from "@/lib/features/teacher/data"
 import * as adminData from "@/lib/features/admin/data"
 import type { GroupProgressSummary } from "@/lib/models/groups"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import type { TeacherProvisioningJobSummary } from "@/lib/features/admin/types"
+import type { ProvisioningStatusSummary } from "@/lib/features/teacher/api"
 import { EMPTY_PROGRESS } from "@/lib/models/groups"
 
 export const queryKeys = {
@@ -16,6 +17,7 @@ export const queryKeys = {
   groupActivities: (id: string) => ["groups", id, "activities"] as const,
   teacherJobs: ["admin", "teacher-jobs"] as const,
   teachers: (filters?: { search?: string; status?: string }) => ["admin", "teachers", filters] as const,
+  provisioningStatus: ["provisioning", "status"] as const,
 }
 
 /** Cursos del docente. */
@@ -26,13 +28,21 @@ export function useGroups() {
   })
 }
 
-/** Un curso, refrescado mientras haya cuentas por provisionar. */
+/** Un curso, refrescado solo mientras haya cuentas por provisionar: el poll
+ *  de provisioning vive en useGroupStudents (5s) y el resumen lo acompaña. */
 export function useGroup(id: string, enabled = true) {
+  const queryClient = useQueryClient()
   return useQuery({
     queryKey: queryKeys.group(id),
     queryFn: () => teacherData.getGroup(id),
     enabled: Boolean(id) && enabled,
-    refetchInterval: 5000,
+    refetchInterval: () => {
+      const students = queryClient.getQueryState(queryKeys.groupStudents(id))?.data as
+        | EnrollmentStudent[]
+        | undefined
+      const pending = students?.some((s) => !s.linuxProvisioned)
+      return pending ? 5000 : false
+    },
   })
 }
 
@@ -89,6 +99,21 @@ export function useTeacherProvisioningJobs() {
       const jobs = query.state.data as TeacherProvisioningJobSummary[] | undefined
       const settled = jobs?.every((job) => job.status === "completed" || job.status === "failed")
       return settled ? false : 5000
+    },
+  })
+}
+
+/** Estado global de aprovisionamiento del docente (indicador persistente);
+ *  refresca cada 5s mientras haya cuentas en proceso. */
+export function useProvisioningStatus(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.provisioningStatus,
+    queryFn: teacherData.getProvisioningStatus,
+    enabled,
+    refetchInterval: (query) => {
+      const status = query.state.data as ProvisioningStatusSummary | undefined
+      const pending = (status?.pending ?? 0) > 0
+      return pending ? 5000 : false
     },
   })
 }

@@ -31,6 +31,12 @@ async function createLinuxAccountWithUniqueUsername(db, userId, email) {
   }
 }
 
+/**
+ * Crea las cuentas Linux de un lote en consultas agrupadas (una para los
+ * usernames ocupados, una para crear). Devuelve las filas creadas
+ * (`user_id` + `linux_username`) para que quien las crea sepa qué username
+ * quedó asignado a cada usuario.
+ */
 async function createLinuxAccountsUnique(db, users) {
   const rows = users.map((user) => ({ user, base: sanitizeUsername(user.email) }))
   const taken = new Set(
@@ -61,6 +67,7 @@ async function createLinuxAccountsUnique(db, users) {
       }
     }
   }
+  return data
 }
 
 module.exports = { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique }

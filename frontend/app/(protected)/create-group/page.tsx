@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, ArrowRight, Send, Users } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
@@ -11,6 +12,8 @@ import { Stepper, type Step } from "@shared/components/stepper"
 import { StudentManager, type DraftStudent } from "@/lib/features/teacher/components/student-manager"
 import { createGroup } from "@/lib/features/teacher/data"
 import { RoleGuard } from "@shared/components/role-guard"
+import { queryKeys } from "@/lib/api/queries"
+import { notify, notifyPromise } from "@shared/lib/toast"
 
 const PASOS: Step[] = [
   { id: "curso", label: "Información" },
@@ -32,11 +35,11 @@ const ENTRADILLA = [
 
 function CreateGroupContent() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [paso, setPaso] = useState(0)
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
   const [students, setStudents] = useState<DraftStudent[]>([])
-  const [error, setError] = useState<string | null>(null)
   const [publishing, setPublishing] = useState(false)
   const addStudent = (student: Omit<DraftStudent, "id">) => {
     setStudents((prev) => [...prev, { ...student, id: crypto.randomUUID() }])
@@ -54,38 +57,43 @@ function CreateGroupContent() {
   // final obliga a rehacer el camino de vuelta.
   const avanzar = () => {
     if (paso === 0 && !groupName.trim()) {
-      setError("El nombre del curso es requerido.")
+      notify.error(null, "El nombre del curso es requerido.")
       return
     }
-    setError(null)
     setPaso((p) => Math.min(p + 1, PASOS.length - 1))
   }
 
   const retroceder = () => {
-    setError(null)
     setPaso((p) => Math.max(p - 1, 0))
   }
 
   const handlePublish = async () => {
-    setError(null)
     setPublishing(true)
-    try {
-      const response = await createGroup({
-        name: groupName,
-        description,
-        students: students.map((s) => ({ name: s.name, email: s.email, code: s.code })),
-      })
-      const e = response.enrollment
-      const parts: string[] = []
-      if (e.registered) parts.push(`${e.registered} inscrito(s)`)
-      if (e.skipped) parts.push(`${e.skipped} ya inscrito(s)`)
-      if (e.errors.length) parts.push(`${e.errors.length} con error`)
-      const summary = parts.length ? parts.join(", ") : "sin estudiantes"
-      router.push(`/groups/${response.group.id}?created=1&summary=${encodeURIComponent(summary)}`)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo publicar el curso.")
-      setPublishing(false)
-    }
+    const response = await notifyPromise(createGroup({
+      name: groupName,
+      description,
+      students: students.map((s) => ({ name: s.name, email: s.email, code: s.code })),
+    }), {
+      loading: "Publicando el curso…",
+      success: "Curso publicado",
+      description: (r) => {
+        const parts: string[] = []
+        if (r.enrollment.registered) parts.push(`${r.enrollment.registered} inscrito(s)`)
+        if (r.enrollment.skipped) parts.push(`${r.enrollment.skipped} ya inscrito(s)`)
+        if (r.enrollment.errors.length) parts.push(`${r.enrollment.errors.length} con error`)
+        return parts.length ? parts.join(", ") : "sin estudiantes"
+      },
+      error: "No se pudo publicar el curso.",
+    })
+    setPublishing(false)
+    if (!response.ok) return
+    const published = response.data
+
+    // El listado de cursos quedo viejo: al volver a /home el curso nuevo debe
+    // estar ahi sin esperar a que la cache expire.
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups })
+
+    router.push(`/groups/${published.group.id}`)
   }
 
   return (
@@ -177,12 +185,6 @@ function CreateGroupContent() {
               </dl>
             )}
           </div>
-
-          {error && (
-            <p className="mt-6 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-              {error}
-            </p>
-          )}
 
           <div className="mt-10 flex items-center gap-3">
             {paso > 0 && (

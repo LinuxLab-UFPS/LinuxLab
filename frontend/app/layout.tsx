@@ -5,6 +5,7 @@ import { ThemeProvider } from '@shared/components/theme-provider'
 import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@shared/components/ui/sonner'
+import { TooltipProvider } from '@shared/components/ui/tooltip'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -48,8 +49,10 @@ export default function RootLayout({
         >
           <AuthProvider>
             <QueryProvider>
-              {children}
-              <Toaster richColors position="top-right" />
+              <TooltipProvider delayDuration={150}>
+                {children}
+                <Toaster richColors position="top-right" />
+              </TooltipProvider>
             </QueryProvider>
           </AuthProvider>
         </ThemeProvider>

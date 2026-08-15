@@ -6,6 +6,7 @@ const { runInTransaction } = require("../lib/transaction")
 const { registerTeacherSchema } = require("../dtos/userDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeTeacher } = require("../dtos/userDtos")
+const { PRIORITIES } = require("../lib/constants")
 
 const TEACHER_SELECT = {
   id: true,

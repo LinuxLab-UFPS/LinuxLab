@@ -12,7 +12,7 @@ import { useActivityCheck } from "@/lib/features/student/use-activity-check"
  * syllabus and are solved next to the terminal.
  */
 export function ExerciseCheck({ slug }: { slug: string }) {
-  const { activity, rows, evaluated, passed, loading, checking, error, check } =
+  const { activity, rows, evaluated, passed, loading, checking, check } =
     useActivityCheck(slug)
 
   if (loading) {
@@ -24,11 +24,7 @@ export function ExerciseCheck({ slug }: { slug: string }) {
   }
 
   if (!activity) {
-    return (
-      <div className="my-8 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-        {error ?? "Comprobación no disponible"}
-      </div>
-    )
+    return <p className="my-8 text-sm text-muted-foreground">Comprobación no disponible.</p>
   }
 
   const edge = passed ? "border-success/40" : "border-amber-500/30"
@@ -51,12 +47,6 @@ export function ExerciseCheck({ slug }: { slug: string }) {
         )}
 
         <CheckList rows={rows} evaluated={evaluated} />
-
-        {error && (
-          <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
 
         <div className="flex items-center gap-3">
           <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking}>

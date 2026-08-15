@@ -99,14 +99,14 @@ export function GroupStudents({
             </TableBody>
           </Table>
 
-          {visible.length === 0 && (
-            <TableEmptyState>
-              {students.length === 0
-                ? "No hay estudiantes inscritos en este curso."
-                : "Ningún estudiante coincide con la búsqueda."}
-            </TableEmptyState>
-          )}
-        </div>
+        {visible.length === 0 && (
+          <TableEmptyState>
+            {students.length === 0
+              ? "No hay estudiantes inscritos en este curso."
+              : "Ningún estudiante coincide con la búsqueda."}
+          </TableEmptyState>
+        )}
+      </div>
       </TablePanel>
 
     </section>

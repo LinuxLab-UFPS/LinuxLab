@@ -29,11 +29,11 @@ export function TablePanel({
         // que no quede una raya doble contra el borde inferior del panel.
         "[&_tr]:border-table-line [&_tbody_tr:last-child]:border-0",
         // Encabezado: unica fila con fondo, etiquetas cortas en mayuscula y
-        // siempre a la izquierda.
+        // siempre centrado.
         "[&_thead_tr]:bg-table-surface",
-        "[&_th]:px-5 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground",
-        // Entradas: alineadas a la izquierda igual que su titulo de columna.
-        "[&_td]:px-5 [&_td]:py-3.5 [&_td]:text-left [&_td]:align-middle",
+        "[&_th]:px-5 [&_th]:py-3 [&_th]:text-center [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-muted-foreground",
+        // Entradas: centradas igual que su titulo de columna.
+        "[&_td]:px-5 [&_td]:py-3.5 [&_td]:text-center [&_td]:align-middle",
         // Hover neutro: funciona igual en claro y oscuro porque se tinta con el
         // color de texto, no con un gris fijo.
         "[&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-foreground/[0.04]",

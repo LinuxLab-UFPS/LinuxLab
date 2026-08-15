@@ -1,15 +1,21 @@
 "use client"
 
+import { useEffect } from "react"
 import { GroupsTable } from "@/lib/features/teacher/components/groups-table"
 import { useAuth } from "@/lib/features/auth/context"
 import { useGroups } from "@/lib/api/queries"
+import { notify } from "@shared/lib/toast"
 
 export function TeacherDashboard() {
   const { user } = useAuth()
   const groupsQuery = useGroups()
-  const groups = groupsQuery.data ?? []
   const loading = groupsQuery.isLoading
-  const error = groupsQuery.error
+
+  useEffect(() => {
+    if (groupsQuery.error) {
+      notify.error(groupsQuery.error, "Error al cargar los cursos")
+    }
+  }, [groupsQuery.error])
 
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-10">
@@ -26,18 +32,12 @@ export function TeacherDashboard() {
         </p>
       </div>
 
-      {error && (
-        <div className="mb-4 rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-          {error instanceof Error ? error.message : "Error al cargar cursos"}
-        </div>
-      )}
-
       {loading ? (
         <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-section border-t-transparent" />
         </div>
       ) : (
-        <GroupsTable initialGroups={groups} />
+        <GroupsTable />
       )}
     </div>
   )

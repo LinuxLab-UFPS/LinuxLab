@@ -109,6 +109,10 @@ export async function listProvisioningJobs(groupId: string): Promise<Provisionin
   }
 }
 
+export async function getProvisioningStatus() {
+  return teacherApi.getProvisioningStatus()
+}
+
 export async function listAuditLog(): Promise<AuditEntry[]> {
   return []
 }

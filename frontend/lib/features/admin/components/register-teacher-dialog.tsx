@@ -14,6 +14,7 @@ import { Button } from "@shared/components/ui/button"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Plus } from "lucide-react"
+import { notify } from "@shared/lib/toast"
 
 interface RegisterTeacherDialogProps {
   onRegister: (name: string, email: string) => Promise<unknown>
@@ -29,32 +30,28 @@ export function RegisterTeacherDialog({
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
 
     if (!name.trim()) {
-      setError("El nombre del docente es requerido")
+      notify.error(null, "El nombre del docente es requerido")
       return
     }
     if (!email.trim()) {
-      setError("El correo electrónico es requerido")
+      notify.error(null, "El correo electrónico es requerido")
       return
     }
     if (!EMAIL_REGEX.test(email.trim())) {
-      setError("El formato del correo no es válido")
+      notify.error(null, "El formato del correo no es válido")
       return
     }
 
-    try {
-      await onRegister(name.trim(), email.trim())
+    const created = await onRegister(name.trim(), email.trim())
+    if (created) {
       setName("")
       setEmail("")
       setOpen(false)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error al registrar docente")
     }
   }
 
@@ -62,7 +59,6 @@ export function RegisterTeacherDialog({
     if (!newOpen) {
       setName("")
       setEmail("")
-      setError(null)
     }
     setOpen(newOpen)
   }
@@ -109,11 +105,6 @@ export function RegisterTeacherDialog({
                 className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
               />
             </div>
-            {error && (
-              <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
-                {error}
-              </div>
-            )}
           </div>
           <DialogFooter>
             <Button

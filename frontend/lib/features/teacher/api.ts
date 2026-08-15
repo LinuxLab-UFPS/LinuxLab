@@ -24,6 +24,14 @@ export interface CreateGroupResponse {
   }
 }
 
+/** Resumen de aprovisionamiento del docente para el indicador global. */
+export interface ProvisioningStatusSummary {
+  pending: number
+  completed: number
+  failed: number
+  total: number
+}
+
 export const teacherApi = {
   listGroups: () => apiFetch<Group[]>("/api/groups"),
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
@@ -87,6 +95,8 @@ export const teacherApi = {
     apiFetch<EnrollmentStudent[]>(`/api/groups/${groupId}/students`),
   listProvisioningJobs: (groupId: string) =>
     apiFetch<ProvisioningJobSummary[]>(`/api/groups/${groupId}/provisioning-jobs`),
+  getProvisioningStatus: () =>
+    apiFetch<ProvisioningStatusSummary>("/api/groups/provisioning/status"),
 
   listAuditLog: () => apiFetch<AuditEntry[]>("/api/audit-log"),
   clearAuditLog: () => apiFetch<void>("/api/audit-log", { method: "DELETE" }),

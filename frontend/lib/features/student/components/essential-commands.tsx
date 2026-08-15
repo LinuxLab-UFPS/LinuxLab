@@ -18,6 +18,7 @@ import {
   type EssentialCommand,
 } from "@/lib/features/student/commands"
 import { downloadCheatSheet } from "@/lib/features/student/cheat-sheet-pdf"
+import { notify } from "@shared/lib/toast"
 
 const PICK_KEY = "linuxlab:cheat-sheet"
 const HIDDEN_KEY = "linuxlab:cheat-sheet-hidden"
@@ -234,7 +235,10 @@ function CommandPicker({
           </div>
           <button
             type="button"
-            onClick={downloadCheatSheet}
+            onClick={() => {
+              downloadCheatSheet()
+              notify.info("Descargando el PDF de comandos…")
+            }}
             className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
           >
             <Download className="h-4 w-4" />

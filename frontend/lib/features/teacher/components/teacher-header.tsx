@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { BookOpen, LogOut, TerminalSquare } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { notify } from "@shared/lib/toast"
 import { Avatar, AvatarFallback } from "@shared/components/ui/avatar"
 import {
   DropdownMenu,
@@ -100,6 +101,7 @@ export function TeacherHeader() {
               <DropdownMenuItem
                 onClick={async () => {
                   await signOut()
+                  notify.info("Sesión cerrada")
                   router.push("/")
                 }}
                 className="cursor-pointer"

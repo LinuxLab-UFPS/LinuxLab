@@ -15,10 +15,10 @@ export function GradesTable({ grades }: { grades: Grade[] }) {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-card">
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Actividad
                 </th>
-                <th className="w-[100px] px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <th className="w-[100px] px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Tipo
                 </th>
                 <th className="w-[120px] px-4 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">

@@ -13,6 +13,7 @@ import {
   type GroupCheckResult,
 } from "@/lib/features/student/group-activities"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
+import { notify } from "@shared/lib/toast"
 
 const PILL = "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium"
 
@@ -29,7 +30,6 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
   const [score, setScore] = useState(detail.lastAttempt?.score ?? 0)
   const [passed, setPassed] = useState(detail.lastAttempt?.passed ?? false)
   const [checking, setChecking] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const autoCd = useRef(false)
 
   useEffect(() => {
@@ -44,14 +44,13 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
 
   const check = async () => {
     setChecking(true)
-    setError(null)
     try {
       const outcome = await checkGroupActivity(detail.id)
       setResults(outcome.results)
       setScore(outcome.score)
       setPassed(outcome.passed)
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo comprobar tu entorno")
+      notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
       setChecking(false)
     }
@@ -132,11 +131,6 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        {error && (
-          <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {error}
-          </p>
-        )}
         <div className="flex flex-wrap items-center gap-2">
           {detail.evaluationType === "manual" ? (
             <span className="text-xs text-muted-foreground">

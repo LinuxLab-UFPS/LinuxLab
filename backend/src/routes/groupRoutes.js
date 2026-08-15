@@ -10,6 +10,8 @@ router.use(teacherMiddleware)
 
 router.post("/", groupController.createGroup)
 router.get("/", groupController.listGroups)
+// Antes de /:id: "provisioning" no debe caer en el parametro de grupo.
+router.get("/provisioning/status", groupController.teacherProvisioningStatus)
 router.get("/:id", groupController.getGroup)
 router.patch("/:id/archive", groupController.archiveGroup)
 router.delete("/:id", groupController.deleteGroup)
