@@ -88,6 +88,7 @@ body{
 
 #w-txt{left:3%;top:54%;width:34%;height:34%}
 .txt-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;overflow-y:auto;padding:16px 18px;font-size:12.5px;line-height:1.6}
+.txt-titulo{font-size:14px;font-weight:700;color:#1A1A1F;margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid #E3E3EA}
 .paso{display:flex;gap:9px;margin-bottom:13px;transition:opacity .3s}
 .paso-n{flex-shrink:0;font-weight:700;color:#8A8A99}
 .paso.pend{opacity:.38}
@@ -185,7 +186,7 @@ body{
       <span class="win-dot" style="background:#FF5F56"></span>
       <span class="win-dot" style="background:#FFBD2E"></span>
       <span class="win-dot" style="background:#27C93F"></span>
-      <span class="win-title">desafios.txt</span>
+      <span class="win-title">objetivos.txt</span>
     </div>
     <div class="txt-body" id="pasos"></div>
   </div>
@@ -639,6 +640,10 @@ function pintar() {
 
   const cont = $("pasos");
   cont.innerHTML = "";
+  const titulo = document.createElement("div");
+  titulo.className = "txt-titulo";
+  titulo.textContent = "Objetivos";
+  cont.appendChild(titulo);
   lista.forEach((d, i) => {
     const fila = document.createElement("div");
     fila.className = "paso " + (i < paso ? "done" : i === paso ? "cur" : "pend");
