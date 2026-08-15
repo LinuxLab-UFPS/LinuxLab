@@ -36,7 +36,7 @@ export function TablePanel({
         "[&_td]:px-5 [&_td]:py-3.5 [&_td]:text-center [&_td]:align-middle",
         // Hover neutro: funciona igual en claro y oscuro porque se tinta con el
         // color de texto, no con un gris fijo.
-        "[&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-foreground/[0.04]",
+        "[&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-foreground/[0.06]",
         className,
       )}
     >
