@@ -13,6 +13,7 @@
 # Flags:
 #   --image-file <ruta>   ruta del tar.gz (default: $HOME/imagenes.tar.gz)
 #   --skip-load           saltar podman load (imagenes ya cargadas)
+#   --skip-seeds          no sembrar las actividades del temario
 #   --dry-run             muestra los pasos sin ejecutar nada
 #   -h | --help           esta ayuda
 set -euo pipefail
@@ -24,6 +25,7 @@ INTERNAL_NET="linuxlab_internal"
 IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno)
 
 SKIP_LOAD=false
+SKIP_SEEDS=false
 IMAGE_FILE="${IMAGE_FILE:-$HOME/imagenes.tar.gz}"
 DRY_RUN=false
 
@@ -40,6 +42,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --image-file) IMAGE_FILE="${2:-}"; shift 2 ;;
     --skip-load)  SKIP_LOAD=true; shift ;;
+    --skip-seeds) SKIP_SEEDS=true; shift ;;
     --dry-run)    DRY_RUN=true; shift ;;
     -h | --help)  usage ;;
     *) die "Opcion desconocida: $1 (usa --help)" ;;
@@ -126,6 +129,28 @@ if ! $DRY_RUN; then
   [ "$ok" -eq 1 ] || warn "El backend no respondio en 150s (revisa podman logs linuxlab-backend)."
 fi
 
-# ---- 7. Resumen ------------------------------------------------------------
+# ---- 7. Seeds --------------------------------------------------------------
+# Las actividades del temario viven en la base, no en el repo, asi que una base
+# nueva sale sin ellas: `migrate` crea el esquema y nada mas. Este paso lo hacia
+# `deploy-server.sh` a mano y no se copio aqui, de modo que un despliegue del CI
+# dejaba la plataforma sin catalogo.
+#
+# Se siembra en cada despliegue a proposito: las semillas son `upsert` y
+# rehacen sus comprobaciones, asi que repetirlas no duplica nada y ademas
+# reponen lo que se hubiera borrado.
+if $SKIP_SEEDS; then
+  log "Omitiendo seeds (--skip-seeds)."
+else
+  log "Sembrando las actividades del temario..."
+  for seed in seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines seed-actividad-mensaje seed-actividad-permisos-archivo seed-actividad-cerrar-proyecto seed-comprobacion-ficha seed-comprobacion-logo seed-comprobacion-solo-lectura; do
+    if run "podman exec linuxlab-backend node prisma/$seed.js"; then
+      log "  OK: $seed"
+    else
+      warn "  fallo: $seed (se continua)"
+    fi
+  done
+fi
+
+# ---- 8. Resumen ------------------------------------------------------------
 log "Actualizacion aplicada. Contenedores:"
 podman ps --filter "name=linuxlab" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
