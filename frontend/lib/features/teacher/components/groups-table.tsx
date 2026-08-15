@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import { BookOpen, FolderOpen, Plus, Search } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { BookOpen, Eye, FolderOpen, Plus, Search, X } from "lucide-react"
 import { Input } from "@shared/components/ui/input"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
 import { StatTabs } from "@shared/components/stat-tabs"
 import {
   Table,
@@ -25,14 +27,20 @@ import {
 } from "@/lib/features/teacher/components/confirm-course-dialog"
 import type { Group } from "@/lib/features/teacher/types"
 import { deactivateGroup, deleteGroup } from "@/lib/features/teacher/data"
+import { queryKeys, useGroups } from "@/lib/api/queries"
 import { notifyPromise } from "@shared/lib/toast"
 
 type Tab = "activos" | "desactivados"
 
 const PAGE_SIZE = 8
 
-export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
-  const [groups, setGroups] = useState<Group[]>(initialGroups)
+export function GroupsTable() {
+  const queryClient = useQueryClient()
+  const groupsQuery = useGroups()
+  // Sin estado local: la tabla lee siempre la query, y las mutaciones
+  // actualizan la cache con setQueryData + invalidacion. Asi cualquier
+  // invalidacion externa (p. ej. al crear un curso) se refleja al instante.
+  const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data])
   const [tab, setTab] = useState<Tab>("activos")
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
@@ -75,12 +83,17 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
     )
     if (done.ok) {
       if (action === "deactivate") {
-        setGroups((prev) =>
+        queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
           prev.map((g) => (g.id === group.id ? { ...g, archived: true } : g)),
         )
+        queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
       } else {
-        setGroups((prev) => prev.filter((g) => g.id !== group.id))
+        queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
+          prev.filter((g) => g.id !== group.id),
+        )
       }
+      // El listado de /home comparte cache con esta tabla local.
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups })
     }
     setConfirming(null)
     setBusy(false)
@@ -138,27 +151,22 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Grupo</TableHead>
+              <TableHead className="w-44">Grupo</TableHead>
               <TableHead className="w-56">Directorio de trabajo</TableHead>
               <TableHead className="w-28">Estudiantes</TableHead>
-              <TableHead className="w-28">Actividades</TableHead>
               <TableHead className="w-32">Creado</TableHead>
-              <TableHead className="w-40">Acciones</TableHead>
+              <TableHead className="w-32">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageRows.map((group) => (
               <TableRow key={group.id}>
                 <TableCell>
-                  <Link href={`/groups/${group.id}`} className="group block whitespace-normal">
-                    <span className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-                      {group.name}
-                    </span>
-                    {group.description && (
-                      <span className="block text-xs text-muted-foreground">
-                        {group.description}
-                      </span>
-                    )}
+                  <Link
+                    href={`/groups/${group.id}`}
+                    className="group block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
+                  >
+                    {group.name}
                   </Link>
                 </TableCell>
                 <TableCell>
@@ -173,24 +181,22 @@ export function GroupsTable({ initialGroups }: { initialGroups: Group[] }) {
                   {group.studentCount}
                 </TableCell>
                 <TableCell className="font-mono text-sm text-muted-foreground">
-                  {group.activityCount}
-                </TableCell>
-                <TableCell className="font-mono text-sm text-muted-foreground">
                   {new Date(group.createdAt).toLocaleDateString("es-CO")}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1.5">
-                    <ActionButton tone="sky" href={`/groups/${group.id}`}>
-                      Ver
-                    </ActionButton>
+                  <div className="flex items-center justify-center gap-1">
+                    <IconAction
+                      label="Ver curso"
+                      icon={Eye}
+                      href={`/groups/${group.id}`}
+                    />
                     {/* Un curso desactivado ya solo se consulta. */}
                     {!group.archived && (
-                      <ActionButton
-                        tone="amber"
+                      <IconAction
+                        label="Desactivar curso"
+                        icon={X}
                         onClick={() => setConfirming({ group, action: "deactivate" })}
-                      >
-                        Desactivar
-                      </ActionButton>
+                      />
                     )}
                   </div>
                 </TableCell>

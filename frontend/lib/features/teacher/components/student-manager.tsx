@@ -15,6 +15,7 @@ import {
 } from "@shared/components/ui/table"
 import { TablePanel, TableEmptyState } from "@shared/components/data-table"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
 import { StatTabs } from "@shared/components/stat-tabs"
 import { parseStudentCsv } from "@shared/lib/csv"
 import { notify } from "@shared/lib/toast"
@@ -304,14 +305,11 @@ export function StudentManager({
                     {student.source === "csv" ? "CSV" : "Manual"}
                   </TableCell>
                   <TableCell>
-                    <button
-                      type="button"
+                    <IconAction
+                      label={`Quitar a ${student.name}`}
+                      icon={Trash2}
                       onClick={() => onRemove(student.id)}
-                      aria-label={`Quitar a ${student.name}`}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    />
                   </TableCell>
                 </TableRow>
               ))}

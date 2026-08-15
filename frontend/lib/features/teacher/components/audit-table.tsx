@@ -148,10 +148,11 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
       </div>
 
       <TablePanel>
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-36">Entrada</TableHead>
+
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-36">Entrada</TableHead>
               <TableHead>Usuario</TableHead>
               <TableHead className="w-36">Rol</TableHead>
               <TableHead className="w-56">Acción</TableHead>

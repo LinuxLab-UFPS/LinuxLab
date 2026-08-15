@@ -99,7 +99,7 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
           <table className="w-full">
             <thead>
               <tr className="bg-card border-b border-border">
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[240px]">
+                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[240px]">
                   Estudiante
                 </th>
                 {topics.map((topic) => (
@@ -111,10 +111,10 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
                     T{topic.number}
                   </th>
                 ))}
-                <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[160px]">
+                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[160px]">
                   Progreso
                 </th>
-                <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[140px]">
+                <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide w-[140px]">
                   Última actividad
                 </th>
               </tr>
@@ -126,7 +126,7 @@ export function TrackingPanel({ groupId, summary, topics }: TrackingPanelProps) 
                   className="border-b border-border/50 hover:bg-card/50 transition-colors group"
                 >
                   <td className="px-4 py-3">
-                    <button onClick={() => openStudent(row)} className="group/link text-left">
+                    <button onClick={() => openStudent(row)} className="group/link text-center">
                       <span className="text-sm font-medium text-foreground group-hover/link:text-primary group-hover/link:underline decoration-primary underline-offset-2 transition-colors">
                         {row.student.name}
                       </span>

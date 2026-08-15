@@ -1,7 +1,7 @@
 const { Role } = require("@prisma/client")
 const { parse } = require("csv-parse/sync")
 const prisma = require("../../prisma/client")
-const { createLinuxAccountWithUniqueUsername } = require("../utils/linuxUsername")
+const { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique } = require("../utils/linuxUsername")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { registerStudentSchema } = require("../dtos/groupDtos")
@@ -165,19 +165,23 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
 
 /**
  * Matricula un lote de estudiantes en un grupo (creacion de curso con
- * estudiantes). Es la misma maquinaria que la matricula individual
- * (enrollOne), con el resumen por fila del contrato de respuesta:
- * los errores de una fila no tumban el lote.
+ * estudiantes). Todo se resuelve con consultas por lote: un puñado sin
+ * importar cuantos estudiantes sean. El loop fila por fila expiraba la
+ * transaccion interactiva de 30s con cohortes grandes (P2028). El contrato
+ * de respuesta no cambia: los errores de una fila no tumban el lote.
  */
 async function enrollMany({ groupId, students, groupDir, groupName, teacherUsername, tx = prisma }) {
+  const db = tx
   const result = {
     total: students.length,
     registered: 0,
     skipped: 0,
     errors: [],
   }
-  const seenEmails = new Set()
 
+  // Prevalidacion en memoria: formato de correo y duplicados del payload.
+  const seenEmails = new Set()
+  const rows = []
   for (let i = 0; i < students.length; i++) {
     const row = students[i] ?? {}
     const email = row.email?.trim().toLowerCase()
@@ -194,34 +198,153 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
       continue
     }
     seenEmails.add(email)
+    rows.push({ row: i + 1, email, name: row.name?.trim(), code: row.code?.trim() || null })
+  }
+  if (rows.length === 0) return result
 
-    try {
-      const outcome = await enrollOne({
-        groupId,
-        name: row.name,
-        email,
-        code: row.code,
-        groupDir,
-        groupName,
-        teacherUsername,
-        tx,
+  const emails = rows.map((r) => r.email)
+
+  // Usuarios existentes, de una vez. Los que ya pertenecen a otro rol son
+  // error de fila; los demas se usan tal cual.
+  const existingUsers = await db.user.findMany({
+    where: { email: { in: emails } },
+    include: { linuxAccount: true },
+  })
+  const byEmail = new Map(existingUsers.map((u) => [u.email, u]))
+
+  const usersById = new Map()
+  const toEnroll = []
+  const toCreate = []
+
+  for (const r of rows) {
+    const existing = byEmail.get(r.email)
+    if (existing && existing.role !== Role.student) {
+      result.errors.push({
+        row: r.row,
+        email: r.email,
+        error: `El correo ${r.email} pertenece a un usuario con rol ${existing.role}, no se puede inscribir como estudiante`,
       })
-      if (outcome.enrolled) {
-        result.registered += 1
-      } else {
-        result.skipped += 1
+      continue
+    }
+    if (existing) {
+      // Un codigo que faltaba se rellena, como hacia el flujo fila por fila.
+      if (r.code && !existing.code) {
+        await db.user.update({ where: { id: existing.id }, data: { code: r.code } })
       }
-    } catch (err) {
-      if (err instanceof AppError && err.statusCode === 409) {
-        // Rol en conflicto (p.ej. el correo pertenece a un docente): error de
-        // fila, el resto del lote sigue.
-        result.errors.push({ row: i + 1, email, error: err.message })
-      } else {
-        throw err
-      }
+      usersById.set(existing.id, {
+        email: existing.email,
+        linuxUsername: existing.linuxAccount?.linux_username ?? null,
+        linuxProvisioned: existing.linuxAccount?.linux_provisioned ?? false,
+      })
+      toEnroll.push({ row: r.row, email: r.email, userId: existing.id })
+    } else {
+      toCreate.push(r)
     }
   }
 
+  // Usuarios nuevos, en lote. skipDuplicates absorbe la carrera de dos
+  // requests creando el mismo correo; los que queden sin fila (el otro
+  // request los creo entre el createMany y el findMany) se releen de a uno.
+  if (toCreate.length > 0) {
+    await db.user.createMany({
+      data: toCreate.map((s) => ({
+        name: s.name || s.email.split("@")[0],
+        email: s.email,
+        role: Role.student,
+        code: s.code,
+        active: true,
+      })),
+      skipDuplicates: true,
+    })
+
+    const created = await db.user.findMany({
+      where: { email: { in: toCreate.map((s) => s.email) } },
+      include: { linuxAccount: true },
+    })
+    const createdByEmail = new Map(created.map((u) => [u.email, u]))
+
+    for (const s of toCreate) {
+      let user = createdByEmail.get(s.email)
+      if (!user) {
+        user = await db.user.findUnique({
+          where: { email: s.email },
+          include: { linuxAccount: true },
+        })
+      }
+      if (!user || user.role !== Role.student) {
+        result.errors.push({
+          row: s.row,
+          email: s.email,
+          error: user
+            ? `El correo ${s.email} pertenece a un usuario con rol ${user.role}, no se puede inscribir como estudiante`
+            : "No se pudo crear la cuenta del estudiante",
+        })
+        continue
+      }
+      usersById.set(user.id, {
+        email: user.email,
+        linuxUsername: user.linuxAccount?.linux_username ?? null,
+        linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
+      })
+      toEnroll.push({ row: s.row, email: s.email, userId: user.id })
+    }
+  }
+
+  // Cuentas Linux de los que no tienen, tambien en lote. Devuelve las filas
+  // creadas para conocer el username que quedo asignado a cada usuario.
+  const withoutAccount = [...usersById.entries()].filter(([, u]) => !u.linuxUsername)
+  if (withoutAccount.length > 0) {
+    const createdAccounts = await createLinuxAccountsUnique(
+      db,
+      withoutAccount.map(([id, u]) => ({ id, email: u.email })),
+    )
+    for (const account of createdAccounts) {
+      const current = usersById.get(account.user_id)
+      usersById.set(account.user_id, {
+        email: current.email,
+        linuxUsername: account.linux_username,
+        linuxProvisioned: false,
+      })
+    }
+  }
+
+  // Matriculas ya existentes: no se duplican, cuentan como omitidas.
+  const userIds = [...usersById.keys()]
+  const existingEnrollments = await db.enrollment.findMany({
+    where: { group_id: groupId, student_id: { in: userIds } },
+    select: { student_id: true },
+  })
+  const enrolledIds = new Set(existingEnrollments.map((e) => e.student_id))
+  const newEnrollments = toEnroll.filter((e) => !enrolledIds.has(e.userId))
+  result.skipped += toEnroll.length - newEnrollments.length
+
+  if (newEnrollments.length > 0) {
+    await db.enrollment.createMany({
+      data: newEnrollments.map((e) => ({ student_id: e.userId, group_id: groupId })),
+      skipDuplicates: true,
+    })
+  }
+
+  // Jobs de aprovisionamiento para las cuentas que faltan en el entorno.
+  const jobRows = []
+  for (const e of newEnrollments) {
+    const u = usersById.get(e.userId)
+    if (!u?.linuxUsername || u.linuxProvisioned) continue
+    jobRows.push({
+      user_id: e.userId,
+      username: u.linuxUsername,
+      group_id: groupDir ? groupId : null,
+      group_dir: groupDir || null,
+      group_name: groupName || null,
+      teacher_username: teacherUsername || null,
+      priority: PRIORITIES.STUDENT,
+    })
+  }
+  if (jobRows.length > 0) {
+    await db.userProvisioningJob.createMany({ data: jobRows })
+  }
+
+  result.registered = newEnrollments.length
   return result
 }
 

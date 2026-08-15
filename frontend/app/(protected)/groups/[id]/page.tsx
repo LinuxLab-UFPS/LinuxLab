@@ -27,7 +27,6 @@ import {
 import { queryKeys, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
-import { useProvisioningProgress } from "@/lib/features/teacher/use-provisioning-progress"
 
 type Tab = "estudiantes" | "actividades"
 
@@ -44,8 +43,6 @@ function GroupDetailContent() {
   const activitiesQuery = useGroupActivities(id)
   const progress = useGroupProgress(id)
 
-  useProvisioningProgress(id, studentsQuery.data)
-
   const group = groupQuery.data ?? null
   const loading = groupQuery.isLoading
   const error = groupQuery.error
@@ -59,6 +56,8 @@ function GroupDetailContent() {
         created,
       ])
       queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })
+      // El conteo de estudiantes del listado de cursos tambien cambia.
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       setAdding(false)
       notify.success("Estudiante agregado")
     },

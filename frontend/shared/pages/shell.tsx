@@ -4,6 +4,7 @@ import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { SiteHeader } from "@/lib/features/student/components/site-header"
 import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
 import { AdminHeader } from "@/lib/features/admin/components/admin-header"
+import { ProvisioningIndicator } from "@shared/components/provisioning-indicator"
 import { getSearchIndex } from "@shared/lib/content/lessons"
 import { getSimulators } from "@shared/lib/content/simulators"
 
@@ -27,6 +28,7 @@ export function Shell({ role, children }: { role: Role; children: ReactNode }) {
         <AdminHeader />
       )}
       <main className="flex-1 overflow-auto">{children}</main>
+      <ProvisioningIndicator />
     </div>
   )
   if (role === "student") {

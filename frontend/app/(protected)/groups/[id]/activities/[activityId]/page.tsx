@@ -86,16 +86,16 @@ function ActivityDetail({ groupId, activity }: { groupId: string; activity: Acti
             <table className="w-full">
               <thead>
                 <tr className="bg-card border-b border-border">
-                  <th className="w-10 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                  <th className="w-10 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                     #
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                  <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                     Tipo
                   </th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                  <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                     Parámetros
                   </th>
-                  <th className="w-20 px-4 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase">
+                  <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                     Puntos
                   </th>
                 </tr>
@@ -108,7 +108,7 @@ function ActivityDetail({ groupId, activity }: { groupId: string; activity: Acti
                     <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
                       {JSON.stringify(check.params)}
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-sm text-foreground">
+                    <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
                       {check.points}
                     </td>
                   </tr>

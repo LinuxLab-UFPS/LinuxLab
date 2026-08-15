@@ -3,6 +3,22 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tailwind v4 quito el cursor de mano de los botones en su preflight: sin
+   esto no hay ninguna senal de que algo es presionable. Los elementos de
+   listado (Radix) y los controles de formulario entran en la misma regla. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  [role='menuitem']:not(:disabled),
+  label:not(:has(input:disabled)),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
+
 /* La consola es oscura en los dos temas, asi que su superficie no vive en las
    paletas de abajo. Debe seguir igual al `theme.background` de xterm en
    terminal-emulator.tsx: los bloques de codigo de las lecciones usan este mismo

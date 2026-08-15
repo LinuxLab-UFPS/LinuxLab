@@ -158,6 +158,37 @@ async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
 }
 
 /**
+ * Resumen de aprovisionamiento del docente (para el indicador global): cuentas
+ * en proceso, listas y fallidas entre los jobs de estudiantes de sus grupos
+ * activos. Solo cuenta jobs recientes (una hora) para que el progreso X/N no
+ * se contamine con cohortes viejas ya terminadas.
+ */
+async function teacherProvisioningSummary({ teacherUserId }) {
+  const since = new Date(Date.now() - 60 * 60 * 1000)
+  const jobs = await prisma.userProvisioningJob.findMany({
+    where: {
+      group: { teacher_id: teacherUserId, archived: false },
+      created_at: { gte: since },
+    },
+    select: { status: true },
+  })
+
+  let pending = 0
+  let completed = 0
+  let failed = 0
+  for (const job of jobs) {
+    if (job.status === "pending" || job.status === "processing") {
+      pending += 1
+    } else if (job.status === "completed") {
+      completed += 1
+    } else if (job.status === "failed") {
+      failed += 1
+    }
+  }
+  return { pending, completed, failed, total: jobs.length }
+}
+
+/**
  * Archiva un grupo (fin de semestre) y deja de ser usable al instante:
  * - El grupo queda desactivado y sus matriculas pasan a 'archived' (historico).
  * - Las cuentas Linux de los estudiantes se borran de la base: su usuario en
@@ -312,6 +343,7 @@ module.exports = {
   listGroups,
   getGroup,
   listGroupProvisioningJobs,
+  teacherProvisioningSummary,
   archiveGroup,
   deleteGroup,
 }

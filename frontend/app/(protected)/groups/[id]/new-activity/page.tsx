@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, Loader2, Send } from "lucide-react"
 import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
@@ -20,6 +21,7 @@ import { CheckBuilder, type ActivityCheck } from "@/lib/features/teacher/compone
 import { cn } from "@shared/lib/utils"
 import { syllabus } from "@shared/lib/content/temario"
 import { createActivity, updateActivity, getGroupActivity } from "@/lib/features/teacher/data"
+import { queryKeys } from "@/lib/api/queries"
 import type { CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
 import { RoleGuard } from "@shared/components/role-guard"
 
@@ -59,6 +61,7 @@ function NewActivityPage() {
   const params = useParams<{ id: string }>()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const groupId = params?.id ?? ""
   const editId = searchParams.get("edit")
   const editing = Boolean(editId)
@@ -139,6 +142,11 @@ function NewActivityPage() {
       gradingPolicy,
       checks,
     }
+    const refreshed = () => {
+      // La pestaña de actividades del curso y su conteo quedan viejos.
+      queryClient.invalidateQueries({ queryKey: queryKeys.groupActivities(groupId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) })
+    }
     if (editId) {
       const updated = await notifyPromise(updateActivity(groupId, editId, input), {
         loading: "Guardando cambios…",
@@ -146,7 +154,10 @@ function NewActivityPage() {
         error: "No se pudo guardar la actividad.",
       })
       setPublishing(false)
-      if (updated.ok) router.push(`/groups/${groupId}/activities/${editId}`)
+      if (updated.ok) {
+        refreshed()
+        router.push(`/groups/${groupId}/activities/${editId}`)
+      }
     } else {
       const created = await notifyPromise(createActivity(groupId, input), {
         loading: "Publicando actividad…",
@@ -154,7 +165,10 @@ function NewActivityPage() {
         error: "No se pudo guardar la actividad.",
       })
       setPublishing(false)
-      if (created.ok) router.push(`/groups/${groupId}`)
+      if (created.ok) {
+        refreshed()
+        router.push(`/groups/${groupId}`)
+      }
     }
   }
 

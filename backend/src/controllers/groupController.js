@@ -92,6 +92,15 @@ const listProvisioningJobs = asyncHandler(async (req, res) => {
   )
 })
 
+/** Resumen global de aprovisionamiento del docente, para el indicador de UI. */
+const teacherProvisioningStatus = asyncHandler(async (req, res) => {
+  res.json(
+    await groupService.teacherProvisioningSummary({
+      teacherUserId: req.user.id,
+    }),
+  )
+})
+
 const reconcileGroup = asyncHandler(async (req, res) => {
   await accessService.ensureGroupAccess({
     groupId: req.params.id,
@@ -112,5 +121,6 @@ module.exports = {
   importCsv,
   listStudents,
   listProvisioningJobs,
+  teacherProvisioningStatus,
   reconcileGroup,
 }

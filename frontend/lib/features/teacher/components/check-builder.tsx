@@ -6,6 +6,7 @@ import { cn } from "@shared/lib/utils"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
 import { Checkbox } from "@shared/components/ui/checkbox"
+import { IconAction } from "@shared/components/icon-action"
 import { notify } from "@shared/lib/toast"
 import type { ActivityCheck, CatalogEntry } from "@/lib/features/teacher/types"
 
@@ -174,13 +175,11 @@ export function CheckBuilder({
                   <span className="text-xs text-muted-foreground">pts</span>
                 </div>
                 {/* Remove */}
-                <button
+                <IconAction
+                  label="Eliminar aserción"
+                  icon={Trash2}
                   onClick={() => removeCheck(check.id)}
-                  title="Eliminar aserción"
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                />
               </div>
 
               {/* Params */}

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, ArrowRight, Send, Users } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
@@ -11,7 +12,8 @@ import { Stepper, type Step } from "@shared/components/stepper"
 import { StudentManager, type DraftStudent } from "@/lib/features/teacher/components/student-manager"
 import { createGroup } from "@/lib/features/teacher/data"
 import { RoleGuard } from "@shared/components/role-guard"
-import { dismissToast, hasToast, notify, notifyLoading, notifyPromise } from "@shared/lib/toast"
+import { queryKeys } from "@/lib/api/queries"
+import { notify, notifyPromise } from "@shared/lib/toast"
 
 const PASOS: Step[] = [
   { id: "curso", label: "Información" },
@@ -33,6 +35,7 @@ const ENTRADILLA = [
 
 function CreateGroupContent() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [paso, setPaso] = useState(0)
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
@@ -86,17 +89,9 @@ function CreateGroupContent() {
     if (!response.ok) return
     const published = response.data
 
-    if (published.enrollment.registered > 0) {
-      const toastId = `prov-${published.group.id}`
-      notifyLoading(`Creando cuentas en el entorno… 0/${published.enrollment.registered}`, { id: toastId })
-      // Red de seguridad: si el docente no entra al curso, el toast de carga
-      // no debe quedarse girando para siempre.
-      setTimeout(() => {
-        if (hasToast(toastId)) {
-          dismissToast(toastId)
-        }
-      }, 3 * 60 * 1000)
-    }
+    // El listado de cursos quedo viejo: al volver a /home el curso nuevo debe
+    // estar ahi sin esperar a que la cache expire.
+    queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 
     router.push(`/groups/${published.group.id}`)
   }

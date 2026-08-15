@@ -9,7 +9,6 @@ import { notify } from "@shared/lib/toast"
 export function TeacherDashboard() {
   const { user } = useAuth()
   const groupsQuery = useGroups()
-  const groups = groupsQuery.data ?? []
   const loading = groupsQuery.isLoading
 
   useEffect(() => {
@@ -38,7 +37,7 @@ export function TeacherDashboard() {
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-section border-t-transparent" />
         </div>
       ) : (
-        <GroupsTable initialGroups={groups} />
+        <GroupsTable />
       )}
     </div>
   )
