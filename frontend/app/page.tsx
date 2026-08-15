@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Terminal } from "lucide-react"
+import Image from "next/image"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
 
@@ -31,9 +31,19 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card px-8 py-10 shadow-xl">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10">
-          <Terminal className="h-8 w-8 text-primary" />
-        </div>
+        {/* El icono de la aplicacion, el mismo de la pestaña del navegador. Va
+            solo, sin la caja de color que llevaba el icono generico: ya es una
+            ficha con su fondo y su borde, y una ficha dentro de otra se ve
+            como un error. `alt` vacio porque el titulo que sigue dice lo
+            mismo, y repetirlo solo molesta a quien use lector de pantalla. */}
+        <Image
+          src="/icon.svg"
+          alt=""
+          width={64}
+          height={64}
+          priority
+          className="mx-auto mb-6 h-16 w-16"
+        />
         <h1 className="text-center text-2xl font-bold text-foreground">Linux Lab UFPS</h1>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Laboratorio Virtual de Linux para Sistemas Operativos
