@@ -1,26 +1,28 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    @media (prefers-color-scheme: light) {
-      .background { fill: black; }
-      .foreground { fill: white; }
-    }
-    @media (prefers-color-scheme: dark) {
-      .background { fill: white; }
-      .foreground { fill: black; }
-    }
-  </style>
-  <g clip-path="url(#clip0_7960_43945)">
-    <rect class="background" width="180" height="180" rx="37" />
-    <g style="transform: scale(95%); transform-origin: center">
-      <path class="foreground"
-        d="M101.141 53H136.632C151.023 53 162.689 64.6662 162.689 79.0573V112.904H148.112V79.0573C148.112 78.7105 148.098 78.3662 148.072 78.0251L112.581 112.898C112.701 112.902 112.821 112.904 112.941 112.904H148.112V126.672H112.941C98.5504 126.672 86.5638 114.891 86.5638 100.5V66.7434H101.141V100.5C101.141 101.15 101.191 101.792 101.289 102.422L137.56 66.7816C137.255 66.7563 136.945 66.7434 136.632 66.7434H101.141V53Z" />
-      <path class="foreground"
-        d="M65.2926 124.136L14 66.7372H34.6355L64.7495 100.436V66.7372H80.1365V118.47C80.1365 126.278 70.4953 129.958 65.2926 124.136Z" />
-    </g>
-  </g>
-  <defs>
-    <clipPath id="clip0_7960_43945">
-      <rect width="180" height="180" fill="white" />
-    </clipPath>
-  </defs>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    LinuxLab: una ventana de terminal con las dos eles de la marca.
+
+    Va oscuro en los dos temas a proposito: una terminal es oscura, y un icono
+    que cambia de fondo deja de reconocerse de un vistazo. El borde tenue es lo
+    que evita que se funda con la barra del navegador en tema oscuro.
+
+    Las eles son rectas y sin redondeos, con el mismo grosor de trazo (8) que la
+    rejilla: a 16 px lo que sobrevive es la silueta, y los redondeos ahi solo
+    ensucian. Todas las medidas son multiplos de 2 para que caigan en pixel
+    entero al rasterizar a 32 y a 16.
+  -->
+  <rect width="64" height="64" rx="14" fill="#0A0A0A" />
+
+  <!-- Barra de titulo con sus tres botones: es lo que dice "terminal". -->
+  <path d="M14 0H50C57.732 0 64 6.26801 64 14H0C0 6.26801 6.26801 0 14 0Z" fill="#16181D" />
+  <circle cx="9" cy="7" r="2" fill="#C41E3A" />
+  <circle cx="16" cy="7" r="2" fill="#2E323B" />
+  <circle cx="23" cy="7" r="2" fill="#2E323B" />
+
+  <!-- L roja: el rojo de la marca. -->
+  <path d="M15 22H23V42H29V50H15Z" fill="#C41E3A" />
+  <!-- L blanca. -->
+  <path d="M35 22H43V42H49V50H35Z" fill="#FFFFFF" />
+
+  <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" stroke="#FFFFFF" stroke-opacity="0.14" />
 </svg>
