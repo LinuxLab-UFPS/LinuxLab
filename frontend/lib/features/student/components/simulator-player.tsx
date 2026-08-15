@@ -25,13 +25,16 @@ export function SimulatorPlayer({ src, title }: { src: string; title: string }) 
   }, [router])
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div className="flex h-11 shrink-0 items-center justify-between border-b border-border px-4">
-        <span className="text-sm font-medium text-foreground">{title}</span>
+    // Colores fijos y no tokens del tema: debajo hay un simulador que siempre
+    // es oscuro, asi que en modo claro esta barra no debe volverse blanca. Mismo
+    // criterio que la barra de ajustes de la terminal.
+    <div className="fixed inset-0 z-50 flex flex-col bg-[#0D1117]">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-white/10 px-4">
+        <span className="text-sm font-medium text-white/80">{title}</span>
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
         >
           <X className="h-3.5 w-3.5" />
           Salir
