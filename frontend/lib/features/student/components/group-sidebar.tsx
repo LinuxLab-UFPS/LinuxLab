@@ -38,7 +38,9 @@ export function GroupSidebar({
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
 
   return (
-    <aside className="w-80 shrink-0 py-4">
+    // Pegada bajo la cabecera (64px) y su barra de progreso (2px): la lista de
+    // temas sigue a mano mientras la pagina se desplaza.
+    <aside className="sticky top-[66px] max-h-[calc(100vh-66px)] w-80 shrink-0 py-4">
       <div className="mt-2 flex max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">

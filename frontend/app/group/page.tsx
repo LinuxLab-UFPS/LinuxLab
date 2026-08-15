@@ -53,9 +53,16 @@ export default async function GroupPage({
     <LessonProgressProvider>
       <ReadingProgressProvider>
         <TerminalUIProvider>
-          <div className="flex h-screen flex-col bg-background">
-            <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
-            <ReadingProgressBar />
+          {/* `min-h-screen` y no `h-screen`: el documento tiene que poder crecer
+              para que el scroll sea el de la ventana. Antes la altura estaba
+              clavada al viewport y las unicas zonas que respondian a la rueda
+              eran la lista de temas y la columna de la leccion; sobre la
+              cabecera, los huecos o la terminal no pasaba nada. */}
+          <div className="flex min-h-screen flex-col bg-background">
+            <div className="sticky top-0 z-40 bg-background">
+              <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+              <ReadingProgressBar />
+            </div>
             <GroupBody>
               <GroupSidebar
                 activeTopicSlug={topic.slug}
