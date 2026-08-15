@@ -3,11 +3,12 @@ import type { ComponentType } from "react"
 import type { LucideIcon } from "lucide-react"
 import { NeonProgress } from "@shared/components/neon-progress"
 import { cn } from "@shared/lib/utils"
+import { Tag, type TagTone } from "@shared/components/tag"
 
 export interface CardTag {
   icon: LucideIcon
   label: string
-  className: string
+  tone?: TagTone
 }
 
 type Accent = "red" | "green"
@@ -91,16 +92,9 @@ export function ContentCard({
         {tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
-              <span
-                key={tag.label}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  tag.className,
-                )}
-              >
-                <tag.icon className="h-3 w-3" />
+              <Tag key={tag.label} icon={tag.icon} tone={tag.tone}>
                 {tag.label}
-              </span>
+              </Tag>
             ))}
           </div>
         )}

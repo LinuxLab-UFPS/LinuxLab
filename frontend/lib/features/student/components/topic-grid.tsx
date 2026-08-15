@@ -48,28 +48,28 @@ function previewTags(preview: TopicPreview): CardTag[] {
     tags.push({
       icon: Clock,
       label: `${preview.minutes} min`,
-      className: "bg-secondary text-muted-foreground",
+      tone: "muted" as const,
     })
   }
   if (preview.videos > 0) {
     tags.push({
       icon: Video,
       label: `${preview.videos} ${preview.videos === 1 ? "video" : "videos"}`,
-      className: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+      tone: "sky" as const,
     })
   }
   if (preview.simulators > 0) {
     tags.push({
       icon: Terminal,
       label: `${preview.simulators} ${preview.simulators === 1 ? "simulador" : "simuladores"}`,
-      className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      tone: "emerald" as const,
     })
   }
   if (preview.activities > 0) {
     tags.push({
       icon: ListChecks,
       label: `${preview.activities} ${preview.activities === 1 ? "actividad" : "actividades"}`,
-      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      tone: "amber" as const,
     })
   }
   return tags

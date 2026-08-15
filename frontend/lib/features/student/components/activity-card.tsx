@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { BookOpen, ListChecks, Target } from "lucide-react"
+import { BookOpen, Target } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { DIFFICULTY_CLASS, DIFFICULTY_LABEL } from "@shared/lib/content/activities"
+import { DIFFICULTY_TONE, DIFFICULTY_LABEL } from "@shared/lib/content/activities"
+import { Tag } from "@shared/components/tag"
 import type { ActivityListing } from "@/lib/models/activities"
 
 const GLOW =
@@ -54,13 +55,11 @@ export function ActivityCard({
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {activity.difficulty && (
-              <Pill className={DIFFICULTY_CLASS[activity.difficulty]}>
+              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
                 {DIFFICULTY_LABEL[activity.difficulty]}
-              </Pill>
+              </Tag>
             )}
-            {completed && (
-              <Pill className="border-sky-500/40 text-sky-400">Completada</Pill>
-            )}
+            {completed && <Tag tone="sky">Completada</Tag>}
           </div>
         </div>
       </div>
@@ -75,48 +74,8 @@ export function ActivityCard({
       </p>
 
       <div className="mt-4 flex flex-wrap gap-1.5">
-        <Tag icon={BookOpen} className="bg-amber-500/10 text-amber-600 dark:text-amber-400">
-          {activity.topicTitle}
-        </Tag>
-        <Tag icon={ListChecks} className="bg-foreground/5 text-muted-foreground">
-          {activity.checks} comprobaciones
-        </Tag>
+        <Tag icon={BookOpen}>{activity.topicTitle}</Tag>
       </div>
     </Link>
-  )
-}
-
-function Pill({ className, children }: { className: string; children: React.ReactNode }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium",
-        className,
-      )}
-    >
-      {children}
-    </span>
-  )
-}
-
-function Tag({
-  icon: Icon,
-  className,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  className: string
-  children: React.ReactNode
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-        className,
-      )}
-    >
-      <Icon className="h-3 w-3" />
-      {children}
-    </span>
   )
 }
