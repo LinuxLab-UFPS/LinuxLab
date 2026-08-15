@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
+import { Skeleton } from "@shared/components/skeleton"
 
 /**
  * Fullscreen simulator. "Salir" (and the simulator's own close message) goes
@@ -10,6 +11,10 @@ import { X } from "lucide-react"
  */
 export function SimulatorPlayer({ src, title }: { src: string; title: string }) {
   const router = useRouter()
+  // El `loading.tsx` de la ruta solo cubre hasta que responde el servidor; el
+  // simulador es un HTML de mil lineas que descarga el navegador despues, y ese
+  // tramo quedaba en blanco. El iframe avisa al terminar.
+  const [cargado, setCargado] = useState(false)
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -32,7 +37,21 @@ export function SimulatorPlayer({ src, title }: { src: string; title: string }) 
           Salir
         </button>
       </div>
-      <iframe src={src} className="w-full flex-1 border-0" title={title} allow="same-origin" />
+      <div className="relative min-h-0 flex-1">
+        {!cargado && (
+          <div role="status" aria-busy="true" className="absolute inset-0 p-4">
+            <span className="sr-only">Cargando el simulador…</span>
+            <Skeleton className="h-full w-full rounded-lg" />
+          </div>
+        )}
+        <iframe
+          src={src}
+          onLoad={() => setCargado(true)}
+          className="h-full w-full border-0"
+          title={title}
+          allow="same-origin"
+        />
+      </div>
     </div>
   )
 }
