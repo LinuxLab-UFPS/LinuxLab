@@ -6,6 +6,8 @@ import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
 import { env } from "@/lib/config/env"
 import { onTerminalInput, markTerminalReady } from "@/lib/features/student/terminal-input"
+import { registerTerminalReset } from "@/lib/features/terminal/reset"
+import { resetTerminal as resetTerminalRequest } from "@/lib/features/terminal/settings"
 
 const WS_BASE = env.backendUrl.replace(/^http/, "ws")
 
@@ -61,20 +63,30 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
 
     // Reintentos al abrir.
     //
-    // El boton de "Reset terminal" remonta este componente, asi que el socket
-    // nuevo sale mientras el anterior todavia se esta cerrando, y el del medio
-    // corta ese primer intento (NS_ERROR_NET_RESET, sin llegar a negociar).
-    // Recargar la pagina no fallaba nunca porque tarda lo suficiente.
-    //
-    // En vez de perseguir quien lo corta, se reintenta: si la conexion muere
-    // antes de haberse abierto, se prueba de nuevo con una espera creciente.
-    // El primer intento no anuncia nada —lo normal es que funcione— y solo se
-    // avisa al usuario si hay que esperar de verdad.
+    // Si la conexion muere antes de haberse abierto, se prueba de nuevo con una
+    // espera creciente. El primer intento no anuncia nada —lo normal es que
+    // funcione— y solo se avisa si hay que esperar de verdad.
     const ESPERAS = [500, 1200, 2500]
     let intento = 0
     let abierta = false
     let cerrado = false
     let reintento: ReturnType<typeof setTimeout> | undefined
+
+    // Quien espera a que el servidor confirme un reinicio (ver `reiniciar`).
+    let espera: {
+      resolve: () => void
+      reject: (err: Error) => void
+      timer: ReturnType<typeof setTimeout>
+    } | null = null
+
+    const cerrarEspera = (err?: Error) => {
+      if (!espera) return
+      const { resolve, reject, timer } = espera
+      espera = null
+      clearTimeout(timer)
+      if (err) reject(err)
+      else resolve()
+    }
 
     const conectar = () => {
       if (cerrado) return
@@ -94,6 +106,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
         try {
           const msg = JSON.parse(event.data)
           if (msg.type === "output") term.write(msg.data)
+          if (msg.type === "reset-ok") cerrarEspera()
           if (msg.type === "exit") {
             term.write(`\r\n[Process exited with code ${msg.code}]\r\n`)
           }
@@ -107,6 +120,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       ws.onerror = () => {}
 
       ws.onclose = (event) => {
+        cerrarEspera(new Error("La conexión se cerró durante el reinicio"))
         if (cerrado) return
 
         // Nunca llego a abrirse y quedan intentos: es el caso del boton.
@@ -138,6 +152,49 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
 
     conectar()
 
+    /**
+     * "Reset terminal".
+     *
+     * Antes esto remontaba el componente: se cerraba el socket y se abria otro.
+     * Ahi estaba el fallo que se veia en el servidor —el socket nuevo salia
+     * mientras el viejo se cerraba y moria en NS_ERROR_NET_RESET, sin llegar a
+     * negociar, los cuatro intentos seguidos—. La conexion no tiene por que
+     * tocarse: lo que se reinicia es la sesion del otro extremo, y eso se pide
+     * por el socket que ya esta abierto.
+     *
+     * Solo se reconecta si no hay socket vivo, que es cuando de verdad hace
+     * falta uno nuevo.
+     */
+    const reiniciar = async () => {
+      const ws = wsRef.current
+
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        await resetTerminalRequest()
+        clearTimeout(reintento)
+        intento = 0
+        abierta = false
+        term.reset()
+        conectar()
+        return
+      }
+
+      term.reset()
+      term.write("\x1b[90mReiniciando la terminal…\x1b[0m\r\n")
+      ws.send(JSON.stringify({ type: "reset" }))
+
+      await new Promise<void>((resolve, reject) => {
+        cerrarEspera(new Error("Reinicio reemplazado por otro"))
+        // Matar los procesos del usuario tarda lo suyo (el servidor espera a
+        // que no quede ninguno antes de abrir la sesion nueva), pero no esto.
+        const timer = setTimeout(() => {
+          cerrarEspera(new Error("La terminal no respondió al reinicio"))
+        }, 30000)
+        espera = { resolve, reject, timer }
+      })
+    }
+
+    const bajaReset = registerTerminalReset(reiniciar)
+
     const write = (data: string) => {
       const ws = wsRef.current
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -165,6 +222,8 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     return () => {
       cerrado = true
       clearTimeout(reintento)
+      cerrarEspera(new Error("La terminal se cerró"))
+      bajaReset()
       unsubscribe()
       wsRef.current?.close()
       term.dispose()

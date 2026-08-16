@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { RotateCcw } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
-import { resetTerminal } from "@/lib/features/terminal/settings"
+import { requestTerminalReset } from "@/lib/features/terminal/reset"
 import { notify } from "@shared/lib/toast"
 
 const FONTS = [
@@ -19,17 +19,17 @@ interface Props {
   fontFamily: string
   onFontSizeChange: (size: number) => void
   onFontFamilyChange: (family: string) => void
-  onReset?: () => void
 }
 
-export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, onFontFamilyChange, onReset }: Props) {
+export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, onFontFamilyChange }: Props) {
   const [resetting, setResetting] = useState(false)
 
+  // El emulador atiende esto por su propio socket: aqui no hay que remontarlo
+  // ni saber si la sesion nueva llego. La promesa se resuelve cuando esta.
   const handleReset = async () => {
     setResetting(true)
     try {
-      await resetTerminal()
-      onReset?.()
+      await requestTerminalReset()
       notify.success("Terminal reiniciado")
     } catch (e) {
       notify.error(e, "No se pudo reiniciar la terminal")
