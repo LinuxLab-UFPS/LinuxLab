@@ -1,3 +1,4 @@
+import type { TagTone } from "@shared/components/tag"
 import { syllabus } from "./temario"
 import type { ActivityListing, Difficulty } from "@/lib/models/activities"
 
@@ -19,10 +20,15 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   advanced: "Difícil",
 }
 
-export const DIFFICULTY_CLASS: Record<Difficulty, string> = {
-  basic: "border-emerald-500/40 text-emerald-500",
-  intermediate: "border-amber-500/40 text-amber-500",
-  advanced: "border-rose-500/40 text-rose-500",
+/**
+ * El color de la dificultad. Es el unico tag de una tarjeta que lo lleva: dice
+ * algo del contenido, mientras que el tema y las comprobaciones son datos y van
+ * en neutro. Antes eran fragmentos de borde y ahora son tonos del `Tag` comun.
+ */
+export const DIFFICULTY_TONE: Record<Difficulty, TagTone> = {
+  basic: "emerald",
+  intermediate: "amber",
+  advanced: "rose",
 }
 
 export interface Activity {

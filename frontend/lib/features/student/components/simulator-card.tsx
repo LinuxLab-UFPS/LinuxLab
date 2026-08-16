@@ -27,11 +27,7 @@ export function SimulatorCard({ simulator }: { simulator: Simulator }) {
       description={simulator.description}
       illustration={ILLUSTRATION[simulator.id] ?? SimulatorTreeIllustration}
       tags={[
-        {
-          icon: BookOpen,
-          label: simulator.topicTitle,
-          className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-        },
+        { icon: BookOpen, label: simulator.topicTitle },
       ]}
       accent="green"
     />

@@ -33,11 +33,11 @@ export function SimulatorLesson({
 
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex flex-col">
-        <div className="h-10 shrink-0 flex items-center justify-end px-4 border-b border-border bg-background/95 backdrop-blur">
+      <div className="fixed inset-0 z-50 flex flex-col bg-[#0D1117]">
+        <div className="flex h-10 shrink-0 items-center justify-end border-b border-white/10 px-4">
           <button
             onClick={() => setFullscreen(false)}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-md hover:bg-secondary"
+            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
           >
             <X className="w-3.5 h-3.5" />
             Salir
