@@ -44,7 +44,7 @@ export default async function GroupPage({
   const blocks = isSimulator
     ? [{ kind: "simulator" as const, src: `/temario/tema-${String(topic.number).padStart(2, "0")}/${activeSubtopic!.file}` }]
     : markdown
-      ? parseLessonBlocks(markdown, topic.number)
+      ? parseLessonBlocks(markdown, topic.number, activeSubtopic?.title)
       : null
 
   // Works for topics without content too, so you can keep advancing the syllabus.
