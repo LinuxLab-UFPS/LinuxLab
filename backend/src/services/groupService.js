@@ -47,6 +47,16 @@ async function createGroup(args) {
   })
   await ensureTeacherRole(teacherUserId, db)
 
+  const teacherAccount = await db.linuxAccount.findUnique({
+    where: { user_id: teacherUserId },
+  })
+
+  if (!teacherAccount?.linux_provisioned) {
+    throw new ConflictError(
+      "Tu cuenta Linux aún no está provisionada en el entorno. Espera a que termine el aprovisionamiento y vuelve a intentar crear el grupo.",
+    )
+  }
+
   const groupId = randomUUID()
   const groupDir = generateGroupDir(parsed.name, groupId)
   const groupName = groupNameOf(groupId)
@@ -60,22 +70,14 @@ async function createGroup(args) {
     },
   })
 
-  const teacherAccount = await db.linuxAccount.findUnique({
-    where: { user_id: teacherUserId },
+  await db.groupProvisioningJob.create({
+    data: {
+      group_id: group.id,
+      group_dir: groupDir,
+      group_name: groupName,
+      teacher_username: teacherAccount.linux_username,
+    },
   })
-
-  if (teacherAccount?.linux_provisioned) {
-    await db.groupProvisioningJob.create({
-      data: {
-        group_id: group.id,
-        group_dir: groupDir,
-        group_name: groupName,
-        teacher_username: teacherAccount.linux_username,
-      },
-    })
-  } else {
-    logger.warn({ teacherUserId }, "Teacher not provisioned yet, group dir will be created after teacher provisioning")
-  }
 
   const enrollment = await enrollmentService.enrollMany({
     groupId: group.id,
