@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Loader2 } from "lucide-react"
 
 /**
@@ -20,10 +21,11 @@ import { Loader2 } from "lucide-react"
  */
 interface Valor {
   pending: boolean
-  go: (href: string) => void
+  /** null fuera del proveedor: entonces el enlace navega por su cuenta. */
+  go: ((href: string) => void) | null
 }
 
-const Contexto = createContext<Valor>({ pending: false, go: () => {} })
+const Contexto = createContext<Valor>({ pending: false, go: null })
 
 export function LessonLoadingProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -42,6 +44,43 @@ export function LessonLoadingProvider({ children }: { children: React.ReactNode 
 
 export function useLessonLoading(): Valor {
   return useContext(Contexto)
+}
+
+/**
+ * Un enlace a otra leccion: el mismo `Link` de siempre, pero pasando por la
+ * transicion para que el velo aparezca mientras llega.
+ *
+ * Lo usan los dos caminos que llevan de una leccion a otra —la lista de temas y
+ * los botones de anterior/siguiente— porque si solo uno lo hiciera, la mitad de
+ * los clics se quedarian sin respuesta visible.
+ */
+export function LessonLink({
+  href,
+  className,
+  children,
+}: {
+  href: string
+  className?: string
+  children: React.ReactNode
+}) {
+  const { go } = useLessonLoading()
+
+  return (
+    <Link
+      href={href}
+      onClick={(e) => {
+        // Con modificador el navegador abre otra pestaña o ventana: la pagina
+        // actual no cambia, asi que no hay transicion que enseñar. Sin
+        // proveedor, tampoco: se deja navegar al `Link`.
+        if (!go || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+        e.preventDefault()
+        go(href)
+      }}
+      className={className}
+    >
+      {children}
+    </Link>
+  )
 }
 
 /**
