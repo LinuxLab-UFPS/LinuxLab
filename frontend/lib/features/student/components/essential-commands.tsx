@@ -1,10 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Command, Download, Plus } from "lucide-react"
+import { Command, Download, Plus, X } from "lucide-react"
 import { CollapsedPanelButton } from "@shared/components/collapsed-panel-button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -160,16 +161,23 @@ function CommandChip({
 }) {
   const body = (
     <>
-      <p className="font-mono text-sm font-bold text-primary [text-shadow:var(--neon-text-shadow)]">
+      {/* `break-words`: el argumento salta de linea cuando no cabe al lado del
+          comando, y se parte si el solo ya es mas ancho que la tarjeta. Sin
+          esto, `unzip <archivo.zip>` se salia por el borde derecho. */}
+      <p className="font-mono text-sm font-bold break-words text-primary [text-shadow:var(--neon-text-shadow)]">
         {command.name}
         {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
       </p>
-      <p className="mt-1 text-xs leading-snug text-muted-foreground">{command.description}</p>
+      <p className="mt-1 text-xs leading-snug break-words text-muted-foreground">
+        {command.description}
+      </p>
     </>
   )
 
+  // `min-w-0`: una celda de rejilla no baja de su contenido por defecto, asi que
+  // un comando largo ensanchaba su columna y la tira entera se desbordaba.
   const style = cn(
-    "rounded-lg border p-2.5 text-left transition-colors",
+    "min-w-0 rounded-lg border p-2.5 text-left transition-colors",
     selected === false
       ? "border-border bg-transparent hover:border-primary/40"
       : "border-primary/40 bg-primary/10",
@@ -188,12 +196,14 @@ function CommandChip({
 /** El chip de un comando aun no aprendido: se ve, pero no se puede escoger. */
 function LockedChip({ command }: { command: EssentialCommand }) {
   return (
-    <div className="rounded-lg border border-border/60 p-2.5 text-left opacity-45">
-      <p className="font-mono text-sm font-bold text-muted-foreground">
+    <div className="min-w-0 rounded-lg border border-border/60 p-2.5 text-left opacity-45">
+      <p className="font-mono text-sm font-bold break-words text-muted-foreground">
         {command.name}
         {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
       </p>
-      <p className="mt-1 text-xs leading-snug text-muted-foreground">{command.description}</p>
+      <p className="mt-1 text-xs leading-snug break-words text-muted-foreground">
+        {command.description}
+      </p>
     </div>
   )
 }
@@ -223,8 +233,20 @@ function CommandPicker({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] gap-0 overflow-y-auto border-primary/50 shadow-[var(--neon-glow-strong)] sm:max-w-3xl">
-        <div className="mb-5 flex flex-wrap items-center gap-3 pr-6">
+      {/* La equis va por nuestra cuenta (`showCloseButton={false}`): la del
+          componente se planta a la misma altura que «Descargar» y las dos
+          juntas se leen como dos acciones del mismo rango. Cerrar no es una
+          accion mas, asi que se sube a la esquina, por encima de la fila. */}
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[80vh] gap-0 overflow-y-auto border-primary/50 shadow-[var(--neon-glow-strong)] sm:max-w-3xl"
+      >
+        <DialogClose className="absolute top-3 right-3 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus:ring-2 focus:ring-ring focus:outline-hidden">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Cerrar</span>
+        </DialogClose>
+
+        <div className="mt-3 mb-5 flex flex-wrap items-center gap-3">
           <div className="min-w-0">
             <DialogTitle className="text-lg font-bold text-foreground">
               Comandos Esenciales
@@ -233,13 +255,15 @@ function CommandPicker({
               Escoge hasta {CHEAT_SHEET_SIZE} para tenerlos debajo de tu terminal
             </DialogDescription>
           </div>
+          {/* En gris: el rojo lo llevan las tarjetas de comando, que son lo que
+              hay que mirar aqui. Un boton secundario no puede gritar mas. */}
           <button
             type="button"
             onClick={() => {
               downloadCheatSheet()
               notify.info("Descargando el PDF de comandos…")
             }}
-            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
+            className="ml-auto inline-flex shrink-0 items-center gap-2 rounded-md border border-border bg-secondary px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/70"
           >
             <Download className="h-4 w-4" />
             Descargar
