@@ -13,14 +13,17 @@ function textOf(node: React.ReactNode): string {
 
 /** Renders lesson markdown with the LinuxLab theme. */
 const components: Components = {
+  // Un escalon por debajo del titulo de la leccion (`lesson-header.tsx`, 3xl).
+  // Antes el `h2` medía lo mismo que él, asi que el primer apartado se leia como
+  // un segundo titulo de la pagina en vez de como una division dentro de ella.
   h1: ({ children }) => (
-    <h1 className="text-4xl font-bold text-foreground mt-2 mb-5">{children}</h1>
+    <h1 className="text-3xl font-bold text-foreground mt-2 mb-5">{children}</h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-3xl font-bold text-foreground mt-12 mb-5">{children}</h2>
+    <h2 className="text-2xl font-bold text-foreground mt-12 mb-5">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-2xl font-semibold text-foreground mt-8 mb-3">{children}</h3>
+    <h3 className="text-xl font-semibold text-foreground mt-8 mb-3">{children}</h3>
   ),
   // El cuerpo va en el color de texto pleno. En gris quedaba lavado y hacia
   // ver la leccion como una nota al pie en vez del contenido principal.
@@ -78,7 +81,7 @@ const components: Components = {
   // el rojo de la plataforma; los colores y el halo viven en `.lesson-kbd`
   // porque cambian entre tema claro y oscuro.
   kbd: ({ children }) => (
-    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
+    <kbd className="lesson-kbd mx-0.5 inline-block whitespace-nowrap rounded-md border border-b-2 px-1.5 py-0.5 align-baseline font-mono text-[0.8em] font-semibold">
       {children}
     </kbd>
   ),

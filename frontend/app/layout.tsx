@@ -42,10 +42,16 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${onest.variable} ${geistMono.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased">
+        {/* `disableTransitionOnChange`: el cambio de tema es instantaneo. Habia
+            un crossfade de 0.28s sobre todos los colores y se notaba como un
+            barrido lento; ademas obligaba a cada elemento de la pagina a animar
+            sus colores tambien al pasar el raton. Los componentes que quieren
+            transicion la declaran ellos con `transition-colors`. */}
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
           enableSystem={false}
+          disableTransitionOnChange
         >
           <AuthProvider>
             <QueryProvider>

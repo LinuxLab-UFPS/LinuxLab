@@ -181,8 +181,13 @@ if $SKIP_PULL; then
 else
   log "Actualizando el repo del servidor (git pull --ff-only)..."
   # Best effort: los archivos criticos ya se transfirieron en el paso 4.
-  out="$(ssh $SSH_OPTS -p "$SSH_PORT" "$HOST" "cd ~/LinuxLab && git pull --ff-only origin main" </dev/null 2>&1)" \
-    || warn "git pull fallo (continua con los archivos transferidos):\n$out"
+  # `pull --ff-only` abortaba SIEMPRE: los archivos que acabamos de transferir por
+  # scp quedan como cambios locales, y git se niega a pisarlos. El repo del
+  # servidor no es un espacio de trabajo, es un checkout de despliegue, asi que
+  # se le fuerza a coincidir con origin. Lo transferido y lo del repo salen del
+  # mismo commit, de modo que el reset no cambia nada de lo que acaba de llegar.
+  out="$(ssh $SSH_OPTS -p "$SSH_PORT" "$HOST" "cd ~/LinuxLab && git fetch -q origin main && git reset --hard -q FETCH_HEAD" </dev/null 2>&1)" \
+    || warn "no se pudo alinear el repo del servidor (continua con los archivos transferidos):\n$out"
 fi
 
 # ---- 6. Aplicar -------------------------------------------------------------

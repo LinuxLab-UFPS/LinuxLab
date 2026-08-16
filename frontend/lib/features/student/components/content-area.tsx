@@ -5,6 +5,7 @@ import { LessonSources } from "@shared/components/lesson-sources"
 import { SimulatorLesson } from "@shared/components/simulator-lesson"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
 import { LessonContainer } from "@shared/components/terminal-ui"
+import { LessonHeader } from "@shared/components/lesson-header"
 import type { Topic } from "@/lib/features/student/types"
 import type { LessonResource, LessonSubtopic, TopicContentMeta } from "@/lib/models/content"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -56,6 +57,14 @@ export function ContentArea({
         />
       ) : (
         <LessonContainer>
+          {/* La rama de simulador no pasa por aqui: monta su propia portada con
+              su titulo, y dos cabeceras seguidas sobraban. */}
+          <LessonHeader
+            topicTitle={topic.title}
+            topicSlug={topic.slug}
+            lessonTitle={activeSubtopic?.title ?? topic.title}
+          />
+
           {bodyBlocks && bodyBlocks.length > 0 ? (
             <LessonBody blocks={bodyBlocks} />
           ) : (

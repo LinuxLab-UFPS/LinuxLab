@@ -9,13 +9,13 @@ import { CheckList } from "@/lib/features/student/components/check-list"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
-  DIFFICULTY_CLASS,
+  DIFFICULTY_TONE,
   DIFFICULTY_LABEL,
   type Activity,
 } from "@shared/lib/content/activities"
+import { Tag } from "@shared/components/tag"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
-const PILL = "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium"
 
 /**
  * An activity open next to the terminal: this is where activities are solved,
@@ -68,17 +68,12 @@ export function ActivityPanel({
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
-          <span className={cn(PILL, activity.difficulty ? DIFFICULTY_CLASS[activity.difficulty] : "border-border text-muted-foreground")}>
+          <Tag tone={activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"}>
             {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
-          </span>
-          <span
-            className={cn(
-              PILL,
-              passed ? "border-sky-500/40 text-sky-400" : "border-border text-muted-foreground",
-            )}
-          >
+          </Tag>
+          <Tag tone={passed ? "sky" : "neutral"}>
             {passed ? "Completada" : "Sin completar"}
-          </span>
+          </Tag>
         </div>
       </header>
 

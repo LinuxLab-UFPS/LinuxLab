@@ -1,5 +1,7 @@
-import Link from "next/link"
+"use client"
+
 import { ArrowLeft, ArrowRight } from "lucide-react"
+import { LessonLink } from "@shared/components/lesson-loading"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
 function describe(ref: LessonRef, currentTopicNumber: number, direction: "prev" | "next") {
@@ -21,6 +23,10 @@ function describe(ref: LessonRef, currentTopicNumber: number, direction: "prev" 
 /**
  * Previous/next navigation at the end of a lesson. Advances through subtopics and
  * then rolls over into the next topic of the temario.
+ *
+ * Va por `LessonLink`, igual que la lista de temas: es el otro camino de una
+ * leccion a otra, y tarda lo mismo, asi que tambien tiene que encender el velo
+ * de carga.
  */
 export function LessonNav({
   currentTopicNumber,
@@ -39,7 +45,7 @@ export function LessonNav({
   return (
     <nav className="mt-10 flex items-center justify-between gap-4">
       {prev && prevInfo ? (
-        <Link
+        <LessonLink
           href={prev.href}
           className="group flex items-center gap-3 max-w-[45%] rounded-md border border-border px-4 py-3 text-left hover:border-primary/40 hover:bg-secondary/40 transition-colors"
         >
@@ -50,13 +56,13 @@ export function LessonNav({
               {prevInfo.title}
             </span>
           </span>
-        </Link>
+        </LessonLink>
       ) : (
         <span />
       )}
 
       {next && nextInfo ? (
-        <Link
+        <LessonLink
           href={next.href}
           className={`group flex items-center gap-3 max-w-[55%] rounded-md px-5 py-3 text-right transition-all duration-300 ${
             next.isSimulator
@@ -69,7 +75,7 @@ export function LessonNav({
             <span className="block text-sm font-semibold truncate">{nextInfo.title}</span>
           </span>
           <ArrowRight className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+        </LessonLink>
       ) : (
         <span />
       )}

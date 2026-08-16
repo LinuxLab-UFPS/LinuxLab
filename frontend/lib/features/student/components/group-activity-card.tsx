@@ -1,10 +1,10 @@
 import Link from "next/link"
-import { ListChecks, Target } from "lucide-react"
-import { cn } from "@shared/lib/utils"
+import { Target } from "lucide-react"
 import { getTopic } from "@shared/lib/content/temario"
+import { BookOpen } from "lucide-react"
+import { Tag } from "@shared/components/tag"
 import type { GroupActivitySummary } from "@/lib/features/student/group-activities"
 
-const PILL = "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
 
 /** Una actividad de curso (creada por el docente), con su estado y su nota. */
 export function GroupActivityCard({ activity }: { activity: GroupActivitySummary }) {
@@ -23,19 +23,11 @@ export function GroupActivityCard({ activity }: { activity: GroupActivitySummary
             {activity.title}
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {activity.passed ? (
-              <span className={cn(PILL, "border-emerald-500/40 text-emerald-500")}>
-                Completada
-              </span>
-            ) : (
-              <span className={cn(PILL, "border-amber-500/40 text-amber-500")}>
-                Pendiente
-              </span>
-            )}
+            <Tag tone={activity.passed ? "emerald" : "amber"}>
+              {activity.passed ? "Completada" : "Pendiente"}
+            </Tag>
             {activity.lastScore !== null && (
-              <span className={cn(PILL, "border-sky-500/40 text-sky-400")}>
-                Nota: {activity.lastScore}/100
-              </span>
+              <Tag tone="sky">Nota: {activity.lastScore}/100</Tag>
             )}
           </div>
         </div>
@@ -46,13 +38,7 @@ export function GroupActivityCard({ activity }: { activity: GroupActivitySummary
       </p>
 
       <div className="mt-4 flex flex-wrap gap-1.5">
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
-          {topic ? `${topic.number}. ${topic.title}` : "Sin tema"}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-full bg-foreground/5 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
-          <ListChecks className="h-3 w-3" />
-          {activity.checksCount} comprobaciones
-        </span>
+        <Tag icon={BookOpen}>{topic ? `${topic.number}. ${topic.title}` : "Sin tema"}</Tag>
       </div>
     </Link>
   )

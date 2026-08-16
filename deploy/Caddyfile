@@ -15,10 +15,16 @@
 	# camino para dos destinos. Lo que los separa es la cabecera de upgrade,
 	# que solo trae el socket. Sin este matcher habria que elegir, y elegir
 	# rompe la terminal o rompe la pagina que la contiene.
+	# Los comodines van sobre un trozo sin la primera letra a proposito. El
+	# matcher de Caddy compara el valor tal cual, y quien manda la cabecera no
+	# se pone de acuerdo con la mayuscula: curl escribe `Connection: Upgrade` y
+	# nginx, por su snippet compartido, `connection: upgrade`. Con `*Upgrade*`
+	# la peticion de nginx no coincidia, caia al frontend —que no habla
+	# WebSocket— y la terminal se quedaba colgada sin un solo byte de vuelta.
 	@terminal_ws {
 		path /terminal
-		header Connection *Upgrade*
-		header Upgrade websocket
+		header Connection *pgrade*
+		header Upgrade *ebsocket*
 	}
 	handle @terminal_ws {
 		reverse_proxy backend:3000

@@ -19,7 +19,7 @@ export const syllabus: Topic[] = [
     title: "Introducción a Linux",
     description: "Historia, kernel, entorno de ventanas e instalación.",
     subTopics: [
-      { number: 1, title: "¿Qué es Linux? Dónde todo empezó" },
+      { number: 1, title: "Linux: Dónde todo empezó" },
       { number: 2, title: "El Kernel" },
       { number: 3, title: "Entorno de ventanas" },
       { number: 4, title: "Instalación" },
@@ -119,26 +119,9 @@ export const syllabus: Topic[] = [
   },
   {
     number: 10,
-    slug: "servicios-y-demonios",
-    title: "Servicios y demonios",
-    description: "systemctl y estados de los servicios.",
-    subTopics: [
-      { number: 1, title: "systemctl" },
-      { number: 2, title: "Estados de servicios" },
-    ],
-  },
-  {
-    number: 11,
     slug: "shell-scripting",
     title: "Shell scripting",
     description: "Variables, condicionales, ciclos y funciones en Bash.",
-    subTopics: [],
-  },
-  {
-    number: 12,
-    slug: "instalacion-de-paquetes",
-    title: "Instalación de paquetes",
-    description: "Gestión de paquetes con apt y dnf.",
     subTopics: [],
   },
 ]

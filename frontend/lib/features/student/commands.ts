@@ -71,9 +71,9 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "whoami", description: "Dice con qué cuenta estás.", topicNumber: 8, subtopicId: "usuarios" },
   { name: "id", args: "[usuario]", description: "Muestra usuario y grupos.", topicNumber: 8, subtopicId: "usuarios" },
 
-  // 11 · Shell scripting
-  { name: "bash", args: "<script.sh>", description: "Ejecuta un script.", topicNumber: 11, subtopicId: "scripting" },
-  { name: "read", args: "<var>", description: "Lee una línea de la entrada.", topicNumber: 11, subtopicId: "scripting" },
+  // 10 · Shell scripting
+  { name: "bash", args: "<script.sh>", description: "Ejecuta un script.", topicNumber: 10, subtopicId: "scripting" },
+  { name: "read", args: "<var>", description: "Lee una línea de la entrada.", topicNumber: 10, subtopicId: "scripting" },
 ]
 
 /** How many the cheat sheet shows at once. */

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { describeCheck } from "@/lib/features/student/use-activity-check"
@@ -15,7 +16,6 @@ import {
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import { notify } from "@shared/lib/toast"
 
-const PILL = "inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium"
 
 /**
  * Una actividad de curso (creada por el docente) abierta junto a la terminal.
@@ -73,19 +73,10 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
-          <span
-            className={cn(
-              PILL,
-              passed ? "border-sky-500/40 text-sky-400" : "border-border text-muted-foreground",
-            )}
-          >
+          <Tag tone={passed ? "sky" : "neutral"}>
             {passed ? "Completada" : "Sin completar"}
-          </span>
-          {detail.evaluationType === "manual" && (
-            <span className={cn(PILL, "border-amber-500/40 text-amber-500")}>
-              Revisión manual
-            </span>
-          )}
+          </Tag>
+          {detail.evaluationType === "manual" && <Tag tone="amber">Revisión manual</Tag>}
         </div>
       </header>
 

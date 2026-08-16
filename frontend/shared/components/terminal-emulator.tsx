@@ -59,43 +59,88 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     term.open(containerRef.current)
     fitAddon.fit()
 
-    const ws = new WebSocket(`${WS_BASE}/terminal`)
-    wsRef.current = ws
+    // Reintentos al abrir.
+    //
+    // El boton de "Reset terminal" remonta este componente, asi que el socket
+    // nuevo sale mientras el anterior todavia se esta cerrando, y el del medio
+    // corta ese primer intento (NS_ERROR_NET_RESET, sin llegar a negociar).
+    // Recargar la pagina no fallaba nunca porque tarda lo suficiente.
+    //
+    // En vez de perseguir quien lo corta, se reintenta: si la conexion muere
+    // antes de haberse abierto, se prueba de nuevo con una espera creciente.
+    // El primer intento no anuncia nada —lo normal es que funcione— y solo se
+    // avisa al usuario si hay que esperar de verdad.
+    const ESPERAS = [500, 1200, 2500]
+    let intento = 0
+    let abierta = false
+    let cerrado = false
+    let reintento: ReturnType<typeof setTimeout> | undefined
 
-    ws.onopen = () => {
-      const { cols, rows } = term
-      ws.send(JSON.stringify({ type: "resize", cols, rows }))
-      // La terminal está lista: los comandos que llegaron antes (p. ej. el cd
-      // a la carpeta de trabajo al abrir una actividad) se vacían en orden.
-      markTerminalReady()
-    }
+    const conectar = () => {
+      if (cerrado) return
+      const ws = new WebSocket(`${WS_BASE}/terminal`)
+      wsRef.current = ws
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data)
-        if (msg.type === "output") term.write(msg.data)
-        if (msg.type === "exit") {
-          term.write(`\r\n[Process exited with code ${msg.code}]\r\n`)
+      ws.onopen = () => {
+        abierta = true
+        const { cols, rows } = term
+        ws.send(JSON.stringify({ type: "resize", cols, rows }))
+        // La terminal está lista: los comandos que llegaron antes (p. ej. el cd
+        // a la carpeta de trabajo al abrir una actividad) se vacían en orden.
+        markTerminalReady()
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data)
+          if (msg.type === "output") term.write(msg.data)
+          if (msg.type === "exit") {
+            term.write(`\r\n[Process exited with code ${msg.code}]\r\n`)
+          }
+        } catch {
+          /**/
         }
-      } catch {
-        /**/
+      }
+
+      // El error de socket no dice nada util por si mismo y siempre viene
+      // seguido de un close: se informa alli, con el codigo.
+      ws.onerror = () => {}
+
+      ws.onclose = (event) => {
+        if (cerrado) return
+
+        // Nunca llego a abrirse y quedan intentos: es el caso del boton.
+        if (!abierta && intento < ESPERAS.length) {
+          const espera = ESPERAS[intento]
+          intento += 1
+          if (intento > 1) term.write("\r\n\x1b[33mReconectando…\x1b[0m\r\n")
+          reintento = setTimeout(conectar, espera)
+          return
+        }
+
+        if (!abierta) {
+          term.write("\r\n\x1b[31mNo se pudo conectar con la terminal.\x1b[0m\r\n")
+          term.write("\x1b[92mRecarga la página para volver a intentarlo.\x1b[0m\r\n")
+          return
+        }
+
+        // La sesion estuvo viva y se cerro. El mensaje de antes preguntaba si
+        // el servidor estaba corriendo, y casi nunca era eso: lo normal es
+        // haber salido de la pestaña, haber escrito `exit` o que saltara el
+        // cierre por inactividad. Decirlo y ofrecer la salida vale mas que un
+        // codigo de error.
+        const motivo = event.reason && event.reason.trim() ? event.reason.trim() : null
+        term.write("\r\n\x1b[33mLa sesión de la terminal se cerró.\x1b[0m\r\n")
+        if (motivo) term.write(`\x1b[37m${motivo}\x1b[0m\r\n`)
+        term.write("\x1b[92mPulsa «Reset terminal» para abrir una nueva.\x1b[0m\r\n")
       }
     }
 
-    ws.onerror = () => {
-      term.write("\r\n\x1b[31mError de conexión. ¿El servidor está corriendo?\x1b[0m\r\n")
-    }
-
-    ws.onclose = (event) => {
-      if (event.code !== 1000) {
-        term.write(`\r\n\x1b[33mConexión cerrada (${event.code}). ${event.reason || "¿El servidor está corriendo?"}\x1b[0m\r\n`)
-      } else {
-        term.write("\r\n\x1b[33mConexión cerrada.\x1b[0m\r\n")
-      }
-    }
+    conectar()
 
     const write = (data: string) => {
-      if (ws.readyState === WebSocket.OPEN) {
+      const ws = wsRef.current
+      if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "input", data }))
       }
     }
@@ -109,7 +154,8 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       resizeTimer = setTimeout(() => {
         fitAddon.fit()
         const { cols, rows } = term
-        if (ws.readyState === WebSocket.OPEN) {
+        const ws = wsRef.current
+        if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "resize", cols, rows }))
         }
       }, 100)
@@ -117,8 +163,10 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     observer.observe(containerRef.current)
 
     return () => {
+      cerrado = true
+      clearTimeout(reintento)
       unsubscribe()
-      ws.close()
+      wsRef.current?.close()
       term.dispose()
       observer.disconnect()
       termRef.current = null

@@ -25,7 +25,7 @@ Sostienen la mayor parte del temario y se repiten en casi todas las lecciones.
 
 | Lección | Fuentes |
 |---|---|
-| ¿Qué es Linux? Dónde todo empezó | Stallings, *Operating Systems*, 9th Ed., 2018 · Cisco · W3Techs, 2024 · TOP500, 2024 · Wikipedia (ES), *Historia de Linux* |
+| Linux: Dónde todo empezó | Stallings, *Operating Systems*, 9th Ed., 2018 · Cisco · W3Techs, 2024 · TOP500, 2024 · Wikipedia (ES), *Historia de Linux* |
 | El Kernel | Silberschatz, Galvin & Gagne, *Operating System Concepts*, 10th Ed., 2021 · Tanenbaum & Bos, *Modern Operating Systems*, 5th Ed., 2023 · Cisco · The Linux Foundation, *Kernel Development Report*, 2024 · kernel.org |
 | Entorno de ventanas | Cisco · Wikipedia (ES), *Entornos de escritorio* · GNOME · KDE Plasma |
 | Instalación | Instituto Linux |

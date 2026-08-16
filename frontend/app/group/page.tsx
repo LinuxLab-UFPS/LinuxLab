@@ -16,6 +16,7 @@ import { parseLessonBlocks } from "@shared/lib/content/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { requireServerRole } from "@/lib/features/auth/session"
 import { TerminalUIProvider } from "@shared/components/terminal-ui"
+import { LessonLoadingProvider } from "@shared/components/lesson-loading"
 import {
   ReadingProgressProvider,
   ReadingProgressBar,
@@ -43,7 +44,7 @@ export default async function GroupPage({
   const blocks = isSimulator
     ? [{ kind: "simulator" as const, src: `/temario/tema-${String(topic.number).padStart(2, "0")}/${activeSubtopic!.file}` }]
     : markdown
-      ? parseLessonBlocks(markdown, topic.number)
+      ? parseLessonBlocks(markdown, topic.number, activeSubtopic?.title)
       : null
 
   // Works for topics without content too, so you can keep advancing the syllabus.
@@ -53,9 +54,17 @@ export default async function GroupPage({
     <LessonProgressProvider>
       <ReadingProgressProvider>
         <TerminalUIProvider>
-          <div className="flex h-screen flex-col bg-background">
-            <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
-            <ReadingProgressBar />
+         <LessonLoadingProvider>
+          {/* `min-h-screen` y no `h-screen`: el documento tiene que poder crecer
+              para que el scroll sea el de la ventana. Antes la altura estaba
+              clavada al viewport y las unicas zonas que respondian a la rueda
+              eran la lista de temas y la columna de la leccion; sobre la
+              cabecera, los huecos o la terminal no pasaba nada. */}
+          <div className="flex min-h-screen flex-col bg-background">
+            <div className="sticky top-0 z-40 bg-background">
+              <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+              <ReadingProgressBar />
+            </div>
             <GroupBody>
               <GroupSidebar
                 activeTopicSlug={topic.slug}
@@ -74,6 +83,7 @@ export default async function GroupPage({
               <GroupTerminal />
             </GroupBody>
           </div>
+         </LessonLoadingProvider>
         </TerminalUIProvider>
       </ReadingProgressProvider>
     </LessonProgressProvider>

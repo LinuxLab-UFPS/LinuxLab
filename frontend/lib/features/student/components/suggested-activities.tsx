@@ -75,10 +75,12 @@ export function SuggestedActivities({
           {loading ? "Buscando actividades…" : "No tienes actividades pendientes."}
         </p>
       ) : (
-        // `-mx-3 px-3`: el recorte del scroll se comería el halo de las tarjetas
-        // si la caja terminara justo en su borde, así que se ensancha y se
-        // compensa con padding para que la columna siga alineada igual.
-        <div className="-mx-3 min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-1">
+        // El halo de las tarjetas mide 30px de desenfoque y el `scale` del hover
+        // añade un poco más: necesita unos 18px de aire por lado. Pedir
+        // `overflow-y-auto` convierte también el eje horizontal en recorte, así
+        // que la caja se ensancha 20px y se compensa con padding para que la
+        // columna siga alineada donde estaba. Con 12px el halo salía cortado.
+        <div className="-mx-5 -my-2 min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-2">
           {pending.map((activity) => (
             <ActivityCard key={activity.slug} activity={activity} compact />
           ))}

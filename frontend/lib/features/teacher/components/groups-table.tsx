@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { BookOpen, Eye, FolderOpen, Plus, Search, X } from "lucide-react"
+import { Archive, BookOpen, FolderOpen, Plus, Search } from "lucide-react"
 import { Input } from "@shared/components/ui/input"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
@@ -35,6 +36,7 @@ type Tab = "activos" | "desactivados"
 const PAGE_SIZE = 8
 
 export function GroupsTable() {
+  const router = useRouter()
   const queryClient = useQueryClient()
   const groupsQuery = useGroups()
   // Sin estado local: la tabla lee siempre la query, y las mutaciones
@@ -160,11 +162,19 @@ export function GroupsTable() {
           </TableHeader>
           <TableBody>
             {pageRows.map((group) => (
-              <TableRow key={group.id}>
+              // La fila entera lleva al curso. Un `<Link>` no puede envolver un
+              // `<tr>`, asi que navega por `onClick`; el nombre sigue siendo un
+              // enlace de verdad para que se pueda alcanzar con el tabulador,
+              // que un `onClick` en la fila no da.
+              <TableRow
+                key={group.id}
+                onClick={() => router.push(`/groups/${group.id}`)}
+                className="group cursor-pointer"
+              >
                 <TableCell>
                   <Link
                     href={`/groups/${group.id}`}
-                    className="group block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
+                    className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
                   >
                     {group.name}
                   </Link>
@@ -183,18 +193,16 @@ export function GroupsTable() {
                 <TableCell className="font-mono text-sm text-muted-foreground">
                   {new Date(group.createdAt).toLocaleDateString("es-CO")}
                 </TableCell>
-                <TableCell>
+                {/* La accion no debe navegar tambien: el clic muere aqui. El
+                    boton de ver desaparecio porque la fila ya hace eso. */}
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-1">
-                    <IconAction
-                      label="Ver curso"
-                      icon={Eye}
-                      href={`/groups/${group.id}`}
-                    />
-                    {/* Un curso desactivado ya solo se consulta. */}
+                    {/* Un curso desactivado ya solo se consulta. El icono es un
+                        archivador y no una equis: esto archiva, no borra. */}
                     {!group.archived && (
                       <IconAction
-                        label="Desactivar curso"
-                        icon={X}
+                        label="Archivar curso"
+                        icon={Archive}
                         onClick={() => setConfirming({ group, action: "deactivate" })}
                       />
                     )}

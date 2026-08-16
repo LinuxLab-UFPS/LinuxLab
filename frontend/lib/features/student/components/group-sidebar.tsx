@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { LessonLink } from "@shared/components/lesson-loading"
 import { CheckCircle2, ChevronRight, Circle, Home } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { syllabus } from "@shared/lib/content/temario"
@@ -38,7 +39,9 @@ export function GroupSidebar({
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
 
   return (
-    <aside className="w-80 shrink-0 py-4">
+    // Pegada bajo la cabecera (64px) y su barra de progreso (2px): la lista de
+    // temas sigue a mano mientras la pagina se desplaza.
+    <aside className="sticky top-[66px] max-h-[calc(100vh-66px)] w-80 shrink-0 pb-4 pt-16">
       <div className="mt-2 flex max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
@@ -68,7 +71,7 @@ export function GroupSidebar({
 
               return (
                 <li key={topic.slug}>
-                  <Link
+                  <LessonLink
                     href={`/group?tema=${topic.slug}`}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
@@ -109,7 +112,7 @@ export function GroupSidebar({
                     {isActive && (
                       <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
                     )}
-                  </Link>
+                  </LessonLink>
 
                   {/* Subtopics of the active module */}
                   {isActive && subs && (
@@ -119,7 +122,7 @@ export function GroupSidebar({
                         const activeSub = sub.id === activeSubtopicId
                         return (
                           <li key={sub.id}>
-                            <Link
+                            <LessonLink
                               href={`/group?tema=${topic.slug}&sub=${sub.id}`}
                               className={cn(
                                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
@@ -136,7 +139,7 @@ export function GroupSidebar({
                                 <Circle className="h-3.5 w-3.5 shrink-0" />
                               )}
                               <span className="truncate">{sub.title}</span>
-                            </Link>
+                            </LessonLink>
                           </li>
                         )
                       })}

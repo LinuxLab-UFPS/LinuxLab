@@ -71,6 +71,34 @@ const SOURCES_RE = /\n+(?:---[ \t]*\n+)?\*\*(?:Fuentes|Sources)\*\*[ \t]*\n+([\s
 /** Languages we render as a terminal window. */
 const TERMINAL_LANGS = new Set(["bash", "sh", "shell", "zsh", "console"])
 
+/**
+ * El titulo repetido.
+ *
+ * Cada leccion abre con un `##` que dice como se llama: era la unica forma de
+ * saberlo, porque la pagina no lo ponia en ningun sitio. Ahora la cabecera lo
+ * escribe arriba, asi que en la mitad de los archivos —los que titulan igual que
+ * su entrada del temario— el nombre salia dos veces seguidas.
+ *
+ * Se quita solo cuando coincide. Cuando dice otra cosa («Encadenar comandos» en
+ * el temario, «head y tail» en el archivo) no es una repeticion sino el primer
+ * apartado de la leccion, y se queda donde esta.
+ *
+ * El heading no siempre es la primera linea: puede ir detras de una directiva
+ * —`<!-- VIDEO: ... -->` abre varias lecciones— y esa se conserva.
+ */
+const LEADING_HEADING_RE = /^((?:\s*<!--[\s\S]*?-->)*\s*)#{1,3}[ \t]+([^\n]+?)[ \t]*(?:\r?\n|$)/
+
+function normalizeTitle(text: string): string {
+  return text.trim().toLowerCase().replace(/\s+/g, " ")
+}
+
+function dropRepeatedTitle(markdown: string, lessonTitle?: string): string {
+  if (!lessonTitle) return markdown
+  const match = markdown.match(LEADING_HEADING_RE)
+  if (!match || normalizeTitle(match[2]) !== normalizeTitle(lessonTitle)) return markdown
+  return match[1] + markdown.slice(match[0].length)
+}
+
 interface Fence {
   start: number
   end: number
@@ -156,14 +184,20 @@ function findPartner(
   return null
 }
 
-export function parseLessonBlocks(markdown: string, topicNumber: number): LessonBlock[] {
-  // 0. Peel the bibliography off the end; it is rendered as a disclosure.
-  let body = markdown
+export function parseLessonBlocks(
+  markdown: string,
+  topicNumber: number,
+  lessonTitle?: string,
+): LessonBlock[] {
+  // 0. Drop the title when the header above already says it, then peel the
+  //    bibliography off the end; it is rendered as a disclosure.
+  const source = dropRepeatedTitle(markdown, lessonTitle)
+  let body = source
   let sources: string | null = null
-  const sourcesMatch = markdown.match(SOURCES_RE)
+  const sourcesMatch = source.match(SOURCES_RE)
   if (sourcesMatch && sourcesMatch.index !== undefined) {
     sources = sourcesMatch[1].trim()
-    body = markdown.slice(0, sourcesMatch.index).trimEnd()
+    body = source.slice(0, sourcesMatch.index).trimEnd()
   }
 
   // 1. Split the markdown around the media directives.
