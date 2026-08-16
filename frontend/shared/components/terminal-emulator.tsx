@@ -120,7 +120,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
 
         if (!abierta) {
           term.write("\r\n\x1b[31mNo se pudo conectar con la terminal.\x1b[0m\r\n")
-          term.write("\x1b[90mRecarga la página para volver a intentarlo.\x1b[0m\r\n")
+          term.write("\x1b[92mRecarga la página para volver a intentarlo.\x1b[0m\r\n")
           return
         }
 
@@ -131,8 +131,8 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
         // codigo de error.
         const motivo = event.reason && event.reason.trim() ? event.reason.trim() : null
         term.write("\r\n\x1b[33mLa sesión de la terminal se cerró.\x1b[0m\r\n")
-        if (motivo) term.write(`\x1b[90m${motivo}\x1b[0m\r\n`)
-        term.write("\x1b[90mPulsa «Reset terminal» para abrir una nueva.\x1b[0m\r\n")
+        if (motivo) term.write(`\x1b[37m${motivo}\x1b[0m\r\n`)
+        term.write("\x1b[92mPulsa «Reset terminal» para abrir una nueva.\x1b[0m\r\n")
       }
     }
 
