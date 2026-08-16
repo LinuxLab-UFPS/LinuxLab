@@ -1,5 +1,12 @@
 /**
  * Una ilustracion por cada trabajo del kernel, para la leccion 02-kernel.
+ *
+ * Salvo la de procesos —que dibuja una ventana, y una ventana tiene su propio
+ * marco—, los diagramas van sin fondo: se apoyan en el de la pagina como el
+ * arbol de directorios (`filesystem-hierarchy.tsx`) o el diagrama de espacios.
+ * Sus colores salen de los tokens del tema, no de valores fijos, para que la
+ * misma figura se lea en claro y en oscuro; antes eran pasteles sobre una
+ * tarjeta oscura y en modo claro habrian quedado lavadisimos.
  */
 
 const W = 820
@@ -12,6 +19,14 @@ const AMBER = "#fbbf24"
 const GREEN = "#86efac"
 const RED = "#ff5470"
 const MONO = "var(--font-geist-mono), ui-monospace, monospace"
+
+/* Paleta de los diagramas, la misma del arbol de directorios: un tono por idea
+   y dos intensidades, la mas oscura para el tema claro. */
+const TRAZO = "stroke-muted-foreground/50"
+const TEXTO = "fill-foreground"
+const APUNTE = "fill-muted-foreground"
+const AZUL_TEXTO = "fill-sky-600 dark:fill-sky-400"
+const VERDE_TEXTO = "fill-emerald-600 dark:fill-emerald-400"
 
 /** El marco comun: una tarjeta oscura del ancho del contenido. */
 function Card({
@@ -48,12 +63,41 @@ function Card({
   )
 }
 
-/** Rotulo en monoespaciada. */
+/** Un diagrama sin marco, directamente sobre la pagina. */
+function Diagram({
+  id,
+  title,
+  height,
+  children,
+}: {
+  id: string
+  title: string
+  height: number
+  children: React.ReactNode
+}) {
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${height}`}
+      role="img"
+      aria-labelledby={id}
+      className="mx-auto my-8 block w-full max-w-3xl"
+    >
+      <title id={id}>{title}</title>
+      {children}
+    </svg>
+  )
+}
+
+/**
+ * Rotulo en monoespaciada. El color va por `className` (token del tema) en los
+ * diagramas y por `fill` en la ventana de procesos, que es de color fijo.
+ */
 function Label({
   x,
   y,
   children,
-  fill = MUTED,
+  fill,
+  className,
   size = 14,
   anchor = "start",
 }: {
@@ -61,11 +105,20 @@ function Label({
   y: number
   children: string
   fill?: string
+  className?: string
   size?: number
   anchor?: "start" | "middle" | "end"
 }) {
   return (
-    <text x={x} y={y} fontSize={size} fill={fill} textAnchor={anchor} fontFamily={MONO}>
+    <text
+      x={x}
+      y={y}
+      fontSize={size}
+      fill={className ? undefined : (fill ?? MUTED)}
+      className={className}
+      textAnchor={anchor}
+      fontFamily={MONO}
+    >
       {children}
     </text>
   )
@@ -217,76 +270,79 @@ export function KernelProcesosIllustration() {
    ============================================================ */
 
 /** Que proceso ocupa cada celda de la RAM. `null` es memoria libre. */
-const RAM_CELLS: (string | null)[] = [
-  SKY, SKY, SKY,
+const RAM_CELLS: ("navegador" | "editor" | null)[] = [
+  "navegador", "navegador", "navegador",
   null,
-  AMBER, AMBER,
+  "editor", "editor",
   null,
-  SKY, SKY,
-  AMBER, AMBER, AMBER,
+  "navegador", "navegador",
+  "editor", "editor", "editor",
   null,
-  SKY,
+  "navegador",
   null,
 ]
 
+/**
+ * La celda ocupada va con su color a plena intensidad y la libre en un gris
+ * medio: tiene que leerse como "aqui no hay nada", no como un hueco negro.
+ */
+const CELDA = {
+  navegador: "fill-sky-500/70 stroke-sky-500",
+  editor: "fill-emerald-500/70 stroke-emerald-500",
+  libre: "fill-muted-foreground/20 stroke-muted-foreground/45",
+}
+
 export function KernelMemoriaIllustration() {
   return (
-    <Card
+    <Diagram
       id="ilu-kernel-memoria"
       title="Cada proceso cree tener un bloque continuo de memoria, mientras que en la RAM sus datos estan repartidos en celdas sueltas"
-      height={210}
+      height={190}
     >
-      <Label x={24} y={34} size={13}>
+      <Label x={4} y={20} size={13} className={APUNTE}>
         lo que cree tener cada proceso
       </Label>
       <rect
-        x="24"
-        y="46"
-        width="360"
-        height="38"
-        rx="8"
-        fill={SKY}
-        fillOpacity="0.16"
-        stroke={SKY}
-        strokeOpacity="0.8"
+        x="4"
+        y="32"
+        width="392"
+        height="42"
+        rx="9"
+        className="fill-sky-500/15 stroke-sky-500"
+        strokeWidth="2"
       />
-      <Label x={40} y={70} fill={SKY}>
+      <Label x={26} y={59} size={15} className={AZUL_TEXTO}>
         navegador
       </Label>
       <rect
-        x="404"
-        y="46"
-        width="280"
-        height="38"
-        rx="8"
-        fill={AMBER}
-        fillOpacity="0.16"
-        stroke={AMBER}
-        strokeOpacity="0.8"
+        x="416"
+        y="32"
+        width="300"
+        height="42"
+        rx="9"
+        className="fill-emerald-500/15 stroke-emerald-500"
+        strokeWidth="2"
       />
-      <Label x={420} y={70} fill={AMBER}>
+      <Label x={438} y={59} size={15} className={VERDE_TEXTO}>
         editor
       </Label>
 
-      <Label x={24} y={132} size={13}>
+      <Label x={4} y={124} size={13} className={APUNTE}>
         cómo queda de verdad en la RAM
       </Label>
       {RAM_CELLS.map((owner, i) => (
         <rect
           key={i}
-          x={24 + i * 52}
-          y="146"
+          x={4 + i * 52}
+          y="138"
           width="44"
-          height="34"
-          rx="6"
-          fill={owner ?? "#ffffff"}
-          fillOpacity={owner ? 0.38 : 0.04}
-          stroke={owner ?? "#ffffff"}
-          strokeOpacity={owner ? 0.85 : 0.14}
-          strokeWidth="1.4"
+          height="36"
+          rx="7"
+          className={CELDA[owner ?? "libre"]}
+          strokeWidth="1.8"
         />
       ))}
-    </Card>
+    </Diagram>
   )
 }
 
@@ -299,42 +355,41 @@ function Folder({ x, y }: { x: number; y: number }) {
   return (
     <path
       d={`M${x} ${y + 4} h10 l4 5 h16 a3 3 0 0 1 3 3 v13 a3 3 0 0 1 -3 3 h-30 a3 3 0 0 1 -3 -3 v-18 a3 3 0 0 1 3 -3 z`}
-      fill={SKY}
-      opacity="0.85"
+      className="fill-sky-500"
     />
   )
 }
 
 const TREE = [
-  { x: 48, y: 40, name: "/", detail: "la raíz: todo cuelga de aquí" },
-  { x: 170, y: 118, name: "etc/", detail: "la configuración del sistema" },
-  { x: 170, y: 188, name: "home/", detail: "los archivos de cada usuario" },
-  { x: 170, y: 258, name: "dev/", detail: "los dispositivos conectados" },
+  { x: 28, y: 20, name: "/", detail: "la raíz: todo cuelga de aquí" },
+  { x: 150, y: 98, name: "etc/", detail: "la configuración del sistema" },
+  { x: 150, y: 168, name: "home/", detail: "los archivos de cada usuario" },
+  { x: 150, y: 238, name: "dev/", detail: "los dispositivos conectados" },
 ]
 
 export function KernelArchivosIllustration() {
   return (
-    <Card
+    <Diagram
       id="ilu-kernel-archivos"
       title="El arbol de directorios: una sola raiz de la que cuelgan etc, home y dev, donde hasta el disco aparece como un archivo"
-      height={370}
+      height={330}
     >
       {/* Tronco desde la raiz y codos hacia cada carpeta */}
-      <g stroke="rgba(255,255,255,0.25)" strokeWidth="1.6" fill="none">
-        <path d="M66 78 V262" />
-        <path d="M66 122 H164" />
-        <path d="M66 192 H164" />
-        <path d="M66 262 H164" />
-        <path d="M188 296 V326 H296" />
+      <g className={TRAZO} strokeWidth="2" fill="none">
+        <path d="M46 58 V242" />
+        <path d="M46 102 H144" />
+        <path d="M46 172 H144" />
+        <path d="M46 242 H144" />
+        <path d="M168 276 V306 H276" />
       </g>
 
       {TREE.map((node) => (
         <g key={node.name}>
           <Folder x={node.x} y={node.y} />
-          <Label x={node.x + 46} y={node.y + 22} fill={INK} size={16}>
+          <Label x={node.x + 46} y={node.y + 22} className={TEXTO} size={16}>
             {node.name}
           </Label>
-          <Label x={node.x + 150} y={node.y + 22} size={13}>
+          <Label x={node.x + 150} y={node.y + 22} size={13} className={APUNTE}>
             {node.detail}
           </Label>
         </g>
@@ -343,24 +398,28 @@ export function KernelArchivosIllustration() {
       {/* El disco, colgando de dev/ */}
       <g>
         <rect
-          x="300"
-          y="312"
+          x="280"
+          y="292"
           width="30"
           height="28"
           rx="5"
           fill="none"
-          stroke={GREEN}
-          strokeWidth="1.6"
+          className="stroke-emerald-500"
+          strokeWidth="2"
         />
-        <path d="M306 320 H324 M306 326 H324 M306 332 H318" stroke={GREEN} strokeWidth="1.4" />
-        <Label x={344} y={332} fill={GREEN} size={16}>
+        <path
+          d="M286 300 H304 M286 306 H304 M286 312 H298"
+          className="stroke-emerald-500"
+          strokeWidth="1.8"
+        />
+        <Label x={324} y={312} className={VERDE_TEXTO} size={16}>
           sda
         </Label>
-        <Label x={420} y={332} size={13}>
+        <Label x={400} y={312} size={13} className={APUNTE}>
           el disco duro, visto como un archivo más
         </Label>
       </g>
-    </Card>
+    </Diagram>
   )
 }
 
@@ -384,10 +443,10 @@ function DeviceGlyph({ cx, name }: { cx: number; name: string }) {
         width="68"
         height="60"
         rx="12"
-        fill="rgba(255,255,255,0.06)"
-        stroke="rgba(255,255,255,0.16)"
+        className="fill-muted/60 stroke-muted-foreground/30"
+        strokeWidth="1.5"
       />
-      <g stroke={SKY} strokeWidth="1.6" fill="none">
+      <g className="stroke-sky-500" strokeWidth="1.9" fill="none">
         {name === "teclado" && (
           <>
             <rect x={cx - 20} y="56" width="40" height="24" rx="4" />
@@ -413,7 +472,7 @@ function DeviceGlyph({ cx, name }: { cx: number; name: string }) {
           </>
         )}
       </g>
-      <Label x={cx} y={118} anchor="middle" size={13}>
+      <Label x={cx} y={118} anchor="middle" size={13} className={APUNTE}>
         {name}
       </Label>
     </g>
@@ -422,36 +481,28 @@ function DeviceGlyph({ cx, name }: { cx: number; name: string }) {
 
 export function KernelDispositivosIllustration() {
   return (
-    <Card
+    <Diagram
       id="ilu-kernel-dispositivos"
       title="Cada dispositivo habla con el kernel a traves de su propio controlador"
-      height={300}
+      height={286}
     >
       {DEVICES.map((device) => (
         <g key={device.name}>
           <DeviceGlyph cx={device.cx} name={device.name} />
-          <path
-            d={`M${device.cx} 128 V158`}
-            stroke="rgba(255,255,255,0.25)"
-            strokeWidth="1.6"
-          />
+          <path d={`M${device.cx} 128 V158`} className={TRAZO} strokeWidth="2" />
           <rect
             x={device.cx - 56}
             y="158"
             width="112"
             height="32"
             rx="8"
-            fill="rgba(125,211,252,0.10)"
-            stroke="rgba(125,211,252,0.45)"
-          />
-          <Label x={device.cx} y={179} anchor="middle" fill={SKY} size={13}>
-            controlador
-          </Label>
-          <path
-            d={`M${device.cx} 190 V222`}
-            stroke="rgba(255,255,255,0.25)"
+            className="fill-sky-500/10 stroke-sky-500/70"
             strokeWidth="1.6"
           />
+          <Label x={device.cx} y={179} anchor="middle" className={AZUL_TEXTO} size={13}>
+            controlador
+          </Label>
+          <path d={`M${device.cx} 190 V222`} className={TRAZO} strokeWidth="2" />
         </g>
       ))}
 
@@ -461,14 +512,13 @@ export function KernelDispositivosIllustration() {
         width="700"
         height="48"
         rx="10"
-        fill="rgba(196,30,58,0.16)"
-        stroke="#c41e3a"
-        strokeWidth="1.6"
+        className="fill-primary/10 stroke-primary"
+        strokeWidth="2"
       />
-      <Label x={410} y={252} anchor="middle" fill={RED} size={17}>
+      <Label x={410} y={252} anchor="middle" className="fill-primary" size={17}>
         kernel
       </Label>
-    </Card>
+    </Diagram>
   )
 }
 
@@ -478,67 +528,67 @@ export function KernelDispositivosIllustration() {
 
 export function KernelRedIllustration() {
   return (
-    <Card
+    <Diagram
       id="ilu-kernel-red"
       title="El equipo intercambia paquetes con internet siguiendo los protocolos de red"
-      height={250}
+      height={230}
     >
       {/* Tu equipo */}
       <rect
-        x="40"
-        y="66"
+        x="24"
+        y="52"
         width="210"
         height="112"
         rx="12"
-        fill="rgba(255,255,255,0.05)"
-        stroke="rgba(255,255,255,0.16)"
+        className="fill-muted/60 stroke-muted-foreground/30"
+        strokeWidth="1.5"
       />
-      <Label x={145} y={96} anchor="middle" fill={INK} size={15}>
+      <Label x={129} y={82} anchor="middle" className={TEXTO} size={15}>
         tu equipo
       </Label>
       <rect
-        x="70"
-        y="112"
+        x="54"
+        y="98"
         width="150"
         height="30"
         rx="7"
-        fill="rgba(125,211,252,0.10)"
-        stroke="rgba(125,211,252,0.45)"
+        className="fill-sky-500/10 stroke-sky-500/70"
+        strokeWidth="1.6"
       />
-      <Label x={145} y={132} anchor="middle" fill={SKY} size={13}>
+      <Label x={129} y={118} anchor="middle" className={AZUL_TEXTO} size={13}>
         192.168.1.42
       </Label>
 
       {/* Los paquetes van y vuelven */}
       <g>
-        <path d="M266 104 H614" stroke="rgba(255,255,255,0.20)" strokeWidth="1.4" strokeDasharray="5 5" />
-        <path d="M614 104 L604 99 L604 109 Z" fill="rgba(255,255,255,0.35)" />
-        <rect x="320" y="98" width="13" height="13" rx="3" fill={SKY} opacity="0.85" />
-        <rect x="410" y="98" width="13" height="13" rx="3" fill={SKY} opacity="0.6" />
-        <rect x="500" y="98" width="13" height="13" rx="3" fill={SKY} opacity="0.4" />
+        <path d="M250 90 H598" className={TRAZO} strokeWidth="1.8" strokeDasharray="6 6" />
+        <path d="M598 90 L586 84 L586 96 Z" className="fill-muted-foreground/70" />
+        <rect x="304" y="84" width="14" height="14" rx="3" className="fill-sky-500" />
+        <rect x="394" y="84" width="14" height="14" rx="3" className="fill-sky-500/75" />
+        <rect x="484" y="84" width="14" height="14" rx="3" className="fill-sky-500/50" />
 
-        <path d="M614 152 H266" stroke="rgba(255,255,255,0.20)" strokeWidth="1.4" strokeDasharray="5 5" />
-        <path d="M266 152 L276 147 L276 157 Z" fill="rgba(255,255,255,0.35)" />
-        <rect x="340" y="146" width="13" height="13" rx="3" fill={GREEN} opacity="0.4" />
-        <rect x="430" y="146" width="13" height="13" rx="3" fill={GREEN} opacity="0.6" />
-        <rect x="520" y="146" width="13" height="13" rx="3" fill={GREEN} opacity="0.85" />
+        <path d="M598 138 H250" className={TRAZO} strokeWidth="1.8" strokeDasharray="6 6" />
+        <path d="M250 138 L262 132 L262 144 Z" className="fill-muted-foreground/70" />
+        <rect x="324" y="132" width="14" height="14" rx="3" className="fill-emerald-500/50" />
+        <rect x="414" y="132" width="14" height="14" rx="3" className="fill-emerald-500/75" />
+        <rect x="504" y="132" width="14" height="14" rx="3" className="fill-emerald-500" />
 
-        <Label x={440} y={134} anchor="middle" size={13}>
+        <Label x={424} y={120} anchor="middle" size={13} className={APUNTE}>
           paquetes · TCP/IP
         </Label>
       </g>
 
       {/* La red, al otro lado */}
       <g>
-        <g stroke={SKY} strokeWidth="1.6" fill="none">
-          <circle cx="700" cy="122" r="44" />
-          <ellipse cx="700" cy="122" rx="18" ry="44" />
-          <path d="M656 122 H744 M664 98 H736 M664 146 H736" />
+        <g className="stroke-sky-500" strokeWidth="1.9" fill="none">
+          <circle cx="684" cy="108" r="44" />
+          <ellipse cx="684" cy="108" rx="18" ry="44" />
+          <path d="M640 108 H728 M648 84 H720 M648 132 H720" />
         </g>
-        <Label x={700} y={196} anchor="middle" size={13}>
+        <Label x={684} y={182} anchor="middle" size={13} className={APUNTE}>
           otros computadores
         </Label>
       </g>
-    </Card>
+    </Diagram>
   )
 }
