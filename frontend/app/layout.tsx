@@ -6,7 +6,6 @@ import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@shared/components/ui/sonner'
 import { TooltipProvider } from '@shared/components/ui/tooltip'
-import { DevRoleSwitcher } from '@/components/dev/role-switcher'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -59,8 +58,6 @@ export default function RootLayout({
               <TooltipProvider delayDuration={150}>
                 {children}
                 <Toaster richColors position="top-right" />
-                {/* DEV: selector de rol para el bypass de auth. Null en producción. */}
-                <DevRoleSwitcher />
               </TooltipProvider>
             </QueryProvider>
           </AuthProvider>
