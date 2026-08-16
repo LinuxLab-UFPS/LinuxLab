@@ -58,8 +58,11 @@ body{
 }
 
 /* ---------- iconos del escritorio ---------- */
-.icons{position:absolute;left:3%;top:4%;width:34%;display:flex;flex-wrap:wrap;gap:14px;align-content:flex-start}
-.icon{width:clamp(100px,11vmin,118px);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+/* La tira llega hasta la terminal y los iconos son mas estrechos: asi la
+   descarga del cuarto desafio aparece en el hueco libre de la derecha en vez
+   de caerse de la lista por falta de sitio. */
+.icons{position:absolute;left:3%;top:4%;width:40%;display:flex;flex-wrap:wrap;gap:12px;align-content:flex-start}
+.icon{width:clamp(76px,8.4vmin,92px);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
 .icon-art{width:clamp(34px,4.8vmin,54px);height:clamp(34px,4.8vmin,54px)}
 .icon-art svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
 .icon-name{font-size:clamp(8.5px,1vmin + 2px,10.5px);color:var(--bright);word-break:break-all;line-height:1.35;text-shadow:0 1px 3px rgba(0,0,0,.8)}
@@ -112,13 +115,73 @@ body{
 .linea.done .paso-t{text-decoration:line-through;text-decoration-color:var(--green);color:var(--green)}
 .txt-nota{margin-top:16px;padding-top:11px;border-top:1px solid #E3E3EA;font-size:11px;color:#70707E;line-height:1.5}
 
-#w-mail{left:3%;top:20%;width:34%;height:28%}
+#w-mail{left:3%;top:20%;width:34%;height:30%}
 .mail-body{background:#FBFBFD;color:#1A1A1F;flex:1;min-height:0;display:flex;flex-direction:column;padding:1.2vmin 1.6vmin;font-size:clamp(9.5px,1.15vmin + 3px,12.5px);gap:0}
 .mail-row{display:flex;gap:8px;padding:5px 2px;border-bottom:1px solid #E8E8EE;color:#55555F}
 .mail-row b{color:#1A1A1F;font-weight:600}
-.mail-adj{flex:1;min-height:0;overflow-y:auto;padding:9px 2px;display:flex;flex-direction:column;gap:8px}
+/* Sin scroll: lo que hay que ver aqui son tres cosas —el adjunto, el limite y
+   el aviso cuando algo no cuadra— y las tres caben. Con una barra, el aviso
+   que explica por que no se puede enviar acababa fuera de la vista, que es
+   justo cuando hace falta leerlo. */
+.mail-adj{flex:1;min-height:0;overflow:hidden;padding:9px 2px;display:flex;flex-direction:column;gap:7px}
 .chip{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;background:#EEF1F6;border:1px solid #D8DDE6;border-radius:5px;padding:5px 10px;font-size:11.5px;color:#1A1A1F}
 .chip.malo{background:#FDECEE;border-color:#F5C2C7;color:#A3111F}
+
+/* ---------- TUBO: el launcher del juego ----------
+   Comparte cuadrante con el correo (cada uno sirve a un desafio distinto y
+   abrir uno cierra el otro), pero mas alto: le pisa un poco los objetivos a
+   proposito, porque todo lo suyo tiene que verse de una sin desplazar nada.
+   El marco es el del sistema, como cualquier ventana del escritorio; el rojo
+   empieza dentro, que es donde empieza el programa. */
+#w-game{left:3%;top:20%;width:40%;height:46%}
+/* Sin scroll: lo que no cabe se arregla encogiendo la tipografia, no
+   escondiendo media ventana detras de una barra. */
+.game-body{background:#140A0D;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+
+/* Cabecera de la aplicacion: el logo de la valvula y la marca. */
+.tubo-hdr{display:flex;align-items:center;gap:9px;padding:7px 11px;background:linear-gradient(90deg,#A8132F,#C41E3A 60%,#8E1329);flex-shrink:0}
+.tubo-logo{width:clamp(20px,2.4vmin,26px);height:clamp(20px,2.4vmin,26px);flex-shrink:0}
+.tubo-marca{font-size:clamp(13px,1.6vmin + 4px,18px);font-weight:800;color:#fff;letter-spacing:.11em}
+
+.tubo-main{flex:1;min-height:0;display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1.05fr);gap:clamp(10px,1.4vmin,16px);padding:clamp(10px,1.4vmin,15px);align-content:start}
+.tubo-izq{display:flex;flex-direction:column;gap:9px;min-width:0}
+.tubo-info{min-width:0}
+.game-art{width:clamp(84px,10vmin,108px);height:clamp(84px,10vmin,108px);border-radius:4px;background:#1B1FA0;display:grid;place-items:center;flex-shrink:0}
+.game-art svg{width:74%;height:74%}
+.game-name{font-size:clamp(13px,1.7vmin + 4px,19px);color:#fff;font-weight:700;line-height:1.15;text-transform:uppercase}
+.game-dir-t{font-size:clamp(9px,1.05vmin + 2px,11.5px);color:#C9AEB4;margin:9px 0 5px}
+.game-ruta{display:flex;align-items:center;gap:8px;min-width:0}
+.game-ruta code{flex:1;min-width:0;font-size:clamp(9px,1.05vmin + 2px,11.5px);color:#F3D9DE;overflow-x:auto;white-space:nowrap}
+.game-copiar{flex-shrink:0;background:#3A1B22;border:1px solid #55262F;color:#E8CDD3;border-radius:4px;padding:4px 10px;font-size:10.5px;cursor:pointer;font-family:inherit}
+.game-copiar:hover{background:#4C242D;color:#fff}
+
+/* Play abajo del todo, en su propia franja: asi no lo recorta el alto de la
+   columna de la izquierda pase lo que pase con el resto del contenido. */
+.tubo-pie{flex-shrink:0;padding:0 clamp(10px,1.4vmin,15px) clamp(10px,1.4vmin,15px)}
+/* Gris mientras la instalacion no este completa. El verde llega solo cuando
+   de verdad se puede jugar, y por eso se ve venir. */
+.game-play{width:clamp(112px,15vmin,158px);display:flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:4px;padding:8px 10px;font-size:clamp(11px,1.25vmin + 3px,14px);font-weight:700;font-family:inherit;background:#8C8F96;color:#26282D;cursor:not-allowed}
+.game-play.listo{background:#2FBF71;color:#06210F;cursor:pointer}
+.game-play.listo:hover{background:#41D585}
+.game-play svg{width:1em;height:1em}
+
+/* Comunidad: la excusa para que alguien "suba" el mod. El primer post es el
+   que trae el enlace; los otros dos son ruido de foro. */
+.tubo-com{display:flex;flex-direction:column;gap:7px;min-width:0}
+.com-t{font-size:clamp(9.5px,1.1vmin + 2px,12px);color:#D8C2C7;margin-bottom:1px}
+.com-post{display:flex;align-items:center;gap:8px;background:#2A121A;border:1px solid #43202A;border-radius:4px;padding:7px 9px;font-size:clamp(9px,1.02vmin + 2px,11px);color:#8C6F76;min-width:0}
+.com-post.top{background:#5E0F22;border-color:#8A1A31;color:#FFE6EA;font-weight:700}
+.com-post span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.com-baja{flex-shrink:0;width:22px;height:22px;display:grid;place-items:center;background:#C41E3A;border:none;border-radius:4px;cursor:pointer;padding:0}
+.com-baja:hover{background:#E23050}
+.com-baja svg{width:13px;height:13px}
+.com-baja[disabled]{background:#3F1A24;cursor:default}
+
+/* Cazador de pegados: fuera de la vista pero enfocable, porque el evento
+   `paste` solo se dispara sobre algo editable. La terminal de aqui no es un
+   campo de texto —las teclas se leen del documento—, asi que sin esto Ctrl+V
+   no llega a ninguna parte. */
+.pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none}
 .mail-vacio{font-size:11.5px;color:#9A9AA6}
 .mail-aviso{font-size:11.5px;color:#A3111F;line-height:1.45}
 .mail-pie{display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #E8E8EE}
@@ -190,12 +253,13 @@ body{
   .desk{display:block;overflow-y:auto;padding:14px 14px 96px}
   .icons{position:static;width:auto;margin-bottom:14px}
   .marca{display:none}
-  #w-term,#w-txt,#w-mail{
+  #w-term,#w-txt,#w-mail,#w-game{
     position:static;left:auto;right:auto;top:auto;width:auto;margin-bottom:13px;
   }
   #w-term{height:min(300px,52vh);min-height:210px}
   #w-txt{height:auto;min-height:190px}
   #w-mail{height:auto;min-height:220px}
+  #w-game{height:auto;min-height:200px}
   .dock{position:fixed;bottom:12px}
 }
 </style>
@@ -229,7 +293,7 @@ body{
     </div>
     <div class="console" id="consola"></div>
     <div class="prompt">
-      <span class="ps1">$</span>
+      <span class="ps1" id="ps1">$</span>
       <span><span class="typed" id="typed"></span><span class="caret"></span></span>
     </div>
   </div>
@@ -255,7 +319,6 @@ body{
     </div>
     <div class="mail-body">
       <div class="mail-row"><b>Para:</b> coordinacion@linuxlab.edu</div>
-      <div class="mail-row"><b>Asunto:</b> <span id="mail-asunto">Entrega</span></div>
       <div class="mail-adj" id="mail-adj"></div>
       <div class="mail-pie">
         <button class="btn-mail" id="mail-enviar">Enviar</button>
@@ -268,6 +331,20 @@ body{
       </div>
     </div>
   </div>
+
+  <!-- TUBO: el launcher del cuarto desafio. La barra es la del sistema, sin
+       titulo: la marca va dentro, en la cabecera de la propia aplicacion. -->
+  <div class="win" id="w-game" hidden>
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <span class="win-dot" style="background:#FFBD2E"></span>
+      <span class="win-dot" style="background:#27C93F"></span>
+      <span class="win-title"></span>
+    </div>
+    <div class="game-body" id="game-body"></div>
+  </div>
+
+  <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
 
   <div class="picker" id="picker" hidden>
     <div class="picker-box">
@@ -290,6 +367,39 @@ body{
         <rect x="9" y="5" width="46" height="9" rx="4.5" fill="#3E7FC1"/>
         <path d="M19 25h26M19 33h26M19 41h17" stroke="#7FA6CC" stroke-width="3.2" stroke-linecap="round"/>
         <rect x="9" y="52" width="46" height="7" rx="3.5" fill="#E8912F"/>
+      </svg>
+    </button>
+    <!-- TUBO: el chiste es la valvula. Steam es de Valve, y esto es Steam del
+         reves, asi que su logo es una valvula de compuerta sobre el rojo de la
+         plataforma apagandose en negro. -->
+    <button class="dock-btn" id="d-game" title="TUBO">
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <radialGradient id="tubo-dock" cx="34%" cy="26%" r="86%">
+            <stop offset="0%" stop-color="#E23050"/>
+            <stop offset="46%" stop-color="#A81530"/>
+            <stop offset="100%" stop-color="#0A0708"/>
+          </radialGradient>
+        </defs>
+        <circle cx="32" cy="32" r="32" fill="url(#tubo-dock)"/>
+        <g fill="#F6EFF1">
+          <!-- volante -->
+          <path d="M32 10.6c-7.2 0-13 2.5-13 5.6s5.8 5.6 13 5.6 13-2.5 13-5.6-5.8-5.6-13-5.6zm0 2.6c5.6 0 10.1 1.4 10.1 3s-4.5 3-10.1 3-10.1-1.4-10.1-3 4.5-3 10.1-3z"/>
+          <rect x="20.5" y="15" width="23" height="2.2" rx="1.1"/>
+          <circle cx="32" cy="16.2" r="2.9"/>
+          <!-- vastago y sombrerete -->
+          <rect x="30.4" y="18" width="3.2" height="7" rx="1"/>
+          <rect x="26.5" y="24.5" width="11" height="6.5" rx="1.6"/>
+          <rect x="23.5" y="30" width="17" height="3.4" rx="1.4"/>
+          <!-- cuerpo y bridas -->
+          <rect x="17.5" y="34.5" width="29" height="14.5" rx="6.5"/>
+          <rect x="10.5" y="32.5" width="7.5" height="18.5" rx="2.2"/>
+          <rect x="46" y="32.5" width="7.5" height="18.5" rx="2.2"/>
+        </g>
+        <g fill="#8E1329">
+          <circle cx="14.2" cy="37" r="1.5"/><circle cx="14.2" cy="46.5" r="1.5"/>
+          <circle cx="49.8" cy="37" r="1.5"/><circle cx="49.8" cy="46.5" r="1.5"/>
+        </g>
       </svg>
     </button>
     <button class="dock-btn" id="d-term" title="Terminal" data-abierta="true">
@@ -357,6 +467,12 @@ const CARPETAS = ["informe", "practica", "entrega", "proyecto"];
 const SUELTOS  = ["notas", "borrador", "resumen", "apuntes"];
 const RESPALDOS = ["respaldo", "copia", "historico"];
 const INTRUSOS = ["clave.txt", "password.txt", "token.txt"];
+const JUEGOS = [
+  { titulo: "Starforge", carpeta: "starforge" },
+  { titulo: "Neon Rift", carpeta: "neonrift" },
+  { titulo: "Duskfall", carpeta: "duskfall" },
+];
+const PACKS = ["pack-invierno", "pack-armas", "pack-texturas"];
 
 const alAzar = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
@@ -374,14 +490,19 @@ const RATIO = 0.27;
 /* ============================================================
    ESTADO
    ============================================================ */
-let fs, nombres, paso, enviado;
+let fs, nombres, paso, enviado, descargado, jugado;
 
 function nuevaPartida() {
+  const juego = alAzar(JUEGOS);
   nombres = {
     carpeta: alAzar(CARPETAS),
     respaldo: alAzar(RESPALDOS) + ".tar.gz",
     intruso: alAzar(INTRUSOS),
     suelto: alAzar(SUELTOS) + ".txt",
+    juego: juego.titulo,
+    // Un solo nivel: el modelo del sistema de archivos no anida mas.
+    mods: juego.carpeta + "-mods",
+    pack: alAzar(PACKS) + ".tar.gz",
   };
 
   const hojas = ["datos.csv", "lectura.md", nombres.suelto];
@@ -403,12 +524,74 @@ function nuevaPartida() {
     pesos: { "config.yml": 140_000, "registro.log": 520_000, [nombres.intruso]: 90_000 },
   };
 
+  // La carpeta de mods del juego existe desde el principio: la crea el
+  // launcher al instalarse, como cualquier juego. Vacia, esperando el pack.
+  fs[nombres.mods] = { tipo: "dir", hijos: [], bytes: 0 };
+
+  cwd = "";
   paso = 0;
   enviado = null;
+  descargado = false;
+  jugado = false;
 }
 
 /** Lo que hay en la raiz de ~/taller (no las hojas de las carpetas). */
 const enRaiz = () => Object.keys(fs).filter((k) => !k.includes("/"));
+
+/**
+ * Donde esta parado el estudiante, relativo a ~/taller ("" es la raiz).
+ *
+ * Antes `cd` estaba capado y era lo mas antinatural del simulador: es el
+ * primer comando que aprende cualquiera y el unico que aqui no funcionaba.
+ * Ahora se mueve de verdad, y tiene que fijarse desde donde comprime o
+ * extrae, que es exactamente la leccion que enseña.
+ */
+let cwd = "";
+
+/**
+ * Traduce lo que se escribe a una clave del sistema de archivos.
+ * Devuelve null si apunta fuera del taller, "" para la raiz.
+ */
+function resolver(ruta) {
+  const texto = (ruta || "").trim();
+  if (!texto) return cwd;
+  if (texto === "~" || texto === "~/taller") return "";
+
+  let partes;
+  if (texto.startsWith("~/taller/")) partes = texto.slice(9).split("/");
+  else if (texto.startsWith("~/")) partes = texto.slice(2).split("/");
+  else if (texto.startsWith("/")) return null;
+  else partes = (cwd ? cwd.split("/") : []).concat(texto.split("/"));
+
+  const pila = [];
+  for (const p of partes) {
+    if (!p || p === ".") continue;
+    if (p === "..") { pila.pop(); continue; }
+    pila.push(p);
+  }
+  return pila.join("/");
+}
+
+/** El prompt dice donde estas, como en cualquier terminal. */
+function pintarPrompt() {
+  const ps1 = $("ps1");
+  if (ps1) ps1.textContent = "~/taller" + (cwd ? "/" + cwd : "") + " $";
+}
+
+/** Ruta que enseña el launcher, tal cual se puede pegar en la terminal. */
+const rutaMods = () => "~/taller/" + nombres.mods;
+
+/** Los .mod que trae el pack, sin el leeme: son los que cuentan como instalados. */
+const MODS = ["arma-legendaria.mod", "texturas-hd.mod"];
+
+/** El pack esta extraido en la carpeta de mods del juego. */
+const modsInstalados = () => {
+  const d = fs[nombres.mods];
+  return Boolean(d && MODS.every((m) => d.hijos.includes(m)));
+};
+
+/** Listo para jugar: los mods puestos y el paquete ya no anda por ahi. */
+const listoParaJugar = () => modsInstalados() && !fs[nombres.pack];
 
 /* ============================================================
    DESAFIOS
@@ -422,7 +605,7 @@ function desafios() {
       objetivo: `Comprime ${nombres.carpeta}/ en un .tar.gz`,
       texto: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz con tar. El correo no admite carpetas.`,
       hecho: () =>
-        enRaiz().some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
+        Object.keys(fs).some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
     },
     {
       objetivo: `Lista y extrae ${nombres.respaldo}`,
@@ -433,6 +616,15 @@ function desafios() {
       objetivo: `Elimina ${nombres.intruso}, recomprime y envía`,
       texto: `Elimina ${nombres.intruso}, vuelve a comprimir ${nombres.raizRespaldo}/ y envíalo por correo.`,
       hecho: () => Boolean(enviado && enviado.limpio),
+    },
+    {
+      objetivo: `Instala los mods de ${nombres.juego} y juega`,
+      // Sin el paso a paso: el launcher ya dice cual es el directorio y por que
+      // no arranca. Contarlo todo aqui convierte el desafio en un dictado.
+      texto:
+        `Abre el launcher TUBO y deja sus mods instalados en el directorio del ` +
+        `juego para poder jugar.`,
+      hecho: () => jugado,
     },
   ];
 }
@@ -453,40 +645,81 @@ function log(texto, clase) {
 
 const AYUDA = [
   "Comandos disponibles en esta práctica:",
-  "  ls [-l]                    lista lo que hay",
+  "  cd <carpeta>               entra en una carpeta (.. sube, ~ vuelve)",
+  "  ls [-l] [carpeta]          lista lo que hay",
   "  tar -czf <salida> <origen> empaqueta y comprime",
   "  tar -tzf <archivo>         lista el contenido sin extraer",
   "  tar -xzf <archivo>         extrae",
+  "  tar -xzf <archivo> -C <carpeta>  extrae dentro de esa carpeta",
   "  rm [-r] <ruta>             borra",
   "  clear                      limpia la consola",
 ];
 
+/** `cd`: moverse de verdad, con `..` y `~` como en cualquier shell. */
+function cmdCd(args) {
+  const donde = args.find((a) => !a.startsWith("-"));
+  const clave = resolver(donde === undefined ? "~" : donde);
+  if (clave === null) return log(`cd: ${donde}: en esta práctica solo existe ~/taller`, "bad");
+  if (clave !== "") {
+    const e = fs[clave];
+    if (!e) return log(`cd: ${donde}: no existe`, "bad");
+    if (e.tipo !== "dir") return log(`cd: ${donde}: no es un directorio`, "bad");
+  }
+  cwd = clave;
+  pintarPrompt();
+}
+
 function cmdLs(args) {
   const largo = args.includes("-l");
-  const items = enRaiz().sort();
-  if (items.length === 0) return log("(vacío)", "note");
-  items.forEach((n) => {
-    const e = fs[n];
-    const marca = e.tipo === "dir" ? "/" : "";
-    log(largo ? `${tam(e.bytes).padStart(8)}  ${n}${marca}` : `${n}${marca}`, "echo");
+  const donde = args.find((a) => !a.startsWith("-"));
+  const clave = resolver(donde);
+  if (clave === null) return log(`ls: ${donde}: en esta práctica solo existe ~/taller`, "bad");
+
+  // Sin argumento lista donde estas; con uno, esa carpeta.
+  if (clave !== "" && !fs[clave]) return log(`ls: ${donde}: no existe`, "bad");
+  if (clave !== "" && fs[clave].tipo !== "dir") return log(donde, "echo");
+
+  const hijos = clave === "" ? enRaiz() : fs[clave].hijos.slice();
+  if (hijos.length === 0) return log("(vacío)", "note");
+  hijos.sort().forEach((n) => {
+    const e = fs[clave ? clave + "/" + n : n];
+    const marca = e && e.tipo === "dir" ? "/" : "";
+    const peso = e ? e.bytes : 0;
+    log(largo ? `${tam(peso).padStart(8)}  ${n}${marca}` : `${n}${marca}`, "echo");
   });
 }
 
 function cmdTar(args) {
+  // `-C <carpeta>` se saca antes de nada: su valor no es un origen ni el
+  // paquete, y si se quedara en la lista se leeria como uno de los dos.
+  let destino = null;
+  const iC = args.indexOf("-C");
+  if (iC !== -1) {
+    const escrito = args[iC + 1];
+    args = args.slice(0, iC).concat(args.slice(iC + 2));
+    if (!escrito) return log("tar: -C necesita una carpeta", "bad");
+    destino = resolver(escrito);
+    if (destino === null) return log(`tar: ${escrito}: en esta práctica solo existe ~/taller`, "bad");
+  }
+
   const bandera = args.find((a) => a.startsWith("-"));
   if (!bandera) return log("tar: falta la operación (-czf, -tzf o -xzf)", "bad");
   const resto = args.filter((a) => !a.startsWith("-"));
 
   if (bandera.includes("c")) {
     if (!bandera.includes("z")) return log("tar: sin -z el archivo no queda comprimido", "bad");
-    const salida = resto[0];
-    const origenes = resto.slice(1).map((o) => o.replace(/\/$/, ""));
-    if (!salida || origenes.length === 0)
+    const nombreSalida = resto[0];
+    if (!nombreSalida || resto.length < 2)
       return log("tar: uso: tar -czf <salida.tar.gz> <origen>", "bad");
-    if (!salida.endsWith(".tar.gz") && !salida.endsWith(".tgz"))
+    if (!nombreSalida.endsWith(".tar.gz") && !nombreSalida.endsWith(".tgz"))
       return log("tar: el nombre de salida debería terminar en .tar.gz", "bad");
+    // El paquete nace donde estas parado, no siempre en la raiz.
+    const salida = resolver(nombreSalida);
+    const origenes = resto.slice(1).map(resolver);
+    if (salida === null || origenes.some((o) => o === null))
+      return log("tar: en esta práctica solo existe ~/taller", "bad");
     const falta = origenes.find((o) => !fs[o]);
-    if (falta) return log(`tar: ${falta}: no existe`, "bad");
+    if (falta !== undefined) return log(`tar: ${falta}: no existe`, "bad");
 
     // Lo que entra al paquete: los archivos de cada carpeta y los sueltos que
     // se nombren. Se guarda el nombre a secas para poder comprobar despues si
@@ -516,7 +749,7 @@ function cmdTar(args) {
   }
 
   if (bandera.includes("t")) {
-    const a = fs[resto[0]];
+    const a = fs[resolver(resto[0])];
     if (!a || !a.dentro) return log(`tar: ${resto[0] || ""}: no es un archivo tar`, "bad");
     a.listado = true;
     if (a.raiz) log("  " + a.raiz + "/", "echo");
@@ -526,17 +759,49 @@ function cmdTar(args) {
 
   if (bandera.includes("x")) {
     const nombre = resto[0];
-    const a = fs[nombre];
+    const a = fs[resolver(nombre)];
     if (!a || !a.dentro) return log(`tar: ${nombre || ""}: no es un archivo tar`, "bad");
+    // Sin `-C`, tar extrae donde estas parado.
+    if (destino === null && cwd) destino = cwd;
+
+    // Con `-C`, tar exige que la carpeta ya exista: no la crea.
+    if (destino) {
+      const d = fs[destino];
+      if (!d) return log(`tar: ${destino}: no existe (créala antes)`, "bad");
+      if (d.tipo !== "dir") return log(`tar: ${destino}: no es una carpeta`, "bad");
+    }
+
     a.extraido = true;
     const raiz = a.raiz;
+
+    // Un paquete con carpeta dentro, extraido en otro sitio, dejaria tres
+    // niveles y el modelo solo lleva dos. Se guarda la carpeta con su peso
+    // —que es lo que se ve en un `ls`— sin desglosar sus hojas.
+    if (raiz && destino) {
+      const total = a.dentro.reduce((s, n) => s + ((a.pesos && a.pesos[n]) || 100_000), 0);
+      fs[destino + "/" + raiz] = { tipo: "dir", hijos: a.dentro.slice(), bytes: total };
+      if (!fs[destino].hijos.includes(raiz)) {
+        fs[destino].hijos.push(raiz);
+        fs[destino].bytes += total;
+      }
+      log(`extraído en ${destino}/: ${raiz}/`, "ok");
+      return;
+    }
+
     if (raiz) fs[raiz] = { tipo: "dir", hijos: a.dentro.slice(), bytes: 0 };
     a.dentro.forEach((n) => {
       const peso = (a.pesos && a.pesos[n]) || 100_000;
-      fs[raiz ? raiz + "/" + n : n] = { tipo: "file", bytes: peso };
+      const clave = destino ? destino + "/" + n : raiz ? raiz + "/" + n : n;
+      fs[clave] = { tipo: "file", bytes: peso };
       if (raiz) fs[raiz].bytes += peso;
+      // Extraer dos veces el mismo paquete no duplica lo que hay dentro.
+      if (destino && !fs[destino].hijos.includes(n)) {
+        fs[destino].hijos.push(n);
+        fs[destino].bytes += peso;
+      }
     });
-    log(`extraído: ${raiz ? raiz + "/" : ""}${a.dentro.join(", ")}`, "ok");
+    const donde = destino ? `${destino}/` : raiz ? `${raiz}/` : "";
+    log(`extraído: ${donde}${a.dentro.join(", ")}`, "ok");
     return;
   }
 
@@ -547,15 +812,18 @@ function cmdRm(args) {
   const recursivo = args.some((a) => a.startsWith("-") && a.includes("r"));
   const objetivo = args.find((a) => !a.startsWith("-"));
   if (!objetivo) return log("rm: falta el archivo", "bad");
-  const clave = objetivo.replace(/\/$/, "").replace(/^\.\//, "");
+  const clave = resolver(objetivo);
+  if (clave === null) return log(`rm: ${objetivo}: en esta práctica solo existe ~/taller`, "bad");
   const e = fs[clave];
   if (!e) return log(`rm: ${objetivo}: no existe`, "bad");
   if (e.tipo === "dir" && !recursivo) return log(`rm: ${objetivo}: es un directorio (usa -r)`, "bad");
   if (e.tipo === "dir") Object.keys(fs).forEach((k) => k.startsWith(clave + "/") && delete fs[k]);
   // Si colgaba de una carpeta, esa carpeta deja de listarlo y de pesarlo: es lo
-  // que hace que volver a comprimirla de el resultado que se espera.
+  // que hace que volver a comprimirla de el resultado que se espera. El corte
+  // va por la ultima barra: con `cd` las rutas pueden tener mas de un nivel.
   if (clave.includes("/")) {
-    const [padre, hoja] = [clave.slice(0, clave.indexOf("/")), clave.slice(clave.indexOf("/") + 1)];
+    const corte = clave.lastIndexOf("/");
+    const [padre, hoja] = [clave.slice(0, corte), clave.slice(corte + 1)];
     if (fs[padre] && fs[padre].tipo === "dir") {
       fs[padre].hijos = fs[padre].hijos.filter((n) => n !== hoja);
       fs[padre].bytes -= e.bytes;
@@ -577,7 +845,7 @@ function ejecutar(linea) {
     case "rm": cmdRm(args); break;
     case "help": AYUDA.forEach((l) => log(l, "note")); break;
     case "clear": $("consola").innerHTML = ""; break;
-    case "cd": log("cd: en esta práctica solo se trabaja en ~/taller", "note"); break;
+    case "cd": cmdCd(args); break;
     default:
       log(`${cmd}: no disponible aquí. Escribe "help" para ver los comandos.`, "bad");
   }
@@ -678,6 +946,147 @@ function enviar() {
 }
 
 /* ============================================================
+   LAUNCHER
+   El cuarto desafio, con la historia que le falta a los otros: el
+   boton de jugar no aparece hasta que la instalacion esta bien
+   hecha, asi que el `-C` no es un requisito inventado por el
+   enunciado sino la condicion para que arranque el juego.
+   ============================================================ */
+/** El logo: la valvula sobre el rojo de la plataforma apagandose en negro. */
+const LOGO_TUBO =
+  '<svg class="tubo-logo" viewBox="0 0 64 64" aria-hidden="true">' +
+  '<defs><radialGradient id="tubo-g" cx="34%" cy="26%" r="86%">' +
+  '<stop offset="0%" stop-color="#E23050"/><stop offset="46%" stop-color="#A81530"/>' +
+  '<stop offset="100%" stop-color="#0A0708"/></radialGradient></defs>' +
+  '<circle cx="32" cy="32" r="32" fill="url(#tubo-g)"/><g fill="#F6EFF1">' +
+  '<path d="M32 10.6c-7.2 0-13 2.5-13 5.6s5.8 5.6 13 5.6 13-2.5 13-5.6-5.8-5.6-13-5.6zm0 2.6c5.6 0 10.1 1.4 10.1 3s-4.5 3-10.1 3-10.1-1.4-10.1-3 4.5-3 10.1-3z"/>' +
+  '<rect x="20.5" y="15" width="23" height="2.2" rx="1.1"/><circle cx="32" cy="16.2" r="2.9"/>' +
+  '<rect x="30.4" y="18" width="3.2" height="7" rx="1"/><rect x="26.5" y="24.5" width="11" height="6.5" rx="1.6"/>' +
+  '<rect x="23.5" y="30" width="17" height="3.4" rx="1.4"/><rect x="17.5" y="34.5" width="29" height="14.5" rx="6.5"/>' +
+  '<rect x="10.5" y="32.5" width="7.5" height="18.5" rx="2.2"/><rect x="46" y="32.5" width="7.5" height="18.5" rx="2.2"/>' +
+  "</g></svg>";
+
+/** La caratula: un mando blanco sobre el azul del juego. */
+const ART_JUEGO =
+  '<svg viewBox="0 0 64 44" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M21 8h22a13 13 0 0 1 13 13v3.5a7.5 7.5 0 0 1-13.4 4.6L40 26H24l-2.6 3.1A7.5 7.5 0 0 1 8 24.5V21A13 13 0 0 1 21 8z"/>' +
+  '<path d="M17 16v8M13 20h8"/><circle cx="44" cy="17.5" r="1.9" fill="#fff" stroke="none"/>' +
+  '<circle cx="49" cy="22.5" r="1.9" fill="#fff" stroke="none"/></svg>';
+
+const ICONO_BAJAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M12 4v11M7.5 11l4.5 4.5L16.5 11M5 19h14"/></svg>';
+
+const ICONO_PLAY =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">' +
+  '<path d="M8 5.5l11 6.5-11 6.5z"/></svg>';
+
+/**
+ * La ventana entera se repinta en cada cambio de estado. Es lo mismo que hace
+ * el resto del simulador y evita el error de dejar un boton vivo describiendo
+ * un estado que ya paso.
+ */
+function pintarJuego() {
+  const cont = $("game-body");
+  if (!cont) return;
+
+  // Jugable solo con los mods puestos y sin la descarga a medio instalar. Lo
+  // que hay que hacer para llegar ahi lo dice la ventana de objetivos: aqui no
+  // se repite, que es informacion de mas sobre la misma cabeza.
+  const activo = listoParaJugar() && !jugado;
+
+  cont.innerHTML =
+    `<div class="tubo-hdr">${LOGO_TUBO}<span class="tubo-marca">TUBO</span></div>` +
+    `<div class="tubo-main">` +
+      `<div class="tubo-izq"><div class="game-art">${ART_JUEGO}</div></div>` +
+      `<div class="tubo-info">` +
+        `<div class="game-name"></div>` +
+        `<div class="game-dir-t">Directorio del juego</div>` +
+        `<div class="game-ruta"><code></code>` +
+        `<button class="game-copiar" id="game-copiar">Copiar</button></div>` +
+      `</div>` +
+      `<div class="tubo-com">` +
+        `<div class="com-t">Posts de la Comunidad</div>` +
+        `<div class="com-post top"><span></span>` +
+        `<button class="com-baja" id="game-bajar" title="Descargar el mod"` +
+        `${descargado ? " disabled" : ""}>${descargado ? "✓" : ICONO_BAJAR}</button></div>` +
+        `<div class="com-post"><span>Community notes</span></div>` +
+        `<div class="com-post"><span>Community notes</span></div>` +
+      `</div>` +
+    `</div>` +
+    `<div class="tubo-pie">` +
+      `<button class="game-play${activo ? " listo" : ""}" id="game-jugar"` +
+      `${activo ? "" : " disabled"}>${ICONO_PLAY}<span>Play</span></button>` +
+    `</div>`;
+
+  // Los datos van por textContent: nombres sorteados, no plantilla.
+  cont.querySelector(".game-name").textContent = nombres.juego;
+  cont.querySelector(".game-ruta code").textContent = rutaMods();
+  cont.querySelector(".com-post.top span").textContent = "OMG miren este mod!";
+}
+
+function descargarPack() {
+  descargado = true;
+  fs[nombres.pack] = {
+    tipo: "file",
+    bytes: 310_000,
+    // Sin carpeta dentro: los mods van sueltos, que es como los reparte
+    // cualquier pack de verdad y lo que hace util el `-C`.
+    raiz: null,
+    dentro: MODS.concat(["leeme.txt"]),
+    pesos: { [MODS[0]]: 420_000, [MODS[1]]: 610_000, "leeme.txt": 2_000 },
+  };
+  log(`descargado: ${nombres.pack}`, "ok");
+  revisar();
+}
+
+function copiarRuta(boton) {
+  const texto = rutaMods();
+  const listo = () => {
+    boton.textContent = "Copiado";
+    setTimeout(() => { if (boton.isConnected) boton.textContent = "Copiar"; }, 1400);
+    // El clic dejo el foco en el boton: se devuelve, o el Ctrl+V siguiente se
+    // pierde justo despues de haber copiado.
+    enfocarEntrada();
+  };
+  // El portapapeles moderno falla en algunos iframes; el textarea de toda la
+  // vida es el que responde entonces.
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(texto).then(listo).catch(() => copiarViejo(texto, listo));
+  } else {
+    copiarViejo(texto, listo);
+  }
+}
+
+function copiarViejo(texto, listo) {
+  const ta = document.createElement("textarea");
+  ta.value = texto;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand("copy"); listo(); } catch { /* sin portapapeles: se teclea */ }
+  document.body.removeChild(ta);
+}
+
+function jugar() {
+  if (!listoParaJugar()) return;
+  jugado = true;
+  log("▶ " + nombres.juego + ": partida iniciada con los mods cargados", "ok");
+  revisar();
+}
+
+// Un solo escuchador para toda la ventana: el contenido se repinta entero en
+// cada cambio de estado y los botones nacen y mueren con el.
+$("game-body").addEventListener("click", (ev) => {
+  const b = ev.target.closest("button");
+  if (!b) return;
+  if (b.id === "game-copiar") copiarRuta(b);
+  if (b.id === "game-bajar") descargarPack();
+  if (b.id === "game-jugar") jugar();
+});
+
+/* ============================================================
    PROGRESO
    ============================================================ */
 function revisar() {
@@ -711,21 +1120,29 @@ function pintar() {
   titulo.appendChild(t);
   cont.appendChild(titulo);
 
-  lista.forEach((d, i) => {
+  // Solo lo hecho y lo que toca ahora. Enseñar los cuatro de golpe es contar
+  // el final antes de tiempo y cargar de instrucciones a quien todavia esta
+  // con la primera; cada uno aparece cuando le llega el turno.
+  lista.slice(0, paso + 1).forEach((d, i) => {
     const fila = document.createElement("div");
-    fila.className = "gutter linea " + (i < paso ? "done" : i === paso ? "cur" : "pend");
+    fila.className = "gutter linea " + (i < paso ? "done" : "cur");
     fila.innerHTML = '<span class="ln"></span><span class="paso-t"></span>';
     fila.querySelector(".ln").textContent = String(i + 1);
     fila.querySelector(".paso-t").textContent = d.texto;
     cont.appendChild(fila);
   });
   pintarIconos();
+  pintarJuego();
 }
 
 function pintarIconos() {
   const cont = $("icons");
   cont.innerHTML = "";
-  enRaiz().sort().slice(0, 4).forEach((n) => {
+  // La carpeta de mods es del juego, no del escritorio: no ocupa icono. El
+  // paquete si aparece, pero solo cuando se descarga, que es cuando existe.
+  // El tope da para todo lo que puede haber a la vez —lo del principio, lo
+  // que se empaqueta, lo que se extrae y la descarga— sin que nada se caiga.
+  enRaiz().filter((n) => n !== nombres.mods).sort().slice(0, 8).forEach((n) => {
     const e = fs[n];
     const it = document.createElement("div");
     it.className = "icon";
@@ -739,8 +1156,9 @@ function pintarIconos() {
 
 function terminar() {
   $("fin-p").textContent =
-    `Enviaste ${enviado.nombre}. Empaquetaste una carpeta, miraste dentro de un ` +
-    `paquete antes de abrirlo y rehiciste uno sin lo que no debía salir.`;
+    `Empaquetaste una carpeta, miraste dentro de un paquete antes de abrirlo, ` +
+    `enviaste ${enviado.nombre} sin lo que no debía salir y dejaste los mods de ` +
+    `${nombres.juego} instalados donde el juego los busca.`;
   $("fin").hidden = false;
 }
 
@@ -748,6 +1166,41 @@ function terminar() {
    ENTRADA
    ============================================================ */
 let tecleado = "";
+
+const ocupado = () =>
+  !$("fin").hidden || !$("picker").hidden || !$("overlay").hidden;
+
+/**
+ * El pegado.
+ *
+ * La ruta de los mods se copia con un boton, asi que sin Ctrl+V la practica se
+ * queda a medias: habria que teclear a mano lo que la ventana acaba de poner
+ * en el portapapeles. Como aqui no se escribe en un `input` sino en el
+ * documento, el evento `paste` no llega solo; lo recoge un textarea escondido
+ * que se mantiene enfocado.
+ */
+function enfocarEntrada() {
+  const t = $("pegar");
+  if (t && t.focus) t.focus({ preventScroll: true });
+}
+
+function pegarTexto(texto) {
+  if (!texto) return;
+  // Solo la primera linea. Un pegado con salto de linea ejecutaria la orden
+  // sin que nadie la haya leido, y aqui la gracia es verla antes de Enter.
+  tecleado += texto.split(/\r?\n/)[0];
+  $("typed").textContent = tecleado;
+}
+
+document.addEventListener("paste", (ev) => {
+  if (ocupado()) return;
+  const datos = ev.clipboardData || window.clipboardData;
+  if (!datos) return;
+  ev.preventDefault();
+  pegarTexto(datos.getData("text"));
+  const t = $("pegar");
+  if (t) t.value = "";
+});
 
 document.addEventListener("keydown", (ev) => {
   if (!$("fin").hidden || !$("picker").hidden || !$("overlay").hidden) return;
@@ -775,9 +1228,25 @@ function alternar(idVentana, idBoton) {
   v.hidden = !v.hidden;
   $(idBoton).dataset.abierta = String(!v.hidden);
 }
+// El correo y el launcher comparten cuadrante: abrir uno cierra el otro, que
+// es lo unico que evita que se pisen sin moverlos de sitio.
+function cerrar(idVentana, idBoton) {
+  $(idVentana).hidden = true;
+  $(idBoton).dataset.abierta = "false";
+}
 $("d-mail").addEventListener("click", () => {
   alternar("w-mail", "d-mail");
-  if (!$("w-mail").hidden) pintarCorreo();
+  if (!$("w-mail").hidden) {
+    cerrar("w-game", "d-game");
+    pintarCorreo();
+  }
+});
+$("d-game").addEventListener("click", () => {
+  alternar("w-game", "d-game");
+  if (!$("w-game").hidden) {
+    cerrar("w-mail", "d-mail");
+    pintarJuego();
+  }
 });
 $("d-txt").addEventListener("click", () => alternar("w-txt", "d-txt"));
 // La terminal tambien se cierra. Detras no hay escritorio vacio: esta la marca.
@@ -798,13 +1267,20 @@ function reiniciar() {
   $("fin").hidden = true;
   $("picker").hidden = true;
   $("overlay").hidden = false;
-  $("mail-asunto").textContent = "Entrega";
+  cerrar("w-game", "d-game");
+  pintarPrompt();
   log("Escribe help para ver los comandos disponibles.", "note");
   pintarCorreo();
   pintar();
 }
 
-$("play").addEventListener("click", () => { $("overlay").hidden = true; });
+// El foco vive en el cazador de pegados. Se le devuelve al arrancar y despues
+// de cualquier clic en el escritorio, que es lo que se lo quita.
+$("play").addEventListener("click", () => {
+  $("overlay").hidden = true;
+  enfocarEntrada();
+});
+$("desk").addEventListener("click", enfocarEntrada);
 $("restart").addEventListener("click", reiniciar);
 $("fin-again").addEventListener("click", reiniciar);
 $("fin-exit").addEventListener("click", () =>
@@ -816,9 +1292,10 @@ reiniciar();
 // Gancho de pruebas: el arnes de Node necesita empujar el estado sin DOM.
 if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
   globalThis.__api = {
-    ejecutar, enviar, reiniciar, desafios,
+    ejecutar, enviar, reiniciar, desafios, descargarPack, jugar,
     fs: () => fs, nombres: () => nombres, paso: () => paso,
     adjuntar: (n) => { adjunto = n; },
+    listoParaJugar, modsInstalados,
   };
 }
 </script>
