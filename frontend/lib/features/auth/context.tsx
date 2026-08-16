@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { signInWithPopup, signOut as firebaseSignOut } from "firebase/auth"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
 import { apiFetch } from "@/lib/api/client"
+import { terminarSesion } from "@shared/lib/terminal-session"
 import type { User } from "@/lib/features/auth/types"
 
 interface AuthContextValue {
@@ -55,6 +56,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore backend logout errors
     }
+    // La terminal ya no vive dentro de un componente: sin esto, su socket y la
+    // PTY del entorno seguirian abiertos despues de cerrar sesion.
+    terminarSesion()
     setUser(null)
   }, [])
 

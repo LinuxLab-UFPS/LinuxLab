@@ -49,7 +49,6 @@ export function TerminalWorkspace({
 }) {
   const { user } = useAuth()
   const { fontSize, fontFamily, handleFontSize, handleFontFamily } = useTerminalPreferences()
-  const [resetKey, setResetKey] = useState(0)
   // null mientras no se ha leído el almacenamiento: sin eso, la primera pintura
   // arrancaría colapsada y el panel entraría con una animación que nadie pidió.
   const [hidden, setHidden] = useState<boolean | null>(null)
@@ -77,8 +76,6 @@ export function TerminalWorkspace({
       // Storage blocked: the choice just won't survive the session.
     }
   }, [])
-
-  const handleReset = useCallback(() => setResetKey((k) => k + 1), [])
 
   const isStudent = user?.role === "student"
   const open = Boolean(isStudent && ((activity && statement) || groupActivity))
@@ -161,11 +158,10 @@ export function TerminalWorkspace({
                   fontFamily={fontFamily}
                   onFontSizeChange={handleFontSize}
                   onFontFamilyChange={handleFontFamily}
-                  onReset={handleReset}
                 />
               }
             >
-              <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
+              <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
             </TerminalFrame>
           </div>
 

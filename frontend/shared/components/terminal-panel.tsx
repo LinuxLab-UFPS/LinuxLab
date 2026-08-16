@@ -1,6 +1,5 @@
 "use client"
 
-import { useCallback, useState } from "react"
 import { TerminalFrame } from "@shared/components/terminal-frame"
 import { TerminalEmulator } from "@shared/components/terminal-emulator"
 import { TerminalSettingsBar } from "@shared/components/terminal-settings-bar"
@@ -9,11 +8,6 @@ import { useTerminalPreferences } from "@shared/hooks/use-terminal-preferences"
 
 export function TerminalPanel({ onClose }: { onClose: () => void }) {
   const { fontSize, fontFamily, handleFontSize, handleFontFamily } = useTerminalPreferences()
-  const [resetKey, setResetKey] = useState(0)
-
-  const handleReset = useCallback(() => {
-    setResetKey((k) => k + 1)
-  }, [])
 
   return (
     // Altura fija y pegada: la terminal no puede irse de la pantalla mientras
@@ -28,11 +22,10 @@ export function TerminalPanel({ onClose }: { onClose: () => void }) {
             fontFamily={fontFamily}
             onFontSizeChange={handleFontSize}
             onFontFamilyChange={handleFontFamily}
-            onReset={handleReset}
           />
         }
       >
-        <TerminalEmulator key={resetKey} fontSize={fontSize} fontFamily={fontFamily} />
+        <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
       </TerminalFrame>
 
       <EssentialCommands className="shrink-0" />

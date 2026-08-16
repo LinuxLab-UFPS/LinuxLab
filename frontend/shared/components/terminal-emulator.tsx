@@ -4,10 +4,14 @@ import { useEffect, useRef } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
-import { env } from "@/lib/config/env"
-import { onTerminalInput, markTerminalReady } from "@/lib/features/student/terminal-input"
-
-const WS_BASE = env.backendUrl.replace(/^http/, "ws")
+import { onTerminalInput } from "@/lib/features/student/terminal-input"
+import {
+  asegurarSesion,
+  enviarEntrada,
+  escuchar,
+  historialSesion,
+  redimensionar,
+} from "@shared/lib/terminal-session"
 
 interface Props {
   className?: string
@@ -15,11 +19,19 @@ interface Props {
   fontFamily?: string
 }
 
+/**
+ * La pantalla de la terminal. Solo la pantalla: la conexion y la sesion viven
+ * en `terminal-session.ts`, fuera de React.
+ *
+ * Este componente se monta y se desmonta a cada rato —al cambiar de pestaña, al
+ * abrir la terminal de la leccion—, y cuando era el dueño del socket eso
+ * significaba una conexion nueva cada vez. Ahora se engancha a la que ya hay:
+ * repinta lo dicho hasta ahora y sigue en directo, asi que la sesion tampoco se
+ * pierde al navegar.
+ */
 export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo, Monaco, 'Courier New', monospace" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
-  const wsRef = useRef<WebSocket | null>(null)
-  const fitAddonRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -54,123 +66,41 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     })
 
     const fitAddon = new FitAddon()
-    fitAddonRef.current = fitAddon
     term.loadAddon(fitAddon)
     term.open(containerRef.current)
     fitAddon.fit()
 
-    // Reintentos al abrir.
-    //
-    // El boton de "Reset terminal" remonta este componente, asi que el socket
-    // nuevo sale mientras el anterior todavia se esta cerrando, y el del medio
-    // corta ese primer intento (NS_ERROR_NET_RESET, sin llegar a negociar).
-    // Recargar la pagina no fallaba nunca porque tarda lo suficiente.
-    //
-    // En vez de perseguir quien lo corta, se reintenta: si la conexion muere
-    // antes de haberse abierto, se prueba de nuevo con una espera creciente.
-    // El primer intento no anuncia nada —lo normal es que funcione— y solo se
-    // avisa al usuario si hay que esperar de verdad.
-    const ESPERAS = [500, 1200, 2500]
-    let intento = 0
-    let abierta = false
-    let cerrado = false
-    let reintento: ReturnType<typeof setTimeout> | undefined
+    // Primero lo ya dicho y despues la suscripcion, en este orden: al reves se
+    // perderia lo que llegara entre una cosa y otra.
+    const anterior = historialSesion()
+    if (anterior) term.write(anterior)
+    const baja = escuchar((texto) => term.write(texto))
 
-    const conectar = () => {
-      if (cerrado) return
-      const ws = new WebSocket(`${WS_BASE}/terminal`)
-      wsRef.current = ws
+    asegurarSesion()
+    redimensionar(term.cols, term.rows)
 
-      ws.onopen = () => {
-        abierta = true
-        const { cols, rows } = term
-        ws.send(JSON.stringify({ type: "resize", cols, rows }))
-        // La terminal está lista: los comandos que llegaron antes (p. ej. el cd
-        // a la carpeta de trabajo al abrir una actividad) se vacían en orden.
-        markTerminalReady()
-      }
-
-      ws.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data)
-          if (msg.type === "output") term.write(msg.data)
-          if (msg.type === "exit") {
-            term.write(`\r\n[Process exited with code ${msg.code}]\r\n`)
-          }
-        } catch {
-          /**/
-        }
-      }
-
-      // El error de socket no dice nada util por si mismo y siempre viene
-      // seguido de un close: se informa alli, con el codigo.
-      ws.onerror = () => {}
-
-      ws.onclose = (event) => {
-        if (cerrado) return
-
-        // Nunca llego a abrirse y quedan intentos: es el caso del boton.
-        if (!abierta && intento < ESPERAS.length) {
-          const espera = ESPERAS[intento]
-          intento += 1
-          if (intento > 1) term.write("\r\n\x1b[33mReconectando…\x1b[0m\r\n")
-          reintento = setTimeout(conectar, espera)
-          return
-        }
-
-        if (!abierta) {
-          term.write("\r\n\x1b[31mNo se pudo conectar con la terminal.\x1b[0m\r\n")
-          term.write("\x1b[92mRecarga la página para volver a intentarlo.\x1b[0m\r\n")
-          return
-        }
-
-        // La sesion estuvo viva y se cerro. El mensaje de antes preguntaba si
-        // el servidor estaba corriendo, y casi nunca era eso: lo normal es
-        // haber salido de la pestaña, haber escrito `exit` o que saltara el
-        // cierre por inactividad. Decirlo y ofrecer la salida vale mas que un
-        // codigo de error.
-        const motivo = event.reason && event.reason.trim() ? event.reason.trim() : null
-        term.write("\r\n\x1b[33mLa sesión de la terminal se cerró.\x1b[0m\r\n")
-        if (motivo) term.write(`\x1b[37m${motivo}\x1b[0m\r\n`)
-        term.write("\x1b[92mPulsa «Reset terminal» para abrir una nueva.\x1b[0m\r\n")
-      }
-    }
-
-    conectar()
-
-    const write = (data: string) => {
-      const ws = wsRef.current
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "input", data }))
-      }
-    }
-
-    term.onData(write)
-    const unsubscribe = onTerminalInput(write)
+    term.onData(enviarEntrada)
+    const unsubscribe = onTerminalInput(enviarEntrada)
 
     let resizeTimer: ReturnType<typeof setTimeout>
     const observer = new ResizeObserver(() => {
       clearTimeout(resizeTimer)
       resizeTimer = setTimeout(() => {
         fitAddon.fit()
-        const { cols, rows } = term
-        const ws = wsRef.current
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "resize", cols, rows }))
-        }
+        redimensionar(term.cols, term.rows)
       }, 100)
     })
     observer.observe(containerRef.current)
 
     return () => {
-      cerrado = true
-      clearTimeout(reintento)
+      // Se va la pantalla, no la sesion: el socket sigue abierto y la PTY con
+      // lo que estuviera corriendo dentro.
+      clearTimeout(resizeTimer)
+      baja()
       unsubscribe()
-      wsRef.current?.close()
-      term.dispose()
       observer.disconnect()
+      term.dispose()
       termRef.current = null
-      wsRef.current = null
     }
     // El terminal nace una sola vez con los valores iniciales de tamaño y
     // fuente; los cambios posteriores los aplican los effects de abajo.

@@ -28,14 +28,95 @@ function setupGateway(server) {
     // llegaba antes de que existiera el manejador y se perdía: la PTY se
     // quedaba con su tamaño por defecto mientras la pantalla tenía otro, y
     // cualquier programa que dibuje por posición (vi, top) salía descuadrado.
+    //
+    // El tamaño se recuerda, no solo se aplica: al reiniciar nace una PTY nueva
+    // sin que el navegador vuelva a abrir el socket, asi que nadie lo repite.
     let stream = null
-    let pending = null
+    let size = null
+    let sessionUser = null
     let messageWindow = { count: 0, resetAt: Date.now() + 1000 }
 
-    const applySize = (size) => {
-      if (!size) return
-      if (stream) stream.setWindow(size.rows, size.cols, 0, 0)
-      else pending = size
+    const applySize = (nuevo) => {
+      if (!nuevo) return
+      size = nuevo
+      if (stream) stream.setWindow(nuevo.rows, nuevo.cols, 0, 0)
+    }
+
+    /**
+     * Abre una PTY para el usuario y engancha su salida al socket.
+     *
+     * Cada manejador comprueba que su stream siga siendo el vigente: al
+     * reiniciar, el anterior muere a proposito, y su `end` no puede anunciar
+     * que la sesion termino ni cerrar el socket que va a usar el siguiente.
+     */
+    const abrirPty = async (username) => {
+      const pty = await containerService.openPtySession(username)
+      stream = pty
+      if (size) pty.setWindow(size.rows, size.cols, 0, 0)
+
+      pty.on("data", (data) => {
+        if (stream !== pty || ws.readyState !== ws.OPEN) return
+        // Backpressure: si el cliente no consume (ventana minimizada, red
+        // lenta), no acumular sin limite; se descarta la salida sobrante y
+        // el stream del contenedor hace de valvula.
+        if (ws.bufferedAmount > MAX_BUFFERED_BYTES) return
+        ws.send(JSON.stringify({ type: "output", data: data.toString() }))
+      })
+
+      pty.on("end", () => {
+        if (stream !== pty || ws.readyState !== ws.OPEN) return
+        ws.send(JSON.stringify({ type: "exit", code: 0 }))
+        ws.close()
+      })
+
+      pty.on("error", (err) => {
+        if (stream !== pty) return
+        logger.warn({ err, username }, "Terminal stream error")
+        if (ws.readyState === ws.OPEN) ws.close(4001, "Error de la sesión")
+      })
+    }
+
+    /**
+     * "Reset terminal", por el socket que ya esta abierto.
+     *
+     * Antes era un POST y una conexion nueva, y ahi estaba el fallo: el
+     * navegador abria el socket nuevo mientras el viejo se cerraba y se quedaba
+     * en NS_ERROR_NET_RESET —sin llegar a negociar— reintento tras reintento,
+     * hasta rendirse. Sin reconexion no hay carrera que perder.
+     *
+     * Ademas el orden queda garantizado aqui dentro: primero mueren los
+     * procesos del usuario, despues nace la PTY. Cuando lo repartian el cliente
+     * y el servidor, la sesion nueva podia entrar a tiempo para el ultimo
+     * barrido del `pkill`.
+     */
+    let reiniciando = false
+    const reiniciar = async () => {
+      if (reiniciando || !sessionUser) return
+      reiniciando = true
+      try {
+        const anterior = stream
+        stream = null
+        if (anterior) anterior.destroy()
+
+        await containerService.resetTerminal(sessionUser.id)
+        if (ws.readyState !== ws.OPEN) return
+
+        await abrirPty(sessionUser.linuxAccount.linux_username)
+        if (ws.readyState !== ws.OPEN) {
+          // Se fue mientras se abria: no dejar una PTY sin nadie al otro lado.
+          if (stream) stream.destroy()
+          stream = null
+          return
+        }
+
+        ws.send(JSON.stringify({ type: "reset-ok" }))
+        logger.info({ userId: sessionUser.id }, "Terminal reset")
+      } catch (err) {
+        logger.error({ err }, "Terminal reset failed")
+        if (ws.readyState === ws.OPEN) ws.close(1011, "No se pudo reiniciar la sesión")
+      } finally {
+        reiniciando = false
+      }
     }
 
     ws.on("message", (raw) => {
@@ -61,6 +142,8 @@ function setupGateway(server) {
           if (stream) stream.write(msg.data)
         } else if (msg.type === "resize") {
           applySize({ rows: msg.rows, cols: msg.cols })
+        } else if (msg.type === "reset") {
+          reiniciar()
         }
       } catch {
         // mensajes invalidos se ignoran
@@ -70,7 +153,6 @@ function setupGateway(server) {
     // Todo el flujo de apertura esta dentro de try/catch: un fallo de base o de
     // SSH aqui no puede tumbar el proceso (un rechazo async sin cazar derriba
     // el event loop de Node).
-    let sessionUser = null
     const openSession = async () => {
       try {
         const auth = wsAuth(request)
@@ -98,7 +180,7 @@ function setupGateway(server) {
         }
 
         sessionUser = user
-        stream = await containerService.openPtySession(user.linuxAccount.linux_username)
+        await abrirPty(user.linuxAccount.linux_username)
       } catch (err) {
         // El detalle interno (base, SSH) no llega al cliente: solo al log.
         logger.error({ err }, "Terminal session failed")
@@ -109,34 +191,6 @@ function setupGateway(server) {
         }
         return
       }
-
-      // El tamaño que llegó mientras se abría la sesión.
-      if (pending) {
-        stream.setWindow(pending.rows, pending.cols, 0, 0)
-        pending = null
-      }
-
-      stream.on("data", (data) => {
-        if (ws.readyState === ws.OPEN) {
-          // Backpressure: si el cliente no consume (ventana minimizada, red
-          // lenta), no acumular sin limite; se descarta la salida sobrante y
-          // el stream del contenedor hace de valvula.
-          if (ws.bufferedAmount > MAX_BUFFERED_BYTES) return
-          ws.send(JSON.stringify({ type: "output", data: data.toString() }))
-        }
-      })
-
-      stream.on("end", () => {
-        if (ws.readyState === ws.OPEN) {
-          ws.send(JSON.stringify({ type: "exit", code: 0 }))
-          ws.close()
-        }
-      })
-
-      stream.on("error", (err) => {
-        logger.warn({ err, username: sessionUser?.linuxAccount?.linux_username }, "Terminal stream error")
-        if (ws.readyState === ws.OPEN) ws.close(4001, "Error de la sesión")
-      })
 
       logger.info({ userId: sessionUser.id, username: sessionUser.linuxAccount.linux_username }, "Terminal session opened")
     }
