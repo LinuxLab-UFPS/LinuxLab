@@ -11,15 +11,8 @@ const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 
-function generateGroupDir(name, groupId) {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9_\u00f1]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "")
-    .substring(0, 20)
-  const shortId = groupId.replace(/-/g, "").substring(0, 8)
-  return `grp_${slug}_${shortId}`
+function generateGroupDir(groupNumber) {
+  return `G-${String(groupNumber).padStart(4, "0")}`
 }
 
 async function ensureTeacherRole(userId, tx = prisma) {
@@ -58,16 +51,20 @@ async function createGroup(args) {
   }
 
   const groupId = randomUUID()
-  const groupDir = generateGroupDir(parsed.name, groupId)
   const groupName = groupNameOf(groupId)
-  const group = await db.group.create({
+  const createdGroup = await db.group.create({
     data: {
       id: groupId,
       name: parsed.name,
       description: parsed.description?.trim() || null,
       teacher_id: teacherUserId,
-      group_dir: groupDir,
+      group_dir: null,
     },
+  })
+  const groupDir = generateGroupDir(createdGroup.group_number)
+  const group = await db.group.update({
+    where: { id: createdGroup.id },
+    data: { group_dir: groupDir },
   })
 
   await db.groupProvisioningJob.create({

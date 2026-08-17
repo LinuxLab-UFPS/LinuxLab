@@ -27,5 +27,9 @@ router.get("/:id/activities", activityController.listGroupActivities)
 router.post("/:id/activities", activityController.createGroupActivity)
 router.get("/:id/activities/:activityId", activityController.getGroupActivity)
 router.patch("/:id/activities/:activityId", activityController.updateGroupActivity)
+// Habilitar/deshabilitar una actividad publicada (RF-GRP-10). "publish" es el
+// inverso de "disable": la publicacion en si ocurre al crear (no hay borrador).
+router.post("/:id/activities/:activityId/publish", activityController.enableGroupActivity)
+router.post("/:id/activities/:activityId/disable", activityController.disableGroupActivity)
 
 module.exports = router

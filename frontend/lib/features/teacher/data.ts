@@ -72,6 +72,15 @@ export async function updateActivity(
   return teacherApi.updateActivity(groupId, activityId, input)
 }
 
+/** Habilita o deshabilita una actividad publicada (RF-GRP-10). */
+export async function setActivityEnabled(
+  groupId: string,
+  activityId: string,
+  enabled: boolean,
+): Promise<Activity> {
+  return teacherApi.setActivityEnabled(groupId, activityId, enabled)
+}
+
 export async function submitActivity(_activityId: string): Promise<void> {
   throw new Error("Actividades: no implementado todavía")
 }

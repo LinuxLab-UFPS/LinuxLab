@@ -19,16 +19,9 @@ function normalizeEvaluationType(value) {
  * y del id para que sea unica (dos actividades con el mismo titulo no chocan).
  * El docente nunca la escribe; sus aserciones usan rutas relativas a ella.
  */
-function generateWorkdir(title, id) {
-  const slug =
-    title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 20) || "actividad"
-  return `${slug}-${id.replace(/-/g, "").slice(0, 8)}`
+function generateWorkdir(activityType, activityNumber) {
+  const prefix = activityType === "quiz" ? "Q" : "T"
+  return `${prefix}-${String(activityNumber).padStart(4, "0")}`
 }
 
 /**
@@ -108,7 +101,15 @@ function validateActivityInput(body) {
   // supere ese valor (ver buildChecks).
   const maxScore = 100
 
-  const gradingPolicy = parsed.gradingPolicy
+  const activityType = parsed.activityType
+  const gradingPolicy = activityType === "quiz" ? "latest_score" : "best_score"
+  const attemptLimit = parsed.attemptLimit ?? null
+  if (activityType === "workshop" && attemptLimit !== null) {
+    throw new AppError("Las actividades tipo taller no tienen límite de intentos", 400, "VALIDATION_ERROR")
+  }
+  if (attemptLimit !== null && (!Number.isInteger(attemptLimit) || attemptLimit < 1)) {
+    throw new AppError("El límite de intentos debe ser un entero positivo", 400, "VALIDATION_ERROR")
+  }
 
   const evaluationType = normalizeEvaluationType(parsed.evaluationType ?? "automatic")
   if (!["automatic", "manual"].includes(evaluationType)) {
@@ -129,7 +130,7 @@ function validateActivityInput(body) {
   const topicNumber = Number(parsed.topicNumber)
   const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
-  return { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks }
+  return { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks }
 }
 
 /**
@@ -140,14 +141,13 @@ function validateActivityInput(body) {
  * titulo, instrucciones, modalidad, puntaje y aserciones. Si la definicion
  * cambiara, lo publicado no cambia: RF-GRP-11).
  *
- * La creacion es a la vez publicacion: queda habilitada al instante. El limite
- * de intentos y la configuracion de taller/quiz se agregan en una fase
- * posterior; aqui quedan sus valores por defecto (ilimitado, workshop,
- * best_score).
+ * La creacion es a la vez publicacion: queda habilitada al instante. La
+ * modalidad de taller/quiz se agrega en una fase posterior; aqui queda su
+ * valor por defecto (workshop).
  */
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(input ?? {})
 
   // La definicion y la publicacion nacen juntas: si una de las dos falla, la
@@ -160,7 +160,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
         difficulty: "basic",
         kind: "activity",
-        activity_type: "workshop",
+        activity_type: activityType,
         evaluation_type: evaluationType,
         max_score: maxScore,
         source: "teacher",
@@ -172,26 +172,28 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
     // La carpeta de trabajo nace del id de la publicacion: se genera antes de
     // crearla para poder guardarla en el mismo registro.
     const groupActivityId = randomUUID()
-    const workdir = generateWorkdir(title, groupActivityId)
-
-    const groupActivity = await tx.groupActivity.create({
+    const createdGroupActivity = await tx.groupActivity.create({
       data: {
         id: groupActivityId,
         group_id: group.id,
         activity_definition_id: activity.id,
         title,
         instructions,
-        activity_type: "workshop",
+        activity_type: activityType,
         evaluation_type: evaluationType,
         max_score: maxScore,
         checks,
-        attempt_limit: null,
+        attempt_limit: attemptLimit,
         grading_policy: gradingPolicy,
         required: true,
         enabled: true,
         due_at: dueAt,
-        workdir,
+        workdir: "pending",
       },
+    })
+    const groupActivity = await tx.groupActivity.update({
+      where: { id: createdGroupActivity.id },
+      data: { workdir: generateWorkdir(activityType, createdGroupActivity.activity_number) },
     })
     return { activity, groupActivity }
   })
@@ -243,7 +245,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
   }
 
-  const { title, instructions, maxScore, gradingPolicy, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(body)
 
   // La definicion del docente es 1:1 con la publicacion: se mantiene en
@@ -257,6 +259,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
           title,
           instructions,
           topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+          activity_type: activityType,
           evaluation_type: evaluationType,
         },
       })
@@ -267,8 +270,10 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
       data: {
         title,
         instructions,
+        activity_type: activityType,
         evaluation_type: evaluationType,
         checks,
+        attempt_limit: attemptLimit,
         grading_policy: gradingPolicy,
         due_at: dueAt,
       },
@@ -309,9 +314,66 @@ async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   return serializeGroupActivity(ga, ga.definition)
 }
 
+/**
+ * Habilita o deshabilita una actividad publicada (RF-GRP-10). Deshabilitar no
+ * borra historial y no toca la politica: solo deja de aceptar intentos y
+ * entregas al instante (el check del estudiante valida `enabled`). Idempotente.
+ *
+ * Deshabilitar con historial no se permite: si ya hay intentos o entregas, la
+ * actividad queda habilitada para siempre (cambiar la regla a mitad de partida
+ * seria injusto). La validacion bloquea la fila con FOR UPDATE para que un
+ * check concurrente no pueda registrar el primer intento entre la revision y
+ * la escritura.
+ */
+async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, role, enabled }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    include: { definition: { select: { topic_number: true, difficulty: true } } },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  if (ga.enabled === enabled) return serializeGroupActivity(ga, ga.definition)
+
+  const updated = await runInTransaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM group_activities WHERE id = ${ga.id} FOR UPDATE`
+
+    const row = await tx.groupActivity.findFirst({
+      where: { id: ga.id },
+      select: { _count: { select: { attempts: true, submissions: true } } },
+    })
+    if (!row) throw new NotFoundError("Actividad no encontrada")
+    if (!enabled && row._count.attempts + row._count.submissions > 0) {
+      throw new AppError(
+        "La actividad ya tiene intentos o entregas; no se puede deshabilitar",
+        409,
+        "CONFLICT",
+      )
+    }
+
+    return tx.groupActivity.update({
+      where: { id: ga.id },
+      data: { enabled },
+      include: { definition: { select: { topic_number: true, difficulty: true } } },
+    })
+  })
+
+  audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: enabled ? "activity_enabled" : "activity_disabled",
+    target: updated.title,
+    metadata: { groupActivityId: ga.id },
+  })
+
+  logger.info({ groupId, teacherUserId, activityId: ga.id, enabled }, "Group activity enabled state changed")
+  return serializeGroupActivity(updated, updated.definition)
+}
+
 module.exports = {
   createGroupActivity,
   updateGroupActivity,
   listGroupActivities,
   getGroupActivity,
+  setGroupActivityEnabled,
 }

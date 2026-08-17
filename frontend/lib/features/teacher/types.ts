@@ -2,6 +2,7 @@ export type {
   Activity,
   ActivityCheck,
   ActivitySource,
+  ActivityType,
   CatalogEntry,
   CatalogField,
   CreateActivityInput,

@@ -6,6 +6,7 @@ import { getGroupActivity } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 
 const ROW =
   "flex items-center justify-between gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"
@@ -45,16 +46,13 @@ function ActivityDetail({ groupId, activity }: { groupId: string; activity: Acti
         <DetailRow label="Modalidad">
           {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
         </DetailRow>
-        <DetailRow label="Política de calificación">
-          {activity.gradingPolicy === "latest_score" ? "Último intento" : "Mejor intento"}
+        <DetailRow label="Tipo de actividad">
+          {activity.activityType === "quiz" ? "Quiz" : "Taller"}
         </DetailRow>
         <DetailRow label="Puntuación">{activity.maxScore} pts</DetailRow>
         <DetailRow label="Fecha de cierre">
           {activity.dueDate
-            ? new Date(activity.dueDate).toLocaleString("es-CO", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })
+            ? formatBogotaDateTime(activity.dueDate)
             : "Sin fecha"}
         </DetailRow>
         <DetailRow label="Carpeta de trabajo">

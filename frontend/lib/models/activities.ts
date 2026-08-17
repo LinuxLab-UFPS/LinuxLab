@@ -6,6 +6,9 @@ export type EvaluationType = "atomic" | "manual"
 
 export type GradingPolicy = "best_score" | "latest_score"
 
+/** Taller: intentos ilimitados. Quiz: permite límite de intentos. */
+export type ActivityType = "workshop" | "quiz"
+
 /** Un campo de formulario de una asercion del catalogo. */
 export interface CatalogField {
   key: string
@@ -69,7 +72,12 @@ export interface Activity {
   dueDate?: string
   required: boolean
   evaluationType: EvaluationType
+  activityType: ActivityType
   gradingPolicy?: GradingPolicy
+  /** Límite de intentos; null o ausente = ilimitado. */
+  attemptLimit?: number | null
+  /** Habilita/deshabilita la actividad (publicar/deshabilitar). */
+  enabled?: boolean
   /** Carpeta de trabajo autogenerada (`~/actividades/<workdir>/`). */
   workdir?: string
   checks: ActivityCheck[]
@@ -110,7 +118,19 @@ export interface GroupActivitySummary {
   topicNumber: number
   checksCount: number
   passed: boolean
+  /** Con al menos un intento o entrega la actividad queda completada (se conserva). */
+  completed: boolean
   lastScore: number | null
+  /** Número de evaluaciones registradas del estudiante. */
+  attemptsCount: number
+  /** Límite de intentos; null = ilimitado. */
+  attemptLimit: number | null
+  /** Nota final según la política configurada (0 si no hay intentos). */
+  finalScore: number
+  dueAt?: string | null
+  enabled: boolean
+  evaluationType: EvaluationType
+  activityType: ActivityType
 }
 
 export interface MyGroupOverview {
@@ -126,14 +146,30 @@ export interface GroupActivityDetail {
   workdir: string
   dueAt: string | null
   evaluationType: EvaluationType
+  activityType: ActivityType
   maxScore: number
   checksCount: number
+  attemptLimit: number | null
+  attemptsCount: number
+  finalScore: number
+  gradingPolicy: GradingPolicy
+  enabled: boolean
+  completed: boolean
+  attempts: {
+    attemptNumber: number
+    createdAt: string
+    score: number
+  }[]
   lastAttempt: { passed: boolean; score: number } | null
 }
 
 export interface GroupCheckOutcome {
   passed: boolean
+  completed: boolean
   score: number
+  finalScore: number
+  attemptsCount: number
+  attempts: GroupActivityDetail["attempts"]
   maxScore: number
   results: ActivityCheckResult[]
 }

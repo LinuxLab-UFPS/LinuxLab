@@ -60,6 +60,11 @@ export const teacherApi = {
       method: "PATCH",
       body: JSON.stringify(input),
     }),
+  setActivityEnabled: (groupId: string, activityId: string, enabled: boolean) =>
+    apiFetch<Activity>(
+      `/api/groups/${groupId}/activities/${activityId}/${enabled ? "publish" : "disable"}`,
+      { method: "POST" },
+    ),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
   validateActivity: (activityId: string) =>

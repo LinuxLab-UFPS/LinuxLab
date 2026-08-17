@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
@@ -15,6 +15,7 @@ import {
 } from "@/lib/features/student/group-activities"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import { notify } from "@shared/lib/toast"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 
 
 /**
@@ -29,17 +30,21 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
   const [results, setResults] = useState<GroupCheckResult[] | null>(null)
   const [score, setScore] = useState(detail.lastAttempt?.score ?? 0)
   const [passed, setPassed] = useState(detail.lastAttempt?.passed ?? false)
+  const [completed, setCompleted] = useState(detail.completed)
+  const [finalScore, setFinalScore] = useState(detail.finalScore)
   const [checking, setChecking] = useState(false)
-  const autoCd = useRef(false)
+  const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
+  const [attempts, setAttempts] = useState(detail.attempts)
+  const [openedFolder, setOpenedFolder] = useState(false)
 
-  useEffect(() => {
-    if (autoCd.current || !detail.workdir) return
-    autoCd.current = true
-    sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
-  }, [detail.workdir])
+  const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
+  const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
+  const canCheck =
+    detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached && openedFolder
 
   const goToWorkdir = () => {
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
+    setOpenedFolder(true)
   }
 
   const check = async () => {
@@ -49,6 +54,10 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
       setResults(outcome.results)
       setScore(outcome.score)
       setPassed(outcome.passed)
+      setCompleted(outcome.completed)
+      setFinalScore(outcome.finalScore)
+      setAttemptsCount(outcome.attemptsCount)
+      setAttempts(outcome.attempts)
     } catch (e) {
       notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
@@ -73,10 +82,16 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
-          <Tag tone={passed ? "sky" : "neutral"}>
-            {passed ? "Completada" : "Sin completar"}
+          <Tag tone={completed ? "sky" : "neutral"}>
+            {completed ? "Completada" : "Sin completar"}
           </Tag>
+          <Tag tone="neutral">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
           {detail.evaluationType === "manual" && <Tag tone="amber">Revisión manual</Tag>}
+          {closed && <Tag tone="rose">Vencida</Tag>}
+        </div>
+        <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+          <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate font-mono">~/actividades/{detail.workdir}</span>
         </div>
       </header>
 
@@ -89,22 +104,50 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
           <p className="text-sm text-muted-foreground">Sin instrucciones.</p>
         )}
 
-        <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-secondary/30 px-3 py-2 text-sm">
-          <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="text-muted-foreground">Carpeta de trabajo:</span>
-          <span className="truncate font-mono text-foreground">
-            ~/actividades/{detail.workdir}
-          </span>
-        </div>
-
-        {(evaluated || detail.lastAttempt) && (
+        {(evaluated || detail.lastAttempt || detail.attemptsCount > 0) && (
           <div className="mt-6 space-y-3">
-            <p className="text-sm text-foreground">
-              Calificación:{" "}
-              <span className="font-mono font-medium text-foreground">
-                {score}/{detail.maxScore}
-              </span>
-            </p>
+            {detail.activityType === "workshop" ? (
+                <p className="text-sm text-foreground">
+                  Calificación obtenida:{" "}
+                  <span className="font-mono font-medium text-foreground">
+                    {finalScore}/{detail.maxScore}
+                  </span>
+                </p>
+            ) : (
+              <p className="text-sm text-foreground">
+                Nota final:{" "}
+                <span className="font-mono font-medium text-foreground">
+                  {finalScore}/{detail.maxScore}
+                </span>
+              </p>
+            )}
+            <div className="space-y-3 text-xs text-muted-foreground">
+              <p>
+                {attemptsCount} {attemptsCount === 1 ? "intento" : "intentos"}
+                {detail.attemptLimit != null &&
+                  ` de ${detail.attemptLimit}${limitReached ? " · límite alcanzado" : ""}`}
+              </p>
+              <div className="overflow-hidden rounded-md border border-border">
+                <table className="w-full text-left">
+                  <thead className="bg-secondary/40 text-[11px] uppercase tracking-wide">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">N. intento</th>
+                      <th className="px-3 py-2 font-medium">Fecha</th>
+                      <th className="px-3 py-2 text-right font-medium">Calificación</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attempts.map((attempt) => (
+                      <tr key={attempt.attemptNumber} className="border-t border-border/60 text-foreground">
+                        <td className="px-3 py-2">{attempt.attemptNumber}</td>
+                        <td className="px-3 py-2">{formatBogotaDateTime(attempt.createdAt)}</td>
+                        <td className="px-3 py-2 text-right font-mono">{attempt.score}/{detail.maxScore}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
             {results && (
               <ul className="space-y-1.5">
                 {results
@@ -128,7 +171,11 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
               Esta actividad se entrega para revisión del docente.
             </span>
           ) : (
-            <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking}>
+            <ActionButton
+              tone={passed ? "emerald" : "amber"}
+              onClick={check}
+              disabled={checking || !canCheck}
+            >
               {checking ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -143,6 +190,20 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
             Ir a la carpeta
           </ActionButton>
         </div>
+
+        {detail.evaluationType === "atomic" && !canCheck && (
+          <p className="text-xs text-muted-foreground">
+              {!openedFolder
+               ? "Primero abre la carpeta de trabajo."
+               : !detail.enabled
+               ? "La actividad está deshabilitada."
+              : closed
+                ? "La actividad venció."
+                : limitReached
+                  ? "Alcanzaste el límite de intentos de esta actividad."
+                  : null}
+          </p>
+        )}
       </footer>
     </div>
   )
