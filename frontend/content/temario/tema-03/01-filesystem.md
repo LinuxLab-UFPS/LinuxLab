@@ -33,7 +33,7 @@ Cada directorio tiene una función definida por el estándar FHS (Filesystem Hie
 
 Dentro de `/home` hay un subdirectorio por cada usuario del sistema. El nombre del subdirectorio coincide con el nombre del usuario: si el usuario es `estudiante`, su directorio personal es `/home/estudiante`.
 
-El directorio home es especial por dos razones. Primero, al abrir una terminal el shell te ubica ahí automáticamente. Segundo, es el único lugar del sistema donde el usuario tiene control total para crear, modificar y eliminar archivos sin necesitar permisos especiales. La mayoría de los otros directorios del sistema están protegidos con permisos de archivo que impiden modificaciones accidentales.
+El directorio home es especial por dos razones. Primero, al abrir una terminal el shell parte de ahí automáticamente. Segundo, es el único lugar del sistema donde el usuario tiene control total para crear, modificar y eliminar archivos sin necesitar permisos especiales. La mayoría de los otros directorios del sistema están protegidos con permisos de archivo que impiden modificaciones accidentales.
 
 Los permisos se estudian en detalle más adelante en el curso.
 
@@ -50,7 +50,7 @@ pwd
 /home/estudiante
 ```
 
-También puedes usarlo para referirte al home de otro usuario:
+También sirve para referirse al home de otro usuario:
 
 ```bash
 ls ~root
@@ -62,13 +62,13 @@ Esto equivale a escribir `ls /root`.
 
 Hay dos formas de indicar la ubicación de un archivo o directorio en el sistema.
 
-Una **ruta absoluta** comienza siempre desde la raíz `/` y describe la ubicación completa sin importar en qué directorio te encuentres:
+Una **ruta absoluta** comienza siempre desde la raíz `/` y describe la ubicación completa sin importar cuál sea el directorio actual:
 
 ```bash
 cd /home/estudiante/Documentos
 ```
 
-Una **ruta relativa** parte desde el directorio actual. No empieza con `/`, sino con el nombre del directorio al que quieres entrar, o con `.` (directorio actual) o `..` (directorio superior):
+Una **ruta relativa** parte desde el directorio actual. No empieza con `/`, sino con el nombre del directorio de destino, o con `.` (directorio actual) o `..` (directorio superior):
 
 ```bash
 # Si ya estás en /home/estudiante:

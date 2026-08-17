@@ -118,7 +118,7 @@ cat d/uno/dos/tres/final.txt
 dato
 ```
 
-Esto explica cómo funciona el aislamiento de este laboratorio. La ruta hasta tu carpeta personal atraviesa varios directorios que conceden `x` a todo el mundo pero no `r`: se puede pasar por ellos sin poder listar quién más hay. El último tramo, tu carpeta, cierra el paso a los demás. Por eso ningún compañero puede llegar a tus archivos, independientemente de los permisos que tengan los archivos en sí.
+Esto explica cómo funciona el aislamiento de este laboratorio. La ruta hasta la carpeta personal de cada estudiante atraviesa varios directorios que conceden `x` a todo el mundo pero no `r`: se puede pasar por ellos sin poder listar quién más hay. El último tramo, la carpeta propia, cierra el paso a los demás. Por eso ningún compañero llega a esos archivos, independientemente de los permisos que tengan los archivos en sí.
 
 ## Borrar depende del directorio, no del archivo
 
@@ -156,7 +156,7 @@ Separar `r`, `w` y `x` sirve para entenderlos, pero en la práctica los director
 
 Ese es también el motivo por el que un `chmod -R` con un solo número estropea las cosas. Un archivo de texto correcto es `644`, y ese mismo valor sobre un directorio le quita `x` y lo vuelve inaccesible. Un directorio correcto es `755`, y ese valor sobre un archivo de texto lo marca como ejecutable sin serlo.
 
-## La s que aparece en tus directorios
+## La s que aparece en los directorios
 
 Los directorios creados en este laboratorio se ven así:
 

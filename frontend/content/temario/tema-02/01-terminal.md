@@ -1,6 +1,6 @@
 ## La línea de comandos
 
-La **línea de comandos** es un sistema de entrada de texto donde le dices al computador exactamente qué quieres que haga. Puedes escribir desde un comando simple hasta un script completo de cien líneas. Es directa, sin capas visuales en el medio.
+La **línea de comandos** es un sistema de entrada de texto donde se le indica al computador exactamente qué debe hacer. Admite desde un comando simple hasta un script completo de cien líneas. Es directa, sin capas visuales en el medio.
 
 <!-- ILLUSTRATION: terminal -->
 
@@ -10,13 +10,13 @@ En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal:
 
 **Terminal de escritorio:** Es una aplicación dentro del entorno gráfico que abre una ventana con la línea de comandos. Según la distribución que uses, la encuentras buscando "terminal" en el menú de aplicaciones. En Ubuntu se llama GNOME Terminal, en KDE es Konsole. Todas hacen lo mismo.
 
-**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F2</kbd> hasta <kbd>F6</kbd>. Cada una es una sesión completamente separada. Para volver al entorno gráfico usas <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F1</kbd> o <kbd>F7</kbd> dependiendo del sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
+**Terminal virtual:** Independiente del entorno gráfico. Se accede con las teclas <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F2</kbd> hasta <kbd>F6</kbd>. Cada una es una sesión completamente separada. Para volver al entorno gráfico se usa <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>F1</kbd> o <kbd>F7</kbd>, según el sistema. Los servidores suelen arrancar directamente en una de estas, sin escritorio.
 
 En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona igual que cualquiera de las dos anteriores.
 
 ## El shell
 
-Cuando escribes un comando en la terminal y presionas <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, que es el programa encargado de interpretar lo que escribiste y decirle al sistema operativo qué tiene que hacer. Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
+Al escribir un comando y pulsar <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, el programa encargado de interpretar esa línea y decirle al sistema operativo qué tiene que hacer. Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
 
 El shell es el puente entre tú y el kernel.
 
@@ -36,18 +36,18 @@ La elección del shell es mayormente personal. Un usuario cómodo con Bash puede
 
 Bash lleva décadas siendo el shell por defecto en Linux. Más allá de ejecutar comandos, tiene características que lo hacen especialmente útil:
 
-- **Historial de comandos:** Puedes navegar los comandos anteriores con las flechas <kbd>↑</kbd> y <kbd>↓</kbd> sin tener que escribirlos de nuevo.
-- **Scripting:** Puedes guardar una secuencia de comandos en un archivo y ejecutarlos todos de una sola vez. Bash incluye estructuras como condicionales y funciones, lo que lo convierte en un lenguaje de programación básico.
-- **Alias:** Puedes crear nombres cortos para comandos largos que usas con frecuencia.
-- **Variables:** Permiten guardar información que puedes reutilizar dentro de la sesión o en scripts.
+- **Historial de comandos:** las flechas <kbd>↑</kbd> y <kbd>↓</kbd> recuperan los comandos anteriores sin tener que escribirlos de nuevo.
+- **Scripting:** una secuencia de comandos se guarda en un archivo y se ejecuta entera de una vez. Bash incluye estructuras como condicionales y funciones, lo que lo convierte en un lenguaje de programación básico.
+- **Alias:** nombres cortos para comandos largos de uso frecuente.
+- **Variables:** guardan información reutilizable dentro de la sesión o en scripts.
 
-Cuando abres una terminal y ves el símbolo `$`, significa que Bash está listo para recibir un comando.
+El símbolo `$` al abrir una terminal significa que Bash está listo para recibir un comando.
 
 ```bash
 usuario@linuxlab:~$
 ```
 
-Ese texto antes del `$` es el **prompt**: te indica tu nombre de usuario, el nombre del equipo y el directorio donde estás. El `~` representa tu directorio de inicio (home).
+Ese texto antes del `$` es el **prompt**: indica el nombre de usuario, el nombre del equipo y el directorio actual. El `~` representa el directorio de inicio (home).
 
 ---
 

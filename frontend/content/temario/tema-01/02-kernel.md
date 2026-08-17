@@ -2,7 +2,7 @@
 
 ## ¿Qué es el kernel?
 
-El kernel es el núcleo del sistema operativo: el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador: procesador, memoria RAM, discos, interfaces de red y periféricos. Cuando ejecutas un comando, abres un archivo o te conectas a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos: siempre pasan por él.
+El kernel es el núcleo del sistema operativo: el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador: procesador, memoria RAM, discos, interfaces de red y periféricos. Al ejecutar un comando, abrir un archivo o establecer una conexión a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos: siempre pasan por él.
 
 ## Funciones principales del kernel
 
@@ -18,11 +18,11 @@ El kernel tiene cinco responsabilidades. Todo lo demás que hace se desprende de
 
 ### 1. Gestión de procesos
 
-Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos: eso es la **multitarea**, y es lo que ocurre cuando tienes abiertos el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
+Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos: eso es la **multitarea**, y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
 
 <!-- ILLUSTRATION: kernel-procesos -->
 
-Cada aplicación abierta consume CPU a ratos: sube cuando trabaja y baja cuando espera. El kernel es quien reparte esos turnos, y más adelante en el curso vas a poder ver esta misma lista desde la terminal, con el consumo real de tu equipo.
+Cada aplicación abierta consume CPU a ratos: sube cuando trabaja y baja cuando espera. El kernel es quien reparte esos turnos. Más adelante en el curso esta misma lista se puede consultar desde la terminal, con el consumo real del equipo.
 
 ### 2. Gestión de memoria
 

@@ -1,6 +1,6 @@
 ## Variables en Bash
 
-El shell Bash mantiene un conjunto de variables que guardan información usada durante tu sesión: el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que tú mismo quieras almacenar. Existen dos tipos: locales y de entorno.
+El shell Bash mantiene un conjunto de variables que guardan información usada durante la sesión: el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que se quiera almacenar. Existen dos tipos: locales y de entorno.
 
 ## Variables locales
 
@@ -12,7 +12,7 @@ Para crear una variable y asignarle un valor, usa el signo igual sin espacios:
 nombre='Juan'
 ```
 
-Para leer su valor necesitas dos cosas: un comando que imprima en pantalla, y el signo `$` delante del nombre.
+Leer su valor requiere dos cosas: un comando que imprima en pantalla y el signo `$` delante del nombre.
 
 `echo` es ese comando. Recibe un texto y lo escribe en la terminal, sin más:
 
@@ -24,7 +24,7 @@ echo Hola
 Hola
 ```
 
-El `$` es lo que convierte un nombre en su contenido. Sin él, Bash entiende que le estás pasando la palabra tal cual:
+El `$` es lo que convierte un nombre en su contenido. Sin él, Bash recibe la palabra tal cual:
 
 ```bash
 echo nombre
@@ -48,9 +48,9 @@ Si la variable no existe, `echo $variable` simplemente no imprime nada. Si ya ex
 
 ## Variables de entorno
 
-Las variables de entorno, también llamadas globales, están disponibles en todos los shells abiertos por Bash. El sistema las recrea automáticamente cada vez que abres una terminal nueva. Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`.
+Las variables de entorno, también llamadas globales, están disponibles en todos los shells abiertos por Bash. El sistema las recrea automáticamente en cada terminal nueva. Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`.
 
-Puedes consultar el valor de cualquiera con `echo`:
+El valor de cualquiera se consulta con `echo`:
 
 ```bash
 echo $HISTSIZE
@@ -60,13 +60,13 @@ echo $HISTSIZE
 1000
 ```
 
-Para convertir una variable local en variable de entorno, usas `export`:
+Para convertir una variable local en variable de entorno se usa `export`:
 
 ```bash
 export nombre
 ```
 
-A partir de ese momento, `nombre` forma parte del entorno. Puedes verificarlo con `env`, que lista todas las variables de entorno. Como la lista es larga, es útil filtrarla con `grep`:
+A partir de ese momento, `nombre` forma parte del entorno. `env` lo confirma, ya que lista todas las variables de entorno. Como la lista es larga, es útil filtrarla con `grep`:
 
 ```bash
 env | grep nombre
@@ -76,13 +76,13 @@ env | grep nombre
 nombre=Juan
 ```
 
-También puedes crear y exportar una variable en una sola línea:
+También se puede crear y exportar una variable en una sola línea:
 
 ```bash
 export ciudad='Cúcuta'
 ```
 
-Para eliminar una variable de entorno, usas `unset`:
+Para eliminar una variable de entorno se usa `unset`:
 
 ```bash
 unset ciudad
@@ -92,7 +92,7 @@ Después de `unset`, la variable deja de existir en el entorno.
 
 ## La variable PATH
 
-`PATH` es una de las variables de entorno más importantes. Contiene la lista de directorios donde el shell busca los programas cuando escribes un comando. Cada directorio está separado por dos puntos:
+`PATH` es una de las variables de entorno más importantes. Contiene la lista de directorios donde el shell busca los programas al ejecutar un comando. Cada directorio está separado por dos puntos:
 
 ```bash
 echo $PATH
@@ -102,7 +102,7 @@ echo $PATH
 /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ```
 
-Cuando escribes `ls`, el shell recorre esa lista en orden hasta encontrar un archivo ejecutable con ese nombre. Si no lo encuentra en ningún directorio, responde con un error:
+Al ejecutar `ls`, el shell recorre esa lista en orden hasta encontrar un archivo ejecutable con ese nombre. Si no lo encuentra en ningún directorio, responde con un error:
 
 ```bash
 programa-inexistente
