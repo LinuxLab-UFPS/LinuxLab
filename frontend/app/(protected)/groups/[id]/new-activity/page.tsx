@@ -22,17 +22,12 @@ import { cn } from "@shared/lib/utils"
 import { syllabus } from "@shared/lib/content/temario"
 import { createActivity, updateActivity, getGroupActivity } from "@/lib/features/teacher/data"
 import { queryKeys } from "@/lib/api/queries"
-import type { CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
+import type { ActivityType, CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
+import { currentBogotaInputValue, parseBogotaInput, toBogotaInputValue } from "@/lib/utils/dates"
 import { RoleGuard } from "@shared/components/role-guard"
 
 /** La escala de calificacion es fija: 0 a 100. */
 const MAX_SCORE = 100
-
-/** Convierte un ISO a la forma que espera un input datetime-local (hora local). */
-function toLocalInputValue(iso: string): string {
-  const d = new Date(iso)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
-}
 
 /** Bloque del formulario: cabecera con su título y el cuerpo debajo. */
 function Seccion({
@@ -69,13 +64,20 @@ function NewActivityPage() {
   const [activityName, setActivityName] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("")
   const [dueDate, setDueDate] = useState("")
-  const [gradingPolicy, setGradingPolicy] = useState<"best_score" | "latest_score">("best_score")
+  const [activityType, setActivityType] = useState<ActivityType>("workshop")
+  const [attemptLimit, setAttemptLimit] = useState("")
   const [instructions, setInstructions] = useState("")
   const [evaluationType, setEvaluationType] = useState<EvaluationType>("atomic")
   const [checks, setChecks] = useState<ActivityCheck[]>([])
   const [distributeEvenly, setDistributeEvenly] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(Boolean(editId))
   const [publishing, setPublishing] = useState(false)
+  const attemptLimitError =
+    activityType === "quiz" &&
+    attemptLimit.trim() !== "" &&
+    (!Number.isInteger(Number(attemptLimit)) || Number(attemptLimit) < 1)
+      ? "El límite debe ser un entero positivo."
+      : ""
 
   // Modo edicion: se carga la actividad publicada y se rellena el formulario.
   useEffect(() => {
@@ -86,8 +88,9 @@ function NewActivityPage() {
         if (!alive || !activity) return
         setActivityName(activity.title)
         setSelectedTopic(activity.topicNumber ? String(activity.topicNumber) : "")
-        setDueDate(activity.dueDate ? toLocalInputValue(activity.dueDate) : "")
-        setGradingPolicy(activity.gradingPolicy ?? "best_score")
+        setDueDate(activity.dueDate ? toBogotaInputValue(activity.dueDate) : "")
+        setActivityType(activity.activityType ?? "workshop")
+        setAttemptLimit(activity.attemptLimit ? String(activity.attemptLimit) : "")
         setInstructions(activity.instructions ?? "")
         setEvaluationType(activity.evaluationType)
         setChecks(activity.checks.map((c) => ({ id: c.id, type: c.type, params: c.params, points: c.points })))
@@ -106,8 +109,7 @@ function NewActivityPage() {
 
   // El minimo del datetime-local se arma en hora local para que el selector
   // no ofrezca momentos ya pasados (la validacion real ocurre al publicar).
-  const now = new Date()
-  const minDateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}T${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+  const minDateTime = currentBogotaInputValue()
 
   const handlePublish = async () => {
     let hasError = false
@@ -123,8 +125,12 @@ function NewActivityPage() {
       notify.error(null, "La descripción no puede superar los 2000 caracteres")
       hasError = true
     }
-    if (dueDate && new Date(dueDate) <= new Date()) {
+    if (dueDate && parseBogotaInput(dueDate) <= new Date()) {
       notify.error(null, "La fecha de cierre debe ser posterior a la fecha actual")
+      hasError = true
+    }
+    if (attemptLimitError) {
+      notify.error(null, attemptLimitError)
       hasError = true
     }
     if (hasError) return
@@ -136,10 +142,11 @@ function NewActivityPage() {
       source: "teacher",
       instructions,
       maxScore: MAX_SCORE,
-      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      dueDate: dueDate ? parseBogotaInput(dueDate).toISOString() : undefined,
       required: true,
       evaluationType,
-      gradingPolicy,
+      activityType,
+      attemptLimit: activityType === "quiz" && attemptLimit.trim() ? Number(attemptLimit) : null,
       checks,
     }
     const refreshed = () => {
@@ -183,9 +190,9 @@ function NewActivityPage() {
 
   return (
     <div data-section="actividades" className="mx-auto max-w-3xl px-6 py-8">
-      <ActionButton tone="neutral" href={`/groups/${groupId}`}>
+      <ActionButton tone="neutral" href={editing ? `/groups/${groupId}/activities/${editId}` : `/groups/${groupId}?tab=actividades`}>
         <ArrowLeft className="h-4 w-4" />
-        Volver al curso
+        Volver
       </ActionButton>
 
       <div className="mb-8 mt-9">
@@ -254,20 +261,42 @@ function NewActivityPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-muted-foreground">Política de calificación</Label>
+              <Label className="text-muted-foreground">Tipo de actividad</Label>
               <Select
-                value={gradingPolicy}
-                onValueChange={(v) => setGradingPolicy(v as "best_score" | "latest_score")}
+                value={activityType}
+                onValueChange={(v) => {
+                  setActivityType(v as ActivityType)
+                  if (v === "workshop") setAttemptLimit("")
+                }}
               >
                 <SelectTrigger className="w-full border-table-line">
-                  <SelectValue placeholder="Política de calificación" />
+                  <SelectValue placeholder="Tipo de actividad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="best_score">Mejor intento</SelectItem>
-                  <SelectItem value="latest_score">Último intento</SelectItem>
+                  <SelectItem value="workshop">Taller (intentos ilimitados)</SelectItem>
+                  <SelectItem value="quiz">Quiz (límite de intentos)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
+            {activityType === "quiz" && (
+              <div className="space-y-2">
+                <Label htmlFor="attemptLimit" className="text-muted-foreground">
+                  Límite de intentos
+                </Label>
+                <Input
+                  id="attemptLimit"
+                  type="number"
+                  min={1}
+                  value={attemptLimit}
+                  onChange={(e) => setAttemptLimit(e.target.value)}
+                  placeholder="Ej. 3"
+                  aria-invalid={Boolean(attemptLimitError)}
+                  className={cn("border-table-line", attemptLimitError && "border-danger")}
+                />
+                {attemptLimitError && <p className="text-xs text-danger">{attemptLimitError}</p>}
+              </div>
+            )}
           </div>
         </Seccion>
 
@@ -351,7 +380,7 @@ function NewActivityPage() {
       </div>
 
       <div className="mt-8 flex items-center gap-3">
-        <ActionButton tone="amber" onClick={handlePublish} disabled={publishing}>
+        <ActionButton tone="amber" onClick={handlePublish} disabled={publishing || Boolean(attemptLimitError)}>
           <Send className="h-4 w-4" />
           {publishing ? "Guardando…" : editing ? "Guardar cambios" : "Publicar actividad"}
         </ActionButton>

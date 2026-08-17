@@ -41,7 +41,7 @@ const registerStudentSchema = z.object({
   code: z.string().trim().max(20, "El código no puede superar los 20 caracteres").optional().nullable(),
 })
 
-function serializeGroup(group, studentCount, activityCount) {
+function serializeGroup(group, studentCount, activityCount, extra = {}) {
   return {
     id: group.id,
     name: group.name,
@@ -54,6 +54,8 @@ function serializeGroup(group, studentCount, activityCount) {
     enabledTopics: [],
     activityCount: activityCount ?? 0,
     groupDir: group.group_dir ?? null,
+    activeNow: extra.activeNow ?? 0,
+    averageScore: extra.averageScore ?? null,
   }
 }
 

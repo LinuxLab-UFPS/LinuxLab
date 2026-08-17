@@ -12,6 +12,8 @@ export interface Group {
   activityCount: number
   /** Directorio del grupo dentro del home del docente: grupos/<group_dir>. */
   groupDir?: string
+  activeNow: number
+  averageScore: number | null
 }
 
 export interface Enrollment {

@@ -6,6 +6,7 @@ const linuxAccountService = require("./linuxAccountService")
 const accessService = require("./accessService")
 const lessonEvaluatorService = require("./lessonEvaluatorService")
 const attemptService = require("./attemptService")
+const { finalScore } = require("../utils/finalScore")
 const { audit } = require("./auditService")
 
 const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
@@ -40,14 +41,13 @@ async function listMine(studentUserId) {
   if (!enrollment) return { group: null, activities: [] }
 
   const rows = await prisma.groupActivity.findMany({
-    where: { group_id: enrollment.group_id },
+    where: { group_id: enrollment.group_id, enabled: true },
     include: {
       definition: { select: { topic_number: true } },
       attempts: {
         where: { student_id: studentUserId },
         orderBy: { created_at: "desc" },
-        take: 1,
-        select: { passed: true, score: true },
+        select: { passed: true, score: true, created_at: true },
       },
     },
     orderBy: { created_at: "desc" },
@@ -60,33 +60,58 @@ async function listMine(studentUserId) {
       description: enrollment.group.description ?? "",
       teacherName: enrollment.group.teacher?.name ?? "",
     },
-    activities: rows.map((ga) => ({
-      id: ga.id,
-      title: ga.title,
-      description: ga.instructions ?? "",
-      topicNumber: ga.definition?.topic_number ?? 0,
-      checksCount: (ga.checks ?? []).length,
-      passed: ga.attempts[0]?.passed ?? false,
-      lastScore: ga.attempts[0]?.score ?? null,
-    })),
+    activities: rows.map((ga) => {
+      const attempts = ga.attempts ?? []
+      return {
+        id: ga.id,
+        title: ga.title,
+        description: ga.instructions ?? "",
+        topicNumber: ga.definition?.topic_number ?? 0,
+        checksCount: (ga.checks ?? []).length,
+        passed: attempts[0]?.passed ?? false,
+        completed: attempts.length > 0,
+        lastScore: attempts[0]?.score ?? null,
+        attemptsCount: attempts.length,
+        attemptLimit: ga.attempt_limit,
+        finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+        dueAt: ga.due_at?.toISOString() ?? null,
+        enabled: ga.enabled,
+        evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
+        activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+      }
+    }),
   }
 }
 
 /** Detalle que ve el estudiante: sin los criterios (ocultos hasta aprobar). */
 async function getForStudent(studentUserId, groupActivityId) {
-  const ga = await prisma.groupActivity.findUnique({
-    where: { id: groupActivityId },
-    select: { id: true, group_id: true, title: true, instructions: true, workdir: true, due_at: true, evaluation_type: true, max_score: true, checks: true },
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: groupActivityId, enabled: true },
+    select: {
+      id: true,
+      group_id: true,
+      title: true,
+      instructions: true,
+      workdir: true,
+      due_at: true,
+      evaluation_type: true,
+      activity_type: true,
+      max_score: true,
+      checks: true,
+      attempt_limit: true,
+      grading_policy: true,
+      enabled: true,
+    },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
   if (!(await accessService.hasEnrollmentInGroup(studentUserId, ga.group_id))) {
     throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
   }
 
-  const lastAttempt = await prisma.activityAttempt.findFirst({
+  const attempts = await prisma.activityAttempt.findMany({
     where: { group_activity_id: ga.id, student_id: studentUserId },
     orderBy: { created_at: "desc" },
-    select: { passed: true, score: true },
+    select: { attempt_number: true, passed: true, score: true, created_at: true },
   })
 
   return {
@@ -96,9 +121,21 @@ async function getForStudent(studentUserId, groupActivityId) {
     workdir: ga.workdir,
     dueAt: ga.due_at?.toISOString() ?? null,
     evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
+    activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
     maxScore: ga.max_score,
     checksCount: (ga.checks ?? []).length,
-    lastAttempt: lastAttempt ? { passed: lastAttempt.passed, score: lastAttempt.score } : null,
+    attemptLimit: ga.attempt_limit,
+    attemptsCount: attempts.length,
+    finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+    completed: attempts.length > 0,
+    gradingPolicy: ga.activity_type === "quiz" ? "latest_score" : "best_score",
+    enabled: true,
+    attempts: attempts.map((attempt) => ({
+      attemptNumber: attempt.attempt_number,
+      createdAt: attempt.created_at.toISOString(),
+      score: attempt.score,
+    })),
+    lastAttempt: attempts[0] ? { passed: attempts[0].passed, score: attempts[0].score } : null,
   }
 }
 
@@ -119,10 +156,13 @@ async function checkForStudent(studentUserId, groupActivityId) {
       workdir: true,
       checks: true,
       evaluation_type: true,
+      activity_type: true,
       max_score: true,
       enabled: true,
       due_at: true,
       activity_definition_id: true,
+      attempt_limit: true,
+      grading_policy: true,
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
@@ -195,6 +235,13 @@ async function checkForStudent(studentUserId, groupActivityId) {
     passed,
     score,
     results,
+    attemptLimit: ga.attempt_limit,
+  })
+
+  const attempts = await prisma.activityAttempt.findMany({
+    where: { group_activity_id: ga.id, student_id: studentUserId },
+    orderBy: { created_at: "desc" },
+    select: { attempt_number: true, score: true, created_at: true },
   })
 
   audit({
@@ -206,7 +253,20 @@ async function checkForStudent(studentUserId, groupActivityId) {
   })
 
   logger.info({ groupActivityId: ga.id, username: account.linux_username, passed, score }, "Group activity checked")
-  return { passed, score, maxScore: ga.max_score, results }
+  return {
+    passed,
+    completed: true,
+    score,
+    finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+    attemptsCount: attempts.length,
+    attempts: attempts.map((attempt) => ({
+      attemptNumber: attempt.attempt_number,
+      createdAt: attempt.created_at.toISOString(),
+      score: attempt.score,
+    })),
+    maxScore: ga.max_score,
+    results,
+  }
 }
 
 module.exports = { listMine, getForStudent, checkForStudent }

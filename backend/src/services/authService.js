@@ -64,13 +64,15 @@ async function loginWithIdToken({ idToken }) {
     throw new AppError("No te encuentras registrado en ningún grupo de laboratorio", 403, "FORBIDDEN")
   }
 
+  const updates = { last_login: new Date() }
   if (!user.google_id) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { google_id: uid },
-      include: USER_INCLUDE,
-    })
+    updates.google_id = uid
   }
+  user = await prisma.user.update({
+    where: { id: user.id },
+    data: updates,
+    include: USER_INCLUDE,
+  })
 
   return user
 }

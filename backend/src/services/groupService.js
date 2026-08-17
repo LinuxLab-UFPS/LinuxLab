@@ -10,16 +10,10 @@ const { groupNameOf } = require("../utils/groupName")
 const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
+const { finalScore } = require("../utils/finalScore")
 
-function generateGroupDir(name, groupId) {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9_\u00f1]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_|_$/g, "")
-    .substring(0, 20)
-  const shortId = groupId.replace(/-/g, "").substring(0, 8)
-  return `grp_${slug}_${shortId}`
+function generateGroupDir(groupNumber) {
+  return `G-${String(groupNumber).padStart(4, "0")}`
 }
 
 async function ensureTeacherRole(userId, tx = prisma) {
@@ -47,35 +41,41 @@ async function createGroup(args) {
   })
   await ensureTeacherRole(teacherUserId, db)
 
+  const teacherAccount = await db.linuxAccount.findUnique({
+    where: { user_id: teacherUserId },
+  })
+
+  if (!teacherAccount?.linux_provisioned) {
+    throw new ConflictError(
+      "Tu cuenta Linux aún no está provisionada en el entorno. Espera a que termine el aprovisionamiento y vuelve a intentar crear el grupo.",
+    )
+  }
+
   const groupId = randomUUID()
-  const groupDir = generateGroupDir(parsed.name, groupId)
   const groupName = groupNameOf(groupId)
-  const group = await db.group.create({
+  const createdGroup = await db.group.create({
     data: {
       id: groupId,
       name: parsed.name,
       description: parsed.description?.trim() || null,
       teacher_id: teacherUserId,
-      group_dir: groupDir,
+      group_dir: null,
     },
   })
-
-  const teacherAccount = await db.linuxAccount.findUnique({
-    where: { user_id: teacherUserId },
+  const groupDir = generateGroupDir(createdGroup.group_number)
+  const group = await db.group.update({
+    where: { id: createdGroup.id },
+    data: { group_dir: groupDir },
   })
 
-  if (teacherAccount?.linux_provisioned) {
-    await db.groupProvisioningJob.create({
-      data: {
-        group_id: group.id,
-        group_dir: groupDir,
-        group_name: groupName,
-        teacher_username: teacherAccount.linux_username,
-      },
-    })
-  } else {
-    logger.warn({ teacherUserId }, "Teacher not provisioned yet, group dir will be created after teacher provisioning")
-  }
+  await db.groupProvisioningJob.create({
+    data: {
+      group_id: group.id,
+      group_dir: groupDir,
+      group_name: groupName,
+      teacher_username: teacherAccount.linux_username,
+    },
+  })
 
   const enrollment = await enrollmentService.enrollMany({
     groupId: group.id,
@@ -127,7 +127,45 @@ async function getGroup({ groupId, teacherUserId, role }) {
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
-  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities)
+
+  const activeNowRows = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS cnt
+    FROM "User" u
+    JOIN enrollments e ON e.student_id = u.id
+    WHERE e.group_id = ${groupId}
+      AND u.last_login IS NOT NULL
+      AND u.last_login > NOW() - INTERVAL '5 minutes'
+  `
+  const activeNow = activeNowRows[0]?.cnt ?? 0
+
+  const activities = await prisma.groupActivity.findMany({
+    where: { group_id: groupId },
+    select: { id: true, activity_type: true },
+  })
+  const actMap = new Map(activities.map((a) => [a.id, a]))
+
+  let totalScore = 0
+  let studentCount = 0
+  for (const act of activities) {
+    const grouped = await prisma.activityAttempt.groupBy({
+      by: ["student_id"],
+      where: { group_activity_id: act.id },
+      _count: { id: true },
+    })
+    for (const g of grouped) {
+      const attempts = await prisma.activityAttempt.findMany({
+        where: { group_activity_id: act.id, student_id: g.student_id },
+        orderBy: { created_at: "desc" },
+        select: { score: true, created_at: true },
+      })
+      const policy = act.activity_type === "quiz" ? "latest_score" : "best_score"
+      totalScore += finalScore(attempts, policy)
+      studentCount++
+    }
+  }
+  const averageScore = studentCount > 0 ? Math.round((totalScore / studentCount) * 10) / 10 : null
+
+  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities, { activeNow, averageScore })
 }
 
 /**

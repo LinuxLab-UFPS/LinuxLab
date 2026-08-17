@@ -3,6 +3,7 @@ import type {
   Group,
   CreateGroupInput,
   Activity,
+  ActivitySubmissionStudent,
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
@@ -70,6 +71,22 @@ export async function updateActivity(
   input: CreateActivityInput,
 ): Promise<Activity> {
   return teacherApi.updateActivity(groupId, activityId, input)
+}
+
+/** Habilita o deshabilita una actividad publicada (RF-GRP-10). */
+export async function setActivityEnabled(
+  groupId: string,
+  activityId: string,
+  enabled: boolean,
+): Promise<Activity> {
+  return teacherApi.setActivityEnabled(groupId, activityId, enabled)
+}
+
+export async function listActivitySubmissions(
+  groupId: string,
+  activityId: string,
+): Promise<ActivitySubmissionStudent[]> {
+  return teacherApi.listActivitySubmissions(groupId, activityId)
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {
