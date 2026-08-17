@@ -19,7 +19,15 @@ Cada condición que se añade recorta esa lista.
 
 ## Por nombre
 
-`-name` compara el nombre del archivo con el patrón que se le indique. El patrón va entre comillas simples para que llegue entero hasta `find`.
+`-name` compara el nombre del archivo con un patrón. Los comodines son los mismos del tema de manejo de archivos:
+
+| Patrón | Coincide con |
+|---|---|
+| `*` | Cualquier cantidad de caracteres, incluida ninguna |
+| `?` | Exactamente un carácter |
+| `[0-9]` | Un carácter de la lista, aquí un dígito |
+
+El patrón va entre comillas simples. Sin ellas el shell lo resuelve antes con los archivos del directorio actual, y `find` termina buscando un nombre concreto en lugar del patrón.
 
 ```bash
 find ~/actividades -name '*.txt'
