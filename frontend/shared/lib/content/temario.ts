@@ -88,11 +88,13 @@ export const syllabus: Topic[] = [
     number: 7,
     slug: "busqueda",
     title: "Búsqueda",
-    description: "Patrones, expresiones regulares y uso de find y grep.",
+    description:
+      "Buscar texto dentro de los archivos con grep, localizar archivos con find y ordenar los resultados.",
     subTopics: [
-      { number: 1, title: "Patrones" },
+      { number: 1, title: "Buscar dentro de los archivos" },
       { number: 2, title: "Expresiones regulares" },
-      { number: 3, title: "find, grep" },
+      { number: 3, title: "Buscar archivos con find" },
+      { number: 4, title: "Ordenar los resultados" },
     ],
   },
   {
