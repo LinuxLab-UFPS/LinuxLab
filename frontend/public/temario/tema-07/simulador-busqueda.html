@@ -1,16 +1,18 @@
 <!doctype html>
 <html lang="es">
 <meta charset="utf-8">
-<title>Descifrar el enigma</title>
+<title>El despliegue del viernes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
 <style>
 /* ============================================================
-   DESCIFRAR EL ENIGMA
-   Cuatro datos repartidos por una unidad incautada. Cada uno se
-   saca con una herramienta distinta del tema de busqueda, y el
-   panel de descifrado es lo que convierte una respuesta leida en
-   un estado que el simulador puede comprobar: buscar no deja
-   rastro en el sistema de archivos, a diferencia de comprimir.
+   EL DESPLIEGUE DEL VIERNES
+   Tres datos repartidos por la copia local de un proyecto. Cada
+   uno se saca con una herramienta distinta del tema de busqueda,
+   y el chat es lo que convierte una respuesta leida en un estado
+   que el simulador puede comprobar: buscar no deja rastro en el
+   sistema de archivos, a diferencia de comprimir.
    ============================================================ */
 :root{
   /* La misma paleta que los otros simuladores del curso: la cabecera y la
@@ -27,134 +29,152 @@
   --dim:    #21262D;
   --gold:   #FFC400;
   --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
-  /* Lo propio de este simulador: el verde de fosforo de la unidad del enigma. */
-  --verde-crt:#39FF6A;
-  --verde-tenue:#1C5E30;
+  /* Lo propio de este simulador: el azul de la aplicacion de mensajes. Es el
+     mismo del icono del dock, para que la ventana y su icono se reconozcan. */
+  --azul-app:  #4A9EFF;
+  --azul-tenue:#1E4E88;
+  --azul-fondo:#0B1B2E;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);display:flex;flex-direction:column;overflow:hidden}
+body{
+  background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+  /* La misma escala que los otros cuatro simuladores. Sin ella este renderiza
+     al 100% y los demas al 130%: la barra salia mas fina y el texto de la
+     portada mas pequeno que en el resto. */
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+}
 
-/* cabecera comun a los simuladores del curso */
-.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px;z-index:50}
-.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
-.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
-.logo-name .wh{color:var(--bright);filter:none}
-.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
-.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
-.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0}
-.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
-.dot.done{background:var(--green)}
-.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
-.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
-.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+/* La cabecera y la portada viven en /temario/comun/barra.css */
 
 /* ============================================================
-   LA CONSOLA
-   Un solo marco con los dos aparatos y el cableado, y encima dos
-   pantallas colocadas en porcentajes medidos sobre la propia
-   imagen. La baticomputadora es donde se busca y la unidad del
-   enigma donde se entrega: esa division es la del tema, buscar no
-   cambia nada y el resultado hay que llevarlo a otro sitio.
+   EL ESCRITORIO
+   El mismo de la practica de compresion: dos ventanas sobre un
+   fondo de escritorio y un dock que las abre y las cierra. La
+   terminal es donde se busca y la aplicacion de mensajes donde se
+   responde. Esa division es la del tema: buscar no cambia nada y
+   el resultado hay que llevarlo a otro sitio.
    ============================================================ */
-/* La cueva, sin foto: piedra oscura, vetas inclinadas, la luz de las pantallas
-   rebotando desde abajo y la boveda cerrandose en los bordes. Son degradados,
-   asi que no pesa nada y no compite con el render del marco, que es lo que
-   tiene que mandar aqui. */
-.desk{position:relative;flex:1;min-height:0;display:grid;place-items:end center;padding:8px 10px 0;overflow:hidden;
+.desk{
+  position:relative;flex:1;min-height:0;overflow:hidden;
   background:
-    radial-gradient(55% 40% at 50% 78%,rgba(96,150,190,.10) 0%,transparent 70%),
-    repeating-linear-gradient(102deg,rgba(255,255,255,.016) 0 2px,transparent 2px 9px),
-    repeating-linear-gradient(-9deg,rgba(0,0,0,.30) 0 46px,transparent 46px 140px),
-    radial-gradient(130% 85% at 50% 118%,#101821 0%,#080C12 52%,#03050A 100%)}
+    linear-gradient(158deg,transparent 54%,rgba(163,113,247,.24) 54.2%),
+    linear-gradient(202deg,transparent 70%,rgba(120,80,200,.18) 70.2%),
+    linear-gradient(130deg,#1B1030 0%,#2E1550 47%,#45208A 100%);
+}
 
-/* Grano de roca: una textura de ruido generada en el propio CSS, sin archivo. */
-.desk::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='r'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='200' height='200' filter='url(%23r)'/></svg>");
-  background-size:220px 220px}
+.win{
+  position:absolute;background:var(--surf);border:1px solid var(--border);
+  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+.win[hidden]{display:none}
+.win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+/* El punto de minimizar es el unico que hace algo; el guion aparece al pasar
+   por encima, como en cualquier escritorio. */
+button.win-dot{border:none;padding:0;font:inherit;cursor:pointer;position:relative}
+button.win-dot::after{
+  content:"";position:absolute;left:2.5px;right:2.5px;top:5px;height:1.5px;
+  background:rgba(0,0,0,.55);border-radius:1px;opacity:0;transition:opacity .15s;
+}
+.win-bar:hover button.win-dot::after{opacity:1}
 
-/* Viñeta: la boca de la cueva se cierra en los cantos. */
-.desk::after{content:"";position:absolute;inset:0;pointer-events:none;
-  box-shadow:inset 0 0 clamp(60px,12vw,190px) rgba(0,0,0,.85)}
+/* La terminal ocupa el lado ancho: es donde se trabaja. El chat es estrecho,
+   como cualquier aplicacion de mensajes. Abrir y cerrar no las mueve de sitio. */
+#w-term{left:36%;top:6%;width:60%;height:76%}
+#w-chat{left:3%;top:9%;width:30%;height:70%}
 
-.consola-marco{position:relative;aspect-ratio:2000/886;width:100%;max-width:min(100%,calc((100vh - 64px) * 2.2573));
-  background:url("marco-consola.webp") center/100% 100% no-repeat}
+/* El guiño: vive en el cuadrante de la terminal, detras de ella. */
+.marca{
+  position:absolute;left:36%;top:6%;width:60%;height:76%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(26px,5.2vmin,54px);font-weight:700;letter-spacing:.04em;
+  color:var(--red);filter:drop-shadow(0 0 24px rgba(255,0,48,.5));
+  user-select:none;pointer-events:none;
+}
+.marca span{color:var(--bright);filter:none}
 
-.pantalla{position:absolute;background:#000;display:flex;flex-direction:column;overflow:hidden}
-.pantalla.bat{top:17.95%;right:41.30%;bottom:20.09%;left:10.95%}
-/* Relleno en px y no en porcentaje: esta caja va posicionada en absoluto, y un
-   porcentaje aqui se calcula sobre el ancho del marco entero, no sobre ella.
-   Con 6% salian 110px de relleno a cada lado dentro de una caja de 335. */
-.pantalla.unidad{top:14.45%;right:6.50%;bottom:9.71%;left:75.25%;background:#020604;
-  padding:clamp(6px,1.05vw,16px) clamp(7px,1.15vw,18px);gap:clamp(5px,.85vw,12px)}
+/* ---------- dock ---------- */
+.dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
+.dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
+.dock-btn:hover{transform:translateY(-4px)}
+.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-7px;left:22%;width:56%;height:3px;border-radius:2px;background:#E8912F}
+.dock-btn svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.5))}
 
-/* terminal: negro, letra blanca, simbolo del sistema en verde */
-.consola{flex:1;min-height:0;overflow-y:auto;padding:2.5% 3%;font-size:clamp(8px,.78vw,12.5px);display:flex;flex-direction:column;gap:2px;color:#E8EDF2}
+/* terminal: fondo de los demas simuladores, simbolo del sistema en verde */
+.consola{flex:1;min-height:0;overflow-y:auto;background:#12161d;padding:12px 14px;font-size:12.5px;display:flex;flex-direction:column;gap:3px;color:#E8EDF2}
 .log{white-space:pre-wrap;word-break:break-word;line-height:1.45}
 .log.eco{color:#FFFFFF}
 .log.ok{color:var(--green)}
 .log.mal{color:#FF5C7A}
 .log.nota{color:#8FA3B8}
-.log.arte{color:var(--verde-crt);white-space:pre;font-size:clamp(2.6px,.42vw,7px);line-height:1.06;text-shadow:0 0 8px rgba(57,255,106,.45);align-self:center;margin-bottom:4px}
-.prompt{display:flex;gap:8px;flex-shrink:0;padding-top:2px;font-size:clamp(8px,.78vw,12.5px)}
-.ps1{color:var(--verde-crt);flex-shrink:0}
+.prompt{display:flex;gap:8px;flex-shrink:0;padding-top:2px;font-size:12.5px}
+.ps1{color:var(--azul-app);flex-shrink:0}
 .tecleado{color:#FFFFFF;white-space:pre-wrap;word-break:break-all}
-.caret{display:inline-block;width:6px;height:12px;background:#FFFFFF;vertical-align:-2px;animation:parpadeo 1s step-end infinite}
+.caret{display:inline-block;width:8px;height:15px;background:#FFFFFF;vertical-align:-2px;animation:parpadeo 1s step-end infinite}
 @keyframes parpadeo{50%{opacity:0}}
 
-/* ---------- la unidad del enigma ---------- */
-.riddle{position:relative;flex:0 0 auto;border:2px solid var(--verde-crt);border-radius:4px;padding:clamp(5px,.75vw,11px) clamp(6px,.85vw,13px);overflow:hidden;
-  background:repeating-linear-gradient(135deg,rgba(57,255,106,.14) 0 6px,rgba(2,6,4,.9) 6px 13px);
-  box-shadow:0 0 16px rgba(57,255,106,.35),inset 0 0 22px rgba(57,255,106,.12)}
-.riddle-t{color:var(--verde-crt);font-weight:700;font-size:clamp(7px,.62vw,12px);letter-spacing:.1em;margin-bottom:5px;text-shadow:0 0 9px rgba(57,255,106,.7)}
-.riddle-p{color:var(--verde-crt);font-size:clamp(9px,.82vw,14px);line-height:1.5;position:relative;z-index:1}
-/* Un dato equivocado pone la unidad en rojo: el Enigma disfruta el error. */
-.riddle.mal{border-color:#FF3B57;box-shadow:0 0 16px rgba(255,59,87,.4),inset 0 0 22px rgba(255,59,87,.12);
-  background:repeating-linear-gradient(135deg,rgba(255,59,87,.16) 0 6px,rgba(6,2,3,.9) 6px 13px)}
-.riddle.mal .riddle-t,.riddle.mal .riddle-p,.riddle.mal .riddle-firma{color:#FF6E85;text-shadow:0 0 9px rgba(255,59,87,.6)}
-.riddle.mal .interros span{color:rgba(255,59,87,.3)}
-.riddle-firma{color:var(--verde-crt);text-align:right;font-size:clamp(9px,.85vw,16px);line-height:1;margin-top:3px}
-/* Interrogaciones flotando por detras del texto, despacio: un parpadeo rapido
-   distrae al leer y es de lo que revisa accesibilidad. */
-.interros{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.interros span{position:absolute;color:rgba(57,255,106,.3);font-weight:700;animation:flotar 7s ease-in-out infinite}
-@keyframes flotar{0%,100%{transform:translateY(0);opacity:.22}50%{transform:translateY(-8px);opacity:.55}}
+/* ---------- la aplicacion de mensajes ---------- */
+/* La cabecera del chat: quien escribe y desde donde. */
+.fono-top{display:flex;align-items:center;gap:10px;flex-shrink:0;padding:10px 12px;background:var(--surf);border-bottom:1px solid var(--border)}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(74,158,255,.14);border:1.5px solid var(--azul-app);color:var(--azul-app);
+  font-size:12px;font-weight:700;letter-spacing:.02em}
+.quien{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.quien b{font-size:13px;color:var(--bright);font-weight:700}
+.quien span{font-size:10.5px;color:var(--muted)}
 
-/* Repartidos por el alto que sobra, en vez de amontonados arriba. */
-.campos{display:flex;flex-direction:column;justify-content:space-evenly;flex:1;min-height:0}
-.campo{display:flex;flex-direction:column;gap:2px}
-.campo label{font-size:clamp(8px,.66vw,11.5px);letter-spacing:.12em;text-transform:uppercase;color:#5F8F72}
-.campo input{background:#04120A;border:1.5px solid var(--verde-tenue);border-radius:3px;padding:clamp(3px,.45vw,7px) clamp(4px,.6vw,9px);color:var(--verde-crt);font:inherit;font-size:clamp(10px,.88vw,15px)}
-.campo input:focus{outline:none;border-color:var(--verde-crt);box-shadow:0 0 10px rgba(57,255,106,.35)}
-.campo.ok input{border-color:var(--verde-crt);background:rgba(57,255,106,.12)}
-/* Lo que falla se subraya: se ve antes que un borde entero. */
-.campo.mal input{border-color:#FF3B57;border-bottom-width:3px}
-.campo.mal label{color:#FF6E85}
-.btn{flex:0 0 auto;background:var(--verde-crt);color:#04120A;border:none;border-radius:3px;padding:clamp(5px,.75vw,10px);font:inherit;font-weight:700;font-size:clamp(10px,.82vw,14px);letter-spacing:.08em;cursor:pointer;text-transform:uppercase;box-shadow:0 0 14px rgba(57,255,106,.4)}
-.btn:hover{background:#7CFFA5}
+/* El hilo. Crece hacia abajo y se desplaza solo, como cualquier chat. */
+.chat{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--azul-fondo);
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.msg{max-width:88%;padding:7px 10px;border-radius:12px;font-size:12px;line-height:1.5;word-break:break-word}
+/* Lo que llega, en el verde de la consola; lo que se manda, en la superficie
+   del curso. El color separa las dos voces sin escribir quien habla. */
+.msg.ella{align-self:flex-start;border-bottom-left-radius:3px;
+  background:rgba(74,158,255,.10);border:1px solid var(--azul-tenue);color:#CFE6FF}
+.msg.yo{align-self:flex-end;border-bottom-right-radius:3px;
+  background:var(--surf2);border:1px solid var(--border);color:var(--bright)}
+.msg.mal{background:rgba(255,59,87,.10);border-color:#7A2233;color:#FFB3C0}
+.msg code{background:rgba(0,0,0,.35);border-radius:3px;padding:0 3px;color:var(--azul-app)}
+/* Los tres puntos mientras escribe. Se turnan, no parpadean a la vez. */
+.msg.escribiendo{display:flex;gap:4px;align-items:center;padding:10px 12px}
+.msg.escribiendo span{width:6px;height:6px;border-radius:50%;background:var(--azul-app);opacity:.35;animation:teclea 1.2s ease-in-out infinite}
+.msg.escribiendo span:nth-child(2){animation-delay:.2s}
+.msg.escribiendo span:nth-child(3){animation-delay:.4s}
+@keyframes teclea{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
 
-/* Pantalla pequena: el marco estorba mas de lo que aporta y lo que no puede
-   perderse es el sitio para leer la salida de los comandos. */
+/* La barra de escribir, pegada abajo como en un telefono de verdad. */
+.fono-in{display:flex;gap:8px;align-items:center;flex-shrink:0;padding:10px 12px;background:var(--surf);border-top:1px solid var(--border)}
+.fono-in input{flex:1;min-width:0;background:var(--azul-fondo);border:1.5px solid var(--azul-tenue);border-radius:16px;
+  padding:8px 12px;color:var(--azul-app);font:inherit;font-size:12.5px}
+.fono-in input:focus{outline:none;border-color:var(--azul-app);box-shadow:0 0 10px rgba(74,158,255,.3)}
+.fono-in input:disabled{opacity:.45}
+.fono-in button{flex-shrink:0;width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--azul-app);color:var(--azul-fondo);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(74,158,255,.35)}
+.fono-in button:hover{background:#7CBBFF}
+.fono-in button:disabled{background:var(--border);color:var(--muted);box-shadow:none;cursor:default}
+
+/* Poco sitio: las dos columnas se apilan y el escritorio se desplaza. Lo que
+   no puede perderse es el alto para leer la salida de los comandos. */
 @media (max-width:900px),(max-height:520px){
   .desk{display:block;overflow-y:auto;padding:12px}
-  .consola-marco{background-image:none;aspect-ratio:auto;max-width:none;display:flex;flex-direction:column;gap:12px}
-  .pantalla{position:static;border:1px solid var(--border);border-radius:8px}
-  .pantalla.bat{min-height:320px}
-  .pantalla.unidad{padding:14px;gap:10px}
+  #w-term,#w-chat{position:static;left:auto;top:auto;width:auto;height:auto;margin-bottom:12px}
+  #w-term{height:min(320px,52vh);min-height:240px}
+  #w-chat{height:min(380px,60vh)}
+  .dock{position:fixed;bottom:12px}
 }
 
 /* portada y final: mismo tamaño y mismos colores que los otros simuladores */
-.velo{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:40;padding:24px;text-align:center}
+/* La pantalla de fin: misma caja que la portada comun, con su propio remate. */
+.velo{position:absolute;left:0;right:0;bottom:0;top:var(--hdr-h);background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:40;padding:24px 32px;text-align:center}
 .velo[hidden]{display:none}
-.velo h2{font-size:19px;color:var(--bright);font-weight:700}
-.velo p{font-size:12px;color:var(--muted);max-width:430px;line-height:1.7}
-.play{width:86px;height:86px;border-radius:50%;border:2px solid var(--red);background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);font-family:var(--mono);line-height:1}
-.play .tri{display:block;transform:translateX(3px)}
-.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
-.velo .interro{font-size:52px;color:var(--verde-crt);line-height:1;text-shadow:0 0 18px rgba(57,255,106,.5)}
+.velo h2{font-size:24px;color:var(--bright);font-weight:700}
+.velo p{font-size:14px;color:var(--text);opacity:.75;max-width:56ch;line-height:1.8}
+.velo .interro{font-size:52px;color:var(--azul-app);line-height:1;text-shadow:0 0 18px rgba(74,158,255,.5)}
 .velo-btns{display:flex;gap:10px}
 .velo-btns button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:8px 16px;font:inherit;font-size:12px;cursor:pointer}
 .velo-btns button:hover{border-color:var(--red);color:var(--bright)}
@@ -168,97 +188,111 @@ body{background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);display
 }
 </style>
 
-<div class="hdr">
-  <div class="logo-box">&gt;_</div>
-  <div class="logo-name">Linux<span>Lab</span></div>
-  <div class="hdr-sep"></div>
-  <div class="hdr-obj">
-    <span class="hdr-eyebrow">Objetivo</span>
-    <span class="hdr-goal" id="goal">&nbsp;</span>
-  </div>
-  <div class="hdr-dots" id="dots"></div>
-  <span class="hdr-n" id="counter">1 / 3</span>
-  <button class="restart-btn" id="restart">Reiniciar</button>
-</div>
+<!-- La barra la arma barra.js. -->
+<div class="hdr"></div>
 
 <div class="desk" id="desk">
-  <div class="consola-marco">
-    <!-- baticomputadora: donde se busca -->
-    <div class="pantalla bat">
-      <div class="consola" id="consola">
-        <div class="prompt">
-          <span class="ps1" id="ps1">~/pruebas $</span>
-          <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
-        </div>
-      </div>
-    </div>
+  <!-- Debajo de la terminal, para quien se le ocurra cerrarla. -->
+  <div class="marca" aria-hidden="true">Linux<span>Lab</span></div>
 
-    <!-- unidad del enigma: donde se entrega -->
-    <div class="pantalla unidad">
-      <div class="riddle" id="riddle">
-        <div class="interros" id="interros" aria-hidden="true"></div>
-        <div class="riddle-t" id="riddle-t">Pista:</div>
-        <div class="riddle-p" id="riddle-p"></div>
-        <div class="riddle-firma">?</div>
-      </div>
-      <div class="campos" id="campos"></div>
-      <button class="btn" id="descifrar">Descifrar</button>
+  <!-- mensajes: donde Laura pide y donde se responde -->
+  <div class="win" id="w-chat">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-chat" data-dock="d-chat" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
     </div>
+    <div class="fono-top">
+      <div class="avatar">LR</div>
+      <div class="quien"><b>Laura Ramírez</b><span>SRE de guardia</span></div>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="fono-in">
+      <input id="chat-in" placeholder="Escribe tu respuesta…" autocomplete="off" spellcheck="false" maxlength="60">
+      <button id="enviar" aria-label="Enviar">&#10148;</button>
+    </div>
+  </div>
+
+  <!-- terminal: donde se busca -->
+  <div class="win" id="w-term">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-term" data-dock="d-term" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+    </div>
+    <div class="consola" id="consola">
+      <div class="prompt">
+        <span class="ps1" id="ps1">~/escritorio $</span>
+        <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="dock-btn" id="d-chat" title="Mensajes" data-abierta="true">
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="ic-chat" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5AAEFF"/><stop offset="1" stop-color="#2B6FD4"/>
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="15" fill="url(#ic-chat)"/>
+        <!-- Un globo de mensaje con su rabito: la forma se lee a 36 px. -->
+        <path d="M16 20h32a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H30l-9 7v-7h-5a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4Z" fill="#FFFFFF"/>
+        <circle cx="25" cy="32" r="2.7" fill="#2B6FD4"/>
+        <circle cx="32" cy="32" r="2.7" fill="#2B6FD4"/>
+        <circle cx="39" cy="32" r="2.7" fill="#2B6FD4"/>
+      </svg>
+    </button>
+    <button class="dock-btn" id="d-term" title="Terminal" data-abierta="true">
+      <svg viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="#1E222B"/>
+        <path d="m19 24 9 8-9 8" fill="none" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 41h12" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 
   <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
 
-  <div class="velo" id="portada">
-    <button class="play" id="play"><span class="tri">&#9654;</span></button>
-    <h2>Descifrar el enigma</h2>
-    <p>
-      Una unidad incautada y una nota que promete cuatro datos escondidos en
-      ella. Ninguno está donde se buscaría primero. Sácalos con <b>grep</b>,
-      <b>find</b> y <b>sort</b>, y escríbelos en el panel de descifrado.
-    </p>
-  </div>
+</div>
 
-  <div class="velo" id="fin" hidden>
-    <div class="interro">?</div>
-    <h2>Enigma descifrado</h2>
-    <p id="fin-p"></p>
-    <div class="velo-btns">
-      <button id="fin-again">Otro caso</button>
-      <button id="fin-exit">Salir</button>
-    </div>
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
+  <h2>El despliegue del viernes</h2>
+  <p>
+    Un despliegue tumbó producción y alguien revirtió la rama a mano. Laura, la
+    SRE de guardia, necesita tres datos para cerrar el informe y te va a ir
+    preguntando. Sácalos del proyecto con <b>grep</b>, <b>find</b> y <b>sort</b>,
+    y respóndele por el teléfono.
+  </p>
+</div>
+
+<div class="velo" id="fin" hidden>
+  <div class="interro">?</div>
+  <h2>Informe cerrado</h2>
+  <p id="fin-p"></p>
+  <div class="velo-btns">
+    <button id="fin-again">Otro incidente</button>
+    <button id="fin-exit">Salir</button>
   </div>
 </div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 
-/* El murcielago que saluda al arrancar. Va en verde de fosforo, como todo lo
-   que escribe esta maquina, y en cuerpo pequeno para que quepa entero. */
-const MURCIELAGO = [
-"                       < $$$                                             k% b",
-"                   Lc$$$$^                                                \\$$$$u:",
-"                ($$$$$$$t                    $$      r                     0$$$$$$$f",
-"             $@$$$$$$$$$$                    \\_      $x                    U$$$$$$$$$~$",
-"            $$$$$$$$$$$$$@$                  %$n    8$z                   c$$$$$$$$$$$$.$",
-"          &$$$$$$$$$$$$$$$$;                  $@tjt|$$Q                 !$$$$$$$$$$$$$$$$",
-"        Y$$$$$$$$$$$$$$$$$$$$$\"             $$$$$$$$$$)              (J$$$$$$$$$$$$$$$$$$$$Q",
-"       1$$$$$$$$$$$$$$$$$$$$$$$$$$(Y        d$$$$$$$$$$$       $o[$$$$$$$$$$$$$$$$$$$$$$$$$$m",
-"      b$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$c*  $$$$$$$$$$;';W$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$_",
-"      $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",
-"     ;$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$0",
-"     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",
-"     0^Q         Z\`$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%^/         X^{",
-"                     x $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*",
-"                        k$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$X",
-"                         :$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$~",
-"                          ;*;>       ?\"$$$$$$$$$$$$$$$$$$$$$^;|       Y;'",
-"                                          ;$$$$$$$$$$$$$$*",
-"                                            '$$$$$$$$$$,",
-"                                              p$$$$$$>",
-"                                               '$$$$l",
-"                                                ~$$}",
-"                                                 .`",
-].join("\n");
+/* Este simulador no puntua: se resuelve o no se resuelve. Reiniciar reparte un
+   caso nuevo, que es lo que aqui significa empezar de cero. */
+const barra = Barra.montar({
+  puntos: false,
+  ayuda: [
+    { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
+    { clave: 'Laura',   tono: 'oro',  texto: 'Pide un dato cada vez y dice dónde mirar. Si la respuesta falla, insiste con una pista más concreta: no se queda nadie atascado.' },
+    { clave: 'Terminal', tono: 'azul', texto: 'Buscar no cambia nada en el disco. La terminal anuncia con qué herramienta se saca cada dato; la respuesta se escribe en el teléfono.' },
+  ],
+  onReiniciar: () => reiniciar(),
+});
+
 
 /* ============================================================
    EL CASO
@@ -283,16 +317,14 @@ function toma(xs, n) {
   return salida;
 }
 
-const LUGARES = ["Muelle 9", "Planta Sionis", "Almacen Kane", "Torre Wayne", "Puerto Este"];
-const ALIAS = ["Cuervo", "Arlequin", "Espantapajaros", "Doble Cara"];
-const CLAVES = ["nocturno", "penumbra", "cascada", "gargola"];
-const NOMBRES = ["nygma", "kyle", "dent", "cobblepot", "isley"];
-const CONTACTOS = ["Alberto Falcone", "Selina Kyle", "Lucius Fox", "Renee Montoya", "Harvey Bullock"];
-const ALMACENES = ["muelle-norte", "sionis", "kane", "puerto-este"];
+const SERVICIOS = ["pagos", "sesiones", "catalogo", "notificaciones", "informes"];
+const COMPANEROS = ["lramirez", "jmedina", "carriaga", "dpineda", "mfajardo"];
+const RAMAS = ["hotfix/pagos", "release/2-4", "feature/carrito", "fix/sesiones"];
+const CAUSAS = ["Disco lleno", "Memoria agotada", "Puerto ocupado", "Certificado vencido"];
+const ENDPOINTS = ["/api/pagos", "/api/sesion", "/api/catalogo", "/api/informe", "/api/salud"];
 
 const DIA = 86400000;
-/** Un archivo del caso. `edad` en milisegundos; por defecto, semanas atras. */
-/** Un archivo del caso. `edad` en milisegundos.
+/** Un archivo del proyecto. `edad` en milisegundos.
  *
  * Por defecto entre cuatro y veinticinco dias: por debajo del mes a proposito,
  * porque la variante del archivo mas antiguo busca con `-mtime +30` y tiene que
@@ -302,196 +334,197 @@ const F = (ruta, lineas, edad) => ({ ruta, lineas, edad: edad === undefined ? DI
 /* ---------- familia grep: una frase escrita en el contenido ---------- */
 const PISTAS_GREP = [
   {
-    id: "lugar",
-    etiqueta: "Punto de encuentro",
-    pista: "El punto de encuentro NO está en /informes. Ni lo intentes.",
-    terminal: 'Busca la frase "Punto de encuentro" con grep -r sobre informes/.',
+    id: "causa",
+    etiqueta: "Causa raíz",
+    pista: "Ya escribieron el informe del incidente, está en incidencias/. Busca la línea de la causa raíz y dime qué pone.",
+    terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
-      const lugar = alAzar(LUGARES);
+      const causa = alAzar(CAUSAS);
       return {
-        respuesta: lugar,
-        solucion: 'grep -r "Punto de encuentro" informes',
+        respuesta: causa,
+        solucion: 'grep -r "Causa raiz" incidencias',
         archivos: [
-          F("informes/caso-0417.txt", [
-            "INFORME COMPLEMENTARIO",
-            `Punto de encuentro confirmado: ${lugar}.`,
-            "La reunion se repite cada semana segun el informante.",
-            "Pendiente de verificar la matricula del vehiculo.",
+          F("incidencias/inc-0417.txt", [
+            "INFORME DE INCIDENTE",
+            `Causa raiz: ${causa}.`,
+            "El servicio volvio solo tras el reinicio.",
+            "Pendiente de revisar el despliegue anterior.",
           ]),
-          F("informes/caso-0412.txt", [
+          F("incidencias/inc-0412.txt", [
             "INFORME PRELIMINAR",
-            "Punto de control revisado sin novedades.",
-            "Testigos describen un maletin metalico.",
+            "Revision rutinaria sin hallazgos.",
+            "Causa pendiente de determinar.",
           ]),
         ],
       };
     },
   },
   {
-    id: "alias",
-    etiqueta: "Alias del sospechoso",
-    pista: "Nunca me ha llamado nadie por ningún alias. Búscalo si quieres perder el rato.",
-    terminal: "Busca la palabra alias con grep -ri sobre interrogatorios/.",
+    id: "autor",
+    etiqueta: "Quién desplegó",
+    pista: "Nadie firmó el despliegue del viernes en el chat, pero el registro sí lo guarda. Mira en despliegues/.",
+    terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
     arma() {
-      const alias = alAzar(ALIAS);
+      const quien = alAzar(COMPANEROS);
       return {
-        respuesta: alias,
-        solucion: "grep -ri alias interrogatorios",
+        respuesta: quien,
+        solucion: 'grep -r "Desplegado por" despliegues',
         archivos: [
-          F("interrogatorios/declaracion-2.txt", [
-            "P: Como se hacia llamar",
-            `R: Todos le decian por su alias, ${alias}. Nadie usaba su nombre.`,
-            "P: Lo vio esa noche",
-            "R: No pienso responder a eso.",
+          F("despliegues/viernes.txt", [
+            "Ventana de despliegue 18:40.",
+            `Desplegado por ${quien} sin aprobacion previa.`,
+            "Rollback manual a las 19:05.",
           ]),
-          F("interrogatorios/declaracion-1.txt", [
-            "P: Reconoce a esta persona",
-            "R: De vista. Ni nombre ni apodo, se lo juro.",
+          F("despliegues/jueves.txt", [
+            "Ventana de despliegue 11:00.",
+            "Aprobado en comite. Sin incidencias.",
           ]),
         ],
       };
     },
   },
   {
-    id: "clave",
-    etiqueta: "Clave del maletín",
-    pista: "La clave no está escrita en ninguna parte. Esa me la llevé conmigo.",
-    terminal: "Busca la palabra clave con grep -ri sobre notas/.",
+    id: "rama",
+    etiqueta: "Rama revertida",
+    pista: "Alguien deshizo cambios a mano y lo dejó anotado en las notas del traspaso. La palabra clave es revertida.",
+    terminal: "Busca la palabra revertida con grep -ri sobre notas/.",
     arma() {
-      const valor = alAzar(CLAVES);
+      const rama = alAzar(RAMAS);
       return {
-        respuesta: valor,
-        solucion: "grep -ri clave notas",
+        respuesta: rama,
+        solucion: "grep -ri revertida notas",
         archivos: [
-          F("notas/apunte-4.txt", [
-            "El maletin sigue cerrado.",
-            `Clave provisional: ${valor}`,
-            "Cambiarla despues del traslado.",
+          F("notas/traspaso.txt", [
+            "Turno de noche, resumen para el siguiente.",
+            `Rama revertida a mano: ${rama}.`,
+            "Queda pendiente rehacer el merge el lunes.",
           ]),
-          F("notas/apunte-1.txt", ["Nada que anotar hoy.", "El almacen del norte lleva dos anos cerrado."]),
+          F("notas/pendientes.txt", [
+            "Revisar alertas del catalogo.",
+            "Nadie ha revisado los avisos de ayer.",
+          ]),
         ],
       };
     },
   },
   {
-    id: "destino",
-    etiqueta: "Destino de la carga",
-    pista: "La carga no iba a ningún sitio. Se quedó donde estaba.",
-    terminal: 'Busca la frase "Destino final" con grep -r sobre manifiestos/.',
+    id: "afectado",
+    etiqueta: "Servicio afectado",
+    pista: "El aviso que mandó monitorización dice qué servicio se cayó. Está en avisos/, busca la frase del servicio afectado.",
+    terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
-      const destino = alAzar(LUGARES);
+      const servicio = alAzar(SERVICIOS);
       return {
-        respuesta: destino,
-        solucion: 'grep -r "Destino final" manifiestos',
+        respuesta: servicio,
+        solucion: 'grep -r "Servicio afectado" avisos',
         archivos: [
-          F("manifiestos/carga-7.txt", [
-            "MANIFIESTO DE CARGA",
-            "Doce cajas selladas, sin declarar contenido.",
-            `Destino final: ${destino}.`,
+          F("avisos/aviso-18-42.txt", [
+            "ALERTA CRITICA",
+            `Servicio afectado: ${servicio}.`,
+            "Sin respuesta durante once minutos.",
           ]),
-          F("manifiestos/carga-3.txt", ["MANIFIESTO DE CARGA", "Ruta anulada, sin destino asignado."]),
+          F("avisos/aviso-09-15.txt", [
+            "AVISO INFORMATIVO",
+            "Uso de disco al 61 por ciento.",
+            "No requiere accion.",
+          ]),
         ],
       };
     },
   },
 ];
 
-/* ---------- familia regex: un codigo con una forma reconocible ----------
-   El ruido son codigos parecidos que NO encajan con el patron. Si encajaran,
-   la expresion regular dejaria de hacer falta y el dato se veria a ojo. */
+/* ---------- familia expresion regular: la forma, no el texto ---------- */
 const PISTAS_REGEX = [
   {
-    id: "placa",
-    etiqueta: "Placa del vehículo",
-    pista: "Ese coche no tiene placa. Nunca la tuvo.",
-    terminal: "La placa son dos letras, un guion y cuatro dígitos. Descríbela con grep -rE y llaves.",
+    id: "commit",
+    etiqueta: "Commit desplegado",
+    pista: "Necesito el commit que se subió el viernes. Son siete caracteres de 0 a 9 y de la a a la f, en algún sitio del proyecto.",
+    terminal: "El commit son siete caracteres hexadecimales seguidos. Descríbelo con grep -rE y llaves.",
     arma() {
-      const placa = alAzar(["GC", "BW", "AR"]) + "-" + entero(1000, 9999);
+      const hex = "0123456789abcdef";
+      let commit = "";
+      while (commit.length < 7) commit += hex[entero(0, 15)];
       return {
-        respuesta: placa,
-        solucion: 'grep -rE "[A-Z]{2}-[0-9]{4}" .',
+        respuesta: commit,
+        solucion: 'grep -rE "[0-9a-f]{7}" .',
         archivos: [
-          F("vigilancia/parte-nocturno.txt", [
-            "Ronda de las tres. Sin incidencias en el muelle.",
-            `Vehiculo detenido en el acceso sur: ${placa}.`,
-            "El conductor no bajo la ventanilla.",
+          F("historial/ultimo-despliegue.txt", [
+            "Etiqueta subida a produccion el viernes.",
+            `Commit ${commit} sobre la rama principal.`,
+            "Sin firmar.",
           ]),
-          F("vigilancia/accesos.log", [
-            "GC-221 entrada 02:14",
-            "AB-12 entrada 02:40",
-            "Z-4410 salida 03:02",
-            "BW-77 salida 03:19",
+          // Ninguno llega a siete: uno corto, uno con letra fuera del rango y
+          // uno partido por un guion, que rompe la racha.
+          F("historial/descartados.txt", [
+            "3f9a21 revertido antes de subir",
+            "9c1ez2b sin validar",
+            "aa10-4bc9 mal copiado",
           ]),
         ],
       };
     },
   },
   {
-    id: "expediente",
-    etiqueta: "Número de expediente",
-    pista: "No hay expediente abierto. Nadie ha denunciado nada.",
-    terminal: "El expediente es EXP y cinco dígitos. Descríbelo con grep -rE y llaves.",
+    id: "build",
+    etiqueta: "Número de build",
+    pista: "El build que rompió producción viene con la etiqueta BUILD y cinco dígitos. Está anotado en alguna parte.",
+    terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
     arma() {
-      const exp = "EXP-" + entero(10000, 99999);
+      const build = "BUILD-" + entero(10000, 99999);
       return {
-        respuesta: exp,
-        solucion: 'grep -rE "EXP-[0-9]{5}" .',
+        respuesta: build,
+        solucion: 'grep -rE "BUILD-[0-9]{5}" .',
         archivos: [
-          F("archivo/traslados.txt", [
-            "Traslado autorizado por la fiscalia.",
-            `Consta en ${exp}, custodia central.`,
+          F("integracion/ultima-ejecucion.txt", [
+            "Tuberia de integracion terminada con fallos.",
+            `Artefacto publicado en ${build}, sin pruebas.`,
           ]),
-          F("archivo/referencias.txt", [
-            "EXP-4812 archivado por falta de pruebas",
+          F("integracion/anteriores.txt", [
+            "BUILD-4812 caducado",
             "REF-48120 duplicado",
-            "EXP-991 sin firmar",
+            "BUILD-991 cancelado",
           ]),
         ],
       };
     },
   },
   {
-    id: "cuenta",
-    etiqueta: "Cuenta bancaria",
-    pista: "El dinero no pasó por ningún banco. Fue en efectivo.",
-    terminal: "La cuenta son tres grupos de cuatro dígitos separados por guiones. Usa grep -rE con llaves.",
+    id: "version",
+    etiqueta: "Versión publicada",
+    pista: "Quiero la versión que quedó publicada. Tiene tres números separados por puntos, con una v delante.",
+    terminal: "La versión es v y tres números separados por puntos. Usa grep -rE y escapa los puntos.",
     arma() {
-      const g = () => String(entero(1000, 9999));
-      const cuenta = `${g()}-${g()}-${g()}`;
+      const v = `v${entero(2, 5)}.${entero(0, 9)}.${entero(0, 9)}`;
       return {
-        respuesta: cuenta,
-        solucion: 'grep -rE "[0-9]{4}-[0-9]{4}-[0-9]{4}" .',
+        respuesta: v,
+        solucion: 'grep -rE "v[0-9]+\\.[0-9]+\\.[0-9]+" .',
         archivos: [
-          F("finanzas/extracto.txt", [
-            "Movimientos revisados por la unidad financiera.",
-            `Ingreso recibido en la cuenta ${cuenta}.`,
-            "Sin titular declarado.",
+          F("paquetes/publicado.txt", [
+            "Paquete subido al repositorio interno.",
+            `Version ${v} marcada como estable por error.`,
           ]),
-          F("finanzas/pendientes.txt", [
-            "2231-9910 sin confirmar",
-            "4-2231-99 error de tecleo",
-            "8890-1122-33 incompleto",
-          ]),
+          F("paquetes/retiradas.txt", ["v2.1 incompleta", "3.0.4 sin prefijo", "v1 borrador"]),
         ],
       };
     },
   },
   {
-    id: "servidor",
-    etiqueta: "Servidor de contacto",
-    pista: "No usé ninguna máquina de la red interna. Ni se te ocurra buscar ahí.",
-    terminal: "El servidor es una dirección que empieza por 192.168. Usa grep -rE y escapa los puntos.",
+    id: "nodo",
+    etiqueta: "Nodo de producción",
+    pista: "El nodo donde se cayó está en la red interna: la dirección empieza por 10.20. Búscala por su forma.",
+    terminal: "El nodo es una dirección que empieza por 10.20. Usa grep -rE y escapa los puntos.",
     arma() {
-      const ip = `192.168.${entero(1, 250)}.${entero(1, 250)}`;
+      const ip = `10.20.${entero(1, 250)}.${entero(1, 250)}`;
       return {
         respuesta: ip,
-        solucion: 'grep -rE "192\\.168\\.[0-9]+\\.[0-9]+" .',
+        solucion: 'grep -rE "10\\.20\\.[0-9]+\\.[0-9]+" .',
         archivos: [
-          F("red/conexiones.txt", [
-            "Sesion abierta desde la sala de maquinas.",
-            `Destino: ${ip}, puerto 8080.`,
+          F("infra/inventario.txt", [
+            "Nodos del entorno de produccion.",
+            `Caido: ${ip}, sin responder al sondeo.`,
           ]),
-          F("red/descartadas.txt", ["10.0.4.2 fuera de servicio", "192.168 sin completar", "172.16.0.9 ajena"]),
+          F("infra/retirados.txt", ["10.0.4.2 fuera de servicio", "10.20 sin completar", "172.16.0.9 ajena"]),
         ],
       };
     },
@@ -501,74 +534,74 @@ const PISTAS_REGEX = [
 /* ---------- familia find: un atributo del archivo, no su contenido ---------- */
 const PISTAS_FIND = [
   {
-    id: "informante",
-    etiqueta: "Informante",
-    pista: "Nadie ha tocado esta unidad en semanas. Estás perdiendo el tiempo.",
-    terminal: "Alguien copió un archivo hace minutos. Búscalo con find y -mmin; su nombre es el del informante.",
+    id: "tocado",
+    etiqueta: "Configuración tocada",
+    pista: "Alguien editó una configuración hace un rato y no lo dijo. Por la fecha lo encuentras: es de hace menos de una hora.",
+    terminal: "Un archivo se modificó hace minutos. Búscalo con find y -mmin; su nombre es el que necesito.",
     arma() {
-      const nombre = alAzar(NOMBRES);
+      const nombre = alAzar(["nginx.conf", "app.env", "pool.conf", "limites.conf"]);
       return {
         respuesta: nombre,
         solucion: "find . -mmin -60",
         archivos: [
-          F(`evidencias/${nombre}.dat`, ["binario: 0af71c33"], 1000 * 60 * entero(2, 9)),
-          F("evidencias/huella.dat", ["binario: 8f2a41b0"]),
-          F("evidencias/muestra.dat", ["binario: 22c9de71"]),
+          F(`config/${nombre}`, ["timeout = 2", "reintentos = 0"], 1000 * 60 * entero(2, 9)),
+          F("config/base.conf", ["puerto = 8080"]),
+          F("config/registro.conf", ["nivel = info"]),
         ],
       };
     },
   },
   {
-    id: "grabacion",
-    etiqueta: "Grabación",
-    pista: "Nunca me grabaron. No existe ninguna cinta.",
-    terminal: "Sólo hay un archivo de audio en la unidad. Búscalo por su extensión con find -name.",
+    id: "volcado",
+    etiqueta: "Volcado de la base",
+    pista: "Antes de revertir alguien sacó un volcado de la base. Es el único archivo .sql que hay por aquí.",
+    terminal: "Sólo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
     arma() {
-      const nombre = "llamada-" + entero(10, 99) + ".wav";
+      const nombre = "respaldo-" + entero(10, 99) + ".sql";
       return {
         respuesta: nombre,
-        solucion: "find . -name '*.wav'",
+        solucion: "find . -name '*.sql'",
         archivos: [
-          F(`evidencias/${nombre}`, ["audio: 44100 Hz, 12 s"]),
-          F("evidencias/huella.dat", ["binario: 8f2a41b0"]),
-          F("evidencias/copia.log", ["volcado completado"]),
+          F(`volcados/${nombre}`, ["-- volcado parcial", "-- 1420 filas"]),
+          F("volcados/notas.txt", ["Volcado hecho a mano antes del rollback."]),
+          F("volcados/salida.log", ["exportacion terminada"]),
         ],
       };
     },
   },
   {
-    id: "carpeta",
+    id: "oculto",
     etiqueta: "Carpeta oculta",
-    pista: "Aquí no hay nada escondido. Todo está a la vista.",
+    pista: "Hay una carpeta que empieza por punto y no sale con un ls normal. Dime cómo se llama.",
     terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
     arma() {
-      const nombre = "." + alAzar(["reserva", "trastero", "sombra", "buzon"]);
+      const nombre = "." + alAzar(["borradores", "cache", "parches", "local"]);
       return {
         respuesta: nombre,
         solucion: "find . -type d -name '.*'",
         archivos: [
-          F(`${nombre}/lista.txt`, ["No abrir hasta el jueves.", "Contar las cajas antes de firmar."]),
-          F("evidencias/huella.dat", ["binario: 8f2a41b0"]),
+          F(`${nombre}/pendiente.diff`, ["--- a/pagos.js", "+++ b/pagos.js", "@@ -1,4 +1,4 @@"]),
+          F("volcados/salida.log", ["exportacion terminada"]),
         ],
       };
     },
   },
   {
-    id: "antiguo",
+    id: "viejo",
     etiqueta: "Archivo más antiguo",
-    pista: "Todo lo de esta unidad es de esta semana. No busques cosas viejas.",
+    pista: "Queda un archivo de antes de que existiera el proyecto actual, de hace más de un mes. Ese nombre me sirve.",
     terminal: "Un solo archivo tiene más de un mes. Búscalo con find y -mtime.",
     arma() {
-      const nombre = "acta-" + entero(1990, 2005) + ".txt";
+      const nombre = "manual-" + entero(2015, 2019) + ".txt";
       return {
         respuesta: nombre,
         solucion: "find . -mtime +30",
         archivos: [
-          F(`archivo/${nombre}`, ["Acta de la primera inspeccion.", "Firmado y archivado."], DIA * entero(60, 400)),
+          F(`documentos/${nombre}`, ["Guia de despliegue manual.", "Obsoleta desde la migracion."], DIA * entero(60, 400)),
           // Rutas propias de esta variante: si dos variantes escriben el mismo
           // archivo, la segunda borra el dato de la primera.
-          F("archivo/parte-reciente.txt", ["Revision de esta semana.", "Sin novedades."], DIA * entero(2, 9)),
-          F("archivo/aviso.txt", ["Revisar la semana que viene."], DIA * entero(2, 9)),
+          F("documentos/reciente.txt", ["Revision de esta semana.", "Sin cambios."], DIA * entero(2, 9)),
+          F("documentos/aviso.txt", ["Revisar la semana que viene."], DIA * entero(2, 9)),
         ],
       };
     },
@@ -578,62 +611,63 @@ const PISTAS_FIND = [
 /* ---------- familia sort: ordenar una tabla y quedarse con el primero ---------- */
 const PISTAS_SORT = [
   {
-    id: "contacto",
-    etiqueta: "Contacto más llamado",
-    pista: "A todos les llamé lo mismo. Ordenar no te dirá nada.",
-    terminal: "En notas/contactos.csv cada línea es un nombre y sus llamadas, separados por coma. Ordena por el segundo campo con sort -t, -k2 -n -r.",
+    id: "servicio-fallos",
+    etiqueta: "Servicio con más fallos",
+    pista: "En metricas/errores.csv está el recuento por servicio. Dime cuál falló más veces.",
+    terminal: "En metricas/errores.csv cada línea es un servicio y sus fallos, separados por coma. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
-      const gente = toma(CONTACTOS, 5);
-      const filas = gente.map((n) => ({ n, v: entero(2, 9) }));
+      const lista = toma(SERVICIOS, 5);
+      const filas = lista.map((n) => ({ n, v: entero(2, 9) }));
       filas[entero(0, filas.length - 1)].v = entero(15, 24);
       const top = filas.slice().sort((a, b) => b.v - a.v)[0];
       return {
         respuesta: top.n,
-        solucion: "sort -t, -k2 -n -r notas/contactos.csv",
-        archivos: [F("notas/contactos.csv", filas.map((f) => `${f.n},${f.v}`))],
+        solucion: "sort -t, -k2 -n -r metricas/errores.csv",
+        archivos: [F("metricas/errores.csv", filas.map((f) => `${f.n},${f.v}`))],
       };
     },
   },
   {
-    id: "transferencia",
-    etiqueta: "Destinatario del pago mayor",
-    pista: "Los pagos eran todos iguales. Da igual cómo los ordenes.",
-    terminal: "En finanzas/transferencias.csv las columnas son fecha, destinatario y monto. Ordena por el tercero con sort -t, -k3 -n -r.",
+    id: "endpoint",
+    etiqueta: "Ruta más lenta",
+    pista: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Necesito la ruta más lenta.",
+    terminal: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Ordena por la tercera con sort -t, -k3 -n -r.",
     arma() {
-      const gente = toma(CONTACTOS, 4);
-      const filas = gente.map((n) => ({ n, v: entero(200, 900) * 10 }));
-      filas[entero(0, filas.length - 1)].v = entero(2000, 2600) * 10;
+      const lista = toma(ENDPOINTS, 4);
+      const filas = lista.map((n) => ({ n, v: entero(20, 90) * 10 }));
+      filas[entero(0, filas.length - 1)].v = entero(200, 260) * 10;
       const top = filas.slice().sort((a, b) => b.v - a.v)[0];
       return {
         respuesta: top.n,
-        solucion: "sort -t, -k3 -n -r finanzas/transferencias.csv",
+        solucion: "sort -t, -k3 -n -r metricas/latencias.csv",
         archivos: [
-          F("finanzas/transferencias.csv", filas.map((f, i) => `0${i + 3}/06,${f.n},${f.v}`)),
+          F("metricas/latencias.csv", filas.map((f, i) => `0${i + 3}/06,${f.n},${f.v}`)),
         ],
       };
     },
   },
   {
-    id: "almacen",
-    etiqueta: "Almacén con más cajas",
-    pista: "Las cajas estaban repartidas por igual. Contar no sirve.",
-    terminal: "En manifiestos/inventario.csv cada línea es un almacén y sus cajas. Ordena por el segundo campo con sort -t, -k2 -n -r.",
+    id: "quien-mas-subio",
+    etiqueta: "Quién subió más cambios",
+    pista: "En metricas/commits.csv está quién subió cuántos cambios esa semana. Dime quién va primero.",
+    terminal: "En metricas/commits.csv cada línea es una persona y sus cambios. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
-      const filas = ALMACENES.map((n) => ({ n, v: entero(3, 19) }));
+      const lista = toma(COMPANEROS, 5);
+      const filas = lista.map((n) => ({ n, v: entero(3, 19) }));
       filas[entero(0, filas.length - 1)].v = entero(40, 70);
       const top = filas.slice().sort((a, b) => b.v - a.v)[0];
       return {
         respuesta: top.n,
-        solucion: "sort -t, -k2 -n -r manifiestos/inventario.csv",
-        archivos: [F("manifiestos/inventario.csv", filas.map((f) => `${f.n},${f.v}`))],
+        solucion: "sort -t, -k2 -n -r metricas/commits.csv",
+        archivos: [F("metricas/commits.csv", filas.map((f) => `${f.n},${f.v}`))],
       };
     },
   },
   {
-    id: "entrega",
-    etiqueta: "Hora de la primera entrega",
-    pista: "Aquella noche no hubo ninguna entrega. Ni la primera ni la última.",
-    terminal: "En manifiestos/entregas.csv cada línea empieza por la hora. Ordénalas con sort: la primera línea es la más temprana.",
+    id: "primer-despliegue",
+    etiqueta: "Hora del primer despliegue",
+    pista: "En despliegues/horas.csv cada línea empieza por la hora. Quiero la del primer despliegue del día.",
+    terminal: "En despliegues/horas.csv cada línea empieza por la hora. Ordénalas con sort: la primera línea es la más temprana.",
     arma() {
       const horas = [];
       while (horas.length < 5) {
@@ -643,9 +677,9 @@ const PISTAS_SORT = [
       const primera = horas.slice().sort()[0];
       return {
         respuesta: primera,
-        solucion: "sort manifiestos/entregas.csv",
+        solucion: "sort despliegues/horas.csv",
         archivos: [
-          F("manifiestos/entregas.csv", horas.map((h) => `${h},${alAzar(LUGARES)}`)),
+          F("despliegues/horas.csv", horas.map((h) => `${h},${alAzar(SERVICIOS)}`)),
         ],
       };
     },
@@ -662,28 +696,37 @@ const FAMILIAS = [
 ];
 const DATOS_POR_CASO = 3;
 
-/** Los senuelos que siempre estan: la unidad nunca se ve vacia. */
+/** Los senuelos que siempre estan: el proyecto nunca se ve vacio. */
 function archivosBase() {
-  // Ninguna encaja con [A-Z]{2}-[0-9]{4}, ni por dentro: una placa como
-  // GCX-4410 contiene "CX-4410" y arruinaria el objetivo de la expresion regular.
-  const placas = ["GC-221", "AB-12", "BW-77", "Z-4410", "PL-88"];
-  const registros = [[], [], []];
+  // Bitacoras largas, que es lo que hace falta para que grep valga la pena.
+  // Nada de aqui puede encajar con las formas que buscan las expresiones
+  // regulares: ni siete hexadecimales seguidos, ni BUILD-#####, ni vN.N.N, ni
+  // una direccion 10.20.x.x. Un solo descuido y el objetivo sale por duplicado.
+  const niveles = ["INFO", "WARN", "INFO", "INFO", "DEBUG"];
+  const mensajes = [
+    "peticion atendida", "cache renovada", "sesion iniciada", "reintento programado",
+    "cola vacia", "conexion reutilizada", "plantilla compilada", "sondeo correcto",
+  ];
+  const bitacoras = [[], [], []];
   for (let i = 0; i < 84; i++) {
-    registros[i % 3].push(`${hhmm(0, 23)} camara-${String(alAzar([3, 7, 11, 14, 22])).padStart(2, "0")} ${alAzar(placas)}`);
+    bitacoras[i % 3].push(`${hhmm(0, 23)} ${alAzar(niveles)} ${alAzar(SERVICIOS)}: ${alAzar(mensajes)}`);
   }
   return [
-    F("camaras/registro-norte.log", registros[0]),
-    F("camaras/registro-sur.log", registros[1]),
-    F("camaras/registro-puerto.log", registros[2]),
-    F("notas/recado.txt", [
-      "Si lees esto, ya llegaste tarde.",
-      "Las respuestas estan repartidas. Ninguna donde deberias mirar.",
+    F("logs/app-lunes.log", bitacoras[0]),
+    F("logs/app-martes.log", bitacoras[1]),
+    F("logs/app-miercoles.log", bitacoras[2]),
+    F("notas/leeme.txt", [
+      "Proyecto clonado en local para revisar el incidente del viernes.",
+      "No tocar nada: esto es una copia de trabajo.",
     ]),
-    F("notas/descartado.txt", ["Pista falsa: el almacen del norte lleva dos anos cerrado.", "No perder tiempo aqui."]),
+    F("notas/descartado.txt", [
+      "Se descarto que fuera la red: el sondeo salio limpio toda la semana.",
+      "No perder tiempo por ahi.",
+    ]),
   ];
 }
 
-let caso, fs, cwd, paso, resueltos, fallidos;
+let caso, fs, cwd, paso, resueltos;
 
 function nuevoCaso() {
   // Una familia se queda fuera en cada partida, y las tres elegidas salen en el
@@ -697,7 +740,7 @@ function nuevoCaso() {
   });
 
   // El reloj del caso se congela al repartirlo. Con el reloj real, el archivo
-  // del informante envejecia mientras se juega y a los pocos minutos dejaba de
+  // recien tocado envejecia mientras se juega y a los pocos minutos dejaba de
   // caer dentro de `find -mmin`: el objetivo se volvia irresoluble solo.
   const ahora = Date.now();
   caso = { t0: ahora, datos };
@@ -720,7 +763,6 @@ function nuevoCaso() {
   paso = 0;
   resueltos = {};
   for (const d of datos) resueltos[d.id] = false;
-  fallidos = new Set();
 }
 
 /* ============================================================
@@ -729,9 +771,9 @@ function nuevoCaso() {
 function resolver(ruta) {
   const t = (ruta || "").trim();
   if (!t || t === ".") return cwd;
-  if (t === "~" || t === "~/pruebas") return "";
+  if (t === "~" || t === "~/escritorio") return "";
   let partes;
-  if (t.startsWith("~/pruebas/")) partes = t.slice(10).split("/");
+  if (t.startsWith("~/escritorio/")) partes = t.slice(13).split("/");
   else if (t.startsWith("~/")) partes = t.slice(2).split("/");
   else if (t.startsWith("/")) return null;
   else partes = (cwd ? cwd.split("/") : []).concat(t.split("/"));
@@ -850,7 +892,7 @@ function cmdCd(args) {
   if (clave === null || !existe(clave)) { log(`cd: ${libres[0]}: no existe`, "mal"); return []; }
   if (!esDir(clave)) { log(`cd: ${libres[0]}: no es un directorio`, "mal"); return []; }
   cwd = clave;
-  $("ps1").textContent = "~/pruebas" + (cwd ? "/" + cwd : "") + " $";
+  $("ps1").textContent = "~/escritorio" + (cwd ? "/" + cwd : "") + " $";
   return [];
 }
 
@@ -1015,7 +1057,7 @@ function cmdFind(args) {
       const v = parseInt(cond.size.replace(/[+-kM]/g, ""), 10);
       if (cond.size.startsWith("+") ? !(lineas > v) : !(lineas < v)) continue;
     }
-    salida.push("~/pruebas" + (k ? "/" + k : ""));
+    salida.push("~/escritorio" + (k ? "/" + k : ""));
   }
   return salida;
 }
@@ -1112,58 +1154,143 @@ function objetivos() {
   return caso.datos.map((d) => ({ campo: d.id, pista: d.pista, terminal: d.terminal }));
 }
 
-/** Los campos de la unidad del enigma, en el mismo orden que los objetivos. */
+/** Los datos que pide esta partida, en el orden en que se piden. */
 function campos() {
   return caso.datos.map((d) => ({ id: d.id, etiqueta: d.etiqueta }));
 }
 
 /** La respuesta buena de un dato. */
-const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuesta || "";
-
-function pintarCampos() {
-  const cont = $("campos");
-  // Lo ya escrito se conserva: quien falla corrige, no vuelve a teclear todo.
-  const escrito = {};
-  for (const c of campos()) {
-    const previo = $("in-" + c.id);
-    if (previo && previo.value) escrito[c.id] = previo.value;
-  }
-  cont.innerHTML = "";
-  for (const c of campos()) {
-    const d = document.createElement("div");
-    d.className = "campo" + (resueltos[c.id] ? " ok" : fallidos.has(c.id) ? " mal" : "");
-    d.innerHTML = `<label>${c.etiqueta}</label><input id="in-${c.id}" autocomplete="off"${resueltos[c.id] ? " disabled" : ""}>`;
-    cont.appendChild(d);
-    const campo = $("in-" + c.id);
-    campo.value = resueltos[c.id] ? respuestaDe(c.id) : (escrito[c.id] || "");
-    // Al corregir, la marca de error se va sola.
-    campo.addEventListener("input", () => {
-      if (!fallidos.delete(c.id)) return;
-      d.classList.remove("mal");
-      if (fallidos.size === 0) pintarNota();
-    });
-  }
-}
-
+/** Compara sin castigar mayusculas, acentos ni espacios de mas. */
 const normal = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
 
-function descifrar() {
-  fallidos = new Set();
-  for (const c of campos()) {
-    if (resueltos[c.id]) continue;
-    const val = normal($("in-" + c.id).value);
-    if (!val) continue;
-    if (val === normal(respuestaDe(c.id))) {
-      resueltos[c.id] = true;
-      log("✓ dato confirmado: " + c.etiqueta.toLowerCase(), "ok");
-    } else {
-      fallidos.add(c.id);
-    }
-  }
-  pintarCampos();
-  pintarNota();
-  revisar();
+/** El dato dentro del mensaje, como palabra suelta.
+ *
+ * Los limites evitan el falso positivo obvio: si el dato es "pagos", una
+ * respuesta que diga "despagos" no cuenta. Y como el mensaje puede traer la
+ * frase entera, basta con que el dato aparezca en alguna parte. */
+function contiene(mensaje, dato) {
+  const d = normal(dato);
+  if (!d) return false;
+  const escapado = d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("(^|[^a-z0-9])" + escapado + "($|[^a-z0-9])").test(normal(mensaje));
 }
+const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuesta || "";
+
+/* ============================================================
+   EL CHAT
+   Laura pide un dato cada vez y espera respuesta. Es una
+   conversacion, no un formulario: por eso va por turnos y por eso
+   al fallar responde con una pista mas concreta en vez de un "no".
+   Equivocarse aqui ensena algo, que es lo contrario de lo que
+   hacia la version anterior, en la que la pista mentia.
+   ============================================================ */
+let charla = [];
+/** Intentos fallidos del dato en curso: la ayuda sube de concrecion. */
+let tropiezos = 0;
+/* Lo que Laura tiene pendiente de escribir. Sus mensajes no salen de golpe:
+   primero se ven los tres puntos y luego llega el texto, como en cualquier
+   aplicacion de mensajes. El estado del juego, en cambio, avanza al momento,
+   asi que la espera no bloquea al que ya sabe la siguiente respuesta. */
+let cola = [], escribiendo = false, temporizador = null;
+
+function di(de, texto, mal) {
+  if (de === "yo") {
+    charla.push({ de, texto, mal: false });
+    pintarChat();
+    return;
+  }
+  cola.push({ de, texto, mal: Boolean(mal) });
+  bombear();
+}
+
+function bombear() {
+  if (escribiendo || !cola.length) return;
+  const m = cola.shift();
+  // En el banco de pruebas no hay reloj que esperar: los mensajes se entregan
+  // al momento, o cada comprobacion tendria que dormir tres segundos.
+  if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+    charla.push(m);
+    pintarChat();
+    bombear();
+    return;
+  }
+  escribiendo = true;
+  pintarChat();
+  temporizador = setTimeout(() => {
+    escribiendo = false;
+    temporizador = null;
+    charla.push(m);
+    pintarChat();
+    bombear();
+  }, entero(1000, 3000));
+}
+
+function pintarChat() {
+  const cont = $("chat");
+  if (!cont) return;
+  cont.innerHTML = "";
+  for (const m of charla) {
+    const d = document.createElement("div");
+    d.className = "msg " + m.de + (m.mal ? " mal" : "");
+    d.innerHTML = m.texto;
+    cont.appendChild(d);
+  }
+  if (escribiendo) {
+    const p = document.createElement("div");
+    p.className = "msg ella escribiendo";
+    p.innerHTML = "<span></span><span></span><span></span>";
+    cont.appendChild(p);
+  }
+  cont.scrollTop = cont.scrollHeight;
+}
+
+/** Lo que Laura pide ahora. */
+function pedir() {
+  const lista = objetivos();
+  if (paso >= lista.length) return;
+  di("ella", lista[paso].pista);
+}
+
+/** La respuesta del estudiante, contra el dato en curso. */
+function responderChat() {
+  const caja = $("chat-in");
+  const valor = caja.value.trim();
+  if (!valor) return;
+  caja.value = "";
+
+  const lista = objetivos();
+  if (paso >= lista.length) return;
+  const id = lista[paso].campo;
+  di("yo", escapar(valor));
+
+  if (contiene(valor, respuestaDe(id))) {
+    resueltos[id] = true;
+    tropiezos = 0;
+    log("dato confirmado: " + etiquetaDe(id).toLowerCase(), "ok");
+    di("ella", alAzar([
+      "Eso es. Lo apunto en el informe.",
+      "Confirmado, gracias.",
+      "Bien, ya lo tengo.",
+    ]));
+    revisar();
+    if (paso < lista.length) pedir();
+    return;
+  }
+
+  tropiezos++;
+  // Primero se repite lo pedido; a la segunda se dice con qué herramienta se
+  // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
+  di("ella", tropiezos === 1
+    ? "Eso no me cuadra. Vuelve a mirar, es lo que te dije."
+    : escapar(lista[paso].terminal), true);
+}
+
+/** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
+function etiquetaDe(id) {
+  return (caso.datos.find((d) => d.id === id) || {}).etiqueta || id;
+}
+
+const escapar = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function revisar() {
   const lista = objetivos();
@@ -1176,19 +1303,12 @@ let ultimoAnuncio = -1;
 
 function pintar() {
   const lista = objetivos();
-  $("goal").textContent = paso < lista.length
-    ? "Usa grep, find y sort para resolver el crimen"
-    : "Enigma descifrado";
-  $("counter").textContent = `${Math.min(paso + 1, lista.length)} / ${lista.length}`;
-  $("dots").innerHTML = "";
-  lista.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = "dot" + (i < paso ? " done" : i === paso ? " cur" : "");
-    $("dots").appendChild(d);
-  });
+  barra.objetivo(paso < lista.length
+    ? "Reúne los datos que pide Laura para el informe"
+    : "Informe cerrado", Math.min(paso, lista.length - 1), lista.length);
+  barra.marcas(lista.map((_, i) => (i < paso ? "done" : i === paso ? "cur" : "")));
   // El objetivo no tiene ventana propia: se anuncia en la terminal cuando
   // cambia, que es donde el estudiante ya esta mirando.
-  pintarNota();
   if (paso !== ultimoAnuncio && paso < lista.length) {
     ultimoAnuncio = paso;
     log("");
@@ -1196,41 +1316,11 @@ function pintar() {
   }
 }
 
-function pintarNota() {
-  // La caja dice una sola cosa: la pista del objetivo en curso. Cuanto menos
-  // texto, mas sitio para los cuatro campos en una pantalla estrecha.
-  const lista = objetivos();
-  const caja = $("riddle");
-  if (fallidos.size) {
-    // El error se ve antes en la caja que en el campo: cambia de color entera.
-    caja.classList.add("mal");
-    $("riddle-t").textContent = "NO.";
-    $("riddle-p").textContent =
-      fallidos.size === 1 ? "Ese dato no es. Sigue buscando." : "Ninguno de esos. Sigue buscando.";
-  } else {
-    caja.classList.remove("mal");
-    $("riddle-t").textContent = "Pista:";
-    $("riddle-p").textContent = paso < lista.length ? lista[paso].pista : "Nada más que esconder.";
-  }
-
-  const zona = $("interros");
-  if (!zona) return;
-  zona.innerHTML = "";
-  for (let i = 0; i < 7; i++) {
-    const q = document.createElement("span");
-    q.textContent = "?";
-    q.style.left = entero(4, 88) + "%";
-    q.style.top = entero(6, 78) + "%";
-    q.style.fontSize = entero(9, 22) + "px";
-    q.style.animationDelay = (i * 0.7).toFixed(1) + "s";
-    zona.appendChild(q);
-  }
-}
 
 function terminar() {
   const linea = caso.datos.map((d) => `${d.etiqueta.toLowerCase()}: ${d.respuesta}`).join(" · ");
   $("fin-p").textContent =
-    `${linea}. Tres búsquedas y tres herramientas distintas para sacarlas de la misma unidad.`;
+    `${linea}. Tres búsquedas y tres herramientas distintas sobre el mismo proyecto.`;
   $("fin").hidden = false;
 }
 
@@ -1238,7 +1328,7 @@ function terminar() {
    ENTRADA
    ============================================================ */
 let tecleado = "";
-const ocupado = () => !$("fin").hidden || !$("portada").hidden;
+const ocupado = () => !$("fin").hidden || !$("portada").classList.contains("hide");
 
 function enfocar() {
   const t = $("pegar");
@@ -1283,36 +1373,71 @@ function reiniciar() {
   tecleado = "";
   $("tecleado").textContent = "";
   $("consola").querySelectorAll(".log").forEach((l) => l.remove());
-  $("ps1").textContent = "~/pruebas $";
+  $("ps1").textContent = "~/escritorio $";
   $("fin").hidden = true;
-  $("portada").hidden = false;
+  $("portada").classList.remove("hide");
+  barra.jugando(false);
   ultimoAnuncio = -1;
-  pintarCampos();
-  log(MURCIELAGO, "arte");
-  log("Terminal conectada a dispositivo Enigma.");
-  log("Usa el dispositivo para ir verificando los datos que encuentres.");
-  log(`Hay ${caso.datos.length} datos por encontrar que ayudaran a resolver el crimen:`);
+  charla = [];
+  tropiezos = 0;
+  cola = [];
+  escribiendo = false;
+  if (temporizador) { clearTimeout(temporizador); temporizador = null; }
+  for (const [v, d] of [["w-chat", "d-chat"], ["w-term", "d-term"]]) {
+    $(v).hidden = false;
+    $(d).dataset.abierta = "true";
+  }
+  log("Copia local del proyecto lista.");
+  log(`Laura necesita ${caso.datos.length} datos para cerrar el informe del incidente:`);
   log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
+  di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
+  di("ella", "Tienes el proyecto clonado en el escritorio. Te voy pidiendo los datos de uno en uno.");
+  di("ella", "Mándame el dato. Que venga en el mensaje.");
+  pedir();
   pintar();
 }
 
-$("descifrar").addEventListener("click", descifrar);
-$("play").addEventListener("click", () => { $("portada").hidden = true; enfocar(); });
-$("restart").addEventListener("click", reiniciar);
-$("fin-again").addEventListener("click", reiniciar);
-$("fin-exit").addEventListener("click", () => window.parent.postMessage({ action: "close-simulator" }, "*"));
+/* ---------- ventanas ---------- */
+/* Mismo trato que en la practica de compresion: el dock abre y cierra, y el
+   punto amarillo de cada ventana solo esconde. */
+function alternar(idVentana, idBoton) {
+  const v = $(idVentana);
+  v.hidden = !v.hidden;
+  $(idBoton).dataset.abierta = String(!v.hidden);
+}
+function cerrar(idVentana, idBoton) {
+  $(idVentana).hidden = true;
+  $(idBoton).dataset.abierta = "false";
+}
+$("d-chat").addEventListener("click", () => alternar("w-chat", "d-chat"));
+$("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
+document.querySelectorAll("button.win-dot.min").forEach((b) =>
+  b.addEventListener("click", () => cerrar(b.dataset.win, b.dataset.dock)));
 
-/* Si los marcos no estan (todavia no se han subido, o fallo la descarga), el
-   simulador cae a paneles planos en vez de quedarse con dos huecos negros. */
+$("enviar").addEventListener("click", responderChat);
+$("chat-in").addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  responderChat();
+});
+
+$("play").addEventListener("click", () => {
+  $("portada").classList.add("hide");
+  barra.jugando(true);
+  enfocar();
+});
+$("fin-again").addEventListener("click", reiniciar);
+$("fin-exit").addEventListener("click", Barra.salir);
+
 reiniciar();
 
 // Gancho de pruebas: el arnes de Node empuja el estado sin DOM.
 if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
   globalThis.__api = {
-    ejecutar, ejecutarTramo, reiniciar, descifrar, objetivos,
+    ejecutar, ejecutarTramo, reiniciar, objetivos,
     caso: () => caso, fs: () => fs, paso: () => paso, resueltos: () => resueltos,
     campos, respuestaDe,
-    responder: (campo, valor) => { resueltos[campo] = normal(valor) === normal(respuestaDe(campo)); revisar(); },
+    responder: (campo, valor) => { resueltos[campo] = contiene(valor, respuestaDe(campo)); revisar(); },
   };
 }
 </script>
