@@ -414,7 +414,7 @@ function init(){
   resetRound();
   document.getElementById('hist').innerHTML='';
   log('inf','Sistema cargado. Estás en '+HOME);
-  log('inf','Comandos: cd  ls  [ls -a]  touch  clear');
+  log('inf','Comandos: cd  ls  [ls -a]  pwd  touch  clear. Escribe help para verlos con su explicación');
   activateRound();
   redraw(); refresh();
 }
@@ -608,6 +608,8 @@ function exec(raw){
     }
   } else if(verb==='touch'){
     doTouch(rest[0]);
+  } else if(verb==='help'){
+    ayuda();
   } else if(verb==='clear'){
     document.getElementById('hist').innerHTML=''; return;
   } else {
@@ -615,6 +617,20 @@ function exec(raw){
   }
 
   redraw(); refresh(); check();
+}
+
+/* La lista de comandos se saluda al empezar y se pierde de vista en cuanto la
+   terminal corre. Con help se vuelve a pedir sin reiniciar la partida. */
+function ayuda(){
+  log('inf','Comandos disponibles:');
+  log('','  cd carpeta      entra en esa carpeta');
+  log('','  cd ..           sube un nivel');
+  log('','  cd /ruta        va directo, desde la raíz');
+  log('','  ls              lista lo que hay aquí');
+  log('','  ls -a           lista también lo oculto');
+  log('','  pwd             dice en qué carpeta estás');
+  log('','  touch archivo   crea un archivo');
+  log('','  clear           limpia la terminal');
 }
 
 function cd(arg){
