@@ -1,5 +1,7 @@
 <!doctype html>
 <title>Escritorio comprimido · LinuxLab</title>
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
 <style>
 :root {
   --bg:     #0D1117;
@@ -29,22 +31,7 @@ body{
   background:var(--bg);position:relative;
 }
 
-/* ---------- cabecera (misma de los demas simuladores) ---------- */
-.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px;z-index:50}
-.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
-.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
-.logo-name .wh{color:var(--bright);filter:none}
-.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
-.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
-.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0}
-.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
-.dot.done{background:var(--green)}
-.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
-.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
-.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+/* La cabecera vive en /temario/comun/barra.css */
 
 /* ---------- escritorio ----------
    Los planos inclinados son tres degradados sobre un fondo plano: da la
@@ -76,8 +63,15 @@ body{
 }
 .win[hidden]{display:none}
 .win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
-.win-dot{width:11px;height:11px;border-radius:50%}
-.win-title{flex:1;text-align:center;font-size:clamp(9px,1.05vmin + 2px,11.5px);color:var(--muted)}
+.win-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+/* El punto de minimizar es el unico que hace algo; el guion aparece al pasar
+   por encima, como en cualquier escritorio. */
+button.win-dot{border:none;padding:0;font:inherit;cursor:pointer;position:relative}
+button.win-dot::after{
+  content:"";position:absolute;left:2.5px;right:2.5px;top:5px;height:1.5px;
+  background:rgba(0,0,0,.55);border-radius:1px;opacity:0;transition:opacity .15s;
+}
+.win-bar:hover button.win-dot::after{opacity:1}
 
 /* Cada ventana en su cuadrante: arriba izquierda los desafios, arriba derecha
    la terminal, abajo derecha el correo. Abrir y cerrar no las mueve de sitio. */
@@ -205,7 +199,7 @@ body{
 .picker-it:hover{background:#EEF1F6}
 .picker-it small{color:#8A8A99}
 
-/* ---------- dock ---------- */
+/* ---------- marca de agua ---------- */
 /* El guiño: vive en el cuadrante de la terminal, detras de ella. */
 .marca{
   position:absolute;left:44%;top:7%;width:53%;height:77%;
@@ -216,22 +210,7 @@ body{
 }
 .marca span{color:var(--bright);filter:none}
 
-/* ---------- portada (misma de los otros simuladores) ---------- */
-.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:40;padding:24px}
-.overlay[hidden]{display:none}
-.play{
-  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
-  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
-  font-family:var(--mono);line-height:1;
-}
-/* El triangulo tiene el peso a la izquierda y descentra a ojo. */
-.play .tri{display:block;transform:translateX(3px)}
-.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
-.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
-.overlay p{font-size:12px;color:var(--muted);max-width:430px;text-align:center;line-height:1.7}
-
+/* ---------- dock ---------- */
 .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
 .dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
 .dock-btn:hover{transform:translateY(-4px)}
@@ -267,18 +246,8 @@ body{
 }
 </style>
 
-<div class="hdr">
-  <div class="logo-box">&gt;_</div>
-  <div class="logo-name">Linux<span class="wh">Lab</span></div>
-  <div class="hdr-sep"></div>
-  <div class="hdr-obj">
-    <span class="hdr-eyebrow">Objetivo</span>
-    <span class="hdr-goal" id="goal">&nbsp;</span>
-  </div>
-  <div class="hdr-dots" id="dots"></div>
-  <span class="hdr-n" id="counter">1 / 3</span>
-  <button class="restart-btn" id="restart">Reiniciar</button>
-</div>
+<!-- La barra la arma barra.js. -->
+<div class="hdr"></div>
 
 <div class="desk" id="desk">
   <div class="icons" id="icons"></div>
@@ -290,9 +259,8 @@ body{
   <div class="win" id="w-term">
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-term" data-dock="d-term" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
-      <span class="win-title">estudiante@linuxlab: ~/taller</span>
     </div>
     <div class="console" id="consola">
       <div class="prompt">
@@ -306,9 +274,8 @@ body{
   <div class="win" id="w-txt">
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-txt" data-dock="d-txt" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
-      <span class="win-title">objetivos.txt</span>
     </div>
     <div class="txt-body" id="pasos"></div>
   </div>
@@ -317,9 +284,8 @@ body{
   <div class="win" id="w-mail" hidden>
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-mail" data-dock="d-mail" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
-      <span class="win-title">Nuevo mensaje</span>
     </div>
     <div class="mail-body">
       <div class="mail-row"><b>Para:</b> coordinacion@linuxlab.edu</div>
@@ -341,9 +307,8 @@ body{
   <div class="win" id="w-game" hidden>
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-game" data-dock="d-game" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
-      <span class="win-title"></span>
     </div>
     <div class="game-body" id="game-body"></div>
   </div>
@@ -352,7 +317,7 @@ body{
 
   <div class="picker" id="picker" hidden>
     <div class="picker-box">
-      <div class="picker-t">Elige un archivo de ~/taller</div>
+      <div class="picker-t">Elige un archivo de ~/escritorio</div>
       <div id="picker-lista"></div>
     </div>
   </div>
@@ -415,31 +380,35 @@ body{
     </button>
   </div>
 
-  <div class="overlay" id="overlay">
-    <button class="play" id="play"><span class="tri">&#9654;</span></button>
-    <h2>Escritorio comprimido</h2>
-    <p>
-      Un escritorio con una terminal y un correo que no admite carpetas.
-      Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la
-      entrega sin lo que no debía salir.
-    </p>
-  </div>
-
   <div class="fin" id="fin" hidden>
     <div class="fin-box">
       <div class="fin-t">Entrega enviada</div>
       <div class="fin-p" id="fin-p"></div>
       <div class="fin-btns">
         <button class="restart-btn" id="fin-again">Otra vez</button>
-        <button class="restart-btn" id="fin-exit">Salir</button>
+        <button class="restart-btn neutro" id="fin-exit">Salir</button>
       </div>
     </div>
   </div>
 </div>
 
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
+  <h2>Escritorio comprimido</h2>
+  <p>
+    Un escritorio con una terminal y un correo que no admite carpetas.
+    Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la
+    entrega sin lo que no debía salir.
+  </p>
+</div>
+
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
+
+// Sin puntos: aqui no se puntua, se completa la entrega. Reiniciar vuelve a
+// la portada, que es de donde arranca la partida.
+const barra = Barra.montar({ puntos: false, onReiniciar: () => reiniciar() });
 
 /* ============================================================
    ICONOS
@@ -539,11 +508,11 @@ function nuevaPartida() {
   jugado = false;
 }
 
-/** Lo que hay en la raiz de ~/taller (no las hojas de las carpetas). */
+/** Lo que hay en la raiz de ~/escritorio (no las hojas de las carpetas). */
 const enRaiz = () => Object.keys(fs).filter((k) => !k.includes("/"));
 
 /**
- * Donde esta parado el estudiante, relativo a ~/taller ("" es la raiz).
+ * Donde esta parado el estudiante, relativo a ~/escritorio ("" es la raiz).
  *
  * Antes `cd` estaba capado y era lo mas antinatural del simulador: es el
  * primer comando que aprende cualquiera y el unico que aqui no funcionaba.
@@ -554,15 +523,15 @@ let cwd = "";
 
 /**
  * Traduce lo que se escribe a una clave del sistema de archivos.
- * Devuelve null si apunta fuera del taller, "" para la raiz.
+ * Devuelve null si apunta fuera del escritorio, "" para la raiz.
  */
 function resolver(ruta) {
   const texto = (ruta || "").trim();
   if (!texto) return cwd;
-  if (texto === "~" || texto === "~/taller") return "";
+  if (texto === "~" || texto === "~/escritorio") return "";
 
   let partes;
-  if (texto.startsWith("~/taller/")) partes = texto.slice(9).split("/");
+  if (texto.startsWith("~/escritorio/")) partes = texto.slice(13).split("/");
   else if (texto.startsWith("~/")) partes = texto.slice(2).split("/");
   else if (texto.startsWith("/")) return null;
   else partes = (cwd ? cwd.split("/") : []).concat(texto.split("/"));
@@ -579,11 +548,11 @@ function resolver(ruta) {
 /** El prompt dice donde estas, como en cualquier terminal. */
 function pintarPrompt() {
   const ps1 = $("ps1");
-  if (ps1) ps1.textContent = "~/taller" + (cwd ? "/" + cwd : "") + " $";
+  if (ps1) ps1.textContent = "~/escritorio" + (cwd ? "/" + cwd : "") + " $";
 }
 
 /** Ruta que enseña el launcher, tal cual se puede pegar en la terminal. */
-const rutaMods = () => "~/taller/" + nombres.mods;
+const rutaMods = () => "~/escritorio/" + nombres.mods;
 
 /** Los .mod que trae el pack, sin el leeme: son los que cuentan como instalados. */
 const MODS = ["arma-legendaria.mod", "texturas-hd.mod"];
@@ -665,7 +634,7 @@ const AYUDA = [
 function cmdCd(args) {
   const donde = args.find((a) => !a.startsWith("-"));
   const clave = resolver(donde === undefined ? "~" : donde);
-  if (clave === null) return log(`cd: ${donde}: en esta práctica solo existe ~/taller`, "bad");
+  if (clave === null) return log(`cd: ${donde}: en esta práctica solo existe ~/escritorio`, "bad");
   if (clave !== "") {
     const e = fs[clave];
     if (!e) return log(`cd: ${donde}: no existe`, "bad");
@@ -679,7 +648,7 @@ function cmdLs(args) {
   const largo = args.includes("-l");
   const donde = args.find((a) => !a.startsWith("-"));
   const clave = resolver(donde);
-  if (clave === null) return log(`ls: ${donde}: en esta práctica solo existe ~/taller`, "bad");
+  if (clave === null) return log(`ls: ${donde}: en esta práctica solo existe ~/escritorio`, "bad");
 
   // Sin argumento lista donde estas; con uno, esa carpeta.
   if (clave !== "" && !fs[clave]) return log(`ls: ${donde}: no existe`, "bad");
@@ -705,7 +674,7 @@ function cmdTar(args) {
     args = args.slice(0, iC).concat(args.slice(iC + 2));
     if (!escrito) return log("tar: -C necesita una carpeta", "bad");
     destino = resolver(escrito);
-    if (destino === null) return log(`tar: ${escrito}: en esta práctica solo existe ~/taller`, "bad");
+    if (destino === null) return log(`tar: ${escrito}: en esta práctica solo existe ~/escritorio`, "bad");
   }
 
   const bandera = args.find((a) => a.startsWith("-"));
@@ -723,7 +692,7 @@ function cmdTar(args) {
     const salida = resolver(nombreSalida);
     const origenes = resto.slice(1).map(resolver);
     if (salida === null || origenes.some((o) => o === null))
-      return log("tar: en esta práctica solo existe ~/taller", "bad");
+      return log("tar: en esta práctica solo existe ~/escritorio", "bad");
     const falta = origenes.find((o) => !fs[o]);
     if (falta !== undefined) return log(`tar: ${falta}: no existe`, "bad");
 
@@ -819,7 +788,7 @@ function cmdRm(args) {
   const objetivo = args.find((a) => !a.startsWith("-"));
   if (!objetivo) return log("rm: falta el archivo", "bad");
   const clave = resolver(objetivo);
-  if (clave === null) return log(`rm: ${objetivo}: en esta práctica solo existe ~/taller`, "bad");
+  if (clave === null) return log(`rm: ${objetivo}: en esta práctica solo existe ~/escritorio`, "bad");
   const e = fs[clave];
   if (!e) return log(`rm: ${objetivo}: no existe`, "bad");
   if (e.tipo === "dir" && !recursivo) return log(`rm: ${objetivo}: es un directorio (usa -r)`, "bad");
@@ -1107,15 +1076,9 @@ function revisar() {
 
 function pintar() {
   const lista = desafios();
-  $("goal").textContent = paso < lista.length ? lista[paso].objetivo : "Completado";
-  $("counter").textContent = `${Math.min(paso + 1, lista.length)} / ${lista.length}`;
-
-  $("dots").innerHTML = "";
-  lista.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = "dot" + (i < paso ? " done" : i === paso ? " cur" : "");
-    $("dots").appendChild(d);
-  });
+  barra.objetivo(paso < lista.length ? lista[paso].objetivo : "Completado",
+                 Math.min(paso, lista.length - 1), lista.length);
+  barra.marcas(lista.map((_, i) => (i < paso ? "done" : i === paso ? "cur" : "")));
 
   const cont = $("pasos");
   cont.innerHTML = "";
@@ -1174,7 +1137,7 @@ function terminar() {
 let tecleado = "";
 
 const ocupado = () =>
-  !$("fin").hidden || !$("picker").hidden || !$("overlay").hidden;
+  !$("fin").hidden || !$("picker").hidden || !$("portada").classList.contains("hide");
 
 /**
  * El pegado.
@@ -1209,7 +1172,7 @@ document.addEventListener("paste", (ev) => {
 });
 
 document.addEventListener("keydown", (ev) => {
-  if (!$("fin").hidden || !$("picker").hidden || !$("overlay").hidden) return;
+  if (!$("fin").hidden || !$("picker").hidden || !$("portada").classList.contains("hide")) return;
   if (ev.key === "Enter") {
     const linea = tecleado;
     tecleado = "";
@@ -1258,6 +1221,11 @@ $("d-txt").addEventListener("click", () => alternar("w-txt", "d-txt"));
 // La terminal tambien se cierra. Detras no hay escritorio vacio: esta la marca.
 $("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
 
+// Minimizar solo esconde: nunca abre, asi que no necesita lo que arrastran los
+// botones del dock al abrir (pintar el correo, montar el juego).
+document.querySelectorAll("button.win-dot.min").forEach((b) =>
+  b.addEventListener("click", () => cerrar(b.dataset.win, b.dataset.dock)));
+
 $("mail-adjuntar").addEventListener("click", abrirPicker);
 $("mail-enviar").addEventListener("click", enviar);
 $("picker").addEventListener("click", (ev) => {
@@ -1272,10 +1240,10 @@ function reiniciar() {
   $("consola").querySelectorAll(".log").forEach((l) => l.remove());
   $("fin").hidden = true;
   $("picker").hidden = true;
-  $("overlay").hidden = false;
+  barra.jugando(false);
+  $("portada").classList.remove("hide");
   cerrar("w-game", "d-game");
   pintarPrompt();
-  log("Escribe help para ver los comandos disponibles.", "note");
   pintarCorreo();
   pintar();
 }
@@ -1283,15 +1251,13 @@ function reiniciar() {
 // El foco vive en el cazador de pegados. Se le devuelve al arrancar y despues
 // de cualquier clic en el escritorio, que es lo que se lo quita.
 $("play").addEventListener("click", () => {
-  $("overlay").hidden = true;
+  $("portada").classList.add("hide");
+  barra.jugando(true);
   enfocarEntrada();
 });
 $("desk").addEventListener("click", enfocarEntrada);
-$("restart").addEventListener("click", reiniciar);
 $("fin-again").addEventListener("click", reiniciar);
-$("fin-exit").addEventListener("click", () =>
-  window.parent.postMessage({ action: "close-simulator" }, "*"),
-);
+$("fin-exit").addEventListener("click", Barra.salir);
 
 reiniciar();
 
