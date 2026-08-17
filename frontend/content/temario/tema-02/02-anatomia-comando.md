@@ -13,7 +13,7 @@ La estructura general de un comando es siempre la misma:
   </div>
 </div>
 
-Las partes entre corchetes son opcionales: hay comandos que funcionan solo con su nombre. Esos tres colores se mantienen en todos los ejemplos del curso, así que puedes reconocer las partes de cualquier comando que veas en la terminal.
+Las partes entre corchetes son opcionales: hay comandos que funcionan solo con su nombre. Esos tres colores se mantienen en todos los ejemplos del curso, de modo que las partes de cualquier comando se reconocen a simple vista.
 
 ## Argumentos
 
@@ -27,7 +27,7 @@ ls /etc
 apt  bash.bashrc  group  hostname  hosts  passwd  profile  shadow  ssh  systemd
 ```
 
-También puedes pasar varios argumentos a la vez:
+También admite varios argumentos a la vez:
 
 ```bash
 ls /etc /home
@@ -61,7 +61,7 @@ drwxr-xr-x 3 estudiante estudiante 4096 mar 12 11:02 proyectos
 
 La opción `-l` hace que `ls` muestre el listado en formato largo, con información detallada de cada archivo: permisos, propietario, tamaño y fecha. Sin `-l`, solo muestra los nombres.
 
-Puedes combinar opciones escribiéndolas juntas o separadas, el resultado es el mismo:
+Las opciones se combinan juntas o separadas, y el resultado es el mismo:
 
 ```bash
 ls -l -r
@@ -109,11 +109,11 @@ drwxr-xr-x 3 estudiante estudiante 4.0K mar 12 11:02 proyectos
 -rw-r--r-- 1 estudiante estudiante   84 mar 12 11:05 notas.txt
 ```
 
-Eso es equivalente a `ls -lh`. Las opciones cortas (`-h`) y largas (`--human-readable`) hacen exactamente lo mismo. Las largas son más fáciles de leer cuando estás escribiendo scripts.
+Eso es equivalente a `ls -lh`. Las opciones cortas (`-h`) y largas (`--human-readable`) hacen exactamente lo mismo. Las largas son más fáciles de leer dentro de un script.
 
 ## Opciones y argumentos juntos
 
-Puedes combinar opciones y argumentos en el mismo comando:
+Opciones y argumentos se combinan en el mismo comando:
 
 ```bash
 ls -lh /usr/bin
@@ -132,6 +132,17 @@ total 142M
 Aquí `-lh` son las opciones y `/usr/bin` es el argumento. El resultado es un listado largo con tamaños legibles del directorio `/usr/bin`.
 
 El orden convencional es: primero las opciones, luego los argumentos. La mayoría de comandos lo esperan así.
+
+## Resumen
+
+| Forma | Significado |
+|---|---|
+| `comando` | El nombre del programa, lo único obligatorio |
+| `comando argumento` | Sobre qué actúa el comando |
+| `comando -o` | Opción corta, una letra |
+| `comando -ab` | Varias opciones cortas combinadas |
+| `comando --opcion` | Opción larga, más legible en scripts |
+| `comando -o argumento` | Opciones y argumentos en la misma línea |
 
 ---
 

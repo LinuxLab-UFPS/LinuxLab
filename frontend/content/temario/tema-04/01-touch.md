@@ -1,6 +1,6 @@
 ## Crear archivos
 
-En Linux casi todo termina siendo un archivo: tus apuntes, la configuración de un programa, un script. Crear uno desde la terminal es cuestión de un comando, y hay varias formas según lo que quieras dejar dentro.
+En Linux casi todo termina siendo un archivo: unos apuntes, la configuración de un programa, un script. Crear uno desde la terminal es cuestión de un comando, y hay varias formas según lo que quieras dejar dentro.
 
 ## touch
 
@@ -10,7 +10,7 @@ En Linux casi todo termina siendo un archivo: tus apuntes, la configuración de 
 touch notas.txt
 ```
 
-Si el archivo no existía, queda creado con cero bytes. Puedes comprobarlo con `ls -l`:
+Si el archivo no existía, queda creado con cero bytes, y `ls -l` lo confirma:
 
 ```bash
 ls -l notas.txt
@@ -30,7 +30,7 @@ Ese `0` es el tamaño. El archivo existe, pero no tiene contenido.
 touch enero.txt febrero.txt marzo.txt
 ```
 
-Y con llaves puedes generar la lista sin escribirla entera. Bash expande `{1..3}` antes de que `touch` la vea:
+Y con llaves se genera la lista sin escribirla entera. Bash expande `{1..3}` antes de que `touch` la vea:
 
 ```bash
 touch practica-{1..3}.txt
@@ -72,11 +72,11 @@ cat enero.txt febrero.txt
 
 Eso muestra primero el contenido de uno y después el del otro, seguidos. Leer un solo archivo es el caso más común, pero es en realidad un efecto secundario de lo que el comando sabe hacer.
 
-`cat` vuelca el archivo completo de una vez, así que sirve para cosas cortas. Con un archivo de miles de líneas se te va la pantalla de largo y sólo alcanzas a ver el final.
+`cat` vuelca el archivo completo de una vez, así que sirve para cosas cortas. Con un archivo de miles de líneas la salida desborda la pantalla y sólo queda visible el final.
 
 ## Crear un archivo con contenido
 
-`touch` deja el archivo vacío. Si quieres meterle algo desde el mismo comando, el operador `>` redirige la salida de un comando hacia un archivo:
+`touch` deja el archivo vacío. Para escribir algo en él desde el mismo comando, el operador `>` redirige la salida hacia un archivo:
 
 ```bash
 echo "Sistemas Operativos" > materia.txt
@@ -121,7 +121,7 @@ touch "mi archivo.txt"
 
 Por eso la costumbre en Linux es usar guiones o guiones bajos: `mi-archivo.txt`, `mi_archivo.txt`.
 
-Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que pidas `ls -a`. No es un mecanismo de seguridad, es sólo una convención para que la configuración no te estorbe cuando listas tu carpeta.
+Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que se use `ls -a`. No es un mecanismo de seguridad, es sólo una convención para que la configuración no estorbe al listar una carpeta.
 
 ```bash
 touch .configuracion
@@ -141,6 +141,18 @@ ls -a
 ```
 
 <!-- ACTIVIDAD: universidad-facultades -->
+
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `touch archivo` | Crea un archivo vacío, o actualiza su fecha si ya existe |
+| `touch a.txt b.txt` | Crea varios de una vez |
+| `cat archivo` | Muestra el contenido completo |
+| `cat a.txt b.txt` | Muestra un archivo detrás de otro |
+| `echo texto > archivo` | Escribe el texto, reemplazando lo que hubiera |
+| `echo texto >> archivo` | Añade el texto al final |
+| `ls -a` | Muestra también los archivos ocultos |
 
 ---
 

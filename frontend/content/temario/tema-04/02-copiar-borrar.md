@@ -18,7 +18,7 @@ Si el destino es un directorio, la copia entra ahí con su mismo nombre:
 cp notas.txt Documentos/
 ```
 
-Y puedes copiar varios archivos de una vez, siempre que el último argumento sea un directorio:
+También copia varios archivos de una vez, siempre que el último argumento sea un directorio:
 
 ```bash
 cp notas.txt tareas.txt informe.pdf Documentos/
@@ -26,7 +26,7 @@ cp notas.txt tareas.txt informe.pdf Documentos/
 
 ### Cuidado al sobrescribir
 
-Si el destino ya existe, `cp` lo reemplaza sin preguntar y sin avisar. La opción `-i` (interactive) te hace confirmar antes:
+Si el destino ya existe, `cp` lo reemplaza sin preguntar y sin avisar. La opción `-i` (interactive) pide confirmación antes:
 
 ```bash
 cp -i notas.txt respaldo.txt
@@ -64,7 +64,7 @@ rm respaldo.txt
 
 Esto es lo más importante de esta lección: **`rm` no manda nada a la papelera de reciclaje**. Lo que borras desde la terminal se borra, y no hay una carpeta donde ir a buscarlo después.
 
-La combinación `-rf` (recursivo y forzado) es la que más daño hace, porque borra directorios enteros sin preguntar ni una vez. Es una herramienta legítima y la vas a usar, pero conviene mirar dos veces la ruta antes de darle *Enter*.
+La combinación `-rf` (recursivo y forzado) es la que más daño hace, porque borra directorios enteros sin preguntar ni una vez. Es una herramienta legítima y de uso corriente, pero conviene mirar dos veces la ruta antes de darle *Enter*.
 
 Dos costumbres que ayudan:
 
@@ -129,6 +129,8 @@ rm *.png
 Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el contenido del directorio, y `rm *.txt` en el directorio equivocado borra los archivos equivocados.
 
 
+<!-- ACTIVIDAD: limpieza-con-comodines -->
+
 ## Resumen
 
 | Comando | Qué hace |
@@ -140,8 +142,6 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 
 Las variantes recursivas de `cp` y `rm`, junto con `rmdir`, se cubrieron en
 Operaciones con directorios.
-
-<!-- ACTIVIDAD: limpieza-con-comodines -->
 
 ---
 

@@ -4,7 +4,7 @@
 >
 > Stallings, W. *Operating Systems: Internals and Design Principles*, 9th Ed.
 
-El sistema operativo es el intermediario entre el hardware del computador y tú. Sin él, el procesador, la memoria y el disco serían piezas inertes: nadie decidiría qué programa usa la CPU, dónde se guarda cada archivo ni cómo llega a la pantalla lo que escribes. El sistema operativo administra esos recursos y te permite usarlos sin lidiar directamente con el hardware.
+El sistema operativo es el intermediario entre el hardware del computador y la persona que lo usa. Sin él, el procesador, la memoria y el disco serían piezas inertes: nadie decidiría qué programa usa la CPU, dónde se guarda cada archivo ni cómo llega a la pantalla el texto escrito. El sistema operativo administra esos recursos y permite usarlos sin lidiar directamente con el hardware.
 
 ## ¿Qué es Linux y dónde está?
 
@@ -21,7 +21,7 @@ Linux empezó como el proyecto personal de un estudiante universitario y hoy sos
 
 En 1969, investigadores de los laboratorios Bell de AT&T desarrollaron **Unix**, el sistema operativo que marcó un antes y un después en la computación. Lo que lo hizo especial no fue lo que podía hacer, sino cómo estaba construido: al escribirse en lenguaje C podía adaptarse a máquinas distintas con relativa facilidad, mientras que el resto de sistemas de la época estaban atados al hardware para el que fueron escritos. Esa portabilidad lo convirtió en el favorito de universidades, centros de investigación y programadores.
 
-Unix también introdujo conceptos que hoy damos por sentados y que verás a lo largo de este curso:
+Unix también introdujo conceptos que hoy se dan por sentados y que reaparecen a lo largo de este curso:
 
 - **Sistema de archivos jerárquico:** todo organizado en un árbol de directorios que parte de una raíz.
 - **Permisos de usuario:** quién puede leer, modificar o ejecutar cada archivo.

@@ -180,6 +180,22 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 
 <!-- SIMULATOR: retos-de-vi -->
 
+## Resumen
+
+| Tecla o comando | Efecto en vi |
+|---|---|
+| `vi archivo` | Abre el archivo en modo comando |
+| <kbd>i</kbd> | Pasa a modo inserción |
+| <kbd>Esc</kbd> | Vuelve a modo comando |
+| `:w` | Guarda |
+| `:q` | Sale |
+| `:wq` | Guarda y sale |
+| `:q!` | Sale descartando los cambios |
+| `dd` | Borra la línea actual |
+| `yy` y `p` | Copia la línea y la pega |
+| `u` | Deshace el último cambio |
+| `/texto` | Busca hacia adelante |
+
 ---
 
 **Fuentes**

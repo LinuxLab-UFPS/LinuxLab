@@ -1,0 +1,54 @@
+{
+  "id": "tema-07",
+  "number": 7,
+  "title": "Búsqueda",
+  "description": "Las dos búsquedas del día a día: grep dentro de los archivos y find entre ellos, con expresiones regulares para afinar el patrón",
+  "subtopics": [
+    {
+      "id": "grep",
+      "title": "Buscar dentro de los archivos",
+      "file": "01-grep.md"
+    },
+    {
+      "id": "expresiones-regulares",
+      "title": "Expresiones regulares",
+      "file": "02-expresiones-regulares.md"
+    },
+    {
+      "id": "find",
+      "title": "Buscar archivos con find",
+      "file": "03-find.md"
+    },
+    {
+      "id": "ordenar",
+      "title": "Ordenar los resultados",
+      "file": "04-ordenar.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 17 y 19: buscar archivos y expresiones regulares · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "GNU Grep: manual de referencia",
+      "url": "https://www.gnu.org/software/grep/manual/",
+      "detail": "gnu.org · Todas las opciones y los tres dialectos de expresiones regulares"
+    },
+    {
+      "type": "link",
+      "title": "GNU Findutils: manual de referencia",
+      "url": "https://www.gnu.org/software/findutils/manual/",
+      "detail": "gnu.org · Condiciones y acciones de find, con ejemplos"
+    },
+    {
+      "type": "link",
+      "title": "regex101",
+      "url": "https://regex101.com/",
+      "detail": "Prueba una expresión regular y explica cada símbolo mientras la escribes"
+    }
+  ]
+}

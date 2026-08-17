@@ -67,11 +67,12 @@ export const syllabus: Topic[] = [
     number: 5,
     slug: "permisos",
     title: "Permisos",
-    description: "Gestión de permisos con chmod, chown y umask.",
+    description: "Dueño, grupo y permisos de archivos y directorios, chmod y umask.",
     subTopics: [
-      { number: 1, title: "chmod" },
-      { number: 2, title: "chown" },
-      { number: 3, title: "umask" },
+      { number: 1, title: "Dueño, grupo y permisos" },
+      { number: 2, title: "Cambiar permisos con chmod" },
+      { number: 3, title: "Permisos sobre directorios" },
+      { number: 4, title: "Permisos por defecto" },
     ],
   },
   {
@@ -88,11 +89,13 @@ export const syllabus: Topic[] = [
     number: 7,
     slug: "busqueda",
     title: "Búsqueda",
-    description: "Patrones, expresiones regulares y uso de find y grep.",
+    description:
+      "Buscar texto dentro de los archivos con grep, localizar archivos con find y ordenar los resultados.",
     subTopics: [
-      { number: 1, title: "Patrones" },
+      { number: 1, title: "Buscar dentro de los archivos" },
       { number: 2, title: "Expresiones regulares" },
-      { number: 3, title: "find, grep" },
+      { number: 3, title: "Buscar archivos con find" },
+      { number: 4, title: "Ordenar los resultados" },
     ],
   },
   {

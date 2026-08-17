@@ -2,11 +2,11 @@
 
 ## Moverse por el sistema
 
-El sistema de archivos de Linux es una jerarquía de directorios. Para moverte por ella desde la terminal necesitas saber usar ciertos comandos. No son muchos, pero los vas a usar todo el tiempo.
+El sistema de archivos de Linux es una jerarquía de directorios. Moverse por ella desde la terminal requiere unos pocos comandos. Son pocos, pero aparecen en todo lo que sigue.
 
 ## pwd: ¿dónde estoy?
 
-`pwd` (print working directory) te dice en qué directorio estás en este momento:
+`pwd` (print working directory) indica cuál es el directorio actual:
 
 ```bash
 pwd
@@ -16,7 +16,7 @@ pwd
 /home/estudiante
 ```
 
-Siempre que no sepas dónde estás parado, `pwd` te lo dice.
+`pwd` es la respuesta cada vez que se pierde la referencia de dónde está parada la terminal.
 
 ## ls: ¿qué hay aquí?
 
@@ -60,13 +60,13 @@ drwxr-xr-x 3 estudiante estudiante 4096 mar 12 11:02 proyectos
 
 ## cd: moverse entre directorios
 
-`cd` (change directory) te mueve a otro directorio:
+`cd` (change directory) cambia el directorio actual:
 
 ```bash
 cd Documentos
 ```
 
-Puedes usar rutas absolutas (desde la raíz `/`) o relativas (desde donde estás):
+Admite rutas absolutas (desde la raíz `/`) y relativas (desde el directorio actual):
 
 ```bash
 # Ruta absoluta
@@ -79,7 +79,7 @@ cd ..
 cd
 ```
 
-`cd` sin argumentos siempre te lleva a tu directorio de inicio.
+`cd` sin argumentos vuelve siempre al directorio de inicio.
 
 ## mkdir: crear un directorio
 
@@ -121,9 +121,24 @@ proyectos
     └── practicas
 ```
 
-Si no tienes `tree` instalado puedes conseguirlo con el gestor de paquetes de tu distribución. En LinuxLab ya está disponible.
+`tree` no viene instalado en todas las distribuciones y se consigue con el gestor de paquetes. En LinuxLab ya está disponible.
 
 <!-- SIMULATOR: travesia-del-arbol -->
+
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `pwd` | Muestra el directorio actual |
+| `ls` | Lista el contenido del directorio |
+| `ls -l` | Lista con permisos, dueño, tamaño y fecha |
+| `ls -a` | Incluye los archivos ocultos |
+| `cd ruta` | Entra en un directorio |
+| `cd ..` | Sube un nivel |
+| `cd` | Vuelve al directorio de inicio |
+| `mkdir nombre` | Crea un directorio |
+| `touch nombre` | Crea un archivo vacío |
+| `tree` | Dibuja la jerarquía completa |
 
 ---
 

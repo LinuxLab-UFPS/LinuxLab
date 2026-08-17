@@ -2,9 +2,9 @@
 
 Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos.
 
-La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema responde a tus clics. Es lo que conoce cualquiera que venga de Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
+La **interfaz gráfica (GUI)** son ventanas, íconos y menús: el sistema responde a los clics del ratón. Es lo que trae cualquier equipo con Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
 
-La **interfaz de línea de comandos (CLI)** es texto puro: escribes lo que quieres hacer y el sistema lo ejecuta. La diferencia de fondo está ahí: cuando haces clic en un ícono, es el computador el que te está diciendo qué puedes hacer; cuando escribes un comando, eres tú quien le dice al computador qué tiene que hacer.
+La **interfaz de línea de comandos (CLI)** es texto puro: se escribe la orden y el sistema la ejecuta. La diferencia de fondo está ahí. Un ícono ofrece las acciones que alguien decidió mostrar; un comando expresa cualquier acción que el sistema sepa hacer.
 
 <!-- ILLUSTRATION: gui-cli -->
 
@@ -19,13 +19,13 @@ Un **entorno de escritorio** es esa capa visual del sistema: las ventanas, el pa
 Detrás de lo que ves hay varias piezas, cada una encargada de una parte del trabajo:
 
 - **Gestor de ventanas:** dibuja los bordes y las barras de título, y se encarga de mover, redimensionar, minimizar y apilar ventanas. También maneja los escritorios virtuales.
-- **Panel o barra de tareas:** muestra las aplicaciones abiertas, el reloj y la bandeja del sistema, y te deja saltar de una ventana a otra.
-- **Menú de aplicaciones:** el lanzador desde donde abres los programas instalados, casi siempre con un buscador.
+- **Panel o barra de tareas:** muestra las aplicaciones abiertas, el reloj y la bandeja del sistema, y permite saltar de una ventana a otra.
+- **Menú de aplicaciones:** el lanzador de los programas instalados, casi siempre con un buscador.
 - **Explorador de archivos:** recorrer carpetas, copiar, mover y renombrar con el ratón, sin escribir rutas.
 - **Centro de configuración:** pantalla, teclado, sonido, red, tema y cuentas de usuario en un solo lugar.
 - **Notificaciones:** los avisos del sistema y de las aplicaciones, más los indicadores de batería, volumen y conexión.
 
-Nada de eso es parte del sistema operativo en sí. Puedes desinstalar el entorno completo y el sistema sigue funcionando; simplemente arranca en modo texto.
+Nada de eso es parte del sistema operativo en sí. El entorno completo se puede desinstalar y el sistema sigue funcionando: arranca en modo texto.
 
 ### GNOME y KDE Plasma
 
@@ -45,7 +45,7 @@ Los dos entornos más usados en Linux resuelven el mismo problema con filosofía
 | **Personalización** | Con extensiones y GNOME Tweaks | Integrada en Preferencias del sistema |
 | **Librerías gráficas** | GTK | Qt |
 
-No son los únicos. **XFCE** y **LXQt** están pensados para equipos con pocos recursos, y **Cinnamon**, el de Linux Mint, busca ser familiar para quien llega desde Windows. Incluso puedes instalar varios en el mismo sistema y elegir cuál usar al iniciar sesión.
+No son los únicos. **XFCE** y **LXQt** están pensados para equipos con pocos recursos, y **Cinnamon**, el de Linux Mint, busca ser familiar para quien llega desde Windows. Incluso se pueden instalar varios en el mismo sistema y elegir cuál usar al iniciar sesión.
 
 Lo importante no es qué entornos existen, sino que **en Linux la interfaz gráfica y el sistema operativo son cosas separadas**. El sistema funciona aunque no haya pantalla: en servidores, Linux corre sin entorno gráfico porque no lo necesita, y eso lo hace más eficiente, más seguro y más flexible.
 
@@ -53,9 +53,9 @@ Lo importante no es qué entornos existen, sino que **en Linux la interfaz gráf
 
 Para el uso del día a día la interfaz gráfica funciona perfecto, pero tiene límites. Para administrar un servidor, automatizar tareas, manejar archivos en cantidad o entender de verdad qué está haciendo el sistema, la línea de comandos no tiene competencia: una sola línea en la terminal reemplaza varios minutos de clics navegando menús, y hay cosas que directamente no se pueden hacer desde la interfaz gráfica.
 
-La otra ventaja es que los comandos son los mismos en todas partes. El escritorio de Ubuntu se ve diferente al de Fedora, que se ve diferente al de Arch, pero la terminal es idéntica en las tres: lo que aprendas aquí te sirve en cualquier distribución.
+La otra ventaja es que los comandos son los mismos en todas partes. El escritorio de Ubuntu se ve diferente al de Fedora, que se ve diferente al de Arch, pero la terminal es idéntica en las tres: lo que se aprende aquí sirve en cualquier distribución.
 
-En LinuxLab vas a trabajar desde la terminal. No porque la interfaz gráfica no exista, sino porque dominar la terminal es lo que te da control real sobre el sistema.
+En LinuxLab todo el trabajo ocurre en la terminal. No porque la interfaz gráfica no exista, sino porque dominar la terminal es lo que da control real sobre el sistema.
 
 ---
 
