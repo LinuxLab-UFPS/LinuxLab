@@ -46,7 +46,6 @@ body{
 .win{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
 .win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
 .win-dot{width:11px;height:11px;border-radius:50%}
-.win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
 /* De arriba hacia abajo, como una terminal de verdad: la primera linea queda
    arriba y el prompt va detras de la ultima. Antes iba `justify-content:
    flex-end` y el texto crecia hacia arriba desde el borde inferior. */
@@ -162,7 +161,6 @@ body{
         <span class="win-dot" style="background:#FF5F56"></span>
         <span class="win-dot" style="background:#FFBD2E"></span>
         <span class="win-dot" style="background:#27C93F"></span>
-        <span class="win-title">filtro de permisos</span>
       </div>
       <div class="console" id="console">
         <div class="prompt">
