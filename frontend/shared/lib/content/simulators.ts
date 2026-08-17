@@ -55,7 +55,7 @@ const RAW = [
     id: "descifrar-el-enigma",
     title: "Descifrar el enigma",
     description:
-      "Una unidad incautada esconde cuatro datos del caso. Sácalos con grep, expresiones regulares, find y sort, y descífralo.",
+      "Usa grep, find y sort para navegar y encontrar datos ocultos en una unidad de almacenamiento sospechosa.",
     topicNumber: 7,
     file: "simulador-busqueda.html",
   },
