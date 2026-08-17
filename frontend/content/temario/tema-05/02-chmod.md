@@ -181,6 +181,8 @@ drwx------ 1 andres_torres grp_cec1648c 14 Aug 10 22:19 sub
 
 Conviene mirar ese resultado con atención. El `700` era el permiso adecuado para el directorio, pero se aplicó también a `uno.txt`, que ha quedado ejecutable sin ser un programa. Un `chmod -R` con un número pensado para directorios estropea los archivos, y con un número pensado para archivos deja los directorios inservibles. La razón está en el subtema siguiente: `x` no significa lo mismo en un directorio que en un archivo.
 
+<!-- ACTIVIDAD: cada-archivo-en-su-sitio -->
+
 ## Resumen
 
 | Comando | Efecto |
@@ -195,8 +197,6 @@ Conviene mirar ese resultado con atención. El `700` era el permiso adecuado par
 | `chmod g+r,o-r archivo` | Encadena cambios con comas |
 | `chmod u+wx,g+w archivo` | Varios permisos en cada tramo de la coma |
 | `chmod -R 700 carpeta` | Aplica el cambio a todo el contenido |
-
-<!-- ACTIVIDAD: cada-archivo-en-su-sitio -->
 
 ---
 

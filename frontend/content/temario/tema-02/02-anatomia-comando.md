@@ -133,6 +133,17 @@ Aquí `-lh` son las opciones y `/usr/bin` es el argumento. El resultado es un li
 
 El orden convencional es: primero las opciones, luego los argumentos. La mayoría de comandos lo esperan así.
 
+## Resumen
+
+| Forma | Significado |
+|---|---|
+| `comando` | El nombre del programa, lo único obligatorio |
+| `comando argumento` | Sobre qué actúa el comando |
+| `comando -o` | Opción corta, una letra |
+| `comando -ab` | Varias opciones cortas combinadas |
+| `comando --opcion` | Opción larga, más legible en scripts |
+| `comando -o argumento` | Opciones y argumentos en la misma línea |
+
 ---
 
 **Fuentes**

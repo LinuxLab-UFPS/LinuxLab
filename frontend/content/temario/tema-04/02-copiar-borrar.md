@@ -129,6 +129,8 @@ rm *.png
 Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el contenido del directorio, y `rm *.txt` en el directorio equivocado borra los archivos equivocados.
 
 
+<!-- ACTIVIDAD: limpieza-con-comodines -->
+
 ## Resumen
 
 | Comando | Qué hace |
@@ -140,8 +142,6 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 
 Las variantes recursivas de `cp` y `rm`, junto con `rmdir`, se cubrieron en
 Operaciones con directorios.
-
-<!-- ACTIVIDAD: limpieza-con-comodines -->
 
 ---
 

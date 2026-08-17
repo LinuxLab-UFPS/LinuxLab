@@ -125,6 +125,21 @@ proyectos
 
 <!-- SIMULATOR: travesia-del-arbol -->
 
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `pwd` | Muestra el directorio actual |
+| `ls` | Lista el contenido del directorio |
+| `ls -l` | Lista con permisos, dueño, tamaño y fecha |
+| `ls -a` | Incluye los archivos ocultos |
+| `cd ruta` | Entra en un directorio |
+| `cd ..` | Sube un nivel |
+| `cd` | Vuelve al directorio de inicio |
+| `mkdir nombre` | Crea un directorio |
+| `touch nombre` | Crea un archivo vacío |
+| `tree` | Dibuja la jerarquía completa |
+
 ---
 
 **Fuentes**

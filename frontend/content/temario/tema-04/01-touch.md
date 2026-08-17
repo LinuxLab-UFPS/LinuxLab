@@ -142,6 +142,18 @@ ls -a
 
 <!-- ACTIVIDAD: universidad-facultades -->
 
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `touch archivo` | Crea un archivo vacío, o actualiza su fecha si ya existe |
+| `touch a.txt b.txt` | Crea varios de una vez |
+| `cat archivo` | Muestra el contenido completo |
+| `cat a.txt b.txt` | Muestra un archivo detrás de otro |
+| `echo texto > archivo` | Escribe el texto, reemplazando lo que hubiera |
+| `echo texto >> archivo` | Añade el texto al final |
+| `ls -a` | Muestra también los archivos ocultos |
+
 ---
 
 **Fuentes**

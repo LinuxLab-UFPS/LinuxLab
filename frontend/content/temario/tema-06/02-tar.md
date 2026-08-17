@@ -142,6 +142,8 @@ La opción `-r` entra en las subcarpetas, que en `zip` no es automático como en
 
 Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo que se quede en el mundo Unix, porque conserva permisos y propietarios; `zip` para lo que vaya a abrir alguien desde otro sistema.
 
+<!-- SIMULATOR: escritorio-comprimido -->
+
 ## Resumen
 
 | Comando | Efecto |
@@ -154,8 +156,6 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 | `tar -cf plano.tar carpeta` | Empaqueta sin comprimir |
 | `zip -rq paquete.zip carpeta` | Empaqueta y comprime en formato zip |
 | `unzip paquete.zip` | Extrae un zip |
-
-<!-- SIMULATOR: escritorio-comprimido -->
 
 ---
 

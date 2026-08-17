@@ -127,6 +127,18 @@ echo $PATH
 
 El nuevo directorio queda al inicio, por lo que el shell lo revisará primero.
 
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `nombre=valor` | Crea una variable local, sin espacios alrededor del `=` |
+| `echo $nombre` | Muestra su contenido |
+| `export nombre` | La convierte en variable de entorno |
+| `export nombre=valor` | Crea y exporta en una sola línea |
+| `env` | Lista todas las variables de entorno |
+| `unset nombre` | Elimina la variable |
+| `echo $PATH` | Muestra dónde busca el shell los programas |
+
 ---
 
 **Fuentes**

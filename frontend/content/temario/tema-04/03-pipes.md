@@ -185,6 +185,18 @@ cat logo.txt
 
 <!-- ACTIVIDAD: mensaje-oculto -->
 
+## Resumen
+
+| Comando | Efecto |
+|---|---|
+| `head archivo` | Las primeras diez líneas |
+| `head -n 3 archivo` | Las primeras tres |
+| `tail archivo` | Las últimas diez líneas |
+| `wc -l archivo` | Cuenta las líneas |
+| `comando \| otro` | Pasa la salida del primero como entrada del segundo |
+| `comando > archivo` | Guarda la salida en un archivo |
+| `comando >> archivo` | Añade la salida al final del archivo |
+
 ---
 
 **Fuentes**

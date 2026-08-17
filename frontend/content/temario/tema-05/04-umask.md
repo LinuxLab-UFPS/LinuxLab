@@ -81,6 +81,8 @@ drwxrwsrwx 1 andres_torres grp_cec1648c 0 Aug 10 22:22 u4
 
 El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar la terminal. Los archivos ya existentes no se ven alterados: `umask` decide con qué permisos se crean las cosas, `chmod` cambia las que ya están. Para que un valor distinto persista hay que escribirlo en el archivo `.bashrc` de la carpeta personal, que es el que se lee al abrir cada sesión.
 
+<!-- SIMULATOR: filtro-de-permisos -->
+
 ## Resumen
 
 | Comando | Efecto |
@@ -89,8 +91,6 @@ El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar
 | `umask 027` | Lo cambia para el resto de la sesión |
 | `666 - umask` | Permisos iniciales de un archivo |
 | `777 - umask` | Permisos iniciales de un directorio |
-
-<!-- SIMULATOR: filtro-de-permisos -->
 
 ---
 
