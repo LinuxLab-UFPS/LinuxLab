@@ -21,12 +21,12 @@
   flex-shrink: 0; position: relative; z-index: 60;
 }
 
+/* El icono de la plataforma, el mismo de la pestaña del navegador. Trae su
+   propio fondo redondeado, asi que no lleva marco: el recuadro rojo era del
+   dibujo del prompt al que sustituye. */
 .hdr-logo {
-  width: 28px; height: 28px; border-radius: 5px;
-  border: 1.5px solid var(--red); color: var(--red);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 900; letter-spacing: -.5px;
-  filter: drop-shadow(0 0 6px rgba(255, 0, 48, .5)); flex-shrink: 0;
+  width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px;
+  filter: drop-shadow(0 0 7px rgba(255, 0, 48, .35));
 }
 .hdr-marca {
   font-size: 14px; font-weight: 700; letter-spacing: .03em; color: var(--red);

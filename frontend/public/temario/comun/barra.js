@@ -61,7 +61,7 @@
     if (!hdr) throw new Error("barra.js: falta el <div class=\"hdr\"> en el HTML");
 
     hdr.innerHTML =
-      '<div class="hdr-logo">&gt;_</div>' +
+      '<img class="hdr-logo" src="/icon-dark-32x32.png" alt="" width="32" height="32">' +
       '<span class="hdr-marca">Linux<span class="wh">Lab</span></span>' +
       '<div class="hdr-sep"></div>' +
       (opc.progreso === false
