@@ -29,11 +29,7 @@ body{
   background:var(--bg);position:relative;
 }
 
-/* La cabecera vive en /temario/comun/barra.css. El ritmo no es una accion de
-   la barra sino un interruptor de este simulador, asi que no va de verde. */
-.modo-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
-.modo-btn:hover{color:var(--text);border-color:var(--muted)}
-.modo-btn[data-activo="true"]{color:var(--gold);border-color:var(--gold)}
+/* La cabecera vive en /temario/comun/barra.css */
 
 /* ---------- disposición ---------- */
 .stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
@@ -367,16 +363,17 @@ function leerChmod(argumento, modo) {
 
 const $ = (id) => document.getElementById(id);
 
-// El ritmo es propio de este simulador: la barra le deja su hueco antes de los
-// puntos. Reiniciar devuelve a la portada, que aqui hay tiempo de por medio.
+// La velocidad del contrarreloj se cambia en marcha: la barra le deja su hueco
+// antes de los puntos. Reiniciar devuelve a la portada.
 const barra = Barra.montar({
-  acciones: '<button class="modo-btn" id="ritmo" data-activo="false">Normal</button>',
+  acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
   onReiniciar: () => volverAlInicio(),
 });
 
 /* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
    con mas margen para pensar la cuenta, que es de lo que va el tema. */
-const RITMOS = { normal: 1, calma: 1.8 };
+// x0.5 es el doble de tiempo para el mismo reto.
+const RITMOS = { normal: 1, calma: 2 };
 let ritmo = "normal";
 
 let orden = [], ronda = 0, puntos = 0, tecleado = "";
@@ -487,7 +484,7 @@ function cambiarRitmo() {
   restante *= factor;
   pintarBarra();
   const b = $("ritmo");
-  b.textContent = ritmo === "calma" ? "Con calma" : "Normal";
+  b.textContent = ritmo === "calma" ? "x0.5" : "x1";
   b.dataset.activo = String(ritmo === "calma");
 }
 

@@ -276,8 +276,28 @@ const MODOS = [
 const $ = (id) => document.getElementById(id);
 
 // Reiniciar aqui devuelve a la portada: los retos van contrarreloj y empezar
-// de golpe sin avisar es empezar ya perdiendo.
-const barra = Barra.montar({ onReiniciar: () => volverAlInicio() });
+// de golpe sin avisar es empezar ya perdiendo. Al lado, el interruptor que
+// baja la velocidad del contrarreloj a la mitad.
+const barra = Barra.montar({
+  acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  onReiniciar: () => volverAlInicio(),
+});
+
+// x0.5 es el doble de tiempo para el mismo reto.
+const RITMOS = { normal: 1, calma: 2 };
+let ritmo = "normal";
+
+function cambiarRitmo() {
+  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
+  ritmo = ritmo === "normal" ? "calma" : "normal";
+  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
+  // pegue un salto al cambiar de velocidad a mitad de reto.
+  limite *= factor;
+  restante *= factor;
+  const b = $("ritmo");
+  b.textContent = ritmo === "calma" ? "x0.5" : "x1";
+  b.dataset.activo = String(ritmo === "calma");
+}
 
 let orden = [], reto = 0, puntos = 0;
 let lineas = [], meta = [], fila = 0, col = 0;
@@ -330,7 +350,7 @@ function pintarCabecera() {
 
 /* ---------- tiempo ---------- */
 function arrancarTiempo() {
-  limite = orden[reto].segundos;
+  limite = orden[reto].segundos * RITMOS[ritmo];
   restante = limite;
   const barraT = $("timer");
   barraT.className = "timer-fill";
@@ -512,6 +532,7 @@ document.addEventListener("keydown", (e) => {
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
 $("res-exit").addEventListener("click", Barra.salir);
+$("ritmo").addEventListener("click", cambiarRitmo);
 
 barajarModos();
 pintarCabecera();

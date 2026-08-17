@@ -126,6 +126,17 @@
 .restart-btn.neutro { background: transparent; border-color: var(--border); color: var(--muted); }
 .restart-btn.neutro:hover { color: var(--text); border-color: var(--muted); }
 
+/* Interruptor de velocidad del contrarreloj. Va en dorado, la familia del
+   tiempo y los puntos, y no en el verde de reiniciar: no reinicia nada. */
+.speed-btn {
+  background: rgba(255, 196, 0, .07); border: 1px solid var(--gold);
+  border-radius: 4px; color: var(--gold); font-family: var(--mono);
+  font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer;
+  flex-shrink: 0; min-width: 42px; transition: background .2s;
+}
+.speed-btn:hover { background: rgba(255, 196, 0, .16); }
+.speed-btn[data-activo="true"] { background: rgba(255, 196, 0, .24); }
+
 /* Salir vive aqui desde que el sitio dejo de dibujar su propia barra encima. */
 .exit-btn {
   display: flex; align-items: center; gap: 6px;
