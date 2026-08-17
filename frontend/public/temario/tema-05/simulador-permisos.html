@@ -372,6 +372,9 @@ const barra = Barra.montar({
 // x0.5 es el doble de tiempo para el mismo reto.
 const RITMOS = { normal: 1, calma: 2 };
 let ritmo = "normal";
+// El mismo hueco que en vi: entre una ronda y la siguiente el teclado no
+// cuenta, o lo pulsado ahi cae sobre el archivo recien puesto en la mesa.
+let transicion = false;
 
 let orden = [], ronda = 0, puntos = 0, tecleado = "";
 let actual = null, restante = 0, limite = 0, tick = null, jugando = false;
@@ -582,6 +585,7 @@ function fallar(motivo) {
 
 function ganarRonda() {
   clearInterval(tick);
+  transicion = true;
   puntos += 100 + Math.round((restante / limite) * 400);
   escribir("aprobado", "ok");
   estado("ok");
@@ -593,6 +597,7 @@ function ganarRonda() {
 }
 
 function perderRonda() {
+  transicion = true;
   escribir("se acabó el tiempo para este archivo", "note");
   estado("error");
   setTimeout(siguiente, 900);
@@ -605,6 +610,7 @@ function siguiente() {
 }
 
 function cargarRonda() {
+  transicion = false;
   const r = orden[ronda];
   actual = r.tipo === "chmod" ? { modo: r.datos.modo } : { mascara: 0o022 };
   tecleado = "";
@@ -642,6 +648,7 @@ function volverAlInicio() {
 }
 
 document.addEventListener("keydown", (e) => {
+  if (transicion) { e.preventDefault(); return }
   if (!jugando) {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
     return;
