@@ -251,23 +251,23 @@ const tiene = (modo, quien, bit) => Boolean((modo >> BLOQUES[quien]) & bit);
    el modo resultante, no contra el texto tecleado: por eso valen tanto la forma
    octal como la simbólica, y cualquier camino que llegue al mismo sitio. */
 const EXIGENCIAS = [
-  { id:"g+r", texto:"el grupo tiene que poder leerlo",        ok:(m)=> tiene(m,"g",R) },
-  { id:"g+w", texto:"el grupo tiene que poder modificarlo",   ok:(m)=> tiene(m,"g",W) },
-  { id:"g-w", texto:"el grupo no debe poder modificarlo",     ok:(m)=>!tiene(m,"g",W) },
-  { id:"g-r", texto:"el grupo no debe poder leerlo",          ok:(m)=>!tiene(m,"g",R) },
-  { id:"o-r", texto:"los demás no deben poder leerlo",        ok:(m)=>!tiene(m,"o",R) },
-  { id:"o+r", texto:"los demás tienen que poder leerlo",      ok:(m)=> tiene(m,"o",R) },
-  { id:"o-w", texto:"los demás no deben poder modificarlo",   ok:(m)=>!tiene(m,"o",W) },
-  { id:"u+x", texto:"tú tienes que poder ejecutarlo",         ok:(m)=> tiene(m,"u",X) },
-  { id:"u+w", texto:"tú tienes que poder modificarlo",        ok:(m)=> tiene(m,"u",W) },
-  { id:"a-x", texto:"nadie debe poder ejecutarlo",            ok:(m)=>!tiene(m,"u",X)&&!tiene(m,"g",X)&&!tiene(m,"o",X) },
-  { id:"solo-tu", texto:"sólo tú debes poder tocarlo",        ok:(m)=>((m>>3)&7)===0 && (m&7)===0 },
+  { id:"g+r", texto:"El grupo debe poder leerlo.",           ok:(m)=> tiene(m,"g",R) },
+  { id:"g+w", texto:"El grupo debe poder modificarlo.",      ok:(m)=> tiene(m,"g",W) },
+  { id:"g-w", texto:"El grupo no debe poder modificarlo.",   ok:(m)=>!tiene(m,"g",W) },
+  { id:"g-r", texto:"El grupo no debe poder leerlo.",        ok:(m)=>!tiene(m,"g",R) },
+  { id:"o-r", texto:"Los otros no deben poder leerlo.",      ok:(m)=>!tiene(m,"o",R) },
+  { id:"o+r", texto:"Los otros deben poder leerlo.",         ok:(m)=> tiene(m,"o",R) },
+  { id:"o-w", texto:"Los otros no deben poder modificarlo.", ok:(m)=>!tiene(m,"o",W) },
+  { id:"u+x", texto:"El usuario debe poder ejecutarlo.",     ok:(m)=> tiene(m,"u",X) },
+  { id:"u+w", texto:"El usuario debe poder modificarlo.",    ok:(m)=> tiene(m,"u",W) },
+  { id:"a-x", texto:"Nadie debe poder ejecutarlo.",          ok:(m)=>!tiene(m,"u",X)&&!tiene(m,"g",X)&&!tiene(m,"o",X) },
+  { id:"solo-usuario", texto:"Ni el grupo ni los otros deben tener ningún permiso.", ok:(m)=>((m>>3)&7)===0 && (m&7)===0 },
 ];
 
 /* Pares que se contradicen y no pueden salir en el mismo expediente. */
 const INCOMPATIBLES = [
   ["g+r","g-r"], ["g+w","g-w"], ["o+r","o-r"],
-  ["g+r","solo-tu"], ["g+w","solo-tu"], ["o+r","solo-tu"],
+  ["g+r","solo-usuario"], ["g+w","solo-usuario"], ["o+r","solo-usuario"],
   ["u+x","a-x"],
 ];
 
@@ -433,7 +433,7 @@ function pintarExpediente() {
       .forEach(([que, letras]) => {
         const el = document.createElement("div");
         el.className = "need";
-        el.textContent = `cada ${que} se crea con ${letras}`;
+        el.textContent = `Cada ${que} se crea con ${letras}.`;
         need.appendChild(el);
       });
   }
@@ -567,7 +567,7 @@ function resolverChmod(partes, r) {
 
   const faltan = r.datos.pedidas.filter((e) => !e.ok(nuevo));
   if (faltan.length === 0) return ganarRonda();
-  fallar(`queda pendiente: ${faltan[0].texto}`);
+  fallar(`queda pendiente. ${faltan[0].texto}`);
 }
 
 function fallar(motivo) {
