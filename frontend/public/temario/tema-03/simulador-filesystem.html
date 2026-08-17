@@ -87,12 +87,6 @@ body{
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;}
 #flash.on{opacity:1}
 
-/* Colores de los modos dentro de la tarjeta de ayuda. */
-.hk-normal{color:var(--muted)}
-.hk-bonus{color:var(--gold)}
-.hk-touch{color:var(--blue)}
-.hk-hidden{color:var(--orange)}
-
 /* RESULTS overlay */
 #results-overlay{
   position:absolute;inset:0;
@@ -173,10 +167,10 @@ const barra = Barra.montar({
     '<div class="rbadge" id="badge-touch">&#10022; TOUCH</div>' +
     '<div class="rbadge" id="badge-hidden">? OCULTO</div>',
   ayuda: [
-    { clave: 'Normal', tono: 'normal', texto: 'navega al directorio destino' },
-    { clave: 'Bonus',  tono: 'bonus',  texto: 'llega al destino con un único <code>cd</code> de ruta absoluta' },
-    { clave: 'Touch',  tono: 'touch',  texto: 'crea el archivo indicado con <code>touch /ruta/absoluta/archivo</code> desde /' },
-    { clave: 'Oculto', tono: 'hidden', texto: 'encuentra el archivo oculto usando <code>ls -a</code> y sigue las pistas' },
+    { clave: 'Normal', tono: 'verde',   texto: 'Navega al directorio destino.' },
+    { clave: 'Bonus',  tono: 'oro',     texto: 'Llega al destino con un único <code>cd</code> de ruta absoluta.' },
+    { clave: 'Touch',  tono: 'azul',    texto: 'Crea el archivo indicado desde la raíz con <code>touch /ruta/absoluta/archivo</code>.' },
+    { clave: 'Oculto', tono: 'naranja', texto: 'Encuentra el archivo oculto con <code>ls -a</code> y sigue las pistas.' },
   ],
   onReiniciar: () => empezar(),
 });

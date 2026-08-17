@@ -101,8 +101,19 @@
   font-weight: 700; font-size: 10px; letter-spacing: .07em;
   min-width: 74px; flex-shrink: 0; text-transform: uppercase; color: var(--muted);
 }
-.help-desc { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+/* En el texto de lectura, no en el gris apagado: un aviso que hay que leer se
+   escribe como el resto de la interfaz. El color va en el rotulo. */
+.help-desc { color: var(--text); font-size: 10.5px; line-height: 1.5; }
 .help-sep { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* La paleta de los simuladores, para el rotulo de cada fila de la ayuda. El
+   valor de reserva es para los simuladores que no declaran ese color. */
+.hk-oro     { color: var(--gold,   #FFC400) }
+.hk-azul    { color: var(--blue,   #58A6FF) }
+.hk-naranja { color: var(--orange, #E8803A) }
+.hk-morado  { color: var(--purple, #A371F7) }
+.hk-verde   { color: var(--green,  #2ECC71) }
+.hk-rojo    { color: var(--red,    #FF0030) }
 
 /* ── acciones ─────────────────────────────────────────────────────────── */
 
@@ -147,6 +158,21 @@
 }
 .exit-btn:hover { background: rgba(255, 255, 255, .07); color: var(--bright); }
 .exit-btn svg { width: 11px; height: 11px; }
+
+/* ── teclas ───────────────────────────────────────────────────────────── */
+
+/* Las teclas de los paneles de ayuda, con el mismo criterio que <kbd> en el
+   temario: en gris y no en el rojo de la marca. Una tecla no es un comando ni
+   un aviso, y en rojo brillante se lleva la mirada por delante del ejercicio.
+   El borde inferior mas grueso es lo unico que las hace parecer una tecla. */
+.key b {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 24px; padding: 1px 5px; border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-bottom: 2px solid rgba(255, 255, 255, .22);
+  background: rgba(255, 255, 255, .07); color: #E5E7EB;
+  font-weight: 600; font-size: 11px;
+}
 
 /* ── antes de empezar ─────────────────────────────────────────────────── */
 
