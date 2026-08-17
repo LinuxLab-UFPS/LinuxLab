@@ -13,100 +13,146 @@
    rastro en el sistema de archivos, a diferencia de comprimir.
    ============================================================ */
 :root{
-  --fondo:#070B12; --panel:#0E1520; --panel2:#131C2A; --linea:#1E2A3C;
-  --texto:#C6D4E4; --tenue:#7C8DA3; --claro:#EAF1F9;
-  --ambar:#F2B33D; --cian:#4DD0E1; --verde:#3FBF71; --rojo:#E2445C;
-  --mono:"SF Mono",Menlo,Consolas,monospace;
+  /* La misma paleta que los otros simuladores del curso: la cabecera y la
+     portada tienen que verse como una familia, aunque dentro cambie el mundo. */
+  --fondo:  #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+  /* Lo propio de este simulador: el verde de fosforo de la unidad del enigma. */
+  --verde-crt:#39FF6A;
+  --verde-tenue:#1C5E30;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);display:flex;flex-direction:column;overflow:hidden}
+body{background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);display:flex;flex-direction:column;overflow:hidden}
 
 /* cabecera comun a los simuladores del curso */
-.hdr{display:flex;align-items:center;gap:12px;padding:9px 14px;background:#0A101A;border-bottom:1px solid var(--linea);flex-shrink:0}
-.logo-box{width:26px;height:26px;border:1.5px solid var(--ambar);border-radius:6px;display:grid;place-items:center;color:var(--ambar);font-size:12px;font-weight:700}
-.logo-name{font-weight:700;color:var(--claro);letter-spacing:.02em}
-.logo-name span{color:var(--ambar)}
-.hdr-sep{width:1px;height:20px;background:var(--linea)}
-.hdr-obj{flex:1;min-width:0;display:flex;align-items:center;gap:9px}
-.hdr-eyebrow{font-size:9px;letter-spacing:.16em;color:var(--ambar);text-transform:uppercase}
-.hdr-goal{font-size:12px;color:var(--claro);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hdr-dots{display:flex;gap:5px}
-.dot{width:7px;height:7px;border-radius:50%;background:#26364A}
-.dot.cur{background:var(--ambar)}
-.dot.done{background:var(--verde)}
-.hdr-n{font-size:11px;color:var(--tenue)}
-.restart-btn{background:transparent;border:1px solid var(--linea);color:var(--tenue);border-radius:5px;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}
-.restart-btn:hover{border-color:var(--ambar);color:var(--ambar)}
+.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px;z-index:50}
+.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
+.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
+.logo-name .wh{color:var(--bright);filter:none}
+.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
+.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
+.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0}
+.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
+.dot.done{background:var(--green)}
+.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
+.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
+.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
+.restart-btn:hover{color:var(--text);border-color:var(--muted)}
 
-/* escritorio: rejilla de la baticomputadora */
-.desk{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,26%);gap:12px;padding:12px;
-  background:
-    linear-gradient(115deg,rgba(77,208,225,.05) 0 1px,transparent 1px 90px),
-    radial-gradient(120% 90% at 50% 0%,#0D1826 0%,#070B12 70%);
-}
-.col{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+/* ============================================================
+   LOS DOS APARATOS
+   La baticomputadora es donde se busca y la unidad del enigma es
+   donde se entrega. Son dos marcos y no uno porque esa es la
+   division que cuesta ver: buscar no cambia nada en el sistema,
+   el resultado hay que sacarlo y llevarlo a otra parte.
 
-.win{background:var(--panel);border:1px solid var(--linea);border-radius:8px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.win-bar{display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--panel2);border-bottom:1px solid var(--linea);flex-shrink:0}
-.win-t{font-size:11px;color:var(--tenue);letter-spacing:.06em;text-transform:uppercase}
-.win-t b{color:var(--cian);font-weight:600}
+   El marco es una imagen de fondo y la pantalla va posicionada en
+   porcentajes sobre ella. Si la imagen no carga, `sin-marco` deja
+   los dos paneles planos y el simulador funciona igual.
+   ============================================================ */
+.desk{position:relative;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;gap:clamp(8px,2vw,34px);padding:14px;
+  background:radial-gradient(120% 90% at 50% 0%,#12181F 0%,#080B0F 70%)}
 
-/* terminal */
-#w-term{flex:1;min-height:0}
-.consola{flex:1;min-height:0;overflow-y:auto;padding:10px 12px;font-size:12.5px;display:flex;flex-direction:column;gap:2px;background:#060A10}
+.aparato{position:relative;background-size:100% 100%;background-repeat:no-repeat;flex-shrink:0}
+.bat{aspect-ratio:1376/768;height:100%;max-width:70%;
+  background-image:url("marco-batcomputadora.webp");
+  --p-top:15.5%;--p-right:15.4%;--p-bottom:18.5%;--p-left:15.4%}
+.unidad{aspect-ratio:768/1344;height:100%;
+  background-image:url("marco-unidad.webp");
+  --p-top:8%;--p-right:11%;--p-bottom:37%;--p-left:11%}
+
+.pantalla{position:absolute;top:var(--p-top);right:var(--p-right);bottom:var(--p-bottom);left:var(--p-left);
+  background:#000;display:flex;flex-direction:column;overflow:hidden}
+
+/* El cable que une los dos aparatos. */
+.cable{flex:0 0 auto;width:clamp(18px,4vw,64px);height:2px;background:linear-gradient(90deg,#2A3340,#4A5A6B);position:relative;align-self:center}
+.cable::before,.cable::after{content:"";position:absolute;top:-3px;width:8px;height:8px;border-radius:2px;background:#4A5A6B}
+.cable::before{left:-4px}
+.cable::after{right:-4px}
+
+/* terminal: negro, letra blanca, simbolo del sistema en verde */
+.consola{flex:1;min-height:0;overflow-y:auto;padding:12px 14px;font-size:clamp(9px,1.15vmin + 2px,12.5px);display:flex;flex-direction:column;gap:2px;color:#E8EDF2}
 .log{white-space:pre-wrap;word-break:break-word;line-height:1.45}
-.log.eco{color:var(--claro)}
-.log.ok{color:var(--verde)}
-.log.mal{color:var(--rojo)}
-.log.nota{color:var(--tenue)}
-/* Dentro de la consola y detras de la ultima linea, como una terminal. */
-.prompt{display:flex;gap:8px;flex-shrink:0;font-size:12.5px;padding-top:2px}
-.ps1{color:var(--ambar);flex-shrink:0}
-.tecleado{color:var(--claro);white-space:pre-wrap;word-break:break-all}
-.caret{display:inline-block;width:7px;height:14px;background:var(--claro);vertical-align:-2px;animation:parpadeo 1s step-end infinite}
+.log.eco{color:#FFFFFF}
+.log.ok{color:var(--green)}
+.log.mal{color:#FF5C7A}
+.log.nota{color:#8FA3B8}
+.log.arte{color:var(--verde-crt);white-space:pre;font-size:clamp(3.4px,.62vw,8px);line-height:1.06;text-shadow:0 0 8px rgba(57,255,106,.45);align-self:center;margin-bottom:6px}
+.prompt{display:flex;gap:8px;flex-shrink:0;padding-top:2px;font-size:clamp(9px,1.15vmin + 2px,12.5px)}
+.ps1{color:var(--verde-crt);flex-shrink:0}
+.tecleado{color:#FFFFFF;white-space:pre-wrap;word-break:break-all}
+.caret{display:inline-block;width:7px;height:13px;background:#FFFFFF;vertical-align:-2px;animation:parpadeo 1s step-end infinite}
 @keyframes parpadeo{50%{opacity:0}}
 
-/* nota del enigma */
-.nota-cuerpo{padding:12px 14px;overflow-y:auto;font-size:12px;line-height:1.65;color:var(--texto)}
-.nota-cuerpo p{margin-bottom:9px}
-.nota-cuerpo b{color:var(--ambar);font-weight:600}
-.firma{color:var(--verde);font-size:22px;text-align:right;line-height:1}
+/* ---------- la unidad del enigma ---------- */
+.unidad .pantalla{padding:6% 7%;gap:5%;background:#020604}
 
-/* panel de descifrado */
-.campos{padding:11px 12px;display:flex;flex-direction:column;gap:9px;overflow-y:auto}
-.campo{display:flex;flex-direction:column;gap:4px}
-.campo label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tenue)}
-.campo input{background:#060A10;border:1px solid var(--linea);border-radius:5px;padding:7px 9px;color:var(--claro);font:inherit;font-size:12.5px}
-.campo input:focus{outline:none;border-color:var(--cian)}
-.campo.ok input{border-color:var(--verde);color:var(--verde)}
-.campo.mal input{border-color:var(--rojo)}
-.campo .pista{font-size:10.5px;color:var(--tenue)}
-.btn{margin:0 12px 12px;background:var(--ambar);color:#1A1206;border:none;border-radius:5px;padding:9px;font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.06em;cursor:pointer;text-transform:uppercase}
-.btn:hover{background:#FFC65A}
-.aviso{padding:0 12px 10px;font-size:11.5px;color:var(--rojo);min-height:16px}
+/* El bloque de arriba: fondo rayado, interrogaciones sueltas y el mensaje. */
+.riddle{position:relative;flex:0 0 auto;border:2px solid var(--verde-crt);border-radius:4px;padding:9px 11px;overflow:hidden;
+  background:repeating-linear-gradient(135deg,rgba(57,255,106,.14) 0 6px,rgba(2,6,4,.9) 6px 13px);
+  box-shadow:0 0 16px rgba(57,255,106,.35),inset 0 0 22px rgba(57,255,106,.12)}
+.riddle-t{color:var(--verde-crt);font-weight:700;font-size:clamp(9px,1.5vmin,13px);letter-spacing:.1em;text-align:center;margin-bottom:6px;text-shadow:0 0 9px rgba(57,255,106,.7)}
+.riddle-p{color:#B9FFD0;font-size:clamp(7.5px,1.15vmin,10.5px);line-height:1.6;position:relative;z-index:1}
+.riddle-p b{color:var(--verde-crt)}
+.riddle-firma{color:var(--verde-crt);text-align:right;font-size:clamp(11px,2vmin,18px);line-height:1;margin-top:4px}
+/* Interrogaciones flotando por detras del texto. Se mueven despacio: un
+   parpadeo rapido distrae al leer y es de lo que revisa accesibilidad. */
+.interros{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.interros span{position:absolute;color:rgba(57,255,106,.35);font-weight:700;animation:flotar 7s ease-in-out infinite}
+@keyframes flotar{0%,100%{transform:translateY(0);opacity:.25}50%{transform:translateY(-9px);opacity:.6}}
 
-/* objetivos */
-.pasos{padding:10px 12px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:7px}
-.paso{display:grid;grid-template-columns:16px 1fr;gap:8px;line-height:1.45}
-.paso .n{color:#3A4A5F;text-align:right}
-.paso.cur .n{color:var(--ambar)}
-.paso.cur{color:var(--claro)}
-.paso.done{color:var(--verde);opacity:.75}
-.paso.done .n{color:var(--verde)}
-.paso.done .t{text-decoration:line-through}
+.campos{display:flex;flex-direction:column;gap:5%;flex:1;min-height:0}
+.campo{display:flex;flex-direction:column;gap:2px}
+.campo label{font-size:clamp(6px,.95vmin,9px);letter-spacing:.12em;text-transform:uppercase;color:#5F8F72}
+.campo input{background:#04120A;border:1.5px solid var(--verde-tenue);border-radius:3px;padding:5px 7px;color:var(--verde-crt);font:inherit;font-size:clamp(7.5px,1.15vmin,11px)}
+.campo input:focus{outline:none;border-color:var(--verde-crt);box-shadow:0 0 10px rgba(57,255,106,.35)}
+.campo.ok input{border-color:var(--verde-crt);background:rgba(57,255,106,.12)}
+.campo.mal input{border-color:#FF5C7A}
+.btn{flex:0 0 auto;background:var(--verde-crt);color:#04120A;border:none;border-radius:3px;padding:7px;font:inherit;font-weight:700;font-size:clamp(8px,1.2vmin,12px);letter-spacing:.08em;cursor:pointer;text-transform:uppercase;box-shadow:0 0 14px rgba(57,255,106,.4)}
+.btn:hover{background:#7CFFA5}
+.aviso{flex:0 0 auto;font-size:clamp(6.5px,1vmin,9.5px);color:#FF5C7A;min-height:11px;text-align:center}
 
-/* portada y final */
-.velo{position:absolute;inset:0;background:rgba(4,7,12,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:26px;z-index:20}
+/* Sin las imagenes de marco, o en pantalla pequena, los aparatos son paneles
+   planos: lo que no puede perderse es el sitio para leer la salida. */
+body.sin-marco .aparato{background-image:none;aspect-ratio:auto;height:auto;max-width:none;border:1px solid var(--border);border-radius:8px;background-color:var(--surf)}
+body.sin-marco .bat{flex:1;height:100%}
+body.sin-marco .unidad{width:clamp(240px,26%,340px);height:100%}
+body.sin-marco .pantalla{position:static;inset:auto;flex:1;border-radius:7px}
+body.sin-marco .cable{display:none}
+
+@media (max-width:900px),(max-height:520px){
+  .desk{flex-direction:column;overflow-y:auto;align-items:stretch}
+  .aparato{background-image:none !important;aspect-ratio:auto !important;height:auto !important;max-width:none !important;border:1px solid var(--border);border-radius:8px;background-color:var(--surf)}
+  .bat{min-height:320px;display:flex}
+  .pantalla{position:static !important;inset:auto !important;flex:1;border-radius:7px}
+  .cable{display:none}
+}
+
+/* portada y final: mismo tamaño y mismos colores que los otros simuladores */
+.velo{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:40;padding:24px;text-align:center}
 .velo[hidden]{display:none}
-.velo h2{color:var(--claro);font-size:20px;letter-spacing:.04em}
-.velo p{max-width:460px;color:var(--tenue);font-size:12.5px;line-height:1.7}
-.velo .interro{font-size:56px;color:var(--verde);line-height:1}
-.play{width:62px;height:62px;border-radius:50%;border:2px solid var(--ambar);background:transparent;color:var(--ambar);font-size:22px;cursor:pointer;display:grid;place-items:center}
-.play:hover{background:rgba(242,179,61,.12)}
+.velo h2{font-size:19px;color:var(--bright);font-weight:700}
+.velo p{font-size:12px;color:var(--muted);max-width:430px;line-height:1.7}
+.play{width:86px;height:86px;border-radius:50%;border:2px solid var(--red);background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);font-family:var(--mono);line-height:1}
+.play .tri{display:block;transform:translateX(3px)}
+.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
+.velo .interro{font-size:52px;color:var(--verde-crt);line-height:1;text-shadow:0 0 18px rgba(57,255,106,.5)}
 .velo-btns{display:flex;gap:10px}
-.velo-btns button{background:transparent;border:1px solid var(--linea);color:var(--texto);border-radius:5px;padding:8px 16px;font:inherit;font-size:12px;cursor:pointer}
-.velo-btns button:hover{border-color:var(--ambar);color:var(--ambar)}
+.velo-btns button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:8px 16px;font:inherit;font-size:12px;cursor:pointer}
+.velo-btns button:hover{border-color:var(--red);color:var(--bright)}
 
 /* pegado: el evento paste solo llega a algo editable */
 .pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0}
@@ -131,9 +177,9 @@ body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);displa
 </div>
 
 <div class="desk" id="desk">
-  <div class="col">
-    <div class="win" id="w-term">
-      <div class="win-bar"><span class="win-t">Terminal <b>unidad incautada</b></span></div>
+  <!-- baticomputadora: la terminal donde se busca -->
+  <div class="aparato bat">
+    <div class="pantalla">
       <div class="consola" id="consola">
         <div class="prompt">
           <span class="ps1" id="ps1">~/pruebas $</span>
@@ -143,29 +189,27 @@ body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);displa
     </div>
   </div>
 
-  <div class="col">
-    <div class="win" style="flex:0 0 auto;max-height:38%">
-      <div class="win-bar"><span class="win-t">Nota <b>hallada en la unidad</b></span></div>
-      <div class="nota-cuerpo" id="nota"></div>
-    </div>
+  <div class="cable" aria-hidden="true"></div>
 
-    <div class="win" style="flex:0 0 auto">
-      <div class="win-bar"><span class="win-t">Descifrado</span></div>
+  <!-- unidad del enigma: donde se entregan las respuestas -->
+  <div class="aparato unidad">
+    <div class="pantalla">
+      <div class="riddle">
+        <div class="interros" id="interros" aria-hidden="true"></div>
+        <div class="riddle-t">ADIVÍNAME ESTO…</div>
+        <div class="riddle-p" id="riddle-p"></div>
+        <div class="riddle-firma">?</div>
+      </div>
       <div class="campos" id="campos"></div>
-      <div class="aviso" id="aviso"></div>
       <button class="btn" id="descifrar">Descifrar</button>
-    </div>
-
-    <div class="win" style="flex:1;min-height:0">
-      <div class="win-bar"><span class="win-t">Objetivos</span></div>
-      <div class="pasos" id="pasos"></div>
+      <div class="aviso" id="aviso"></div>
     </div>
   </div>
 
   <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
 
   <div class="velo" id="portada">
-    <button class="play" id="play">&#9654;</button>
+    <button class="play" id="play"><span class="tri">&#9654;</span></button>
     <h2>Descifrar el enigma</h2>
     <p>
       Una unidad incautada y una nota que promete cuatro datos escondidos en
@@ -187,6 +231,34 @@ body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);displa
 
 <script>
 const $ = (id) => document.getElementById(id);
+
+/* El murcielago que saluda al arrancar. Va en verde de fosforo, como todo lo
+   que escribe esta maquina, y en cuerpo pequeno para que quepa entero. */
+const MURCIELAGO = [
+"                       < $$$                                             k% b",
+"                   Lc$$$$^                                                \\$$$$u:",
+"                ($$$$$$$t                    $$      r                     0$$$$$$$f",
+"             $@$$$$$$$$$$                    \\_      $x                    U$$$$$$$$$~$",
+"            $$$$$$$$$$$$$@$                  %$n    8$z                   c$$$$$$$$$$$$.$",
+"          &$$$$$$$$$$$$$$$$;                  $@tjt|$$Q                 !$$$$$$$$$$$$$$$$",
+"        Y$$$$$$$$$$$$$$$$$$$$$\"             $$$$$$$$$$)              (J$$$$$$$$$$$$$$$$$$$$Q",
+"       1$$$$$$$$$$$$$$$$$$$$$$$$$$(Y        d$$$$$$$$$$$       $o[$$$$$$$$$$$$$$$$$$$$$$$$$$m",
+"      b$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$c*  $$$$$$$$$$;';W$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$_",
+"      $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",
+"     ;$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$0",
+"     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",
+"     0^Q         Z\`$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$%^/         X^{",
+"                     x $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*",
+"                        k$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$X",
+"                         :$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$~",
+"                          ;*;>       ?\"$$$$$$$$$$$$$$$$$$$$$^;|       Y;'",
+"                                          ;$$$$$$$$$$$$$$*",
+"                                            '$$$$$$$$$$,",
+"                                              p$$$$$$>",
+"                                               '$$$$l",
+"                                                ~$$}",
+"                                                 .`",
+].join("\n");
 const alAzar = (xs) => xs[Math.floor(Math.random() * xs.length)];
 const entero = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
@@ -730,6 +802,8 @@ function revisar() {
   if (Object.values(resueltos).every(Boolean)) terminar();
 }
 
+let ultimoAnuncio = -1;
+
 function pintar() {
   const lista = objetivos();
   $("goal").textContent = paso < lista.length ? lista[paso].objetivo : "Caso cerrado";
@@ -740,24 +814,33 @@ function pintar() {
     d.className = "dot" + (i < paso ? " done" : i === paso ? " cur" : "");
     $("dots").appendChild(d);
   });
-  // Los objetivos salen de uno en uno, como en el simulador de compresión.
-  const cont = $("pasos");
-  cont.innerHTML = "";
-  lista.slice(0, paso + 1).forEach((o, i) => {
-    const d = document.createElement("div");
-    d.className = "paso " + (i < paso ? "done" : "cur");
-    d.innerHTML = `<span class="n">${i + 1}</span><span class="t"></span>`;
-    d.querySelector(".t").textContent = o.texto;
-    cont.appendChild(d);
-  });
+  // El objetivo no tiene ventana propia: se anuncia en la terminal cuando
+  // cambia, que es donde el estudiante ya esta mirando.
+  if (paso !== ultimoAnuncio && paso < lista.length) {
+    ultimoAnuncio = paso;
+    log("");
+    log(`[${paso + 1}/${lista.length}] ${lista[paso].texto}`, "nota");
+  }
 }
 
 function pintarNota() {
-  $("nota").innerHTML =
-    `<p>Detective:</p>` +
-    `<p>Cuatro datos te delatan el caso. <b>Dónde</b>, <b>cuándo</b>, <b>quién</b> y <b>cuánto</b>.</p>` +
-    `<p>Están todos en esta unidad. Ninguno donde mirarías primero.</p>` +
-    `<p class="firma">?</p>`;
+  $("riddle-p").innerHTML =
+    `Si fallas, la baticomputadora es mía.<br><br>` +
+    `Cuatro datos te delatan: <b>dónde</b>, <b>cuándo</b>, <b>quién</b> y <b>cuánto</b>. ` +
+    `Los escondí en esta unidad. Ninguno donde mirarías primero.`;
+  // Interrogaciones sueltas, colocadas al azar detras del texto.
+  const zona = $("interros");
+  if (!zona) return;
+  zona.innerHTML = "";
+  for (let i = 0; i < 7; i++) {
+    const q = document.createElement("span");
+    q.textContent = "?";
+    q.style.left = entero(4, 88) + "%";
+    q.style.top = entero(6, 78) + "%";
+    q.style.fontSize = entero(9, 22) + "px";
+    q.style.animationDelay = (i * 0.7).toFixed(1) + "s";
+    zona.appendChild(q);
+  }
 }
 
 function terminar() {
@@ -820,10 +903,13 @@ function reiniciar() {
   $("ps1").textContent = "~/pruebas $";
   $("fin").hidden = true;
   $("portada").hidden = false;
+  ultimoAnuncio = -1;
   pintarNota();
   pintarCampos();
+  log(MURCIELAGO, "arte");
+  log("Unidad del sospechoso montada en ~/pruebas.", "nota");
+  log("Escribe help para ver los comandos disponibles.", "nota");
   pintar();
-  log("Unidad montada en ~/pruebas. Escribe help para ver los comandos.", "nota");
 }
 
 $("descifrar").addEventListener("click", descifrar);
@@ -831,6 +917,22 @@ $("play").addEventListener("click", () => { $("portada").hidden = true; enfocar(
 $("restart").addEventListener("click", reiniciar);
 $("fin-again").addEventListener("click", reiniciar);
 $("fin-exit").addEventListener("click", () => window.parent.postMessage({ action: "close-simulator" }, "*"));
+
+/* Si los marcos no estan (todavia no se han subido, o fallo la descarga), el
+   simulador cae a paneles planos en vez de quedarse con dos huecos negros. */
+(function comprobarMarcos() {
+  if (typeof Image === "undefined") return;
+  let pendientes = 2, fallos = 0;
+  const revisar = () => {
+    if (--pendientes === 0 && fallos) document.body.classList.add("sin-marco");
+  };
+  for (const src of ["marco-batcomputadora.webp", "marco-unidad.webp"]) {
+    const img = new Image();
+    img.onload = revisar;
+    img.onerror = () => { fallos++; revisar(); };
+    img.src = src;
+  }
+})();
 
 reiniciar();
 
