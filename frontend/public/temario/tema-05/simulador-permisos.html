@@ -64,9 +64,6 @@ body{
 .typed{color:var(--bright);white-space:pre}
 .caret{display:inline-block;width:8px;height:16px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
 @keyframes blink{50%{opacity:0}}
-.status{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--surf2);border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
-.mode{font-weight:700;color:var(--green);letter-spacing:.1em}
-.tip{color:var(--muted);font-size:11px}
 
 /* ---------- ficha del archivo ---------- */
 /* El estado vive en un unico atributo y de ahi cuelga el color de todo: borde,
@@ -79,7 +76,7 @@ body{
 .ficha[data-estado="ok"]    {--acento:var(--green)}
 
 .visor{
-  position:relative;width:200px;height:200px;flex-shrink:0;overflow:hidden;
+  position:relative;width:148px;height:148px;flex-shrink:0;overflow:hidden;
   border:2px solid var(--acento);border-radius:4px;
   display:flex;align-items:center;justify-content:center;
   transition:border-color .25s;
@@ -92,17 +89,17 @@ body{
 .lineas{
   position:absolute;inset:-20px;
   background:repeating-linear-gradient(to bottom,
-    transparent 0 15px, var(--acento) 15px 16px);
+    transparent 0 11px, var(--acento) 11px 12px);
   opacity:.26;animation:deriva 3.2s linear infinite;transition:opacity .25s;
 }
-@keyframes deriva{to{background-position:0 16px}}
+@keyframes deriva{to{background-position:0 12px}}
 
 .icono{
-  position:relative;font-size:74px;font-weight:700;line-height:1;
+  position:relative;font-size:54px;font-weight:700;line-height:1;
   color:var(--acento);letter-spacing:-.04em;
   transition:color .25s;filter:drop-shadow(0 0 14px var(--acento));
 }
-.icono.corto{font-size:44px;letter-spacing:.02em}
+.icono.corto{font-size:33px;letter-spacing:.02em}
 
 .datos{display:flex;flex-direction:column;gap:3px;min-width:0}
 .doc-name{font-size:15px;color:var(--bright);font-weight:700;word-break:break-all;margin-bottom:7px}
@@ -172,10 +169,6 @@ body{
           <span class="ps1">$</span>
           <span class="entrada"><span class="typed" id="typed"></span><span class="caret"></span></span>
         </div>
-      </div>
-      <div class="status">
-        <span class="mode" id="mode">ESPERANDO</span>
-        <span class="tip" id="tip"></span>
       </div>
     </div>
   </div>
@@ -366,6 +359,11 @@ const $ = (id) => document.getElementById(id);
 // antes de los puntos. Reiniciar devuelve a la portada.
 const barra = Barra.montar({
   acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  ayuda: [
+    { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver las formas de cambiar permisos.' },
+    { clave: 'Tiempo', tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde esa ronda y empieza la siguiente.' },
+    { clave: 'x0.5',   tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de ronda.' },
+  ],
   onReiniciar: () => volverAlInicio(),
 });
 
@@ -397,9 +395,6 @@ function pintarCabecera() {
     r.tipo === "chmod" ? "Deja el archivo como lo pide su ficha"
                        : "Ajusta la umask para lo que va a llegar",
     Math.min(ronda, orden.length - 1), orden.length);
-  $("tip").textContent = !r ? "" :
-    r.tipo === "chmod" ? "chmod 640 archivo · chmod g+r archivo"
-                       : "umask 027";
   barra.puntos(puntos);
   barra.marcas(orden.map((_, i) => (i < ronda ? "done" : i === ronda ? "cur" : "")));
 }
@@ -452,8 +447,9 @@ function escribir(texto, clase) {
   const c = $("console");
   c.insertBefore(el, c.lastElementChild);
   c.scrollTop = c.scrollHeight;
-  // La consola es corta a propósito: sólo interesa lo último que se intentó.
-  while (c.children.length > 9) c.removeChild(c.firstElementChild);
+  // Corta a propósito, que sólo interesa lo último que se intentó, pero con
+  // sitio para que la respuesta de help quepa entera.
+  while (c.children.length > 14) c.removeChild(c.firstElementChild);
 }
 
 function estado(cual) {
@@ -511,6 +507,7 @@ function enviar() {
   const r = orden[ronda];
   const partes = linea.split(" ");
 
+  if (partes[0] === "help") return ayuda(r);
   if (r.tipo === "umask") return resolverUmask(partes);
   return resolverChmod(partes, r);
 }
@@ -529,6 +526,25 @@ function resolverUmask(partes) {
 
   pintarExpediente();
   fallar(`con esa máscara se crearían ${aLetras(0o666 & ~mascara, false)} y ${aLetras(0o777 & ~mascara, true)}`);
+}
+
+/* La chuleta vivia en una franja fija debajo de la consola. Aqui se pide, que
+   es como se pide la ayuda de cualquier comando, y ademas se puede releer sin
+   ocupar sitio el resto de la partida. */
+function ayuda(r) {
+  if (!r || r.tipo === "chmod") {
+    escribir("chmod cambia los permisos de un archivo. Dos formas de decirlo:", "note");
+    escribir("  chmod g+w archivo    añade escritura al grupo", "ok");
+    escribir("  chmod o-r archivo    quita lectura a los otros", "ok");
+    escribir("  chmod u=rw archivo   fija los del dueño, sin tocar el resto", "ok");
+    escribir("  chmod 640 archivo    los tres de golpe: 6 dueño, 4 grupo, 0 otros", "ok");
+    escribir("quién: u dueño, g grupo, o otros, a todos", "note");
+    escribir("qué: r leer (4), w escribir (2), x ejecutar (1)", "note");
+  } else {
+    escribir("umask decide los permisos que traerá lo que se cree a partir de ahora.", "note");
+    escribir("  umask 027            tres dígitos octales", "ok");
+    escribir("Se resta de 666 en archivos y de 777 en directorios.", "note");
+  }
 }
 
 function resolverChmod(partes, r) {
@@ -593,7 +609,6 @@ function cargarRonda() {
   actual = r.tipo === "chmod" ? { modo: r.datos.modo } : { mascara: 0o022 };
   tecleado = "";
   $("typed").textContent = "";
-  $("mode").textContent = r.tipo === "chmod" ? "CHMOD" : "UMASK";
   limpiarConsola();
   estado("espera");
   pintarCabecera();
