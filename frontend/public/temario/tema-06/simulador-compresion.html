@@ -64,6 +64,14 @@ body{
 .win[hidden]{display:none}
 .win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
 .win-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+/* El punto de minimizar es el unico que hace algo; el guion aparece al pasar
+   por encima, como en cualquier escritorio. */
+button.win-dot{border:none;padding:0;font:inherit;cursor:pointer;position:relative}
+button.win-dot::after{
+  content:"";position:absolute;left:2.5px;right:2.5px;top:5px;height:1.5px;
+  background:rgba(0,0,0,.55);border-radius:1px;opacity:0;transition:opacity .15s;
+}
+.win-bar:hover button.win-dot::after{opacity:1}
 
 /* Cada ventana en su cuadrante: arriba izquierda los desafios, arriba derecha
    la terminal, abajo derecha el correo. Abrir y cerrar no las mueve de sitio. */
@@ -251,7 +259,7 @@ body{
   <div class="win" id="w-term">
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-term" data-dock="d-term" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
     </div>
     <div class="console" id="consola">
@@ -266,7 +274,7 @@ body{
   <div class="win" id="w-txt">
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-txt" data-dock="d-txt" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
     </div>
     <div class="txt-body" id="pasos"></div>
@@ -276,7 +284,7 @@ body{
   <div class="win" id="w-mail" hidden>
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-mail" data-dock="d-mail" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
     </div>
     <div class="mail-body">
@@ -299,7 +307,7 @@ body{
   <div class="win" id="w-game" hidden>
     <div class="win-bar">
       <span class="win-dot" style="background:#FF5F56"></span>
-      <span class="win-dot" style="background:#FFBD2E"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-game" data-dock="d-game" title="Minimizar" aria-label="Minimizar"></button>
       <span class="win-dot" style="background:#27C93F"></span>
     </div>
     <div class="game-body" id="game-body"></div>
@@ -1212,6 +1220,11 @@ $("d-game").addEventListener("click", () => {
 $("d-txt").addEventListener("click", () => alternar("w-txt", "d-txt"));
 // La terminal tambien se cierra. Detras no hay escritorio vacio: esta la marca.
 $("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
+
+// Minimizar solo esconde: nunca abre, asi que no necesita lo que arrastran los
+// botones del dock al abrir (pintar el correo, montar el juego).
+document.querySelectorAll("button.win-dot.min").forEach((b) =>
+  b.addEventListener("click", () => cerrar(b.dataset.win, b.dataset.dock)));
 
 $("mail-adjuntar").addEventListener("click", abrirPicker);
 $("mail-enviar").addEventListener("click", enviar);
