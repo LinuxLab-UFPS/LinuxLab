@@ -1,0 +1,176 @@
+/*
+ * Barra superior y portada comunes a todos los simuladores.
+ *
+ * Los simuladores son HTML sueltos que el sitio carga en un iframe, asi que
+ * cada uno traia su propia barra y su propia portada, y todas se fueron
+ * separando. Estos estilos son la version unica: el marcado lo genera
+ * barra.js, aqui solo esta el aspecto.
+ *
+ * Depende de las variables de color que cada simulador declara en su :root
+ * (--surf, --border, --red, --green, --gold, --bright, --muted, --mono...).
+ */
+
+:root { --hdr-h: 48px; }
+
+/* ── la barra ─────────────────────────────────────────────────────────── */
+
+.hdr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; min-height: var(--hdr-h);
+  background: var(--surf); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; position: relative; z-index: 60;
+}
+
+.hdr-logo {
+  width: 28px; height: 28px; border-radius: 5px;
+  border: 1.5px solid var(--red); color: var(--red);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900; letter-spacing: -.5px;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 48, .5)); flex-shrink: 0;
+}
+.hdr-marca {
+  font-size: 14px; font-weight: 700; letter-spacing: .03em; color: var(--red);
+  filter: drop-shadow(0 0 8px rgba(255, 0, 48, .3)); flex-shrink: 0;
+}
+.hdr-marca .wh { color: var(--bright); filter: none; }
+.hdr-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+
+/* El progreso va antes del objetivo y el objetivo va numerado: los puntos
+   solos no decian de que eran, y el numero los explica sin leyenda. */
+.hdr-dots { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--dim);
+  transition: background .3s, box-shadow .3s;
+}
+.dot.done { background: var(--green); }
+.dot.done-gold { background: var(--gold); box-shadow: 0 0 5px rgba(255, 196, 0, .5); }
+.dot.cur { background: var(--red); box-shadow: 0 0 7px rgba(255, 0, 48, .75); }
+.hdr-n {
+  font-size: 12px; color: var(--muted); flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.hdr-obj { display: flex; align-items: baseline; gap: 8px; flex: 1; min-width: 0; overflow: hidden; }
+.hdr-eyebrow {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .16em;
+  color: var(--gold); font-weight: 700; flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(255, 196, 0, .4));
+}
+.hdr-goal {
+  font-size: 13px; color: var(--bright);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Solo empuja cuando el objetivo esta oculto, antes de empezar la partida. */
+.hdr-fill { display: none; }
+
+/* Distintivos de modo. Cada simulador les pone el color en su propio estilo. */
+.rbadge {
+  display: none; align-items: center; border-radius: 4px; padding: 3px 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  flex-shrink: 0; border: 1px solid;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+.rbadge.show { display: flex; }
+@keyframes badge-pulse { 0%, 100% { opacity: 1 } 50% { opacity: .6 } }
+
+/* ── ayuda ────────────────────────────────────────────────────────────── */
+
+.help-wrap { position: relative; flex-shrink: 0; }
+/* En rojo de neon, como el logo: es lo unico de la barra que abre algo. */
+.help-btn {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--red); color: var(--red);
+  font-size: 11px; font-weight: 700; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default; transition: box-shadow .15s, background .15s;
+  font-family: var(--mono); box-shadow: 0 0 8px rgba(255, 0, 48, .3);
+}
+.help-wrap:hover .help-btn { background: rgba(255, 0, 48, .12); box-shadow: 0 0 12px rgba(255, 0, 48, .55); }
+.help-card {
+  display: none; position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surf2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 14px 16px;
+  z-index: 200; min-width: 300px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .6);
+  flex-direction: column; gap: 10px; pointer-events: none;
+}
+.help-wrap:hover .help-card { display: flex; }
+.help-row { display: flex; align-items: baseline; gap: 10px; font-size: 11px; color: var(--text); }
+.help-key {
+  font-weight: 700; font-size: 10px; letter-spacing: .07em;
+  min-width: 74px; flex-shrink: 0; text-transform: uppercase; color: var(--muted);
+}
+.help-desc { color: var(--muted); font-size: 10.5px; line-height: 1.5; }
+.help-sep { height: 1px; background: var(--border); margin: 2px 0; }
+
+/* ── acciones ─────────────────────────────────────────────────────────── */
+
+.score-pill {
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 4px;
+  padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--gold);
+  flex-shrink: 0; min-width: 58px; text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reiniciar en verde y sin icono: es la unica accion que devuelve el
+   simulador a cero, y tiene que distinguirse de la ayuda de un vistazo. */
+.restart-btn {
+  background: rgba(46, 204, 113, .08); border: 1px solid var(--green);
+  border-radius: 4px; color: var(--green); font-family: var(--mono);
+  font-size: 11px; padding: 4px 12px; cursor: pointer; flex-shrink: 0;
+  transition: background .2s;
+}
+.restart-btn:hover { background: rgba(46, 204, 113, .18); }
+/* Mismo boton en las pantallas de fin, cuando lo que hace no es reiniciar. */
+.restart-btn.neutro { background: transparent; border-color: var(--border); color: var(--muted); }
+.restart-btn.neutro:hover { color: var(--text); border-color: var(--muted); }
+
+/* Salir vive aqui desde que el sitio dejo de dibujar su propia barra encima. */
+.exit-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: none; border-radius: 4px;
+  color: var(--muted); font-family: var(--mono); font-size: 11px;
+  padding: 4px 8px; cursor: pointer; flex-shrink: 0;
+  transition: background .2s, color .2s;
+}
+.exit-btn:hover { background: rgba(255, 255, 255, .07); color: var(--bright); }
+.exit-btn svg { width: 11px; height: 11px; }
+
+/* ── antes de empezar ─────────────────────────────────────────────────── */
+
+/* Con la portada puesta no hay partida de la que informar: la barra se queda
+   en el logo y la salida. Los :not() suben la especificidad por encima de
+   reglas como .rbadge.show, que viven en la hoja de cada simulador. */
+.hdr.pre > *:not(.hdr-logo):not(.hdr-marca):not(.exit-btn):not(.hdr-fill) { display: none; }
+.hdr.pre > .hdr-fill { display: block; flex: 1; }
+
+/* ── portada ──────────────────────────────────────────────────────────── */
+
+/* Arranca debajo de la barra, nunca encima: la barra es lo unico que sigue
+   en pie mientras el simulador espera. */
+.sim-portada {
+  position: absolute; left: 0; right: 0; bottom: 0; top: var(--hdr-h);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 24px 32px; z-index: 40;
+  background: rgba(13, 17, 23, .94);
+}
+.sim-portada.hide { display: none; }
+.sim-play {
+  width: 96px; height: 96px; border-radius: 50%;
+  border: 2px solid var(--red); background: rgba(255, 0, 48, .1);
+  color: var(--red); font-size: 34px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+  box-shadow: 0 0 22px rgba(255, 0, 48, .35);
+  font-family: var(--mono); line-height: 1;
+}
+/* El triangulo tiene el peso a la izquierda y descentra a ojo. */
+.sim-play .tri { display: block; transform: translateX(3px); }
+.sim-play:hover { transform: scale(1.06); box-shadow: 0 0 32px rgba(255, 0, 48, .55); }
+.sim-portada h2 { font-size: 24px; color: var(--bright); font-weight: 700; text-align: center; }
+.sim-portada p {
+  font-size: 14px; color: var(--text); opacity: .75;
+  max-width: 56ch; text-align: center; line-height: 1.8;
+}
+.sim-portada p b { color: var(--bright); opacity: 1; font-weight: 700; }
