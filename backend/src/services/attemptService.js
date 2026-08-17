@@ -1,5 +1,5 @@
 const prisma = require("../../prisma/client")
-const { NotFoundError } = require("../lib/errors")
+const { NotFoundError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 
 /**
@@ -11,8 +11,13 @@ const { runInTransaction } = require("../lib/transaction")
  * (FOR UPDATE): dos evaluaciones concurrentes del mismo estudiante se
  * serializan en el lock y no pueden producir dos intentos con el mismo numero.
  * Estudiantes distintos no se bloquean entre si.
+ *
+ * Con `attemptLimit` configurado, el limite se valida en la MISMA transaccion:
+ * contar y crear son una operacion atomica, asi que dos checks concurrentes no
+ * pueden colarse pasadas ya consumidas (sin TOCTOU). Un intento fallido tambien
+ * consume intento (el registro se crea igual), conforme a las reglas de negocio.
  */
-async function recordAttempt({ activityDefinitionId, groupActivityId, studentUserId, passed, score, results }) {
+async function recordAttempt({ activityDefinitionId, groupActivityId, studentUserId, passed, score, results, attemptLimit }) {
   return runInTransaction(async (tx) => {
     const countWhere = groupActivityId
       ? { group_activity_id: groupActivityId, student_id: studentUserId }
@@ -24,6 +29,10 @@ async function recordAttempt({ activityDefinitionId, groupActivityId, studentUse
     await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${studentUserId} FOR UPDATE`
 
     const attemptNumber = await tx.activityAttempt.count({ where: countWhere })
+
+    if (attemptLimit !== undefined && attemptLimit !== null && attemptNumber >= attemptLimit) {
+      throw new ConflictError("Alcanzaste el límite de intentos de esta actividad")
+    }
 
     return tx.activityAttempt.create({
       data: {

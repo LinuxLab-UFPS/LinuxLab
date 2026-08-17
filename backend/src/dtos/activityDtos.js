@@ -24,6 +24,9 @@ const activityInputSchema = z.object({
   gradingPolicy: z
     .enum(["best_score", "latest_score"], { errorMap: () => ({ message: "La política de calificación no es válida" }) })
     .default("best_score"),
+  // null o ausente = intentos ilimitados; un entero positivo = límite.
+  attemptLimit: z.number().int().positive().nullable().optional(),
+  activityType: z.enum(["workshop", "quiz"]).default("workshop"),
   // "atomic" es una alias historico de "automatic" (lo normaliza el servicio).
   evaluationType: z.string().optional(),
   dueDate: z.string().optional().nullable(),
@@ -44,8 +47,11 @@ function serializeGroupActivity(ga, definition) {
     dueDate: ga.due_at?.toISOString(),
     required: ga.required,
     evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
-    gradingPolicy: ga.grading_policy,
+    activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+    attemptLimit: ga.attempt_limit,
+    gradingPolicy: ga.activity_type === "quiz" ? "latest_score" : "best_score",
     workdir: ga.workdir,
+    enabled: ga.enabled,
     checks: (ga.checks ?? []).map((c) => ({
       id: c.id,
       type: c.type,

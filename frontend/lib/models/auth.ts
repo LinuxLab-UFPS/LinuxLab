@@ -29,4 +29,9 @@ export interface EnrollmentStudent {
   linuxUsername?: string | null
   /** Si esa cuenta ya existe dentro del entorno. */
   linuxProvisioned?: boolean
+  /** Ultimo login en ISO. */
+  lastLogin?: string | null
+  /** Actividades completadas / total del grupo. */
+  completedActivities?: number
+  totalActivities?: number
 }

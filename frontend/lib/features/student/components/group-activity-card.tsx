@@ -1,14 +1,12 @@
 import Link from "next/link"
 import { Target } from "lucide-react"
-import { getTopic } from "@shared/lib/content/temario"
-import { BookOpen } from "lucide-react"
 import { Tag } from "@shared/components/tag"
 import type { GroupActivitySummary } from "@/lib/features/student/group-activities"
 
 
 /** Una actividad de curso (creada por el docente), con su estado y su nota. */
 export function GroupActivityCard({ activity }: { activity: GroupActivitySummary }) {
-  const topic = getTopic(activity.topicNumber)
+  const limitReached = activity.attemptLimit != null && activity.attemptsCount >= activity.attemptLimit
   return (
     <Link
       href={`/terminal?ga=${activity.id}`}
@@ -19,16 +17,25 @@ export function GroupActivityCard({ activity }: { activity: GroupActivitySummary
           <Target className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="font-bold tracking-tight text-foreground transition-colors group-hover:text-amber-400">
+          <h3 className="line-clamp-1 font-bold tracking-tight text-foreground transition-colors group-hover:text-amber-400">
             {activity.title}
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <Tag tone={activity.passed ? "emerald" : "amber"}>
-              {activity.passed ? "Completada" : "Pendiente"}
-            </Tag>
-            {activity.lastScore !== null && (
-              <Tag tone="sky">Nota: {activity.lastScore}/100</Tag>
+            {!activity.enabled ? (
+              <Tag tone="rose">Deshabilitada</Tag>
+            ) : activity.attemptLimit != null && limitReached ? (
+              <Tag tone="rose">Límite alcanzado</Tag>
+            ) : (
+              <Tag tone={activity.completed ? "emerald" : "amber"}>
+                {activity.completed ? "Completada" : "Pendiente"}
+              </Tag>
             )}
+            <Tag tone="neutral">
+              {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+            </Tag>
+            <Tag tone="violet">
+              Calificación: {activity.finalScore}/100
+            </Tag>
           </div>
         </div>
       </div>
@@ -37,9 +44,6 @@ export function GroupActivityCard({ activity }: { activity: GroupActivitySummary
         {activity.description || "Sin instrucciones."}
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        <Tag icon={BookOpen}>{topic ? `${topic.number}. ${topic.title}` : "Sin tema"}</Tag>
-      </div>
     </Link>
   )
 }

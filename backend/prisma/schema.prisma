@@ -13,48 +13,50 @@ enum Role {
 }
 
 model User {
-  id         String   @id @default(uuid()) @db.Uuid
-  email      String   @unique @db.VarChar(255)
-  name       String   @db.VarChar(255)
+  id         String    @id @default(uuid()) @db.Uuid
+  email      String    @unique @db.VarChar(255)
+  name       String    @db.VarChar(255)
   role       Role
-  code       String?  @db.VarChar(20)
-  google_id  String?  @unique @db.VarChar(255)
-  active     Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  code       String?   @db.VarChar(20)
+  google_id  String?   @unique @db.VarChar(255)
+  active     Boolean   @default(true)
+  last_login DateTime? @map("last_login")
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
 
-  linuxAccount          LinuxAccount?
-  taughtGroups          Group[]                @relation("TeacherGroups")
-  enrollments           Enrollment[]           @relation("StudentEnrollments")
-  activityAttempts      ActivityAttempt[]      @relation("StudentAttempts")
-  activitySubmissions   ActivitySubmission[]   @relation("StudentSubmissions")
-  gradedSubmissions     ActivitySubmission[]   @relation("SubmissionGraders")
-  auditEvents           ActivityAuditEvent[]   @relation("AuditEvents")
-  createdDefinitions    ActivityDefinition[]   @relation("ActivityCreators")
-  userProvisioningJobs  UserProvisioningJob[]
-  preferences           UserPreference?
+  linuxAccount         LinuxAccount?
+  taughtGroups         Group[]               @relation("TeacherGroups")
+  enrollments          Enrollment[]          @relation("StudentEnrollments")
+  activityAttempts     ActivityAttempt[]     @relation("StudentAttempts")
+  activitySubmissions  ActivitySubmission[]  @relation("StudentSubmissions")
+  gradedSubmissions    ActivitySubmission[]  @relation("SubmissionGraders")
+  auditEvents          ActivityAuditEvent[]  @relation("AuditEvents")
+  createdDefinitions   ActivityDefinition[]  @relation("ActivityCreators")
+  userProvisioningJobs UserProvisioningJob[]
+  preferences          UserPreference?
 }
 
 model LinuxAccount {
-  user_id           String   @id @db.Uuid @map("user_id")
-  user              User     @relation(fields: [user_id], references: [id])
-  linux_username    String   @unique @db.VarChar(32) @map("linux_username")
-  linux_provisioned Boolean  @default(false) @map("linux_provisioned")
+  user_id           String  @id @map("user_id") @db.Uuid
+  user              User    @relation(fields: [user_id], references: [id])
+  linux_username    String  @unique @map("linux_username") @db.VarChar(32)
+  linux_provisioned Boolean @default(false) @map("linux_provisioned")
 
   @@map("linux_accounts")
 }
 
 model Group {
-  id          String       @id @default(uuid()) @db.Uuid
-  name        String       @db.VarChar(255)
-  description String?      @db.Text @map("description")
-  teacher_id  String       @db.Uuid @map("teacher_id")
-  teacher     User         @relation("TeacherGroups", fields: [teacher_id], references: [id])
-  archived    Boolean      @default(false)
-  created_at  DateTime     @default(now()) @map("created_at")
-  updated_at  DateTime     @updatedAt @map("updated_at")
-  enrollments Enrollment[]
-  group_dir   String?      @db.VarChar(64) @map("group_dir")
+  id           String       @id @default(uuid()) @db.Uuid
+  group_number Int          @unique @default(autoincrement()) @map("group_number")
+  name         String       @db.VarChar(255)
+  description  String?      @map("description") @db.Text
+  teacher_id   String       @map("teacher_id") @db.Uuid
+  teacher      User         @relation("TeacherGroups", fields: [teacher_id], references: [id])
+  archived     Boolean      @default(false)
+  created_at   DateTime     @default(now()) @map("created_at")
+  updated_at   DateTime     @updatedAt @map("updated_at")
+  enrollments  Enrollment[]
+  group_dir    String?      @map("group_dir") @db.VarChar(64)
 
   groupProvisioningJobs GroupProvisioningJob[]
   userProvisioningJobs  UserProvisioningJob[]
@@ -84,14 +86,14 @@ model ActivityDefinition {
   /// Se declara como datos (rutas y contenidos), nunca como comandos.
   setup           Json?
   /// `workshop` (taller) o `quiz`.
-  activity_type   String   @default("workshop") @db.VarChar(16) @map("activity_type")
+  activity_type   String   @default("workshop") @map("activity_type") @db.VarChar(16)
   /// `automatic` (aserciones atómicas) o `manual` (revisión docente).
-  evaluation_type String   @default("automatic") @db.VarChar(16) @map("evaluation_type")
+  evaluation_type String   @default("automatic") @map("evaluation_type") @db.VarChar(16)
   /// De donde nace: `bank` (administra el admin) o `teacher` (docente).
   source          String   @default("bank") @db.VarChar(16)
   active          Boolean  @default(true)
   max_score       Int      @default(100) @map("max_score")
-  created_by      String?  @db.Uuid @map("created_by")
+  created_by      String?  @map("created_by") @db.Uuid
   creator         User?    @relation("ActivityCreators", fields: [created_by], references: [id])
   created_at      DateTime @default(now()) @map("created_at")
   updated_at      DateTime @updatedAt @map("updated_at")
@@ -106,13 +108,13 @@ model ActivityDefinition {
 /// Una asercion del catalogo con los parametros que puso el docente. El `type`
 /// es el contrato con el evaluador que corre dentro del entorno.
 model ActivityCheck {
-  id                      String               @id @default(uuid()) @db.Uuid
-  activity_definition_id  String               @db.Uuid @map("activity_definition_id")
-  definition              ActivityDefinition   @relation(fields: [activity_definition_id], references: [id], onDelete: Cascade)
-  type                    String               @db.VarChar(48)
-  params                  Json
-  points                  Int                  @default(0)
-  position                Int                  @default(0)
+  id                     String             @id @default(uuid()) @db.Uuid
+  activity_definition_id String             @map("activity_definition_id") @db.Uuid
+  definition             ActivityDefinition @relation(fields: [activity_definition_id], references: [id], onDelete: Cascade)
+  type                   String             @db.VarChar(48)
+  params                 Json
+  points                 Int                @default(0)
+  position               Int                @default(0)
 
   @@index([activity_definition_id])
   @@map("activity_checks")
@@ -129,31 +131,32 @@ model ActivityCheck {
 /// No hay estado borrador: crear una actividad es publicarla (queda habilitada
 /// al instante). `enabled` la habilita o deshabilita, y `due_at` la cierra.
 model GroupActivity {
-  id                      String               @id @default(uuid()) @db.Uuid
-  group_id                String               @db.Uuid @map("group_id")
-  group                   Group                @relation(fields: [group_id], references: [id])
-  activity_definition_id  String?              @db.Uuid @map("activity_definition_id")
-  definition              ActivityDefinition?  @relation(fields: [activity_definition_id], references: [id])
-  title                   String               @db.VarChar(255)
-  instructions            String?              @db.Text
-  activity_type           String               @db.VarChar(16) @map("activity_type")
-  evaluation_type         String               @db.VarChar(16) @map("evaluation_type")
-  max_score               Int                  @default(100) @map("max_score")
+  id                     String              @id @default(uuid()) @db.Uuid
+  activity_number        Int                 @unique @default(autoincrement()) @map("activity_number")
+  group_id               String              @map("group_id") @db.Uuid
+  group                  Group               @relation(fields: [group_id], references: [id])
+  activity_definition_id String?             @map("activity_definition_id") @db.Uuid
+  definition             ActivityDefinition? @relation(fields: [activity_definition_id], references: [id])
+  title                  String              @db.VarChar(255)
+  instructions           String?             @db.Text
+  activity_type          String              @map("activity_type") @db.VarChar(16)
+  evaluation_type        String              @map("evaluation_type") @db.VarChar(16)
+  max_score              Int                 @default(100) @map("max_score")
   /// Copia de las aserciones al momento de publicar: JSON de
   /// {id, type, params, points, position} en orden.
-  checks                  Json
+  checks                 Json
   /// `null` para intentos ilimitados o un entero positivo como limite.
-  attempt_limit           Int?                 @map("attempt_limit")
+  attempt_limit          Int?                @map("attempt_limit")
   /// `best_score` (mejor intento valido) o `latest_score` (ultimo valido).
-  grading_policy          String               @default("best_score") @db.VarChar(16) @map("grading_policy")
-  required                Boolean              @default(true)
-  enabled                 Boolean              @default(true)
-  due_at                  DateTime?            @map("due_at")
+  grading_policy         String              @default("best_score") @map("grading_policy") @db.VarChar(16)
+  required               Boolean             @default(true)
+  enabled                Boolean             @default(true)
+  due_at                 DateTime?           @map("due_at")
   /// Nombre de la carpeta de trabajo, autogenerado al crear (`~/actividades/<workdir>/`).
   /// Las aserciones de la actividad usan rutas relativas a esta carpeta.
-  workdir                 String               @db.VarChar(64)
-  created_at              DateTime             @default(now()) @map("created_at")
-  updated_at              DateTime             @updatedAt @map("updated_at")
+  workdir                String              @db.VarChar(64)
+  created_at             DateTime            @default(now()) @map("created_at")
+  updated_at             DateTime            @updatedAt @map("updated_at")
 
   attempts    ActivityAttempt[]
   submissions ActivitySubmission[]
@@ -169,18 +172,18 @@ model GroupActivity {
 /// `group_activity_id` es nullable: los intentos por slug (comprobaciones del
 /// temario y mecanismo transitorio) no tienen publicacion.
 model ActivityAttempt {
-  id                      String               @id @default(uuid()) @db.Uuid
-  activity_definition_id  String               @db.Uuid @map("activity_definition_id")
-  definition              ActivityDefinition   @relation(fields: [activity_definition_id], references: [id])
-  group_activity_id       String?              @db.Uuid @map("group_activity_id")
-  groupActivity           GroupActivity?       @relation(fields: [group_activity_id], references: [id])
-  student_id              String               @db.Uuid @map("student_id")
-  student                 User                 @relation("StudentAttempts", fields: [student_id], references: [id])
-  attempt_number          Int                  @default(1) @map("attempt_number")
-  passed                  Boolean              @default(false)
-  score                   Int                  @default(0)
-  results                 Json
-  created_at              DateTime             @default(now()) @map("created_at")
+  id                     String             @id @default(uuid()) @db.Uuid
+  activity_definition_id String             @map("activity_definition_id") @db.Uuid
+  definition             ActivityDefinition @relation(fields: [activity_definition_id], references: [id])
+  group_activity_id      String?            @map("group_activity_id") @db.Uuid
+  groupActivity          GroupActivity?     @relation(fields: [group_activity_id], references: [id])
+  student_id             String             @map("student_id") @db.Uuid
+  student                User               @relation("StudentAttempts", fields: [student_id], references: [id])
+  attempt_number         Int                @default(1) @map("attempt_number")
+  passed                 Boolean            @default(false)
+  score                  Int                @default(0)
+  results                Json
+  created_at             DateTime           @default(now()) @map("created_at")
 
   @@index([activity_definition_id, student_id])
   @@index([group_activity_id])
@@ -191,21 +194,21 @@ model ActivityAttempt {
 /// snapshot del entorno al momento del envio: el home del estudiante despues
 /// muta, y no sirve como evidencia historica.
 model ActivitySubmission {
-  id                String         @id @default(uuid()) @db.Uuid
-  group_activity_id String         @db.Uuid @map("group_activity_id")
-  groupActivity     GroupActivity  @relation(fields: [group_activity_id], references: [id])
-  student_id        String         @db.Uuid @map("student_id")
-  student           User           @relation("StudentSubmissions", fields: [student_id], references: [id])
-  attempt_number    Int            @default(1) @map("attempt_number")
+  id                String        @id @default(uuid()) @db.Uuid
+  group_activity_id String        @map("group_activity_id") @db.Uuid
+  groupActivity     GroupActivity @relation(fields: [group_activity_id], references: [id])
+  student_id        String        @map("student_id") @db.Uuid
+  student           User          @relation("StudentSubmissions", fields: [student_id], references: [id])
+  attempt_number    Int           @default(1) @map("attempt_number")
   /// `submitted` | `under_review` | `graded` | `returned`
-  status            String         @default("submitted")
+  status            String        @default("submitted")
   evidence          Json
   score             Int?
-  feedback          String?        @db.Text
-  graded_by         String?        @db.Uuid @map("graded_by")
-  grader            User?          @relation("SubmissionGraders", fields: [graded_by], references: [id])
-  submitted_at      DateTime       @default(now()) @map("submitted_at")
-  graded_at         DateTime?      @map("graded_at")
+  feedback          String?       @db.Text
+  graded_by         String?       @map("graded_by") @db.Uuid
+  grader            User?         @relation("SubmissionGraders", fields: [graded_by], references: [id])
+  submitted_at      DateTime      @default(now()) @map("submitted_at")
+  graded_at         DateTime?     @map("graded_at")
 
   @@index([group_activity_id, student_id])
   @@map("activity_submissions")
@@ -217,10 +220,10 @@ model ActivitySubmission {
 /// confirmacion), el evento conserva su rastro en `metadata` y `target`.
 model ActivityAuditEvent {
   id         String   @id @default(uuid()) @db.Uuid
-  user_id    String   @db.Uuid @map("user_id")
+  user_id    String   @map("user_id") @db.Uuid
   user       User     @relation("AuditEvents", fields: [user_id], references: [id])
-  group_id   String?  @db.Uuid @map("group_id")
-  event_type String   @db.VarChar(48) @map("event_type")
+  group_id   String?  @map("group_id") @db.Uuid
+  event_type String   @map("event_type") @db.VarChar(48)
   target     String?  @db.VarChar(255)
   metadata   Json?
   created_at DateTime @default(now()) @map("created_at")
@@ -232,9 +235,9 @@ model ActivityAuditEvent {
 
 model Enrollment {
   id          String   @id @default(uuid()) @db.Uuid
-  student_id  String   @db.Uuid @map("student_id")
+  student_id  String   @map("student_id") @db.Uuid
   student     User     @relation("StudentEnrollments", fields: [student_id], references: [id])
-  group_id    String   @db.Uuid @map("group_id")
+  group_id    String   @map("group_id") @db.Uuid
   group       Group    @relation(fields: [group_id], references: [id])
   status      String   @default("active")
   enrolled_at DateTime @default(now()) @map("enrolled_at")
@@ -268,12 +271,12 @@ model UserProvisioningJob {
 }
 
 model UserPreference {
-  id                  String   @id @default(uuid()) @db.Uuid
-  user_id             String   @db.Uuid  @unique
-  terminal_font_size  Int      @default(16)
-  terminal_font_family String  @default("Menlo, Monaco, 'Courier New', monospace")
-  theme               String   @default("system")
-  updated_at          DateTime @updatedAt
+  id                   String   @id @default(uuid()) @db.Uuid
+  user_id              String   @unique @db.Uuid
+  terminal_font_size   Int      @default(16)
+  terminal_font_family String   @default("Menlo, Monaco, 'Courier New', monospace")
+  theme                String   @default("system")
+  updated_at           DateTime @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 

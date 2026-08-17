@@ -107,21 +107,31 @@ Estos comandos actúan en modo normal:
 | `D` | Borra desde el cursor hasta el final de la línea |
 | `3dd` | Borra tres líneas |
 
+`d` sigue la misma regla que se explica en el apartado siguiente: es una acción que espera un movimiento para saber hasta dónde llega. `x` es la excepción cómoda, un atajo para el carácter que está bajo el cursor.
+
 ## Copiar y pegar
 
 `vi` no usa el portapapeles del sistema. Lo que se copia o se borra va a un registro interno del editor, y de ahí se pega.
 
+La tecla `y` (*yank*, copiar) no actúa sola: espera a que se le indique qué copiar, y eso se dice con una tecla de movimiento de las ya vistas. La combinación se lee de izquierda a derecha, primero la acción y después su alcance.
+
 | Comando | Efecto |
 |---|---|
-| `yy` | Copia la línea actual (*yank*) |
-| `3yy` | Copia tres líneas |
+| `yy` | Copia la línea actual |
+| `yl` | Copia el carácter bajo el cursor |
 | `yw` | Copia hasta el final de la palabra |
+| `y$` | Copia hasta el final de la línea |
+| `3yy` | Copia tres líneas |
 | `p` | Pega después del cursor |
 | `P` | Pega antes del cursor |
 
-Los comandos de borrado también llenan ese registro, de modo que `dd` seguido de `p` mueve una línea de sitio: `dd` la corta y `p` la deposita donde esté el cursor.
+Repetir la letra de la acción significa "sobre la línea entera". Por eso `yy` copia la línea, igual que `dd` la borra.
 
-Duplicar una línea son dos pulsaciones: `yy` para copiarla y `p` para pegarla debajo.
+Los comandos de borrado también llenan ese registro, así que `x` y `dd` no destruyen lo que quitan: lo cortan. De ahí que `dd` seguido de `p` mueva una línea de sitio, y que `x` seguido de `p` mueva un carácter.
+
+El registro recuerda además si lo que guarda es una línea o un fragmento suelto, y `p` se comporta en consecuencia: después de `yy` o `dd` pega una línea nueva debajo, mientras que después de `x` o `yl` deja el carácter al lado del cursor. Es la misma tecla obedeciendo a lo último que se copió.
+
+Duplicar una línea son dos pulsaciones: `yy` para copiarla y `p` para pegarla debajo. Intercambiar dos caracteres seguidos son otras dos: `x` corta el primero y `p` lo devuelve detrás del segundo.
 
 ## Deshacer
 
@@ -191,8 +201,10 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 | `:q` | Sale |
 | `:wq` | Guarda y sale |
 | `:q!` | Sale descartando los cambios |
-| `dd` | Borra la línea actual |
-| `yy` y `p` | Copia la línea y la pega |
+| `dd` | Corta la línea actual |
+| `x` | Corta el carácter bajo el cursor |
+| `yy` y `p` | Copia la línea y la pega debajo |
+| `yl` y `p` | Copia un carácter y lo pega al lado |
 | `u` | Deshace el último cambio |
 | `/texto` | Busca hacia adelante |
 

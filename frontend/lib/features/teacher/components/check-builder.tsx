@@ -61,11 +61,15 @@ export function CheckBuilder({
   const getEntry = (type: string) =>
     catalog.find((c) => c.type === type) ?? catalog[0]
 
-  const evenPoints =
-    checks.length > 0 ? Math.round((activityValue / checks.length) * 10) / 10 : 0
+  const evenPointsFor = (index: number, count = checks.length) => {
+    if (count === 0) return 0
+    const base = Math.floor(activityValue / count)
+    const remainder = activityValue % count
+    return base + (index < remainder ? 1 : 0)
+  }
 
-  const effectivePoints = (c: ActivityCheck) =>
-    distributeEvenly ? evenPoints : c.points
+  const effectivePoints = (c: ActivityCheck, index: number) =>
+    distributeEvenly ? evenPointsFor(index) : c.points
 
   const customTotal = checks.reduce((sum, c) => sum + (Number(c.points) || 0), 0)
   const exceeds = !distributeEvenly && customTotal > activityValue
@@ -79,7 +83,7 @@ export function CheckBuilder({
         id: crypto.randomUUID(),
         type: entry.type,
         params: {},
-        points: evenPoints || activityValue,
+        points: evenPointsFor(checks.length, checks.length + 1) || activityValue,
       },
     ])
   }
@@ -126,7 +130,13 @@ export function CheckBuilder({
         <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
           <Checkbox
             checked={distributeEvenly}
-            onCheckedChange={(next) => onDistributeChange(next === true)}
+             onCheckedChange={(next) => {
+               const enabled = next === true
+               if (!enabled) {
+                 onChange(checks.map((check, index) => ({ ...check, points: evenPointsFor(index) })))
+               }
+               onDistributeChange(enabled)
+             }}
             className="h-4 w-4"
           />
           <span className="text-muted-foreground">Distribuir puntaje equitativamente</span>
@@ -164,7 +174,7 @@ export function CheckBuilder({
                   <input
                     type="number"
                     min={0}
-                    value={effectivePoints(check)}
+                    value={effectivePoints(check, index)}
                     disabled={distributeEvenly}
                     onChange={(e) => updateCheck(check.id, { points: Number(e.target.value) })}
                     className={cn(

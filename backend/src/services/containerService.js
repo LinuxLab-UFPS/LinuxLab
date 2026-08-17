@@ -70,9 +70,9 @@ async function createTeacher(teacherUsername) {
 
 /**
  * El docente se hace dueno de los directorios de sus grupos activos y se une
- * al grupo Unix de cada uno. `createGroup` ya no depende de que el docente
- * exista (crea el directorio como root:grp); la transferencia de ownership
- * ocurre aqui, cuando el docente esta provisionado.
+ * al grupo Unix de cada uno. Reparacion idempotente: los directorios creados
+ * por `createGroup` ya nacen del docente, esto corrige los que quedaron con
+ * ownership viejo (root:grp) de antes o tras reprovisionar la cuenta.
  */
 async function syncTeacherGroups(teacherUsername) {
   const account = await prisma.linuxAccount.findUnique({
@@ -98,9 +98,10 @@ async function syncTeacherGroups(teacherUsername) {
 }
 
 /**
- * Crea el directorio del grupo y el grupo Unix. No depende del docente: el
- * directorio nace como root:grp y la transferencia al docente la hace
- * `syncTeacherGroups` cuando el docente existe.
+ * Crea el directorio del grupo y el grupo Unix. El directorio nace directo del
+ * docente (el worker garantiza que su cuenta existe antes del job de grupo):
+ * es dueno y queda en el grupo Unix para poder leer el trabajo de sus
+ * estudiantes. Idempotente: los comandos son seguros de repetir.
  */
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
@@ -110,8 +111,9 @@ async function createGroup(teacherUsername, groupDir, groupName) {
     }
     await execChecked(
       `sudo mkdir -p ${path} && ` +
-      `sudo chown root:${groupName} ${path} && ` +
-      `sudo chmod 2751 ${path}`,
+      `sudo chown ${teacherUsername}:${groupName} ${path} && ` +
+      `sudo chmod 2751 ${path} && ` +
+      `sudo usermod -aG ${groupName} ${teacherUsername}`,
       `createGroup(${groupName})`,
     )
   } finally {

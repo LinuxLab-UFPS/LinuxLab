@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { FileCode } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import { FolderOpen } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -11,13 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@shared/components/ui/table"
-import { TablePanel, TableEmptyState, TablePagination } from "@shared/components/data-table"
+import { TablePanel, TableEmptyState, TablePagination } from "@/shared/components/data-table"
 import { getTopic } from "@shared/lib/content/temario"
+import { Switch } from "@shared/components/ui/switch"
+import { setActivityEnabled } from "@/lib/features/teacher/data"
+import { queryKeys } from "@/lib/api/queries"
+import { notify } from "@shared/lib/toast"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 import type { Activity } from "@/lib/features/teacher/types"
 
 const PAGE_SIZE = 8
 
-/** Las actividades del curso: una actividad de grupo no lleva dificultad. */
+/** Las actividades del curso: fila cliqueable con switch de habilitado. */
 export function GroupActivities({
   activities,
   query,
@@ -28,6 +34,8 @@ export function GroupActivities({
   groupId: string
 }) {
   const [page, setPage] = useState(1)
+  const [toggling, setToggling] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   const q = query.trim().toLowerCase()
   const filtered = activities.filter((a) => !q || a.title.toLowerCase().includes(q))
@@ -35,35 +43,79 @@ export function GroupActivities({
   const page_ = Math.min(page, totalPages)
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
+  const toggle = async (activity: Activity, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setToggling(activity.id)
+    try {
+      await setActivityEnabled(groupId, activity.id, !activity.enabled)
+      queryClient.invalidateQueries({ queryKey: queryKeys.groupActivities(groupId) })
+      notify.success(activity.enabled ? "Actividad deshabilitada" : "Actividad habilitada")
+    } catch (err) {
+      notify.error(err, "No se pudo cambiar el estado de la actividad")
+    } finally {
+      setToggling(null)
+    }
+  }
+
   return (
     <section>
       <TablePanel>
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Actividad</TableHead>
-              <TableHead className="w-48">Tema</TableHead>
-              <TableHead className="w-44">Tipo</TableHead>
+              <TableHead>Titulo</TableHead>
+              <TableHead className="w-44">Directorio de trabajo</TableHead>
+              <TableHead className="w-40">Tema</TableHead>
+              <TableHead className="w-36">Tipo</TableHead>
+              <TableHead className="w-44">Fecha de entrega</TableHead>
+              <TableHead className="w-24 text-center">Habilitada</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.map((activity) => (
-              <TableRow key={activity.id}>
+              {pageRows.map((activity) => (
+                <TableRow key={activity.id} className="relative">
                 <TableCell>
                   <Link
                     href={`/groups/${groupId}/activities/${activity.id}`}
-                    className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-amber-500"
-                  >
-                    <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    className="absolute inset-0 z-10"
+                    aria-label={`Ver actividad ${activity.title}`}
+                  />
+                  <span className="text-sm font-medium text-foreground">
                     {activity.title}
-                  </Link>
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
+                    <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {activity.workdir ?? "—"}
+                  </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {getTopic(activity.topicNumber)?.title ??
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {activity.evaluationType === "atomic" ? "Autoevaluación" : "Revisión manual"}
+                  {activity.evaluationType === "manual"
+                    ? "Revisión manual"
+                    : activity.activityType === "quiz"
+                      ? "Quiz"
+                      : "Taller"}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {activity.dueDate
+                    ? formatBogotaDateTime(activity.dueDate)
+                    : "Sin fecha"}
+                </TableCell>
+                <TableCell className="text-center">
+                  <span className="relative z-20 inline-flex">
+                    <Switch
+                      checked={activity.enabled ?? false}
+                      onCheckedChange={() => {}}
+                      disabled={toggling === activity.id}
+                      onClick={(e: React.MouseEvent) => toggle(activity, e)}
+                    />
+                  </span>
                 </TableCell>
               </TableRow>
             ))}

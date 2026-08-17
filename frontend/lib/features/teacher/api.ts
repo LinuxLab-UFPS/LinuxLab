@@ -4,6 +4,7 @@ import type {
   Group,
   CreateGroupInput,
   Activity,
+  ActivitySubmissionStudent,
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
@@ -60,6 +61,15 @@ export const teacherApi = {
       method: "PATCH",
       body: JSON.stringify(input),
     }),
+  setActivityEnabled: (groupId: string, activityId: string, enabled: boolean) =>
+    apiFetch<Activity>(
+      `/api/groups/${groupId}/activities/${activityId}/${enabled ? "publish" : "disable"}`,
+      { method: "POST" },
+    ),
+  listActivitySubmissions: (groupId: string, activityId: string) =>
+    apiFetch<ActivitySubmissionStudent[]>(
+      `/api/groups/${groupId}/activities/${activityId}/submissions`,
+    ),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
   validateActivity: (activityId: string) =>
