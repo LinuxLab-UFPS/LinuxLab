@@ -57,6 +57,8 @@ body{
 .cell.v{background:#3FB950}
 .cell.a{background:#E3B341}
 .cell.r{background:#F85149}
+.cell.z{background:#58A6FF}
+.cell.n{background:#E8803A}
 .cell.cur{outline:2px solid var(--bright);outline-offset:2px}
 
 /* ---------- ayudas ---------- */
@@ -131,15 +133,16 @@ body{
       <h4>Copiar y pegar</h4>
       <div class="keys">
         <div class="key"><b>yy</b><span>copia la línea</span></div>
-        <div class="key"><b>p</b><span>pega debajo</span></div>
-        <div class="key"><b>P</b><span>pega encima</span></div>
+        <div class="key"><b>yl</b><span>copia un cuadro</span></div>
+        <div class="key"><b>p</b><span>pega después</span></div>
+        <div class="key"><b>P</b><span>pega antes</span></div>
       </div>
     </div>
     <div class="hint">
-      <h4>Borrar</h4>
+      <h4>Cortar y deshacer</h4>
       <div class="keys">
-        <div class="key"><b>dd</b><span>borra la línea</span></div>
-        <div class="key"><b>x</b><span>borra un cuadro</span></div>
+        <div class="key"><b>dd</b><span>corta la línea</span></div>
+        <div class="key"><b>x</b><span>corta un cuadro</span></div>
         <div class="key"><b>u</b><span>deshace</span></div>
       </div>
     </div>
@@ -177,11 +180,16 @@ body{
    emoji, que ocupan doble ancho en una fuente monoespaciada, no descuadran la
    rejilla. */
 // Marcas, no caracteres: la casilla la pinta el CSS.
-const V = "v", A = "a", R = "r";
+const V = "v", A = "a", R = "r", Z = "z", N = "n";
 
 const azar = (n) => Math.floor(Math.random() * n);
 const entre = (a, b) => a + azar(b - a + 1);
 const clonar = (m) => m.map((f) => f.slice());
+const mezclar = (a) => {
+  const c = a.slice();
+  for (let i = c.length - 1; i > 0; i--) { const j = azar(i + 1); [c[i], c[j]] = [c[j], c[i]] }
+  return c;
+};
 const fila3 = (c) => [c, c, c];
 const esDe = (color) => (f) => f.length > 0 && f.every((c) => c === color);
 
@@ -278,6 +286,37 @@ const MODOS = [
       };
     },
   },
+  {
+    id: "zonas",
+    goal: "Deja cada fila de un solo color, sin perder ningún cuadro",
+    tip: "x corta el cuadro · p lo suelta donde estés",
+    segundos: 40,
+    armar() {
+      // Cuatro zonas, una por fila, y dos cuadros cambiados de sitio entre dos
+      // de ellas. Se arregla con x y p: cortar el intruso, soltarlo en su zona
+      // y traerse de vuelta al que ocupaba su lugar.
+      const lado = 4;
+      const colores = mezclar([R, Z, N, A]);
+      const inicio = colores.map((c) => Array.from({ length: lado }, () => c));
+
+      const f1 = azar(lado);
+      let f2 = azar(lado);
+      while (f2 === f1) f2 = azar(lado);
+      inicio[f1][azar(lado)] = colores[f2];
+      inicio[f2][azar(lado)] = colores[f1];
+
+      const zonas = [...colores].sort().join("");
+      return {
+        inicio,
+        // Se valida el final, no el camino: el tablero sigue siendo del mismo
+        // tamaño, cada fila es de un color y las zonas son las mismas cuatro.
+        gana: (l) =>
+          l.length === lado &&
+          l.every((f) => f.length === lado && f.every((c) => c === f[0])) &&
+          [...l.map((f) => f[0])].sort().join("") === zonas,
+      };
+    },
+  },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -321,14 +360,10 @@ let restante = 0, limite = 0, tick = null, jugando = false;
 let transicion = false;
 
 /* El primero siempre es el de copiar, que es el más simple y enseña el gesto
-   básico. Los otros cuatro entran barajados. */
+   básico. De los demás entran cuatro de los cinco, barajados: así una partida
+   no es la misma que la anterior. */
 function barajarModos() {
-  const resto = MODOS.slice(1);
-  for (let i = resto.length - 1; i > 0; i--) {
-    const j = azar(i + 1);
-    [resto[i], resto[j]] = [resto[j], resto[i]];
-  }
-  orden = [MODOS[0], ...resto];
+  orden = [MODOS[0], ...mezclar(MODOS.slice(1)).slice(0, 4)];
 }
 
 /* ---------- pintado ---------- */
@@ -387,6 +422,24 @@ function ajustarCursor() {
   col = Math.min(Math.max(col, 0), Math.max(0, ancho - 1));
 }
 
+/* p y P sueltan lo que haya en el registro, y lo que haya manda: una linea
+   entera va debajo o encima, un cuadro suelto va detras o delante del cursor.
+   Es como se comporta vi, y es lo que hace falta para recolocar un cuadro. */
+function pegar(despues) {
+  if (!registro) return;
+  guardar();
+  if (registro.tipo === "linea") {
+    lineas.splice(fila + despues, 0, registro.dato.slice());
+    fila += despues;
+  } else {
+    if (!lineas[fila]) return;
+    const donde = lineas[fila].length ? col + despues : 0;
+    lineas[fila].splice(donde, 0, registro.dato);
+    col = donde;
+  }
+  ajustarCursor();
+}
+
 function guardar() {
   historial.push({ lineas: clonar(lineas), fila, col });
   if (historial.length > 40) historial.shift();
@@ -412,10 +465,15 @@ function ejecutar(tecla) {
     const combo = pendiente + tecla;
     pendiente = "";
     if (combo === "gg") { fila = 0; ajustarCursor() }
-    else if (combo === "yy") { registro = lineas[fila] ? lineas[fila].slice() : null }
+    else if (combo === "yl") {
+      // y con un movimiento de una posicion: copia el cuadro de debajo del
+      // cursor sin quitarlo, que es la pareja de x.
+      if (lineas[fila] && lineas[fila].length) registro = { tipo: "cuadro", dato: lineas[fila][col] };
+    }
+    else if (combo === "yy") { registro = lineas[fila] ? { tipo: "linea", dato: lineas[fila].slice() } : null }
     else if (combo === "dd" && lineas.length) {
       guardar();
-      registro = lineas[fila].slice();
+      registro = { tipo: "linea", dato: lineas[fila].slice() };
       lineas.splice(fila, 1);
       ajustarCursor();
     }
@@ -431,22 +489,14 @@ function ejecutar(tecla) {
     case "0": col = 0; break;
     case "$": col = lineas[fila] ? lineas[fila].length - 1 : 0; break;
     case "G": fila = lineas.length - 1; ajustarCursor(); break;
-    case "p":
-      if (!registro) return;
-      guardar();
-      lineas.splice(fila + 1, 0, registro.slice());
-      fila++;
-      ajustarCursor();
-      break;
-    case "P":
-      if (!registro) return;
-      guardar();
-      lineas.splice(fila, 0, registro.slice());
-      ajustarCursor();
-      break;
+    case "p": pegar(1); break;
+    case "P": pegar(0); break;
     case "x":
       if (!lineas[fila] || !lineas[fila].length) return;
       guardar();
+      // x corta, no borra: el cuadro queda en el registro y p puede soltarlo
+      // en otra parte. Es lo que permite mover uno solo de sitio.
+      registro = { tipo: "cuadro", dato: lineas[fila][col] };
       lineas[fila].splice(col, 1);
       if (!lineas[fila].length) lineas.splice(fila, 1);
       ajustarCursor();
