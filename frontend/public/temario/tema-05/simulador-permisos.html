@@ -1,5 +1,7 @@
 <!doctype html>
 <title>Filtro de permisos · LinuxLab</title>
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
 <style>
 :root {
   --bg:     #0D1117;
@@ -27,24 +29,11 @@ body{
   background:var(--bg);position:relative;
 }
 
-/* ---------- cabecera ---------- */
-.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px}
-.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
-.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
-.logo-name .wh{color:var(--bright);filter:none}
-.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
-.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
-.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,196,0,.4))}
-.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
-.dot.done{background:var(--green)}
-.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
-.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-.score-pill{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}
-.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
-.restart-btn:hover{color:var(--text);border-color:var(--muted)}
-.ritmo-btn[data-activo="true"]{color:var(--gold);border-color:var(--gold)}
+/* La cabecera vive en /temario/comun/barra.css. El ritmo no es una accion de
+   la barra sino un interruptor de este simulador, asi que no va de verde. */
+.modo-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
+.modo-btn:hover{color:var(--text);border-color:var(--muted)}
+.modo-btn[data-activo="true"]{color:var(--gold);border-color:var(--gold)}
 
 /* ---------- disposición ---------- */
 .stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
@@ -140,23 +129,6 @@ body{
    columna de valores de un vistazo. */
 .key span i{margin-left:auto;font-style:normal;color:var(--gold);font-weight:700}
 
-/* ---------- capa de inicio ---------- */
-.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20}
-.overlay.hide{display:none}
-.play{
-  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
-  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
-  font-family:var(--mono);line-height:1;
-}
-/* El triángulo tiene el peso a la izquierda y descentra a ojo; el resto de
-   glifos no, así que la corrección va sólo en él. */
-.play .tri{display:block;transform:translateX(3px)}
-.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
-.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
-.overlay p{font-size:12px;color:var(--muted);max-width:430px;text-align:center;line-height:1.7}
-
 /* ---------- card de resultado (compartida con los demas simuladores) ---------- */
 #results-overlay{
   position:absolute;inset:0;
@@ -187,20 +159,8 @@ body{
 .flash.err{background:var(--red)}
 </style>
 
-<div class="hdr">
-  <div class="logo-box">&gt;_</div>
-  <div class="logo-name">Linux<span class="wh">Lab</span></div>
-  <div class="hdr-sep"></div>
-  <div class="hdr-obj">
-    <span class="hdr-eyebrow">Objetivo</span>
-    <span class="hdr-goal" id="goal">&nbsp;</span>
-  </div>
-  <div class="hdr-dots" id="dots"></div>
-  <span class="hdr-n" id="counter">1 / 5</span>
-  <div class="score-pill" id="score">★ 0</div>
-  <button class="restart-btn ritmo-btn" id="ritmo" data-activo="false">Normal</button>
-  <button class="restart-btn" id="restart">Reiniciar</button>
-</div>
+<!-- La barra la arma barra.js. -->
+<div class="hdr"></div>
 
 <div class="stage">
   <div class="term-col">
@@ -266,8 +226,8 @@ body{
   </div>
 </div>
 
-<div class="overlay" id="overlay">
-  <button class="play" id="play"><span class="tri">▶</span></button>
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">▶</span></button>
   <h2>Filtro de permisos</h2>
   <p>
     Llegan archivos a tu mesa. Cada uno dice qué permisos trae y qué necesita.
@@ -407,6 +367,13 @@ function leerChmod(argumento, modo) {
 
 const $ = (id) => document.getElementById(id);
 
+// El ritmo es propio de este simulador: la barra le deja su hueco antes de los
+// puntos. Reiniciar devuelve a la portada, que aqui hay tiempo de por medio.
+const barra = Barra.montar({
+  acciones: '<button class="modo-btn" id="ritmo" data-activo="false">Normal</button>',
+  onReiniciar: () => volverAlInicio(),
+});
+
 /* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
    con mas margen para pensar la cuenta, que es de lo que va el tema. */
 const RITMOS = { normal: 1, calma: 1.8 };
@@ -430,21 +397,15 @@ function armarPartida() {
 /* ---------- pintado ---------- */
 function pintarCabecera() {
   const r = orden[ronda];
-  $("goal").textContent = !r ? "" :
+  barra.objetivo(!r ? "" :
     r.tipo === "chmod" ? "Deja el archivo como lo pide su ficha"
-                       : "Ajusta la umask para lo que va a llegar";
+                       : "Ajusta la umask para lo que va a llegar",
+    Math.min(ronda, orden.length - 1), orden.length);
   $("tip").textContent = !r ? "" :
     r.tipo === "chmod" ? "chmod 640 archivo · chmod g+r archivo"
                        : "umask 027";
-  $("counter").textContent = `${Math.min(ronda + 1, orden.length)} / ${orden.length}`;
-  $("score").textContent = `★ ${puntos}`;
-  const dots = $("dots");
-  dots.innerHTML = "";
-  orden.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = "dot" + (i < ronda ? " done" : i === ronda ? " cur" : "");
-    dots.appendChild(d);
-  });
+  barra.puntos(puntos);
+  barra.marcas(orden.map((_, i) => (i < ronda ? "done" : i === ronda ? "cur" : "")));
 }
 
 function pintarExpediente() {
@@ -655,7 +616,8 @@ function empezar() {
   armarPartida();
   ronda = 0; puntos = 0; jugando = true;
   limpiarConsola();
-  $("overlay").classList.add("hide");
+  barra.jugando(true);
+  $("portada").classList.add("hide");
   $("results-overlay").classList.remove("show");
   cargarRonda();
 }
@@ -663,8 +625,9 @@ function empezar() {
 function volverAlInicio() {
   clearInterval(tick);
   jugando = false;
+  barra.jugando(false);
   $("results-overlay").classList.remove("show");
-  $("overlay").classList.remove("hide");
+  $("portada").classList.remove("hide");
 }
 
 document.addEventListener("keydown", (e) => {
@@ -682,12 +645,10 @@ document.addEventListener("keydown", (e) => {
 
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
-$("res-exit").addEventListener("click", () =>
-  window.parent.postMessage({ action: "close-simulator" }, "*"),
-);
-$("restart").addEventListener("click", volverAlInicio);
+$("res-exit").addEventListener("click", Barra.salir);
 $("ritmo").addEventListener("click", cambiarRitmo);
 
 armarPartida();
 pintarCabecera();
+barra.jugando(false);
 </script>

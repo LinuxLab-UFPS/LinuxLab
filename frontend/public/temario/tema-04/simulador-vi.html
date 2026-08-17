@@ -1,5 +1,7 @@
 <!doctype html>
 <title>Retos de vi · LinuxLab</title>
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
 <style>
 :root {
   --bg:     #0D1117;
@@ -27,23 +29,7 @@ body{
   background:var(--bg);position:relative;
 }
 
-/* ---------- cabecera ---------- */
-.hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0;min-height:48px}
-.logo-box{width:28px;height:28px;border-radius:5px;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--red);filter:drop-shadow(0 0 6px rgba(255,0,48,.5));flex-shrink:0}
-.logo-name{font-size:14px;font-weight:700;letter-spacing:.03em;color:var(--red);filter:drop-shadow(0 0 8px rgba(255,0,48,.3));flex-shrink:0}
-.logo-name .wh{color:var(--bright);filter:none}
-.hdr-sep{width:1px;height:18px;background:var(--border);flex-shrink:0}
-.hdr-obj{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0;overflow:hidden}
-.hdr-eyebrow{font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:var(--gold);font-weight:700;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(255,196,0,.4))}
-.hdr-goal{font-size:13px;color:var(--bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdr-dots{display:flex;gap:5px;align-items:center;flex-shrink:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--dim);transition:background .3s,box-shadow .3s}
-.dot.done{background:var(--green)}
-.dot.cur{background:var(--red);box-shadow:0 0 7px rgba(255,0,48,.75)}
-.hdr-n{font-size:12px;color:var(--muted);flex-shrink:0;font-variant-numeric:tabular-nums}
-.score-pill{background:var(--surf2);border:1px solid var(--border);border-radius:4px;padding:4px 10px;font-size:12px;font-weight:700;color:var(--gold);flex-shrink:0;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}
-.restart-btn{background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer;flex-shrink:0;transition:color .2s,border-color .2s}
-.restart-btn:hover{color:var(--text);border-color:var(--muted)}
+/* La cabecera vive en /temario/comun/barra.css */
 
 /* ---------- disposición ---------- */
 .stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
@@ -80,22 +66,6 @@ body{
 .key span{color:var(--text)}
 
 /* ---------- capa de inicio ---------- */
-.overlay{position:absolute;inset:0;background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:20}
-.overlay.hide{display:none}
-.play{
-  width:86px;height:86px;border-radius:50%;border:2px solid var(--red);
-  background:rgba(255,0,48,.1);color:var(--red);font-size:30px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .2s,box-shadow .2s;box-shadow:0 0 22px rgba(255,0,48,.35);
-  font-family:var(--mono);line-height:1;
-}
-/* El triángulo tiene el peso a la izquierda y descentra a ojo; el resto de
-   glifos no, así que la corrección va sólo en él. */
-.play .tri{display:block;transform:translateX(3px)}
-.play:hover{transform:scale(1.06);box-shadow:0 0 32px rgba(255,0,48,.55)}
-.overlay h2{font-size:19px;color:var(--bright);font-weight:700}
-.overlay p{font-size:12px;color:var(--muted);max-width:420px;text-align:center;line-height:1.7}
-
 /* ---------- card de resultado (compartida con los demas simuladores) ---------- */
 #results-overlay{
   position:absolute;inset:0;
@@ -126,19 +96,8 @@ body{
 .flash.err{background:var(--red)}
 </style>
 
-<div class="hdr">
-  <div class="logo-box">&gt;_</div>
-  <div class="logo-name">Linux<span class="wh">Lab</span></div>
-  <div class="hdr-sep"></div>
-  <div class="hdr-obj">
-    <span class="hdr-eyebrow">Objetivo</span>
-    <span class="hdr-goal" id="goal">&nbsp;</span>
-  </div>
-  <div class="hdr-dots" id="dots"></div>
-  <span class="hdr-n" id="counter">1 / 5</span>
-  <div class="score-pill" id="score">★ 0</div>
-  <button class="restart-btn" id="restart">Reiniciar</button>
-</div>
+<!-- La barra la arma barra.js. -->
+<div class="hdr"></div>
 
 <div class="stage">
   <div class="term-col">
@@ -203,8 +162,8 @@ body{
   </div>
 </div>
 
-<div class="overlay" id="overlay">
-  <button class="play" id="play"><span class="tri">▶</span></button>
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">▶</span></button>
   <h2>Retos de vi</h2>
   <p>
     Cinco retos contrarreloj con los comandos de vi. Copiar líneas, pegarlas
@@ -316,6 +275,10 @@ const MODOS = [
 
 const $ = (id) => document.getElementById(id);
 
+// Reiniciar aqui devuelve a la portada: los retos van contrarreloj y empezar
+// de golpe sin avisar es empezar ya perdiendo.
+const barra = Barra.montar({ onReiniciar: () => volverAlInicio() });
+
 let orden = [], reto = 0, puntos = 0;
 let lineas = [], meta = [], fila = 0, col = 0;
 let registro = null, historial = [], pendiente = "";
@@ -359,32 +322,25 @@ function pintar() {
 
 function pintarCabecera() {
   const m = orden[reto];
-  $("goal").textContent = m ? m.goal : "";
   $("tip").textContent = m ? m.tip : "";
-  $("counter").textContent = `${Math.min(reto + 1, orden.length)} / ${orden.length}`;
-  $("score").textContent = `★ ${puntos}`;
-  const dots = $("dots");
-  dots.innerHTML = "";
-  orden.forEach((_, i) => {
-    const d = document.createElement("span");
-    d.className = "dot" + (i < reto ? " done" : i === reto ? " cur" : "");
-    dots.appendChild(d);
-  });
+  barra.objetivo(m ? m.goal : "", Math.min(reto, orden.length - 1), orden.length);
+  barra.puntos(puntos);
+  barra.marcas(orden.map((_, i) => (i < reto ? "done" : i === reto ? "cur" : "")));
 }
 
 /* ---------- tiempo ---------- */
 function arrancarTiempo() {
   limite = orden[reto].segundos;
   restante = limite;
-  const barra = $("timer");
-  barra.className = "timer-fill";
-  barra.style.width = "100%";
+  const barraT = $("timer");
+  barraT.className = "timer-fill";
+  barraT.style.width = "100%";
   clearInterval(tick);
   tick = setInterval(() => {
     restante = Math.max(0, restante - 0.1);
     const pct = (restante / limite) * 100;
-    barra.style.width = pct + "%";
-    barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
+    barraT.style.width = pct + "%";
+    barraT.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
     if (restante === 0) clearInterval(tick);
   }, 100);
 }
@@ -485,9 +441,9 @@ function ganarReto() {
   // Los puntos salen del tiempo que sobró: resolver rápido vale más.
   puntos += 100 + Math.round((restante / limite) * 400);
 
-  const barra = $("timer");
-  barra.className = "timer-fill win";
-  barra.style.width = "100%";
+  const barraT = $("timer");
+  barraT.className = "timer-fill win";
+  barraT.style.width = "100%";
   $("flash").classList.add("on");
   setTimeout(() => $("flash").classList.remove("on"), 180);
   pintarCabecera();
@@ -503,8 +459,8 @@ function ganarReto() {
    al siguiente reto sin sumar, que ya es castigo suficiente en un contrarreloj. */
 function fallarReto() {
   clearInterval(tick);
-  const barra = $("timer");
-  barra.className = "timer-fill out";
+  const barraT = $("timer");
+  barraT.className = "timer-fill out";
   const f = $("flash");
   f.classList.add("on", "err");
   setTimeout(() => f.classList.remove("on", "err"), 260);
@@ -526,7 +482,8 @@ function terminar() {
 function empezar() {
   barajarModos();
   reto = 0; puntos = 0; jugando = true;
-  $("overlay").classList.add("hide");
+  barra.jugando(true);
+  $("portada").classList.add("hide");
   $("results-overlay").classList.remove("show");
   cargarReto();
 }
@@ -534,8 +491,9 @@ function empezar() {
 function volverAlInicio() {
   clearInterval(tick);
   jugando = false;
+  barra.jugando(false);
   $("results-overlay").classList.remove("show");
-  $("overlay").classList.remove("hide");
+  $("portada").classList.remove("hide");
 }
 
 document.addEventListener("keydown", (e) => {
@@ -553,12 +511,10 @@ document.addEventListener("keydown", (e) => {
 
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
-$("res-exit").addEventListener("click", () =>
-  window.parent.postMessage({ action: "close-simulator" }, "*"),
-);
-$("restart").addEventListener("click", volverAlInicio);
+$("res-exit").addEventListener("click", Barra.salir);
 
 barajarModos();
 pintarCabecera();
+barra.jugando(false);
 pintar();
 </script>
