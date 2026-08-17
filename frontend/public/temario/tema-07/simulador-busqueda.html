@@ -69,10 +69,11 @@ body{background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);display
 .aparato{position:relative;background-size:100% 100%;background-repeat:no-repeat;flex-shrink:0}
 .bat{aspect-ratio:1376/768;height:100%;max-width:70%;
   background-image:url("marco-batcomputadora.webp");
-  --p-top:15.5%;--p-right:15.4%;--p-bottom:18.5%;--p-left:15.4%}
-.unidad{aspect-ratio:768/1344;height:100%;
+  /* Medido sobre la propia imagen: donde empieza y acaba el hueco negro. */
+  --p-top:15.5%;--p-right:15.3%;--p-bottom:18.1%;--p-left:15.9%}
+.unidad{aspect-ratio:560/1003;height:100%;
   background-image:url("marco-unidad.webp");
-  --p-top:8%;--p-right:11%;--p-bottom:37%;--p-left:11%}
+  --p-top:11.8%;--p-right:19.3%;--p-bottom:25.3%;--p-left:19.5%}
 
 .pantalla{position:absolute;top:var(--p-top);right:var(--p-right);bottom:var(--p-bottom);left:var(--p-left);
   background:#000;display:flex;flex-direction:column;overflow:hidden}
