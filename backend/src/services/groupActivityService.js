@@ -8,6 +8,7 @@ const { activityInputSchema, serializeGroupActivity } = require("../dtos/activit
 const { parseOrThrow } = require("../dtos/common")
 const { audit } = require("./auditService")
 const { runInTransaction } = require("../lib/transaction")
+const { finalScore } = require("../utils/finalScore")
 
 /** Normaliza la modalidad que manda el frontend ("atomic") a la de la base. */
 function normalizeEvaluationType(value) {
@@ -395,7 +396,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
   const studentIds = grouped.map((g) => g.student_id)
   const students = await prisma.user.findMany({
     where: { id: { in: studentIds } },
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, code: true },
   })
   const studentMap = new Map(students.map((s) => [s.id, s]))
 
@@ -413,6 +414,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
         studentId: g.student_id,
         studentName: student?.name ?? "—",
         studentEmail: student?.email ?? "—",
+        studentCode: student?.code ?? null,
         attemptsCount: g._count.id,
         lastAttemptDate: g._max.created_at?.toISOString() ?? null,
         finalScore: finalScore(attempts, policy),

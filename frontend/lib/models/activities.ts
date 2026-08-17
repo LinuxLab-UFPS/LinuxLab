@@ -65,6 +65,7 @@ export interface ActivitySubmissionStudent {
   studentId: string
   studentName: string
   studentEmail: string
+  studentCode: string | null
   attemptsCount: number
   lastAttemptDate: string | null
   finalScore: number

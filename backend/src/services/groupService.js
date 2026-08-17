@@ -10,6 +10,7 @@ const { groupNameOf } = require("../utils/groupName")
 const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
+const { finalScore } = require("../utils/finalScore")
 
 function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
@@ -126,7 +127,45 @@ async function getGroup({ groupId, teacherUserId, role }) {
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
-  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities)
+
+  const activeNowRows = await prisma.$queryRaw`
+    SELECT COUNT(*)::int AS cnt
+    FROM "User" u
+    JOIN enrollments e ON e.student_id = u.id
+    WHERE e.group_id = ${groupId}
+      AND u.last_login IS NOT NULL
+      AND u.last_login > NOW() - INTERVAL '5 minutes'
+  `
+  const activeNow = activeNowRows[0]?.cnt ?? 0
+
+  const activities = await prisma.groupActivity.findMany({
+    where: { group_id: groupId },
+    select: { id: true, activity_type: true },
+  })
+  const actMap = new Map(activities.map((a) => [a.id, a]))
+
+  let totalScore = 0
+  let studentCount = 0
+  for (const act of activities) {
+    const grouped = await prisma.activityAttempt.groupBy({
+      by: ["student_id"],
+      where: { group_activity_id: act.id },
+      _count: { id: true },
+    })
+    for (const g of grouped) {
+      const attempts = await prisma.activityAttempt.findMany({
+        where: { group_activity_id: act.id, student_id: g.student_id },
+        orderBy: { created_at: "desc" },
+        select: { score: true, created_at: true },
+      })
+      const policy = act.activity_type === "quiz" ? "latest_score" : "best_score"
+      totalScore += finalScore(attempts, policy)
+      studentCount++
+    }
+  }
+  const averageScore = studentCount > 0 ? Math.round((totalScore / studentCount) * 10) / 10 : null
+
+  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities, { activeNow, averageScore })
 }
 
 /**

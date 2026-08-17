@@ -190,9 +190,9 @@ function NewActivityPage() {
 
   return (
     <div data-section="actividades" className="mx-auto max-w-3xl px-6 py-8">
-      <ActionButton tone="neutral" href={`/groups/${groupId}`}>
+      <ActionButton tone="neutral" href={editing ? `/groups/${groupId}/activities/${editId}` : `/groups/${groupId}?tab=actividades`}>
         <ArrowLeft className="h-4 w-4" />
-        Volver al curso
+        Volver
       </ActionButton>
 
       <div className="mb-8 mt-9">

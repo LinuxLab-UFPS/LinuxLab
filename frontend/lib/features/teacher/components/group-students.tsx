@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import {
   Table,
   TableBody,
@@ -13,14 +14,16 @@ import { formatBogotaDateTime } from "@/lib/utils/dates"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
 /**
- * Los estudiantes del curso: nombre, email, usuario Linux, ultima conexion
- * y acciones (por definir).
+ * Los estudiantes del curso: nombre, email, usuario Linux, actividades
+ * completadas y ultima conexion.
  */
 export function GroupStudents({
   students,
+  groupId,
   query,
 }: {
   students: EnrollmentStudent[]
+  groupId: string
   query: string
 }) {
   const q = query.trim().toLowerCase()
@@ -38,18 +41,31 @@ export function GroupStudents({
           <Table>
             <TableHeader className="sticky top-0 z-10">
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-28">Codigo</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="w-40">Usuario</TableHead>
+                <TableHead className="w-28 text-center">Entregas</TableHead>
                 <TableHead className="w-44">Ultima conexion</TableHead>
-                <TableHead className="w-28">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {visible.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="text-sm font-medium text-foreground">
-                    {student.name}
+                <TableRow key={student.id} className="relative">
+                  <TableCell>
+                    <Link
+                      href={`/groups/${groupId}/student/${student.id}`}
+                      className="absolute inset-0 z-10"
+                      aria-label={`Ver estudiante ${student.name}`}
+                    />
+                    <span className="font-mono text-sm text-muted-foreground">
+                      {student.code ?? "—"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-medium text-foreground">
+                      {student.name}
+                    </span>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {student.email}
@@ -63,12 +79,14 @@ export function GroupStudents({
                       <span className="text-sm text-muted-foreground">Sin cuenta</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-center font-mono text-sm text-foreground">
+                    {student.completedActivities ?? 0}/{student.totalActivities ?? 0}
+                  </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {student.lastLogin
                       ? formatBogotaDateTime(student.lastLogin)
                       : "Sin conexion"}
                   </TableCell>
-                  <TableCell />
                 </TableRow>
               ))}
             </TableBody>

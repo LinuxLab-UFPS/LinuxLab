@@ -368,6 +368,17 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     orderBy: { enrolled_at: "asc" },
   })
 
+  const totalActivities = await prisma.groupActivity.count({ where: { group_id: groupId } })
+
+  const completedRows = await prisma.$queryRaw`
+    SELECT student_id, COUNT(DISTINCT group_activity_id)::int AS completed
+    FROM activity_attempts a
+    JOIN group_activities ga ON ga.id = a.group_activity_id
+    WHERE ga.group_id = ${groupId}
+    GROUP BY student_id
+  `
+  const completedMap = new Map(completedRows.map((r) => [r.student_id, r.completed]))
+
   return enrollments.map((e) => ({
     enrollmentId: e.id,
     id: e.student.id,
@@ -379,6 +390,8 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.enrolled_at,
     lastLogin: e.student.last_login?.toISOString() ?? null,
+    completedActivities: completedMap.get(e.student.id) ?? 0,
+    totalActivities,
   }))
 }
 

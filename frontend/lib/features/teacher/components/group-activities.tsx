@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
-import { FileCode } from "lucide-react"
+import { FolderOpen } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -64,8 +64,8 @@ export function GroupActivities({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-28">Codigo</TableHead>
               <TableHead>Titulo</TableHead>
+              <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
               <TableHead className="w-36">Tipo</TableHead>
               <TableHead className="w-44">Fecha de entrega</TableHead>
@@ -73,22 +73,22 @@ export function GroupActivities({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pageRows.map((activity) => (
-              <TableRow key={activity.id}>
+              {pageRows.map((activity) => (
+                <TableRow key={activity.id} className="relative">
                 <TableCell>
                   <Link
                     href={`/groups/${groupId}/activities/${activity.id}`}
                     className="absolute inset-0 z-10"
                     aria-label={`Ver actividad ${activity.title}`}
                   />
-                  <span className="font-mono text-sm text-muted-foreground">
-                    {activity.workdir ?? "—"}
+                  <span className="text-sm font-medium text-foreground">
+                    {activity.title}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {activity.title}
+                  <span className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
+                    <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    {activity.workdir ?? "—"}
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">

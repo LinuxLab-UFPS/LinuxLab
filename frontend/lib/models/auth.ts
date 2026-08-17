@@ -31,4 +31,7 @@ export interface EnrollmentStudent {
   linuxProvisioned?: boolean
   /** Ultimo login en ISO. */
   lastLogin?: string | null
+  /** Actividades completadas / total del grupo. */
+  completedActivities?: number
+  totalActivities?: number
 }
