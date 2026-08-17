@@ -62,7 +62,10 @@ body{
 .win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
 .win-dot{width:11px;height:11px;border-radius:50%}
 .win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
-.console{background:#12161d;padding:12px 14px;height:300px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;font-size:12.5px}
+/* De arriba hacia abajo, como una terminal de verdad: la primera linea queda
+   arriba y el prompt va detras de la ultima. Antes iba `justify-content:
+   flex-end` y el texto crecia hacia arriba desde el borde inferior. */
+.console{background:#12161d;padding:12px 14px;height:300px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;overflow-y:auto}
 .log{white-space:pre-wrap;line-height:1.5}
 .log.ok{color:var(--green)}
 .log.bad{color:var(--red)}
@@ -491,6 +494,7 @@ function escribir(texto, clase) {
   el.textContent = texto;
   const c = $("console");
   c.insertBefore(el, c.lastElementChild);
+  c.scrollTop = c.scrollHeight;
   // La consola es corta a propósito: sólo interesa lo último que se intentó.
   while (c.children.length > 9) c.removeChild(c.firstElementChild);
 }

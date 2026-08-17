@@ -60,7 +60,8 @@ body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);displa
 .log.ok{color:var(--verde)}
 .log.mal{color:var(--rojo)}
 .log.nota{color:var(--tenue)}
-.prompt{display:flex;gap:8px;padding:8px 12px;background:#060A10;border-top:1px solid var(--linea);flex-shrink:0;font-size:12.5px}
+/* Dentro de la consola y detras de la ultima linea, como una terminal. */
+.prompt{display:flex;gap:8px;flex-shrink:0;font-size:12.5px;padding-top:2px}
 .ps1{color:var(--ambar);flex-shrink:0}
 .tecleado{color:var(--claro);white-space:pre-wrap;word-break:break-all}
 .caret{display:inline-block;width:7px;height:14px;background:var(--claro);vertical-align:-2px;animation:parpadeo 1s step-end infinite}
@@ -133,10 +134,11 @@ body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);displa
   <div class="col">
     <div class="win" id="w-term">
       <div class="win-bar"><span class="win-t">Terminal <b>unidad incautada</b></span></div>
-      <div class="consola" id="consola"></div>
-      <div class="prompt">
-        <span class="ps1" id="ps1">~/pruebas $</span>
-        <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+      <div class="consola" id="consola">
+        <div class="prompt">
+          <span class="ps1" id="ps1">~/pruebas $</span>
+          <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+        </div>
       </div>
     </div>
   </div>
@@ -342,8 +344,10 @@ function log(texto, clase) {
   const d = document.createElement("div");
   d.className = "log" + (clase ? " " + clase : "");
   d.textContent = texto;
-  $("consola").appendChild(d);
-  $("consola").scrollTop = $("consola").scrollHeight;
+  const c = $("consola");
+  const prompt = c.querySelector(".prompt");
+  if (prompt) c.insertBefore(d, prompt); else c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
 }
 
 const AYUDA = [
@@ -638,7 +642,7 @@ function ejecutarTramo(linea, entrada) {
     case "sort": return cmdSort(args, entrada);
     case "uniq": return cmdUniq(args, entrada);
     case "help": AYUDA.forEach((l) => log(l, "nota")); return [];
-    case "clear": $("consola").innerHTML = ""; return [];
+    case "clear": $("consola").querySelectorAll(".log").forEach((l) => l.remove()); return [];
     default:
       log(`${cmd}: no disponible aquí. Escribe "help" para ver la lista.`, "mal");
       return [];
@@ -811,7 +815,7 @@ function reiniciar() {
   nuevoCaso();
   tecleado = "";
   $("tecleado").textContent = "";
-  $("consola").innerHTML = "";
+  $("consola").querySelectorAll(".log").forEach((l) => l.remove());
   $("aviso").textContent = "";
   $("ps1").textContent = "~/pruebas $";
   $("fin").hidden = true;

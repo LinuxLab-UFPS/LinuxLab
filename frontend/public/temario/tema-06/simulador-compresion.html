@@ -88,7 +88,10 @@ body{
 .log.bad{color:var(--red)}
 .log.note{color:var(--muted)}
 .log.echo{color:var(--text)}
-.prompt{display:flex;align-items:center;gap:7px;font-size:clamp(10px,1.3vmin + 3px,13.5px);flex-shrink:0;padding:0 1.6vmin 1.4vmin;background:#0B0E14}
+/* El prompt vive dentro de la consola y detras de la ultima linea: es donde
+   lo pone una terminal. Como fila aparte quedaba clavado abajo, con la
+   salida arriba y un hueco en medio. */
+.prompt{display:flex;align-items:center;gap:7px;font-size:clamp(10px,1.3vmin + 3px,13.5px);flex-shrink:0}
 .ps1{color:var(--green);font-weight:700;flex-shrink:0}
 .typed{color:var(--bright);white-space:pre}
 .caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
@@ -291,10 +294,11 @@ body{
       <span class="win-dot" style="background:#27C93F"></span>
       <span class="win-title">estudiante@linuxlab: ~/taller</span>
     </div>
-    <div class="console" id="consola"></div>
-    <div class="prompt">
-      <span class="ps1" id="ps1">$</span>
-      <span><span class="typed" id="typed"></span><span class="caret"></span></span>
+    <div class="console" id="consola">
+      <div class="prompt">
+        <span class="ps1" id="ps1">$</span>
+        <span><span class="typed" id="typed"></span><span class="caret"></span></span>
+      </div>
     </div>
   </div>
 
@@ -639,8 +643,10 @@ function log(texto, clase) {
   const d = document.createElement("div");
   d.className = "log" + (clase ? " " + clase : "");
   d.textContent = texto;
-  $("consola").appendChild(d);
-  $("consola").scrollTop = $("consola").scrollHeight;
+  const c = $("consola");
+  const prompt = c.querySelector(".prompt");
+  if (prompt) c.insertBefore(d, prompt); else c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
 }
 
 const AYUDA = [
@@ -844,7 +850,7 @@ function ejecutar(linea) {
     case "tar": cmdTar(args); break;
     case "rm": cmdRm(args); break;
     case "help": AYUDA.forEach((l) => log(l, "note")); break;
-    case "clear": $("consola").innerHTML = ""; break;
+    case "clear": $("consola").querySelectorAll(".log").forEach((l) => l.remove()); break;
     case "cd": cmdCd(args); break;
     default:
       log(`${cmd}: no disponible aquí. Escribe "help" para ver los comandos.`, "bad");
@@ -1263,7 +1269,7 @@ function reiniciar() {
   adjunto = null;
   tecleado = "";
   $("typed").textContent = "";
-  $("consola").innerHTML = "";
+  $("consola").querySelectorAll(".log").forEach((l) => l.remove());
   $("fin").hidden = true;
   $("picker").hidden = true;
   $("overlay").hidden = false;
