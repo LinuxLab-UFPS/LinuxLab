@@ -133,6 +133,8 @@ grep -o 'ERROR\|AVISO' bitacora.txt | sort | uniq -c | sort -n -r
 
 La opción `-o` de `grep` imprime cada coincidencia en su propia línea, en lugar de la línea completa. Después `sort` agrupa, `uniq -c` cuenta y el último `sort` deja arriba lo más frecuente.
 
+<!-- SIMULATOR: descifrar-el-enigma -->
+
 ## Resumen
 
 | Comando | Efecto |

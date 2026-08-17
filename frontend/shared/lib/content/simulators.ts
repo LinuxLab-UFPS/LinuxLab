@@ -51,6 +51,14 @@ const RAW = [
     topicNumber: 6,
     file: "simulador-compresion.html",
   },
+  {
+    id: "descifrar-el-enigma",
+    title: "Descifrar el enigma",
+    description:
+      "Una unidad incautada esconde cuatro datos del caso. Sácalos con grep, expresiones regulares, find y sort, y descífralo.",
+    topicNumber: 7,
+    file: "simulador-busqueda.html",
+  },
 ]
 
 export const simulators: Simulator[] = RAW.map((s) => {

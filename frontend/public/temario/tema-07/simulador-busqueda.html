@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>Descifrar el enigma</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ============================================================
+   DESCIFRAR EL ENIGMA
+   Cuatro datos repartidos por una unidad incautada. Cada uno se
+   saca con una herramienta distinta del tema de busqueda, y el
+   panel de descifrado es lo que convierte una respuesta leida en
+   un estado que el simulador puede comprobar: buscar no deja
+   rastro en el sistema de archivos, a diferencia de comprimir.
+   ============================================================ */
+:root{
+  --fondo:#070B12; --panel:#0E1520; --panel2:#131C2A; --linea:#1E2A3C;
+  --texto:#C6D4E4; --tenue:#7C8DA3; --claro:#EAF1F9;
+  --ambar:#F2B33D; --cian:#4DD0E1; --verde:#3FBF71; --rojo:#E2445C;
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--fondo);color:var(--texto);font:14px/1.5 var(--mono);display:flex;flex-direction:column;overflow:hidden}
+
+/* cabecera comun a los simuladores del curso */
+.hdr{display:flex;align-items:center;gap:12px;padding:9px 14px;background:#0A101A;border-bottom:1px solid var(--linea);flex-shrink:0}
+.logo-box{width:26px;height:26px;border:1.5px solid var(--ambar);border-radius:6px;display:grid;place-items:center;color:var(--ambar);font-size:12px;font-weight:700}
+.logo-name{font-weight:700;color:var(--claro);letter-spacing:.02em}
+.logo-name span{color:var(--ambar)}
+.hdr-sep{width:1px;height:20px;background:var(--linea)}
+.hdr-obj{flex:1;min-width:0;display:flex;align-items:center;gap:9px}
+.hdr-eyebrow{font-size:9px;letter-spacing:.16em;color:var(--ambar);text-transform:uppercase}
+.hdr-goal{font-size:12px;color:var(--claro);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hdr-dots{display:flex;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;background:#26364A}
+.dot.cur{background:var(--ambar)}
+.dot.done{background:var(--verde)}
+.hdr-n{font-size:11px;color:var(--tenue)}
+.restart-btn{background:transparent;border:1px solid var(--linea);color:var(--tenue);border-radius:5px;padding:4px 10px;font:inherit;font-size:11px;cursor:pointer}
+.restart-btn:hover{border-color:var(--ambar);color:var(--ambar)}
+
+/* escritorio: rejilla de la baticomputadora */
+.desk{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,26%);gap:12px;padding:12px;
+  background:
+    linear-gradient(115deg,rgba(77,208,225,.05) 0 1px,transparent 1px 90px),
+    radial-gradient(120% 90% at 50% 0%,#0D1826 0%,#070B12 70%);
+}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+
+.win{background:var(--panel);border:1px solid var(--linea);border-radius:8px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.win-bar{display:flex;align-items:center;gap:8px;padding:7px 11px;background:var(--panel2);border-bottom:1px solid var(--linea);flex-shrink:0}
+.win-t{font-size:11px;color:var(--tenue);letter-spacing:.06em;text-transform:uppercase}
+.win-t b{color:var(--cian);font-weight:600}
+
+/* terminal */
+#w-term{flex:1;min-height:0}
+.consola{flex:1;min-height:0;overflow-y:auto;padding:10px 12px;font-size:12.5px;display:flex;flex-direction:column;gap:2px;background:#060A10}
+.log{white-space:pre-wrap;word-break:break-word;line-height:1.45}
+.log.eco{color:var(--claro)}
+.log.ok{color:var(--verde)}
+.log.mal{color:var(--rojo)}
+.log.nota{color:var(--tenue)}
+.prompt{display:flex;gap:8px;padding:8px 12px;background:#060A10;border-top:1px solid var(--linea);flex-shrink:0;font-size:12.5px}
+.ps1{color:var(--ambar);flex-shrink:0}
+.tecleado{color:var(--claro);white-space:pre-wrap;word-break:break-all}
+.caret{display:inline-block;width:7px;height:14px;background:var(--claro);vertical-align:-2px;animation:parpadeo 1s step-end infinite}
+@keyframes parpadeo{50%{opacity:0}}
+
+/* nota del enigma */
+.nota-cuerpo{padding:12px 14px;overflow-y:auto;font-size:12px;line-height:1.65;color:var(--texto)}
+.nota-cuerpo p{margin-bottom:9px}
+.nota-cuerpo b{color:var(--ambar);font-weight:600}
+.firma{color:var(--verde);font-size:22px;text-align:right;line-height:1}
+
+/* panel de descifrado */
+.campos{padding:11px 12px;display:flex;flex-direction:column;gap:9px;overflow-y:auto}
+.campo{display:flex;flex-direction:column;gap:4px}
+.campo label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--tenue)}
+.campo input{background:#060A10;border:1px solid var(--linea);border-radius:5px;padding:7px 9px;color:var(--claro);font:inherit;font-size:12.5px}
+.campo input:focus{outline:none;border-color:var(--cian)}
+.campo.ok input{border-color:var(--verde);color:var(--verde)}
+.campo.mal input{border-color:var(--rojo)}
+.campo .pista{font-size:10.5px;color:var(--tenue)}
+.btn{margin:0 12px 12px;background:var(--ambar);color:#1A1206;border:none;border-radius:5px;padding:9px;font:inherit;font-weight:700;font-size:12.5px;letter-spacing:.06em;cursor:pointer;text-transform:uppercase}
+.btn:hover{background:#FFC65A}
+.aviso{padding:0 12px 10px;font-size:11.5px;color:var(--rojo);min-height:16px}
+
+/* objetivos */
+.pasos{padding:10px 12px;overflow-y:auto;font-size:12px;display:flex;flex-direction:column;gap:7px}
+.paso{display:grid;grid-template-columns:16px 1fr;gap:8px;line-height:1.45}
+.paso .n{color:#3A4A5F;text-align:right}
+.paso.cur .n{color:var(--ambar)}
+.paso.cur{color:var(--claro)}
+.paso.done{color:var(--verde);opacity:.75}
+.paso.done .n{color:var(--verde)}
+.paso.done .t{text-decoration:line-through}
+
+/* portada y final */
+.velo{position:absolute;inset:0;background:rgba(4,7,12,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:26px;z-index:20}
+.velo[hidden]{display:none}
+.velo h2{color:var(--claro);font-size:20px;letter-spacing:.04em}
+.velo p{max-width:460px;color:var(--tenue);font-size:12.5px;line-height:1.7}
+.velo .interro{font-size:56px;color:var(--verde);line-height:1}
+.play{width:62px;height:62px;border-radius:50%;border:2px solid var(--ambar);background:transparent;color:var(--ambar);font-size:22px;cursor:pointer;display:grid;place-items:center}
+.play:hover{background:rgba(242,179,61,.12)}
+.velo-btns{display:flex;gap:10px}
+.velo-btns button{background:transparent;border:1px solid var(--linea);color:var(--texto);border-radius:5px;padding:8px 16px;font:inherit;font-size:12px;cursor:pointer}
+.velo-btns button:hover{border-color:var(--ambar);color:var(--ambar)}
+
+/* pegado: el evento paste solo llega a algo editable */
+.pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0}
+
+@media (max-width:900px){
+  .desk{grid-template-columns:1fr;overflow-y:auto}
+  #w-term{min-height:300px}
+}
+</style>
+
+<div class="hdr">
+  <div class="logo-box">&gt;_</div>
+  <div class="logo-name">Linux<span>Lab</span></div>
+  <div class="hdr-sep"></div>
+  <div class="hdr-obj">
+    <span class="hdr-eyebrow">Objetivo</span>
+    <span class="hdr-goal" id="goal">&nbsp;</span>
+  </div>
+  <div class="hdr-dots" id="dots"></div>
+  <span class="hdr-n" id="counter">1 / 4</span>
+  <button class="restart-btn" id="restart">Reiniciar</button>
+</div>
+
+<div class="desk" id="desk">
+  <div class="col">
+    <div class="win" id="w-term">
+      <div class="win-bar"><span class="win-t">Terminal <b>unidad incautada</b></span></div>
+      <div class="consola" id="consola"></div>
+      <div class="prompt">
+        <span class="ps1" id="ps1">~/pruebas $</span>
+        <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="win" style="flex:0 0 auto;max-height:38%">
+      <div class="win-bar"><span class="win-t">Nota <b>hallada en la unidad</b></span></div>
+      <div class="nota-cuerpo" id="nota"></div>
+    </div>
+
+    <div class="win" style="flex:0 0 auto">
+      <div class="win-bar"><span class="win-t">Descifrado</span></div>
+      <div class="campos" id="campos"></div>
+      <div class="aviso" id="aviso"></div>
+      <button class="btn" id="descifrar">Descifrar</button>
+    </div>
+
+    <div class="win" style="flex:1;min-height:0">
+      <div class="win-bar"><span class="win-t">Objetivos</span></div>
+      <div class="pasos" id="pasos"></div>
+    </div>
+  </div>
+
+  <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
+
+  <div class="velo" id="portada">
+    <button class="play" id="play">&#9654;</button>
+    <h2>Descifrar el enigma</h2>
+    <p>
+      Una unidad incautada y una nota que promete cuatro datos escondidos en
+      ella. Ninguno está donde se buscaría primero. Sácalos con <b>grep</b>,
+      <b>find</b> y <b>sort</b>, y escríbelos en el panel de descifrado.
+    </p>
+  </div>
+
+  <div class="velo" id="fin" hidden>
+    <div class="interro">?</div>
+    <h2>Enigma descifrado</h2>
+    <p id="fin-p"></p>
+    <div class="velo-btns">
+      <button id="fin-again">Otro caso</button>
+      <button id="fin-exit">Salir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const alAzar = (xs) => xs[Math.floor(Math.random() * xs.length)];
+const entero = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+
+/* ============================================================
+   EL CASO
+   Los cuatro datos se sortean en cada partida: dos estudiantes
+   sentados juntos no pueden copiarse la respuesta, tienen que
+   repetir la busqueda.
+   ============================================================ */
+const LUGARES = ["Muelle 9", "Planta Sionis", "Almacen Kane", "Torre Wayne", "Puerto Este"];
+const NOMBRES = ["nygma", "kyle", "dent", "cobblepot", "isley"];
+const CONTACTOS = ["Alberto Falcone", "Selina Kyle", "Lucius Fox", "Renee Montoya"];
+
+let caso, fs, cwd, paso, resueltos;
+
+/** Texto plano de un archivo, como lista de lineas. */
+function nuevoCaso() {
+  const lugar = alAzar(LUGARES);
+  const placa = "GC-" + entero(1000, 9999);
+  const hora = String(entero(1, 4)).padStart(2, "0") + ":" + String(entero(10, 59));
+  const informante = alAzar(NOMBRES);
+  const camaras = [3, 7, 11, 14, 22];
+  const camara = alAzar(camaras);
+
+  caso = { lugar, placa, hora, informante, camara: "camara-" + String(camara).padStart(2, "0") };
+
+  // ---- registros de camaras: mucho ruido y unas pocas lineas del sospechoso
+  const placasRuido = ["GC-2210", "GC-8834", "GC-5567", "GC-4102", "GC-9938"];
+  const linea = (h, c, p) => `${h} ${"camara-" + String(c).padStart(2, "0")} ${p}`;
+  const registros = { norte: [], sur: [], puerto: [] };
+  const zonas = Object.keys(registros);
+  for (let i = 0; i < 90; i++) {
+    const z = zonas[i % 3];
+    const h = String(entero(0, 23)).padStart(2, "0") + ":" + String(entero(10, 59));
+    registros[z].push(linea(h, alAzar(camaras), alAzar(placasRuido)));
+  }
+  // La camara buscada ve la placa mas veces que ninguna otra.
+  const otras = camaras.filter((c) => c !== camara);
+  for (let i = 0; i < 6; i++) {
+    const h = String(entero(0, 23)).padStart(2, "0") + ":" + String(entero(10, 59));
+    registros[alAzar(zonas)].push(linea(h, camara, placa));
+  }
+  for (let i = 0; i < 3; i++) {
+    const h = String(entero(0, 23)).padStart(2, "0") + ":" + String(entero(10, 59));
+    registros[alAzar(zonas)].push(linea(h, alAzar(otras), placa));
+  }
+  // La unica aparicion con la hora del encuentro va en el informe, no aqui:
+  // asi la hora se saca por la forma de la placa y no contando lineas.
+  registros.norte.push(linea(hora, camara, placa));
+
+  const ahora = Date.now();
+  const dia = 86400000;
+  const F = (ruta, lineas, edad) => ({ ruta, lineas, edad: edad === undefined ? dia * entero(3, 40) : edad });
+
+  const archivos = [
+    F("informes/caso-0412.txt", [
+      "INFORME PRELIMINAR",
+      "El sospechoso abandono el vehiculo antes del amanecer.",
+      "Testigos describen un maletin metalico.",
+      "Sin coincidencias en la base de datos.",
+    ]),
+    F("informes/caso-0417.txt", [
+      "INFORME COMPLEMENTARIO",
+      `Punto de encuentro confirmado: ${lugar}.`,
+      "La reunion se repite cada semana segun el informante.",
+      "Pendiente de verificar la matricula del vehiculo.",
+    ]),
+    F("informes/interrogatorio.txt", [
+      "P: Donde lo vio por ultima vez",
+      "R: No pienso responder a eso.",
+      "P: Reconoce este vehiculo",
+      `R: Placa ${placa}. Lo vi salir a las ${hora}, no me pregunte mas.`,
+    ]),
+    F("notas/contactos.txt", CONTACTOS.map((c, i) => `${c},${entero(2, 9)} llamadas`)),
+    F("notas/descartado.txt", [
+      "Pista falsa: el almacen del norte lleva dos anos cerrado.",
+      "No perder tiempo aqui.",
+    ]),
+    F("notas/recado.txt", [
+      "Si lees esto, ya llegaste tarde.",
+      "Las respuestas estan repartidas. Ninguna donde deberias mirar.",
+    ]),
+    F("camaras/registro-norte.log", registros.norte),
+    F("camaras/registro-sur.log", registros.sur),
+    F("camaras/registro-puerto.log", registros.puerto),
+    F("evidencias/huella.dat", ["binario: 8f2a41b0"]),
+    F("evidencias/audio-01.dat", ["binario: 22c9de71"]),
+    // El informante: el ultimo archivo que entro a la unidad.
+    F(`evidencias/${informante}.dat`, ["binario: 0af71c33"], 1000 * 60 * 4),
+  ];
+
+  fs = {};
+  for (const a of archivos) {
+    fs[a.ruta] = { tipo: "file", lineas: a.lineas, fecha: ahora - a.edad };
+    // los directorios se crean solos a partir de las rutas
+    const partes = a.ruta.split("/");
+    for (let i = 1; i < partes.length; i++) {
+      const dir = partes.slice(0, i).join("/");
+      if (!fs[dir]) fs[dir] = { tipo: "dir", fecha: ahora - dia * 41 };
+    }
+  }
+
+  cwd = "";
+  paso = 0;
+  resueltos = { lugar: false, hora: false, informante: false, camara: false };
+}
+
+/* ============================================================
+   SISTEMA DE ARCHIVOS
+   ============================================================ */
+function resolver(ruta) {
+  const t = (ruta || "").trim();
+  if (!t || t === ".") return cwd;
+  if (t === "~" || t === "~/pruebas") return "";
+  let partes;
+  if (t.startsWith("~/pruebas/")) partes = t.slice(10).split("/");
+  else if (t.startsWith("~/")) partes = t.slice(2).split("/");
+  else if (t.startsWith("/")) return null;
+  else partes = (cwd ? cwd.split("/") : []).concat(t.split("/"));
+  const pila = [];
+  for (const p of partes) {
+    if (!p || p === ".") continue;
+    if (p === "..") { pila.pop(); continue; }
+    pila.push(p);
+  }
+  return pila.join("/");
+}
+
+const existe = (clave) => clave === "" || Boolean(fs[clave]);
+const esDir = (clave) => clave === "" || (fs[clave] && fs[clave].tipo === "dir");
+
+/** Contenido de un directorio, sin bajar de nivel. */
+function hijos(dir) {
+  const pref = dir ? dir + "/" : "";
+  const set = new Set();
+  for (const k of Object.keys(fs)) {
+    if (!k.startsWith(pref)) continue;
+    const resto = k.slice(pref.length);
+    if (!resto) continue;
+    set.add(resto.split("/")[0]);
+  }
+  return [...set].sort();
+}
+
+/** Todos los archivos bajo una ruta, incluida ella misma. */
+function bajo(dir) {
+  const pref = dir ? dir + "/" : "";
+  return Object.keys(fs).filter((k) => k === dir || k.startsWith(pref)).sort();
+}
+
+/* ============================================================
+   CONSOLA
+   ============================================================ */
+function log(texto, clase) {
+  const d = document.createElement("div");
+  d.className = "log" + (clase ? " " + clase : "");
+  d.textContent = texto;
+  $("consola").appendChild(d);
+  $("consola").scrollTop = $("consola").scrollHeight;
+}
+
+const AYUDA = [
+  "Comandos disponibles:",
+  "  ls [-l] [ruta]                 lista un directorio",
+  "  cd <ruta>                      entra en un directorio",
+  "  cat <archivo>                  muestra un archivo",
+  "  head/tail [-n N] <archivo>     primeras o ultimas lineas",
+  "  wc -l <archivo>                cuenta lineas",
+  "  grep [-inrlcvowE] [-A/-B/-C n] <patron> [archivos]",
+  "  find <ruta> [-name X] [-type f|d] [-size +N] [-mmin -N]",
+  "  sort [-n] [-r] [-t X] [-k N]   ordena lo que recibe",
+  "  uniq [-c]                      colapsa repetidas seguidas",
+  "  clear                          limpia la consola",
+  "",
+  "Se pueden encadenar con | (pipe).",
+];
+
+/* ---------- utilidades de opciones ---------- */
+function separa(args) {
+  const flags = [];
+  const libres = [];
+  const valores = {};
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === "-n" || a === "-A" || a === "-B" || a === "-C" || a === "-k") {
+      valores[a] = args[++i];
+    } else if (a.startsWith("-t") && a.length > 2) {
+      valores["-t"] = a.slice(2);
+    } else if (a === "-t") {
+      valores["-t"] = args[++i];
+    } else if (a.startsWith("-") && a.length > 1) {
+      for (const c of a.slice(1)) flags.push("-" + c);
+    } else {
+      libres.push(a);
+    }
+  }
+  return { flags, libres, valores };
+}
+
+const quita = (s) => (s || "").replace(/^['"]|['"]$/g, "");
+
+/* ---------- comandos ----------
+   Cada uno recibe lo que le llega por el pipe (lista de lineas o
+   null si es el primero de la cadena) y devuelve lista de lineas. */
+function cmdLs(args) {
+  const { flags, libres } = separa(args);
+  const clave = resolver(libres[0]);
+  if (clave === null || !existe(clave)) { log(`ls: ${libres[0] || ""}: no existe`, "mal"); return []; }
+  if (!esDir(clave)) return [libres[0]];
+  return hijos(clave).map((h) => {
+    const e = fs[clave ? clave + "/" + h : h];
+    const marca = e && e.tipo === "dir" ? "/" : "";
+    if (!flags.includes("-l")) return h + marca;
+    const n = e && e.lineas ? e.lineas.length : 0;
+    const fecha = new Date(e ? e.fecha : Date.now());
+    const sello = `${String(fecha.getDate()).padStart(2, "0")}/${String(fecha.getMonth() + 1).padStart(2, "0")} ${String(fecha.getHours()).padStart(2, "0")}:${String(fecha.getMinutes()).padStart(2, "0")}`;
+    return `${e && e.tipo === "dir" ? "d" : "-"}  ${String(n).padStart(4)} lineas  ${sello}  ${h}${marca}`;
+  });
+}
+
+function cmdCd(args) {
+  const { libres } = separa(args);
+  const clave = resolver(libres[0] === undefined ? "~" : libres[0]);
+  if (clave === null || !existe(clave)) { log(`cd: ${libres[0]}: no existe`, "mal"); return []; }
+  if (!esDir(clave)) { log(`cd: ${libres[0]}: no es un directorio`, "mal"); return []; }
+  cwd = clave;
+  $("ps1").textContent = "~/pruebas" + (cwd ? "/" + cwd : "") + " $";
+  return [];
+}
+
+function leer(nombre) {
+  const clave = resolver(nombre);
+  if (clave === null || !fs[clave] || fs[clave].tipo !== "file") return null;
+  return fs[clave].lineas;
+}
+
+function cmdCat(args) {
+  const { libres } = separa(args);
+  const salida = [];
+  for (const n of libres) {
+    const l = leer(n);
+    if (!l) { log(`cat: ${n}: no existe o es un directorio`, "mal"); continue; }
+    salida.push(...l);
+  }
+  return salida;
+}
+
+function cmdHeadTail(args, entrada, cual) {
+  const { libres, valores } = separa(args);
+  const n = parseInt(valores["-n"] || "10", 10);
+  const lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log(`${cual}: falta un archivo válido`, "mal"); return []; }
+  return cual === "head" ? lineas.slice(0, n) : lineas.slice(-n);
+}
+
+function cmdWc(args, entrada) {
+  const { libres } = separa(args);
+  if (entrada) return [String(entrada.length)];
+  const l = libres[0] ? leer(libres[0]) : null;
+  if (!l) { log("wc: falta un archivo válido", "mal"); return []; }
+  return [`${l.length} ${libres[0]}`];
+}
+
+/** Traduce una expresion regular basica a la sintaxis del motor de JavaScript. */
+function aBRE(p) {
+  const especiales = "{}()+?|";
+  let r = "", i = 0;
+  while (i < p.length) {
+    const c = p[i];
+    if (c === "\\" && i + 1 < p.length) {
+      const sig = p[i + 1];
+      r += especiales.includes(sig) ? sig : "\\" + sig;
+      i += 2;
+      continue;
+    }
+    r += especiales.includes(c) ? "\\" + c : c;
+    i++;
+  }
+  return r;
+}
+
+function cmdGrep(args, entrada) {
+  const { flags, libres, valores } = separa(args);
+  const patron = quita(libres[0]);
+  if (!patron) { log("grep: falta el patrón", "mal"); return []; }
+
+  let banderas = flags.includes("-i") ? "i" : "";
+  // Sin -E las llaves, el mas, el interrogante y la barra son literales, igual
+  // que en el grep real: si el simulador los aceptara siempre, ensenaria a
+  // escribir expresiones que fuera de aqui no funcionan.
+  let fuente = flags.includes("-E") ? patron : aBRE(patron);
+  if (flags.includes("-w")) fuente = "\\b(?:" + fuente + ")\\b";
+  let re;
+  try { re = new RegExp(fuente, banderas + "g"); }
+  catch (e) { log("grep: la expresión regular no es válida", "mal"); return []; }
+
+  // De donde se lee: del pipe, de los archivos nombrados o de un directorio con -r
+  const objetivos = [];
+  if (entrada) objetivos.push({ nombre: null, lineas: entrada });
+  else {
+    const rutas = libres.slice(1);
+    if (flags.includes("-r")) {
+      const base = resolver(rutas[0] || ".");
+      for (const k of bajo(base)) if (fs[k].tipo === "file") objetivos.push({ nombre: k, lineas: fs[k].lineas });
+    } else {
+      for (const r of rutas) {
+        const l = leer(r);
+        if (!l) { log(`grep: ${r}: no existe`, "mal"); continue; }
+        objetivos.push({ nombre: r, lineas: l });
+      }
+    }
+  }
+  if (objetivos.length === 0) { log("grep: falta el archivo donde buscar", "mal"); return []; }
+
+  const varios = objetivos.length > 1;
+  const salida = [];
+  let total = 0;
+  const ctxA = parseInt(valores["-C"] || valores["-A"] || "0", 10);
+  const ctxB = parseInt(valores["-C"] || valores["-B"] || "0", 10);
+
+  for (const o of objetivos) {
+    const marcadas = [];
+    o.lineas.forEach((l, i) => {
+      re.lastIndex = 0;
+      const hay = re.test(l);
+      if (hay !== flags.includes("-v")) marcadas.push(i);
+    });
+    total += marcadas.length;
+    if (flags.includes("-l")) { if (marcadas.length) salida.push(o.nombre); continue; }
+    if (flags.includes("-c")) { salida.push((varios && o.nombre ? o.nombre + ":" : "") + marcadas.length); continue; }
+
+    const mostrar = new Set();
+    for (const i of marcadas) for (let j = i - ctxB; j <= i + ctxA; j++) if (j >= 0 && j < o.lineas.length) mostrar.add(j);
+    [...mostrar].sort((a, b) => a - b).forEach((i) => {
+      let texto = o.lineas[i];
+      if (flags.includes("-o")) {
+        re.lastIndex = 0;
+        const trozos = texto.match(re) || [];
+        trozos.forEach((t) => salida.push(t));
+        return;
+      }
+      if (flags.includes("-n")) texto = (i + 1) + ":" + texto;
+      if (varios && o.nombre && !flags.includes("-h")) texto = o.nombre + ":" + texto;
+      salida.push(texto);
+    });
+  }
+  if (flags.includes("-c") && !varios && salida.length === 0) return [String(total)];
+  return salida;
+}
+
+function cmdFind(args) {
+  const { flags, libres, valores } = separa(args);
+  // find lleva sus propias condiciones, que separa() no entiende: se releen aqui
+  const cond = { nombre: null, tipo: null, size: null, mmin: null, mtime: null };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "-name" || args[i] === "-iname") cond.nombre = { patron: quita(args[++i]), i: args[i - 1] === "-iname" };
+    else if (args[i] === "-type") cond.tipo = args[++i];
+    else if (args[i] === "-size") cond.size = args[++i];
+    else if (args[i] === "-mmin") cond.mmin = args[++i];
+    else if (args[i] === "-mtime") cond.mtime = args[++i];
+  }
+  // La ruta es el primer argumento, si no empieza por guion. Buscarla entre los
+  // libres tomaria por ruta el valor de una condicion, por ejemplo el +5 de -size.
+  const inicio = args[0] && !args[0].startsWith("-") ? args[0] : ".";
+  const base = resolver(inicio);
+  if (base === null || !existe(base)) { log(`find: ${inicio}: no existe`, "mal"); return []; }
+
+  const aRegex = (p) => new RegExp("^" + p.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$", cond.nombre.i ? "i" : "");
+  const ahora = Date.now();
+  const salida = [];
+  for (const k of bajo(base)) {
+    const e = fs[k];
+    const nombre = k.split("/").pop();
+    if (cond.tipo === "f" && e.tipo !== "file") continue;
+    if (cond.tipo === "d" && e.tipo !== "dir") continue;
+    if (cond.nombre && !aRegex(cond.nombre.patron).test(nombre)) continue;
+    if (cond.mmin !== null) {
+      const min = (ahora - e.fecha) / 60000;
+      const v = parseInt(cond.mmin.replace(/[+-]/, ""), 10);
+      if (cond.mmin.startsWith("-") ? !(min < v) : !(min > v)) continue;
+    }
+    if (cond.mtime !== null) {
+      const dias = (ahora - e.fecha) / 86400000;
+      const v = parseInt(cond.mtime.replace(/[+-]/, ""), 10);
+      if (cond.mtime.startsWith("-") ? !(dias < v) : !(dias > v)) continue;
+    }
+    if (cond.size !== null) {
+      const lineas = e.lineas ? e.lineas.length : 0;
+      const v = parseInt(cond.size.replace(/[+-kM]/g, ""), 10);
+      if (cond.size.startsWith("+") ? !(lineas > v) : !(lineas < v)) continue;
+    }
+    salida.push("~/pruebas" + (k ? "/" + k : ""));
+  }
+  return salida;
+}
+
+function cmdSort(args, entrada) {
+  const { flags, libres, valores } = separa(args);
+  let lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log("sort: falta lo que hay que ordenar", "mal"); return []; }
+  const sep = valores["-t"];
+  const campo = valores["-k"] ? parseInt(valores["-k"], 10) : null;
+  const num = flags.includes("-n") || (valores["-k"] || "").includes("n");
+  const clave = (l) => {
+    if (!campo) return l.trim();
+    const partes = sep ? l.split(sep) : l.trim().split(/\s+/);
+    return (partes[campo - 1] || "").trim();
+  };
+  const ordenadas = lineas.slice().sort((a, b) => {
+    const x = clave(a), y = clave(b);
+    if (num) return (parseFloat(x) || 0) - (parseFloat(y) || 0);
+    return x.localeCompare(y);
+  });
+  if (flags.includes("-r")) ordenadas.reverse();
+  return ordenadas;
+}
+
+function cmdUniq(args, entrada) {
+  const { flags, libres } = separa(args);
+  const lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log("uniq: falta lo que hay que revisar", "mal"); return []; }
+  const salida = [];
+  let previa = null, cuenta = 0;
+  const volcar = () => {
+    if (previa === null) return;
+    salida.push(flags.includes("-c") ? `${String(cuenta).padStart(7)} ${previa}` : previa);
+  };
+  for (const l of lineas) {
+    if (l === previa) { cuenta++; continue; }
+    volcar();
+    previa = l; cuenta = 1;
+  }
+  volcar();
+  return salida;
+}
+
+/* ---------- ejecutor con pipes ---------- */
+function ejecutarTramo(linea, entrada) {
+  const partes = linea.trim().match(/'[^']*'|"[^"]*"|\S+/g) || [];
+  if (partes.length === 0) return entrada || [];
+  const [cmd, ...args] = partes;
+  switch (cmd) {
+    case "ls": return cmdLs(args);
+    case "cd": return cmdCd(args);
+    case "cat": return cmdCat(args);
+    case "head": return cmdHeadTail(args, entrada, "head");
+    case "tail": return cmdHeadTail(args, entrada, "tail");
+    case "wc": return cmdWc(args, entrada);
+    case "grep": return cmdGrep(args, entrada);
+    case "find": return cmdFind(args);
+    case "sort": return cmdSort(args, entrada);
+    case "uniq": return cmdUniq(args, entrada);
+    case "help": AYUDA.forEach((l) => log(l, "nota")); return [];
+    case "clear": $("consola").innerHTML = ""; return [];
+    default:
+      log(`${cmd}: no disponible aquí. Escribe "help" para ver la lista.`, "mal");
+      return [];
+  }
+}
+
+function ejecutar(linea) {
+  if (!linea.trim()) return;
+  log("$ " + linea, "eco");
+  let entrada = null;
+  for (const tramo of linea.split("|")) {
+    entrada = ejecutarTramo(tramo, entrada);
+  }
+  // Un limite alto pero real: volcar diez mil lineas cuelga el navegador y no
+  // ensena nada, y en una terminal de verdad se resuelve con head o con grep.
+  const salida = entrada || [];
+  if (salida.length > 200) {
+    salida.slice(0, 200).forEach((l) => log(l));
+    log(`… ${salida.length - 200} líneas más. Afina la búsqueda o usa head.`, "nota");
+  } else {
+    salida.forEach((l) => log(l));
+  }
+}
+
+/* ============================================================
+   OBJETIVOS Y PANEL
+   ============================================================ */
+function objetivos() {
+  return [
+    { campo: "lugar", objetivo: "Encuentra el punto de encuentro",
+      texto: "El punto de encuentro está escrito en un informe. Búscalo por esas mismas palabras en toda la unidad." },
+    { campo: "hora", objetivo: "Encuentra la hora de salida",
+      texto: "La hora aparece junto a la placa del vehículo. La placa son dos letras, un guion y cuatro dígitos." },
+    { campo: "informante", objetivo: "Identifica al informante",
+      texto: "Alguien copió un archivo a la unidad hace unos minutos. El nombre del archivo lo delata." },
+    { campo: "camara", objetivo: "Señala la cámara que más lo vio",
+      texto: "En los registros de cámaras, cuenta cuál grabó esa placa más veces." },
+  ];
+}
+
+const CAMPOS = [
+  { id: "lugar", etiqueta: "Punto de encuentro", pista: "El nombre tal cual aparece" },
+  { id: "hora", etiqueta: "Hora de salida", pista: "Formato hh:mm" },
+  { id: "informante", etiqueta: "Informante", pista: "Sólo el nombre" },
+  { id: "camara", etiqueta: "Cámara", pista: "Por ejemplo camara-07" },
+];
+
+function pintarCampos() {
+  const cont = $("campos");
+  cont.innerHTML = "";
+  for (const c of CAMPOS) {
+    const d = document.createElement("div");
+    d.className = "campo" + (resueltos[c.id] ? " ok" : "");
+    d.innerHTML = `<label>${c.etiqueta}</label><input id="in-${c.id}" autocomplete="off"${resueltos[c.id] ? " disabled" : ""}><span class="pista">${c.pista}</span>`;
+    cont.appendChild(d);
+    if (resueltos[c.id]) $("in-" + c.id).value = caso[c.id];
+  }
+}
+
+const normal = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+function descifrar() {
+  let fallos = 0;
+  for (const c of CAMPOS) {
+    if (resueltos[c.id]) continue;
+    const val = normal($("in-" + c.id).value);
+    if (!val) continue;
+    if (val === normal(caso[c.id])) {
+      resueltos[c.id] = true;
+      log("✓ dato confirmado: " + c.etiqueta.toLowerCase(), "ok");
+    } else {
+      fallos++;
+      $("in-" + c.id).parentElement.classList.add("mal");
+    }
+  }
+  $("aviso").textContent = fallos ? "Ese dato no cuadra con la unidad. Vuelve a buscarlo." : "";
+  pintarCampos();
+  revisar();
+}
+
+function revisar() {
+  const lista = objetivos();
+  while (paso < lista.length && resueltos[lista[paso].campo]) paso++;
+  pintar();
+  if (Object.values(resueltos).every(Boolean)) terminar();
+}
+
+function pintar() {
+  const lista = objetivos();
+  $("goal").textContent = paso < lista.length ? lista[paso].objetivo : "Caso cerrado";
+  $("counter").textContent = `${Math.min(paso + 1, lista.length)} / ${lista.length}`;
+  $("dots").innerHTML = "";
+  lista.forEach((_, i) => {
+    const d = document.createElement("span");
+    d.className = "dot" + (i < paso ? " done" : i === paso ? " cur" : "");
+    $("dots").appendChild(d);
+  });
+  // Los objetivos salen de uno en uno, como en el simulador de compresión.
+  const cont = $("pasos");
+  cont.innerHTML = "";
+  lista.slice(0, paso + 1).forEach((o, i) => {
+    const d = document.createElement("div");
+    d.className = "paso " + (i < paso ? "done" : "cur");
+    d.innerHTML = `<span class="n">${i + 1}</span><span class="t"></span>`;
+    d.querySelector(".t").textContent = o.texto;
+    cont.appendChild(d);
+  });
+}
+
+function pintarNota() {
+  $("nota").innerHTML =
+    `<p>Detective:</p>` +
+    `<p>Cuatro datos te delatan el caso. <b>Dónde</b>, <b>cuándo</b>, <b>quién</b> y <b>cuánto</b>.</p>` +
+    `<p>Están todos en esta unidad. Ninguno donde mirarías primero.</p>` +
+    `<p class="firma">?</p>`;
+}
+
+function terminar() {
+  $("fin-p").textContent =
+    `${caso.lugar}, a las ${caso.hora}. Lo entregó ${caso.informante} y la ${caso.camara} lo grabó ` +
+    `más veces que ninguna. Cuatro búsquedas, cuatro herramientas: grep, una expresión regular, find y sort.`;
+  $("fin").hidden = false;
+}
+
+/* ============================================================
+   ENTRADA
+   ============================================================ */
+let tecleado = "";
+const ocupado = () => !$("fin").hidden || !$("portada").hidden;
+
+function enfocar() {
+  const t = $("pegar");
+  if (t && t.focus) t.focus({ preventScroll: true });
+}
+
+document.addEventListener("keydown", (ev) => {
+  if (ocupado()) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+  if (ev.key === "Enter") {
+    const linea = tecleado;
+    tecleado = "";
+    $("tecleado").textContent = "";
+    ejecutar(linea);
+    return;
+  }
+  if (ev.key === "Backspace") tecleado = tecleado.slice(0, -1);
+  else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) tecleado += ev.key;
+  else return;
+  ev.preventDefault();
+  $("tecleado").textContent = tecleado;
+});
+
+document.addEventListener("paste", (ev) => {
+  if (ocupado()) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+  const datos = ev.clipboardData || window.clipboardData;
+  if (!datos) return;
+  ev.preventDefault();
+  tecleado += (datos.getData("text") || "").split(/\r?\n/)[0];
+  $("tecleado").textContent = tecleado;
+  const t = $("pegar");
+  if (t) t.value = "";
+});
+
+$("desk").addEventListener("click", (ev) => {
+  if (ev.target.tagName !== "INPUT") enfocar();
+});
+
+function reiniciar() {
+  nuevoCaso();
+  tecleado = "";
+  $("tecleado").textContent = "";
+  $("consola").innerHTML = "";
+  $("aviso").textContent = "";
+  $("ps1").textContent = "~/pruebas $";
+  $("fin").hidden = true;
+  $("portada").hidden = false;
+  pintarNota();
+  pintarCampos();
+  pintar();
+  log("Unidad montada en ~/pruebas. Escribe help para ver los comandos.", "nota");
+}
+
+$("descifrar").addEventListener("click", descifrar);
+$("play").addEventListener("click", () => { $("portada").hidden = true; enfocar(); });
+$("restart").addEventListener("click", reiniciar);
+$("fin-again").addEventListener("click", reiniciar);
+$("fin-exit").addEventListener("click", () => window.parent.postMessage({ action: "close-simulator" }, "*"));
+
+reiniciar();
+
+// Gancho de pruebas: el arnes de Node empuja el estado sin DOM.
+if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+  globalThis.__api = {
+    ejecutar, ejecutarTramo, reiniciar, descifrar, objetivos,
+    caso: () => caso, fs: () => fs, paso: () => paso, resueltos: () => resueltos,
+    responder: (campo, valor) => { resueltos[campo] = normal(valor) === normal(caso[campo]); revisar(); },
+  };
+}
+</script>
