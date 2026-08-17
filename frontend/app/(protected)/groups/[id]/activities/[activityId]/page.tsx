@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { ArrowLeft, Pencil, ListChecks, FolderOpen } from "lucide-react"
+import { ArrowLeft, Pencil, ListChecks, FolderOpen, Eye } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { ActionButton } from "@shared/components/action-button"
-import { getGroupActivity } from "@/lib/features/teacher/data"
+import { getGroupActivity, listActivitySubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
@@ -20,10 +20,18 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
   )
 }
 
-function ActivityDetail({ groupId, activity }: { groupId: string; activity: Activity }) {
+function ActivityDetail({
+  groupId,
+  activity,
+  submissions,
+}: {
+  groupId: string
+  activity: Activity
+  submissions: { studentId: string; studentName: string; studentEmail: string; attemptsCount: number; lastAttemptDate: string | null; finalScore: number }[]
+}) {
   const topic = getTopic(activity.topicNumber)
   return (
-    <div data-section="cursos" className="mx-auto max-w-3xl px-6 py-8">
+    <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
       <ActionButton tone="neutral" href={`/groups/${groupId}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver al curso
@@ -42,80 +50,151 @@ function ActivityDetail({ groupId, activity }: { groupId: string; activity: Acti
         </ActionButton>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        <DetailRow label="Modalidad">
-          {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
-        </DetailRow>
-        <DetailRow label="Tipo de actividad">
-          {activity.activityType === "quiz" ? "Quiz" : "Taller"}
-        </DetailRow>
-        <DetailRow label="Puntuación">{activity.maxScore} pts</DetailRow>
-        <DetailRow label="Fecha de cierre">
-          {activity.dueDate
-            ? formatBogotaDateTime(activity.dueDate)
-            : "Sin fecha"}
-        </DetailRow>
-        <DetailRow label="Carpeta de trabajo">
-          <span className="flex items-center justify-end gap-1.5 font-mono">
-            <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            ~/actividades/{activity.workdir}
-          </span>
-        </DetailRow>
-      </div>
-
-      {activity.instructions && (
-        <section className="mt-6">
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-            Instrucciones
-          </h2>
-          <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-            {activity.instructions}
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+        {/* Columna izquierda: detalle de la actividad */}
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <DetailRow label="Modalidad">
+              {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
+            </DetailRow>
+            <DetailRow label="Tipo de actividad">
+              {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+            </DetailRow>
+            <DetailRow label="Puntuación">{activity.maxScore} pts</DetailRow>
+            <DetailRow label="Fecha de cierre">
+              {activity.dueDate ? formatBogotaDateTime(activity.dueDate) : "Sin fecha"}
+            </DetailRow>
+            <DetailRow label="Carpeta de trabajo">
+              <span className="flex items-center justify-end gap-1.5 font-mono">
+                <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                ~/actividades/{activity.workdir}
+              </span>
+            </DetailRow>
           </div>
-        </section>
-      )}
 
-      <section className="mt-6">
-        <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          <ListChecks className="h-4 w-4" />
-          Aserciones ({activity.checks.length})
-        </h2>
-        <div className="overflow-hidden rounded-xl border border-border">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-card border-b border-border">
-                  <th className="w-10 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                    #
-                  </th>
-                  <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                    Tipo
-                  </th>
-                  <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                    Parámetros
-                  </th>
-                  <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                    Puntos
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {activity.checks.map((check, index) => (
-                  <tr key={check.id} className="border-b border-border/50 bg-background last:border-0">
-                    <td className="px-4 py-2.5 text-sm text-muted-foreground">{index + 1}</td>
-                    <td className="px-4 py-2.5 font-mono text-sm text-foreground">{check.type}</td>
-                    <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                      {JSON.stringify(check.params)}
-                    </td>
-                    <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
-                      {check.points}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {activity.instructions && (
+            <section>
+              <h2 className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                Instrucciones
+              </h2>
+              <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                {activity.instructions}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              <ListChecks className="h-4 w-4" />
+              Aserciones ({activity.checks.length})
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-card border-b border-border">
+                      <th className="w-10 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        #
+                      </th>
+                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Tipo
+                      </th>
+                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Parámetros
+                      </th>
+                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Puntos
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activity.checks.map((check, index) => (
+                      <tr key={check.id} className="border-b border-border/50 bg-background last:border-0">
+                        <td className="px-4 py-2.5 text-sm text-muted-foreground">{index + 1}</td>
+                        <td className="px-4 py-2.5 font-mono text-sm text-foreground">{check.type}</td>
+                        <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
+                          {JSON.stringify(check.params)}
+                        </td>
+                        <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
+                          {check.points}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+
+        {/* Columna derecha: entregas */}
+        {activity.evaluationType !== "manual" && (
+          <section>
+            <h2 className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+              Entregas ({submissions.length})
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-card border-b border-border">
+                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Estudiante
+                      </th>
+                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Intentos
+                      </th>
+                      <th className="w-44 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Fecha de entrega
+                      </th>
+                      <th className="w-28 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Calificación
+                      </th>
+                      <th className="w-16 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                        Detalle
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {submissions.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                          Aún no hay entregas registradas.
+                        </td>
+                      </tr>
+                    ) : (
+                      submissions.map((sub) => (
+                        <tr key={sub.studentId} className="border-b border-border/50 bg-background last:border-0">
+                          <td className="px-4 py-2.5">
+                            <span className="block text-sm font-medium text-foreground">
+                              {sub.studentName}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {sub.studentEmail}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
+                            {sub.attemptsCount}
+                          </td>
+                          <td className="px-4 py-2.5 text-sm text-muted-foreground">
+                            {sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}
+                          </td>
+                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
+                            {sub.finalScore}/{activity.maxScore}
+                          </td>
+                          <td className="px-4 py-2.5 text-center">
+                            <Eye className="h-4 w-4 mx-auto text-muted-foreground" />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   )
 }
@@ -127,7 +206,10 @@ export default async function ActivityDetailPage({
 }) {
   await requireServerRole(["teacher", "admin"])
   const { id, activityId } = await params
-  const activity = await getGroupActivity(id, activityId)
+  const [activity, submissions] = await Promise.all([
+    getGroupActivity(id, activityId),
+    listActivitySubmissions(id, activityId),
+  ])
 
   if (!activity) {
     return (
@@ -143,5 +225,5 @@ export default async function ActivityDetailPage({
     )
   }
 
-  return <ActivityDetail groupId={id} activity={activity} />
+  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} />
 }

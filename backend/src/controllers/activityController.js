@@ -119,6 +119,17 @@ const disableGroupActivity = asyncHandler(async (req, res) => {
   )
 })
 
+const getActivitySubmissions = asyncHandler(async (req, res) => {
+  res.json(
+    await groupActivityService.getActivitySubmissions({
+      groupId: req.params.id,
+      activityId: req.params.activityId,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 module.exports = {
   getCatalog,
   getActivity,
@@ -134,4 +145,5 @@ module.exports = {
   updateGroupActivity,
   enableGroupActivity,
   disableGroupActivity,
+  getActivitySubmissions,
 }

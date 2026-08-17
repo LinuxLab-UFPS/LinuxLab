@@ -31,5 +31,6 @@ router.patch("/:id/activities/:activityId", activityController.updateGroupActivi
 // inverso de "disable": la publicacion en si ocurre al crear (no hay borrador).
 router.post("/:id/activities/:activityId/publish", activityController.enableGroupActivity)
 router.post("/:id/activities/:activityId/disable", activityController.disableGroupActivity)
+router.get("/:id/activities/:activityId/submissions", activityController.getActivitySubmissions)
 
 module.exports = router

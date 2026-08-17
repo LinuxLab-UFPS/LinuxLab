@@ -2,6 +2,7 @@ export type {
   Activity,
   ActivityCheck,
   ActivitySource,
+  ActivitySubmissionStudent,
   ActivityType,
   CatalogEntry,
   CatalogField,

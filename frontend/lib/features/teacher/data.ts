@@ -3,6 +3,7 @@ import type {
   Group,
   CreateGroupInput,
   Activity,
+  ActivitySubmissionStudent,
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
@@ -79,6 +80,13 @@ export async function setActivityEnabled(
   enabled: boolean,
 ): Promise<Activity> {
   return teacherApi.setActivityEnabled(groupId, activityId, enabled)
+}
+
+export async function listActivitySubmissions(
+  groupId: string,
+  activityId: string,
+): Promise<ActivitySubmissionStudent[]> {
+  return teacherApi.listActivitySubmissions(groupId, activityId)
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {

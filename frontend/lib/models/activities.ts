@@ -61,6 +61,15 @@ export interface LessonActivity {
  * Actividad de curso (GroupActivity): el snapshot que el docente publica en su
  * grupo. Es la misma forma para el CRUD del docente y para el listado.
  */
+export interface ActivitySubmissionStudent {
+  studentId: string
+  studentName: string
+  studentEmail: string
+  attemptsCount: number
+  lastAttemptDate: string | null
+  finalScore: number
+}
+
 export interface Activity {
   id: string
   title: string
@@ -82,6 +91,7 @@ export interface Activity {
   workdir?: string
   checks: ActivityCheck[]
   uses?: number
+  submissions?: ActivitySubmissionStudent[]
 }
 
 export type CreateActivityInput = Omit<Activity, "id" | "uses">

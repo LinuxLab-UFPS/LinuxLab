@@ -370,10 +370,64 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
   return serializeGroupActivity(updated, updated.definition)
 }
 
+/**
+ * Intentos por estudiante para una actividad de grupo: la tabla de entregas
+ * que ve el docente en el detalle de la actividad.
+ */
+async function getActivitySubmissions({ groupId, activityId, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    select: { id: true, grading_policy: true, activity_type: true },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  const grouped = await prisma.activityAttempt.groupBy({
+    by: ["student_id"],
+    where: { group_activity_id: ga.id },
+    _count: { id: true },
+    _max: { created_at: true },
+  })
+
+  if (grouped.length === 0) return []
+
+  const studentIds = grouped.map((g) => g.student_id)
+  const students = await prisma.user.findMany({
+    where: { id: { in: studentIds } },
+    select: { id: true, name: true, email: true },
+  })
+  const studentMap = new Map(students.map((s) => [s.id, s]))
+
+  const policy = ga.activity_type === "quiz" ? "latest_score" : "best_score"
+
+  const submissions = await Promise.all(
+    grouped.map(async (g) => {
+      const attempts = await prisma.activityAttempt.findMany({
+        where: { group_activity_id: ga.id, student_id: g.student_id },
+        orderBy: { created_at: "desc" },
+        select: { score: true, created_at: true },
+      })
+      const student = studentMap.get(g.student_id)
+      return {
+        studentId: g.student_id,
+        studentName: student?.name ?? "—",
+        studentEmail: student?.email ?? "—",
+        attemptsCount: g._count.id,
+        lastAttemptDate: g._max.created_at?.toISOString() ?? null,
+        finalScore: finalScore(attempts, policy),
+      }
+    }),
+  )
+
+  return submissions
+}
+
 module.exports = {
   createGroupActivity,
   updateGroupActivity,
   listGroupActivities,
   getGroupActivity,
   setGroupActivityEnabled,
+  getActivitySubmissions,
 }

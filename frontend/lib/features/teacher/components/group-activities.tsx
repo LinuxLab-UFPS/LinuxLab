@@ -3,9 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
-import { FileCode, Power } from "lucide-react"
-import { cn } from "@shared/lib/utils"
-import { ActionButton } from "@shared/components/action-button"
+import { FileCode } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -14,16 +12,18 @@ import {
   TableHeader,
   TableRow,
 } from "@shared/components/ui/table"
-import { TablePanel, TableEmptyState, TablePagination } from "@shared/components/data-table"
+import { TablePanel, TableEmptyState, TablePagination } from "@/shared/components/data-table"
 import { getTopic } from "@shared/lib/content/temario"
+import { Switch } from "@shared/components/ui/switch"
 import { setActivityEnabled } from "@/lib/features/teacher/data"
 import { queryKeys } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 import type { Activity } from "@/lib/features/teacher/types"
 
 const PAGE_SIZE = 8
 
-/** Las actividades del curso: una actividad de grupo no lleva dificultad. */
+/** Las actividades del curso: fila cliqueable con switch de habilitado. */
 export function GroupActivities({
   activities,
   query,
@@ -43,14 +43,16 @@ export function GroupActivities({
   const page_ = Math.min(page, totalPages)
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
-  const toggle = async (activity: Activity) => {
+  const toggle = async (activity: Activity, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setToggling(activity.id)
     try {
       await setActivityEnabled(groupId, activity.id, !activity.enabled)
       queryClient.invalidateQueries({ queryKey: queryKeys.groupActivities(groupId) })
       notify.success(activity.enabled ? "Actividad deshabilitada" : "Actividad habilitada")
-    } catch (e) {
-      notify.error(e, "No se pudo cambiar el estado de la actividad")
+    } catch (err) {
+      notify.error(err, "No se pudo cambiar el estado de la actividad")
     } finally {
       setToggling(null)
     }
@@ -62,10 +64,12 @@ export function GroupActivities({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Actividad</TableHead>
-              <TableHead className="w-48">Tema</TableHead>
-              <TableHead className="w-44">Tipo</TableHead>
-              <TableHead className="w-40">Estado</TableHead>
+              <TableHead className="w-28">Codigo</TableHead>
+              <TableHead>Titulo</TableHead>
+              <TableHead className="w-40">Tema</TableHead>
+              <TableHead className="w-36">Tipo</TableHead>
+              <TableHead className="w-44">Fecha de entrega</TableHead>
+              <TableHead className="w-24 text-center">Habilitada</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -74,11 +78,18 @@ export function GroupActivities({
                 <TableCell>
                   <Link
                     href={`/groups/${groupId}/activities/${activity.id}`}
-                    className="flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-amber-500"
-                  >
+                    className="absolute inset-0 z-10"
+                    aria-label={`Ver actividad ${activity.title}`}
+                  />
+                  <span className="font-mono text-sm text-muted-foreground">
+                    {activity.workdir ?? "—"}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <FileCode className="h-4 w-4 shrink-0 text-muted-foreground" />
                     {activity.title}
-                  </Link>
+                  </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {getTopic(activity.topicNumber)?.title ??
@@ -91,25 +102,20 @@ export function GroupActivities({
                       ? "Quiz"
                       : "Taller"}
                 </TableCell>
-                <TableCell className="text-sm">
-                  <span
-                    className={cn(
-                      "mr-2 text-xs",
-                      activity.enabled ? "text-success" : "text-muted-foreground",
-                    )}
-                  >
-                    {activity.enabled ? "Habilitada" : "Deshabilitada"}
+                <TableCell className="text-sm text-muted-foreground">
+                  {activity.dueDate
+                    ? formatBogotaDateTime(activity.dueDate)
+                    : "Sin fecha"}
+                </TableCell>
+                <TableCell className="text-center">
+                  <span className="relative z-20 inline-flex">
+                    <Switch
+                      checked={activity.enabled ?? false}
+                      onCheckedChange={() => {}}
+                      disabled={toggling === activity.id}
+                      onClick={(e: React.MouseEvent) => toggle(activity, e)}
+                    />
                   </span>
-                  <span title={activity.enabled ? "Deshabilitar" : "Habilitar"}>
-                  <ActionButton
-                    tone="neutral"
-                    size="sm"
-                    onClick={() => toggle(activity)}
-                    disabled={toggling === activity.id}
-                  >
-                    <Power className="h-3.5 w-3.5" />
-                  </ActionButton>
-                </span>
                 </TableCell>
               </TableRow>
             ))}

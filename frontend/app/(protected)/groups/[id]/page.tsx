@@ -24,7 +24,7 @@ import { GroupActivities } from "@/lib/features/teacher/components/group-activit
 import {
   addStudent,
 } from "@/lib/features/teacher/data"
-import { queryKeys, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
+import { queryKeys, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
 
@@ -41,7 +41,6 @@ function GroupDetailContent() {
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
   const activitiesQuery = useGroupActivities(id)
-  const progress = useGroupProgress(id)
 
   const group = groupQuery.data ?? null
   const loading = groupQuery.isLoading
@@ -185,7 +184,7 @@ function GroupDetailContent() {
       </div>
 
       {tab === "estudiantes" ? (
-        <GroupStudents students={studentsQuery.data ?? []} summary={progress} query={query} />
+        <GroupStudents students={studentsQuery.data ?? []} query={query} />
       ) : (
         <div data-section="actividades">
           <GroupActivities activities={activitiesQuery.data ?? []} query={query} groupId={id} />

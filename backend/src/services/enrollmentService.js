@@ -360,6 +360,7 @@ async function listByGroup({ groupId, teacherUserId, role }) {
           name: true,
           email: true,
           code: true,
+          last_login: true,
           linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
         },
       },
@@ -377,6 +378,7 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     linuxUsername: e.student.linuxAccount?.linux_username ?? null,
     linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.enrolled_at,
+    lastLogin: e.student.last_login?.toISOString() ?? null,
   }))
 }
 
