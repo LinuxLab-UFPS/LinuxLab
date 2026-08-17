@@ -104,6 +104,22 @@ practica/leeme.txt
 
 Por eso conviene el `-t` de antes: la ruta hay que darla completa, y el listado es donde se lee.
 
+## Extraer en otra carpeta
+
+`tar` deja lo que saca donde estés parado, así que abrir un paquete al lado del original mezcla las dos copias. `-C` dice a qué carpeta ir a extraer:
+
+```bash
+mkdir revision
+tar -xzf practica.tar.gz -C revision
+ls revision
+```
+
+```
+practica
+```
+
+La carpeta tiene que existir antes: `tar` no la crea, y si no está, falla. Es lo que se hace al instalar algo que llega comprimido — el paquete se descarga a un lado y se extrae donde toca, sin moverse de sitio.
+
 ## Empaquetar sin comprimir
 
 Quitando la `-z` se ve para qué sirve cada mitad:
@@ -153,6 +169,7 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 | `tar -tzf paquete.tar.gz` | Lista el contenido sin extraerlo |
 | `tar -xzvf paquete.tar.gz` | Extrae mostrando cada archivo |
 | `tar -xzvf paquete.tar.gz ruta/archivo` | Extrae sólo esa ruta |
+| `tar -xzf paquete.tar.gz -C carpeta` | Extrae dentro de esa carpeta |
 | `tar -cf plano.tar carpeta` | Empaqueta sin comprimir |
 | `zip -rq paquete.zip carpeta` | Empaqueta y comprime en formato zip |
 | `unzip paquete.zip` | Extrae un zip |
