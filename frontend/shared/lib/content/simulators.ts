@@ -52,10 +52,10 @@ const RAW = [
     file: "simulador-compresion.html",
   },
   {
-    id: "descifrar-el-enigma",
-    title: "Descifrar el enigma",
+    id: "despliegue-del-viernes",
+    title: "El despliegue del viernes",
     description:
-      "Usa grep, find y sort para navegar y encontrar datos ocultos en una unidad de almacenamiento sospechosa.",
+      "Un despliegue tumbó producción y hay que reconstruir qué pasó. Rastrea la copia local del proyecto con grep, find y sort, y responde por el chat lo que vayas encontrando.",
     topicNumber: 7,
     file: "simulador-busqueda.html",
   },
