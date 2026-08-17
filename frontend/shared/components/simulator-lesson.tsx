@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { X, Play } from "lucide-react"
+import { Play } from "lucide-react"
 import { LessonNav } from "@shared/components/lesson-nav"
 import { LessonContainer } from "@shared/components/terminal-ui"
 import type { LessonRef } from "@shared/lib/content/lessons"
@@ -33,16 +33,9 @@ export function SimulatorLesson({
 
   if (fullscreen) {
     return (
+      // Sin barra propia: la salida vive dentro del simulador, en la misma
+      // barra que lleva el objetivo y los puntos.
       <div className="fixed inset-0 z-50 flex flex-col bg-[#0D1117]">
-        <div className="flex h-10 shrink-0 items-center justify-end border-b border-white/10 px-4">
-          <button
-            onClick={() => setFullscreen(false)}
-            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs text-white/50 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <X className="w-3.5 h-3.5" />
-            Salir
-          </button>
-        </div>
         <iframe
           src={src}
           className="flex-1 w-full border-0"
