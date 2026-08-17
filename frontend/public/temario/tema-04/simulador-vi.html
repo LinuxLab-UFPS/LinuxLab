@@ -47,14 +47,17 @@ body{
 .win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
 .win-dot{width:11px;height:11px;border-radius:50%}
 .win-title{flex:1;text-align:center;font-size:11px;color:var(--muted)}
-.editor{background:#12161d;padding:12px 14px;min-height:300px;display:flex;flex-direction:column;gap:2px}
-.row{display:flex;gap:2px;align-items:center;min-height:22px}
+.editor{background:#12161d;padding:12px 14px;min-height:300px;display:flex;flex-direction:column;gap:5px}
+.row{display:flex;gap:5px;align-items:center;min-height:22px}
 .gutter{width:16px;color:var(--dim);font-size:12px;flex-shrink:0;user-select:none}
-.cell{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:15px;border-radius:3px;line-height:1}
-.cell.cur{outline:2px solid var(--bright);outline-offset:-2px;background:rgba(240,246,252,.12)}
-.status{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:var(--surf2);border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
-.mode{font-weight:700;color:var(--green);letter-spacing:.1em}
-.tip{color:var(--muted);font-size:11px}
+/* Los cuadros se dibujan, no se escriben. Eran emoji, y cada sistema los
+   dibujaba de un tamaño distinto dentro de la casilla: el recuadro del cursor
+   marcaba la casilla y el emoji flotaba dentro sin llenarla. */
+.cell{width:20px;height:20px;border-radius:4px;flex-shrink:0}
+.cell.v{background:#3FB950}
+.cell.a{background:#E3B341}
+.cell.r{background:#F85149}
+.cell.cur{outline:2px solid var(--bright);outline-offset:2px}
 
 /* ---------- ayudas ---------- */
 .hints{display:flex;flex-direction:column;gap:8px;width:210px;flex-shrink:0}
@@ -62,7 +65,6 @@ body{
 .hint h4{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:6px;font-weight:700}
 .keys{display:flex;flex-direction:column;gap:4px}
 .key{display:flex;align-items:center;gap:8px;font-size:11px}
-.key b{display:inline-flex;align-items:center;justify-content:center;min-width:24px;padding:1px 5px;border:1px solid var(--red);border-radius:4px;color:var(--red);font-weight:700;font-size:11px}
 .key span{color:var(--text)}
 
 /* ---------- capa de inicio ---------- */
@@ -110,10 +112,6 @@ body{
         <span class="win-title" id="filename">reto.txt</span>
       </div>
       <div class="editor" id="editor"></div>
-      <div class="status">
-        <span class="mode" id="mode">NORMAL</span>
-        <span class="tip" id="tip"></span>
-      </div>
     </div>
   </div>
 
@@ -178,12 +176,14 @@ body{
 /* Cada línea es un arreglo de celdas: así el cursor avanza por casillas y los
    emoji, que ocupan doble ancho en una fuente monoespaciada, no descuadran la
    rejilla. */
-const V = "🟩", A = "🟨", R = "🟥";
+// Marcas, no caracteres: la casilla la pinta el CSS.
+const V = "v", A = "a", R = "r";
 
 const azar = (n) => Math.floor(Math.random() * n);
 const entre = (a, b) => a + azar(b - a + 1);
 const clonar = (m) => m.map((f) => f.slice());
 const fila3 = (c) => [c, c, c];
+const esDe = (color) => (f) => f.length > 0 && f.every((c) => c === color);
 
 /* Los retos son generadores, no tableros fijos: cada partida arma sus propias
    posiciones y cantidades para que repetirla no sea repetir la solución. */
@@ -198,7 +198,10 @@ const MODOS = [
       const inicio = [fila3(V), ...Array.from({ length: relleno }, () => fila3(A))];
       // Vale cualquier camino: copiar la verde y pegarla abajo, o quitar de en
       // medio lo que sobra. Lo que se pide es el resultado.
-      return { inicio, gana: (l) => l.length > 0 && l[l.length - 1].every((c) => c === V) };
+      return {
+        inicio,
+        gana: (l) => l.length > 0 && esDe(V)(l[l.length - 1]),
+      };
     },
   },
   {
@@ -215,7 +218,8 @@ const MODOS = [
       return {
         inicio,
         meta: Array.from({ length: verdes }, () => fila3(V)),
-        // Borrar a ciegas deja de ser una estrategia: si cae una verde, se pierde.
+        // Tambien es un reto de punteria: hay que borrar lo rojo sin llevarse
+        // lo verde. Barrer a ciegas y deshacer despues seria saltarselo.
         pierde: (l) => cuentaVerdes(l) < verdes,
       };
     },
@@ -230,7 +234,13 @@ const MODOS = [
       const donde = azar(verdes);
       const inicio = Array.from({ length: verdes }, () => fila3(V));
       inicio.splice(donde, 0, fila3(A));
-      return { inicio, meta: [...Array.from({ length: verdes }, () => fila3(V)), fila3(A)] };
+      return {
+        inicio,
+        // Lo que se pide es que la amarilla acabe ultima. Cortarla y pegarla
+        // abajo es el camino que se enseña, pero quitar de en medio lo que
+        // sobra llega al mismo sitio y tambien cuenta.
+        gana: (l) => l.length > 0 && esDe(A)(l[l.length - 1]),
+      };
     },
   },
   {
@@ -241,13 +251,7 @@ const MODOS = [
     armar() {
       const total = entre(4, 6);
       this.goal = `Deja ${total} líneas verdes`;
-      return {
-        inicio: [fila3(V)],
-        meta: Array.from({ length: total }, () => fila3(V)),
-        // Se parte de una sola verde y de ella salen las demas: si esa cae, no
-        // queda nada que copiar y el reto se vuelve irresoluble.
-        pierde: (l) => l.filter((f) => f.every((c) => c === V)).length < 1,
-      };
+      return { inicio: [fila3(V)], meta: Array.from({ length: total }, () => fila3(V)) };
     },
   },
   {
@@ -267,6 +271,9 @@ const MODOS = [
       return {
         inicio,
         meta: Array.from({ length: filas }, () => Array.from({ length: ancho - 1 }, () => V)),
+        // Unico reto que penaliza romper el tablero: lo que se practica aqui es
+        // la punteria, asi que llevarse un verde por delante es fallar, no un
+        // rodeo. En los demas basta con deshacer.
         pierde: (l) => cuentaVerdes(l) < verdes,
       };
     },
@@ -280,6 +287,11 @@ const $ = (id) => document.getElementById(id);
 // baja la velocidad del contrarreloj a la mitad.
 const barra = Barra.montar({
   acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  ayuda: [
+    { clave: 'Deshacer',  tono: 'verde', texto: '¿Borraste algo que no debías? <code>u</code> devuelve el tablero al paso anterior, tantas veces como haga falta.' },
+    { clave: 'Tiempo',    tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde ese reto y empieza el siguiente.' },
+    { clave: 'x0.5',      tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de reto.' },
+  ],
   onReiniciar: () => volverAlInicio(),
 });
 
@@ -304,6 +316,9 @@ let lineas = [], meta = [], fila = 0, col = 0;
 let registro = null, historial = [], pendiente = "";
 let gana = null, pierde = null;
 let restante = 0, limite = 0, tick = null, jugando = false;
+// Entre un reto y el siguiente el teclado no cuenta: lo que se pulsara ahi
+// caeria sobre el tablero recien cargado y lo estropearia antes de empezar.
+let transicion = false;
 
 /* El primero siempre es el de copiar, que es el más simple y enseña el gesto
    básico. Los otros cuatro entran barajados. */
@@ -331,8 +346,7 @@ function pintar() {
     if (f < lineas.length) {
       lineas[f].forEach((celda, c) => {
         const el = document.createElement("span");
-        el.className = "cell" + (f === fila && c === col ? " cur" : "");
-        el.textContent = celda;
+        el.className = "cell " + celda + (f === fila && c === col ? " cur" : "");
         row.appendChild(el);
       });
     }
@@ -342,7 +356,6 @@ function pintar() {
 
 function pintarCabecera() {
   const m = orden[reto];
-  $("tip").textContent = m ? m.tip : "";
   barra.objetivo(m ? m.goal : "", Math.min(reto, orden.length - 1), orden.length);
   barra.puntos(puntos);
   barra.marcas(orden.map((_, i) => (i < reto ? "done" : i === reto ? "cur" : "")));
@@ -361,7 +374,8 @@ function arrancarTiempo() {
     const pct = (restante / limite) * 100;
     barraT.style.width = pct + "%";
     barraT.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
-    if (restante === 0) clearInterval(tick);
+    // Se acaba el tiempo: este reto se pierde y se pasa al siguiente.
+    if (restante === 0) { clearInterval(tick); fallarReto() }
   }, 100);
 }
 
@@ -380,7 +394,12 @@ function guardar() {
 
 /* Un reto puede pedir un tablero exacto o solo una condicion. Con `gana` se
    acepta cualquier camino que llegue al resultado; sin el, se compara contra la
-   meta como siempre. */
+   meta como siempre.
+
+   Los retos de mover y copiar no tienen condicion de derrota: existe el
+   deshacer, asi que romper lo que hacia falta no es un callejon sin salida sino
+   una tecla mas, y lo unico que se pierde es tiempo. Los de punteria si la
+   declaran, porque ahi no equivocarse es el ejercicio. */
 const resuelto = () =>
   gana ? gana(lineas) : JSON.stringify(lineas) === JSON.stringify(meta);
 
@@ -454,10 +473,12 @@ function cargarReto() {
   pintarCabecera();
   pintar();
   arrancarTiempo();
+  transicion = false;
 }
 
 function ganarReto() {
   clearInterval(tick);
+  transicion = true;
   // Los puntos salen del tiempo que sobró: resolver rápido vale más.
   puntos += 100 + Math.round((restante / limite) * 400);
 
@@ -475,10 +496,12 @@ function ganarReto() {
   }, 700);
 }
 
-/* Se pierde por estropear lo que habia que conservar. No resta puntos: se pasa
-   al siguiente reto sin sumar, que ya es castigo suficiente en un contrarreloj. */
+/* Se pierde por agotar el reloj, o por llevarse algo verde en los retos de
+   punteria. No resta puntos: se pasa al siguiente reto sin sumar, que ya es
+   castigo suficiente en un contrarreloj. */
 function fallarReto() {
   clearInterval(tick);
+  transicion = true;
   const barraT = $("timer");
   barraT.className = "timer-fill out";
   const f = $("flash");
@@ -517,6 +540,7 @@ function volverAlInicio() {
 }
 
 document.addEventListener("keydown", (e) => {
+  if (transicion) { e.preventDefault(); return }
   if (!jugando) {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
     return;
