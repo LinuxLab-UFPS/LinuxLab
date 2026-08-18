@@ -3,6 +3,7 @@ const groupActivityService = require("../services/groupActivityService")
 const studentActivityService = require("../services/studentActivityService")
 const submissionService = require("../services/submissionService")
 const checkCatalogService = require("../services/checkCatalogService")
+const gradebookService = require("../services/gradebookService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const getActivity = asyncHandler(async (req, res) => {
@@ -41,6 +42,10 @@ const checkActivity = asyncHandler(async (req, res) => {
 
 const getMyGroupActivities = asyncHandler(async (req, res) => {
   res.json(await studentActivityService.listMine(req.user.id))
+})
+
+const getMyGrades = asyncHandler(async (req, res) => {
+  res.json(await gradebookService.getMyGrades(req.user.id))
 })
 
 const getGroupActivityForStudent = asyncHandler(async (req, res) => {
@@ -154,6 +159,7 @@ module.exports = {
   checkActivity,
   resetActivity,
   getMyGroupActivities,
+  getMyGrades,
   getGroupActivityForStudent,
   checkGroupActivity,
   listGroupActivities,

@@ -92,3 +92,106 @@ export interface StudentGroupDetail {
   recentGrades: Grade[]
   grades: Grade[]
 }
+
+/* ---------------------------------------------------------------- *
+ * Cuaderno de calificaciones (gradebook)
+ * ---------------------------------------------------------------- */
+
+export type GradebookCellStatus =
+  | "completed"
+  | "under-review"
+  | "overdue"
+  | "not-started"
+
+export interface GradebookActivity {
+  id: string
+  activityNumber: number
+  /** Código del directorio de trabajo (ej. T-0001, Q-0001): identifica la columna. */
+  workdir: string
+  title: string
+  topicNumber: number | null
+  evaluationType: "manual" | "automatic"
+  activityType: "workshop" | "quiz"
+  dueAt: string | null
+  enabled: boolean
+  gradingPolicy: "best_score" | "latest_score"
+  maxScore: number
+}
+
+export interface GradebookCell {
+  score: number | null
+  status: GradebookCellStatus
+  attempts: number
+  lastDate: string | null
+}
+
+export interface Gradebook {
+  students: { id: string; name: string; code: string | null }[]
+  activities: GradebookActivity[]
+  cells: Record<string, Record<string, GradebookCell>>
+  activityAverages: Record<string, number | null>
+  studentAverages: Record<string, number | null>
+}
+
+export interface GradeSeriesPoint {
+  activityId: string
+  activityNumber: number
+  /** Código del directorio de trabajo (ej. T-0001): etiqueta corta en gráficas. */
+  workdir: string
+  title: string
+  topicNumber: number
+  evaluationType: "manual" | "automatic"
+  activityType: "workshop" | "quiz"
+  score: number | null
+  status: GradebookCellStatus
+  attempts: number
+  lastDate: string | null
+  dueAt: string | null
+  groupAverage: number | null
+}
+
+export interface GradeTopicSummary {
+  topicNumber: number
+  completed: number
+  total: number
+  avgScore: number | null
+}
+
+export interface GradeSummary {
+  average: number | null
+  completed: number
+  underReview: number
+  overdue: number
+  notStarted: number
+  total: number
+}
+
+export interface StudentPerformance {
+  student: EnrollmentStudent
+  series: GradeSeriesPoint[]
+  topics: GradeTopicSummary[]
+  summary: GradeSummary
+}
+
+export interface MyGrades {
+  group: { id: string; name: string } | null
+  series: GradeSeriesPoint[]
+  topics: GradeTopicSummary[]
+  summary: GradeSummary
+}
+
+export const EMPTY_GRADE_SUMMARY: GradeSummary = {
+  average: null,
+  completed: 0,
+  underReview: 0,
+  overdue: 0,
+  notStarted: 0,
+  total: 0,
+}
+
+export const EMPTY_MY_GRADES: MyGrades = {
+  group: null,
+  series: [],
+  topics: [],
+  summary: EMPTY_GRADE_SUMMARY,
+}

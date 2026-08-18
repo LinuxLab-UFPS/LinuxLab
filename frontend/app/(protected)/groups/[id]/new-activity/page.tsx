@@ -150,9 +150,11 @@ function NewActivityPage() {
       checks,
     }
     const refreshed = () => {
-      // La pestaña de actividades del curso y su conteo quedan viejos.
+      // La pestaña de actividades del curso, su conteo y el cuaderno de
+      // calificaciones quedan viejos.
       queryClient.invalidateQueries({ queryKey: queryKeys.groupActivities(groupId) })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(groupId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(groupId) })
     }
     if (editId) {
       const updated = await notifyPromise(updateActivity(groupId, editId, input), {
@@ -380,7 +382,7 @@ function NewActivityPage() {
       </div>
 
       <div className="mt-8 flex items-center gap-3">
-        <ActionButton tone="amber" onClick={handlePublish} disabled={publishing || Boolean(attemptLimitError)}>
+        <ActionButton tone="primary" onClick={handlePublish} disabled={publishing || Boolean(attemptLimitError)}>
           <Send className="h-4 w-4" />
           {publishing ? "Guardando…" : editing ? "Guardar cambios" : "Publicar actividad"}
         </ActionButton>

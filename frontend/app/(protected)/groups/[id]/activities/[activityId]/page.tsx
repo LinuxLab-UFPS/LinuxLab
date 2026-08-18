@@ -26,16 +26,18 @@ function ActivityDetail({
   activity,
   submissions,
   manualSubmissions,
+  backTab,
 }: {
   groupId: string
   activity: Activity
   submissions: { studentId: string; studentName: string; studentEmail: string; studentCode: string | null; attemptsCount: number; lastAttemptDate: string | null; finalScore: number }[]
   manualSubmissions: { submissionId: string; studentId: string; studentName: string; studentEmail: string; studentCode: string | null; status: string; score: number | null; submittedAt: string; files: number }[]
+  backTab: string
 }) {
   const topic = getTopic(activity.topicNumber)
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
-      <ActionButton tone="neutral" href={`/groups/${groupId}?tab=actividades`}>
+      <ActionButton tone="neutral" href={`/groups/${groupId}?tab=${backTab}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver
       </ActionButton>
@@ -50,7 +52,7 @@ function ActivityDetail({
                 {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
-            <ActionButton tone="amber" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
+            <ActionButton tone="primary" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
               <Pencil className="h-4 w-4" />
               Editar
             </ActionButton>
@@ -162,7 +164,7 @@ function ActivityDetail({
                       submissions.map((sub) => (
                         <Link
                           key={sub.studentId}
-                          href={`/groups/${groupId}/activities/${activity.id}/students/${sub.studentId}`}
+                          href={`/groups/${groupId}/activities/${activity.id}/students/${sub.studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`}
                           className="contents"
                         >
                           <tr className="cursor-pointer border-b border-border/50 bg-background transition-colors hover:bg-secondary/30 last:border-0">
@@ -188,11 +190,15 @@ function ActivityDetail({
 
 export default async function ActivityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; activityId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   await requireServerRole(["teacher", "admin"])
   const { id, activityId } = await params
+  const sp = await searchParams
+  const backTab = sp.from === "calificaciones" ? "calificaciones" : "actividades"
   const [activity, submissions, manualSubmissions] = await Promise.all([
     getGroupActivity(id, activityId),
     listActivitySubmissions(id, activityId),
@@ -206,12 +212,12 @@ export default async function ActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           Esta actividad no existe o no pertenece al curso.
         </p>
-        <Link href={`/groups/${id}`}>
+        <Link href={`/groups/${id}?tab=${backTab}`}>
           <Button variant="outline">Volver al curso</Button>
         </Link>
       </div>
     )
   }
 
-  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} manualSubmissions={manualSubmissions} />
+  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} manualSubmissions={manualSubmissions} backTab={backTab} />
 }

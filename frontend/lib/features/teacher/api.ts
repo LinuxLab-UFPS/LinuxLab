@@ -8,7 +8,9 @@ import type {
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
+  Gradebook,
   StudentGroupDetail,
+  StudentPerformance,
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
@@ -138,4 +140,7 @@ export const teacherApi = {
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),
   getStudentGroupDetail: (groupId: string, studentId: string) =>
     apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/students/${studentId}`),
+  getGradebook: (groupId: string) => apiFetch<Gradebook>(`/api/groups/${groupId}/gradebook`),
+  getStudentPerformance: (groupId: string, studentId: string) =>
+    apiFetch<StudentPerformance>(`/api/groups/${groupId}/gradebook/students/${studentId}`),
 }
