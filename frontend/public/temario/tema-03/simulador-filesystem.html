@@ -1,6 +1,7 @@
 <!doctype html>
 <title>Simulador de Directorios · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/claro.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 :root {
@@ -23,6 +24,21 @@
   --dim:    #21262D;
   --gold:   #FFC400;
   --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+
+  /* El arbol lo dibuja render() en SVG, asi que sus colores no pueden salir de
+     una regla: se declaran aqui y el guion los lee. Es lo que deja que el modo
+     claro cambie el arbol entero sin tocar una linea de JavaScript. */
+  --nodo-fondo:   #161B22;
+  --nodo-marco:   #21262D;
+  --nodo-texto:   #5A7A90;
+  --nodo-texto-ruta: #8899AA;
+  --nodo-aqui:    #1E0008;
+  --nodo-meta:    #071610;
+  --rama:         #21262D;
+  --rama-viva:    rgba(255,0,48,.5);
+  --rama-ruta:    rgba(255,0,48,.28);
+  --archivo-fondo:#101820;
+  --archivo-marco:#253040;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{height:100%;background:var(--bg);overflow:hidden}
@@ -47,7 +63,7 @@ body{
 /* NICE! overlay */
 #nice{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .25s;z-index:10;}
 #nice.show{opacity:1}
-#nice-txt{font-size:90px;font-weight:900;letter-spacing:-.02em;color:#2ECC71;filter:drop-shadow(0 0 28px rgba(46,204,113,.95)) drop-shadow(0 0 70px rgba(46,204,113,.45));}
+#nice-txt{font-size:90px;font-weight:900;letter-spacing:-.02em;color:var(--green-tinta);filter:drop-shadow(0 0 28px rgba(46,204,113,.95)) drop-shadow(0 0 70px rgba(46,204,113,.45));}
 @keyframes nice-pop{0%{transform:scale(.45);opacity:0}65%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 #nice.show #nice-txt{animation:nice-pop .38s ease-out forwards}
 @keyframes nice-out{0%{transform:scale(1);opacity:1}100%{transform:scale(1.25);opacity:0}}
@@ -87,6 +103,30 @@ body{
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;}
 #flash.on{opacity:1}
 
+/* ---------- modo claro ----------
+   La paleta comun esta en /temario/comun/claro.css; aqui van el arbol y la
+   terminal, que son lo propio de este simulador. La terminal se queda oscura
+   (lleva `zona-oscura`): es donde se escriben los comandos, y en el temario
+   la consola es oscura en los dos temas. */
+html.claro {
+  --nodo-fondo:   #FFFFFF;
+  --nodo-marco:   #D8DDE4;
+  --nodo-texto:   #57606A;
+  --nodo-texto-ruta: #3D444D;
+  /* El mismo rojo y el mismo verde, ahora como un tinte de fondo: sobre claro
+     el relleno casi negro de antes seria una mancha. */
+  --nodo-aqui:    #FFF0F2;
+  --nodo-meta:    #E9FBF1;
+  --rama:         #D0D7DE;
+  --rama-viva:    rgba(196,30,58,.55);
+  --rama-ruta:    rgba(196,30,58,.3);
+  --archivo-fondo:#F1F4F8;
+  --archivo-marco:#D8DDE4;
+}
+/* La marca de agua es roja al 16%: sobre el fondo oscuro se adivina y sobre el
+   claro desaparece del todo. */
+html.claro .wm{opacity:.3}
+
 </style>
 
 <!-- La barra la arma barra.js con las piezas que este simulador declara. -->
@@ -96,13 +136,13 @@ body{
   <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
   <div class="wm">LinuxLab</div>
   <div id="nice"><span id="nice-txt">NICE!</span></div>
-  <div id="mode-overlay">
+  <div id="mode-overlay" class="zona-oscura">
     <div id="mo-name"></div>
     <div id="mo-sub"></div>
   </div>
 </div>
 
-<div class="term" id="term">
+<div class="term zona-oscura" id="term">
   <div class="hist" id="hist"></div>
   <div class="inp-row">
     <span class="prompt" id="pr">estudiante@linuxlab:~$</span>
@@ -149,6 +189,7 @@ const barra = Barra.montar({
     { clave: 'Touch',  tono: 'azul',    texto: 'Crea el archivo indicado desde la raíz con <code>touch /ruta/absoluta/archivo</code>.' },
     { clave: 'Oculto', tono: 'naranja', texto: 'Encuentra el archivo oculto con <code>ls -a</code> y sigue las pistas.' },
   ],
+  tema: true,
   onReiniciar: () => empezar(),
 });
 
@@ -270,6 +311,24 @@ function render(root,svg,current,target){
   const tgtPath=target?pathOf(target):null;
   const curPath=pathOf(current);
 
+  // La paleta del arbol vive en el CSS, junto a la del resto del simulador: se
+  // lee en cada dibujado, asi que cambiar de tema y volver a dibujar basta para
+  // que el arbol cambie de color. Los del resplandor no estan aqui porque son
+  // los colores del juego y son los mismos en los dos temas.
+  const cs=getComputedStyle(document.documentElement);
+  const C=n=>cs.getPropertyValue(n).trim();
+  const COL={
+    fondo:C('--nodo-fondo'), marco:C('--nodo-marco'),
+    texto:C('--nodo-texto'), ruta:C('--nodo-texto-ruta'),
+    aqui:C('--nodo-aqui'),   meta:C('--nodo-meta'),
+    rama:C('--rama'),        ramaViva:C('--rama-viva'), ramaRuta:C('--rama-ruta'),
+    archFondo:C('--archivo-fondo'), archMarco:C('--archivo-marco'),
+    rojo:C('--red'),   rojoTinta:C('--red-tinta'),
+    verde:C('--green'),verdeTinta:C('--green-tinta'),
+    oro:C('--gold'),   oroTinta:C('--gold-tinta'),
+    azulTinta:C('--blue-tinta'),
+  };
+
   // ── edges
   const eG=se('g',{},svg);
   for(const n of all){
@@ -280,7 +339,7 @@ function render(root,svg,current,target){
       se('path',{
         d:`M${x1},${y1}C${x1},${my} ${x2},${my} ${x2},${y2}`,
         fill:'none',
-        stroke:active?'rgba(255,0,48,.5)':'#21262D',
+        stroke:active?COL.ramaViva:COL.rama,
         'stroke-width':active?'1.5':'1',
         'stroke-linecap':'round',
       },eG);
@@ -297,15 +356,18 @@ function render(root,svg,current,target){
 
     const g=se('g',{transform:`translate(${n.px-NW/2},${n.py-NH/2})`},svg);
 
+    // El marco y el resplandor van con el color del juego tal cual; el nombre
+    // del directorio, con su tinta. Sobre el fondo claro el color puro se lee
+    // igual como linea gruesa y se pierde como texto de 11px.
     let fill,stroke,sw,txCol,txW,filt;
     if(isGold){
-      fill='rgba(255,196,0,.18)'; stroke='#FFC400'; sw='2.5';
-      txCol='#FFC400'; txW='700'; filt='url(#glow-gold)';
+      fill='rgba(255,196,0,.18)'; stroke=COL.oro; sw='2.5';
+      txCol=COL.oroTinta; txW='700'; filt='url(#glow-gold)';
     } else {
-      fill=isCur?'#1E0008':isTgt?'#071610':'#161B22';
-      stroke=isCur?'#FF0030':isTgt?'#2ECC71':isAnces?'rgba(255,0,48,.28)':'#21262D';
+      fill=isCur?COL.aqui:isTgt?COL.meta:COL.fondo;
+      stroke=isCur?COL.rojo:isTgt?COL.verde:isAnces?COL.ramaRuta:COL.marco;
       sw=isCur||isTgt?'2':'1';
-      txCol=isCur?'#FF0030':isTgt?'#2ECC71':isAnces?'#8899AA':'#5A7A90';
+      txCol=isCur?COL.rojoTinta:isTgt?COL.verdeTinta:isAnces?COL.ruta:COL.texto;
       txW=isCur||isTgt?'700':'400';
       filt=isCur?'url(#glow-r)':isTgt?'url(#glow-g)':'';
     }
@@ -314,10 +376,10 @@ function render(root,svg,current,target){
     if(filt)rect.setAttribute('filter',filt);
     if(isTgt){rect.setAttribute('class','tgt-rect');rect.setAttribute('stroke-dasharray','5 3');}
     if(isTgt){
-      const lbl=se('text',{x:NW/2,y:-11,'text-anchor':'middle',fill:'#2ECC71','font-family':'monospace','font-size':'13','font-weight':'700',opacity:'1'},g);
+      const lbl=se('text',{x:NW/2,y:-11,'text-anchor':'middle',fill:COL.verdeTinta,'font-family':'monospace','font-size':'13','font-weight':'700',opacity:'1'},g);
       lbl.textContent='▼ ir aquí';
     }
-    if(isCur) se('circle',{cx:NW-9,cy:9,r:'3.5',fill:'#FF0030',filter:'url(#glow-r)'},g);
+    if(isCur) se('circle',{cx:NW-9,cy:9,r:'3.5',fill:COL.rojo,filter:'url(#glow-r)'},g);
 
     const tx=se('text',{
       x:NW/2,y:NH/2+4.5,'text-anchor':'middle',
@@ -329,8 +391,8 @@ function render(root,svg,current,target){
     if(n._files&&n._files.length){
       n._files.forEach((f,i)=>{
         const fy=NH+5+i*20;
-        se('rect',{x:2,y:fy,width:NW-4,height:16,rx:3,fill:'#101820',stroke:'#253040','stroke-width':'1'},g);
-        const ft=se('text',{x:NW/2,y:fy+11,'text-anchor':'middle',fill:'#58A6FF','font-family':'monospace','font-size':'9'},g);
+        se('rect',{x:2,y:fy,width:NW-4,height:16,rx:3,fill:COL.archFondo,stroke:COL.archMarco,'stroke-width':'1'},g);
+        const ft=se('text',{x:NW/2,y:fy+11,'text-anchor':'middle',fill:COL.azulTinta,'font-family':'monospace','font-size':'9'},g);
         ft.textContent=f;
       });
     }
@@ -802,6 +864,10 @@ inp.addEventListener('keydown',e=>{
 });
 document.addEventListener('click',()=>{ if(!document.getElementById('inp').disabled) inp.focus();});
 window.addEventListener('resize',redraw);
+// El arbol es SVG con los colores puestos atributo a atributo, asi que el CSS
+// no puede recolorearlo solo: hay que volver a dibujarlo. render() relee la
+// paleta en cada pasada, asi que basta con esto.
+window.addEventListener('tema-cambiado',redraw);
 
 function empezar(){
   document.getElementById('portada').classList.add('hide');

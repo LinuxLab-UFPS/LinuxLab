@@ -8,6 +8,12 @@
  *
  * Depende de las variables de color que cada simulador declara en su :root
  * (--surf, --border, --red, --green, --gold, --bright, --muted, --mono...).
+ *
+ * La barra, la portada y la pantalla final son oscuras en los dos temas, asi
+ * que aqui no hay nada que cambiar. Lo unico que se aclara son las teclas de
+ * los paneles de ayuda, que viven en la zona clara del simulador: toman su
+ * color de variables con el valor de siempre como reserva, de modo que los
+ * simuladores sin paleta clara se siguen viendo exactamente igual.
  */
 
 :root { --hdr-h: 48px; }
@@ -148,6 +154,19 @@
 .speed-btn:hover { background: rgba(255, 196, 0, .16); }
 .speed-btn[data-activo="true"] { background: rgba(255, 196, 0, .24); }
 
+/* Claro/oscuro, en gris apagado como Salir: cambia como se ve el simulador,
+   no lo que pasa dentro. A pantalla completa la cabecera del sitio no esta, y
+   este es el unico sitio desde donde se puede cambiar el tema. */
+.theme-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0;
+  background: none; border: none; border-radius: 4px;
+  color: var(--muted); cursor: pointer; flex-shrink: 0;
+  transition: background .2s, color .2s;
+}
+.theme-btn:hover { background: rgba(255, 255, 255, .07); color: var(--bright); }
+.theme-btn svg { width: 15px; height: 15px; }
+
 /* Salir vive aqui desde que el sitio dejo de dibujar su propia barra encima. */
 .exit-btn {
   display: flex; align-items: center; gap: 6px;
@@ -168,18 +187,21 @@
 .key b {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 24px; padding: 1px 5px; border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, .13);
-  border-bottom: 2px solid rgba(255, 255, 255, .22);
-  background: rgba(255, 255, 255, .07); color: #E5E7EB;
+  border: 1px solid var(--tecla-borde, rgba(255, 255, 255, .13));
+  border-bottom: 2px solid var(--tecla-canto, rgba(255, 255, 255, .22));
+  background: var(--tecla-fondo, rgba(255, 255, 255, .07));
+  color: var(--tecla-texto, #E5E7EB);
   font-weight: 600; font-size: 11px;
 }
 
 /* ── antes de empezar ─────────────────────────────────────────────────── */
 
 /* Con la portada puesta no hay partida de la que informar: la barra se queda
-   en el logo y la salida. Los :not() suben la especificidad por encima de
-   reglas como .rbadge.show, que viven en la hoja de cada simulador. */
-.hdr.pre > *:not(.hdr-logo):not(.hdr-marca):not(.exit-btn):not(.hdr-fill) { display: none; }
+   en el logo, el tema y la salida. Los :not() suben la especificidad por
+   encima de reglas como .rbadge.show, que viven en la hoja de cada simulador.
+   El tema se queda porque no es estado de la partida: se elige antes de
+   empezar igual que despues, y a pantalla completa no hay otro sitio. */
+.hdr.pre > *:not(.hdr-logo):not(.hdr-marca):not(.theme-btn):not(.exit-btn):not(.hdr-fill) { display: none; }
 .hdr.pre > .hdr-fill { display: block; flex: 1; }
 
 /* ── portada ──────────────────────────────────────────────────────────── */

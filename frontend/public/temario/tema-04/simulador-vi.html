@@ -1,6 +1,7 @@
 <!doctype html>
 <title>Retos de vi · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/claro.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 :root {
@@ -73,6 +74,14 @@ body{
 .flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
 .flash.on{opacity:.13}
 .flash.err{background:var(--red)}
+
+/* ---------- modo claro ----------
+   La paleta esta en /temario/comun/claro.css. La ventana del editor se queda
+   entera como estaba —marco, barra de titulo y contenido— porque es una
+   terminal: lleva `zona-oscura` y ni sus cuadros de colores ni el recuadro
+   del cursor cambian. Lo que pasa a claro es lo de alrededor: el fondo, la
+   barra de tiempo y el panel de ayudas. */
+html.claro .hint{box-shadow:0 1px 2px rgba(27,31,36,.05)}
 </style>
 
 <!-- La barra la arma barra.js. -->
@@ -81,7 +90,7 @@ body{
 <div class="stage">
   <div class="term-col">
     <div class="timer"><div class="timer-fill" id="timer"></div></div>
-    <div class="win">
+    <div class="win zona-oscura">
       <div class="win-bar">
         <span class="win-dot" style="background:#FF5F56"></span>
         <span class="win-dot" style="background:#FFBD2E"></span>
@@ -305,6 +314,7 @@ const barra = Barra.montar({
     { clave: 'Tiempo',    tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde ese reto y empieza el siguiente.' },
     { clave: 'x0.5',      tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de reto.' },
   ],
+  tema: true,
   onReiniciar: () => volverAlInicio(),
 });
 
