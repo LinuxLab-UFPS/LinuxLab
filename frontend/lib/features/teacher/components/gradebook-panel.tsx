@@ -1,12 +1,16 @@
 "use client"
 
 import { useState } from "react"
+import { BarChart3, Users } from "lucide-react"
 import { TablePagination } from "@shared/components/data-table"
+import { Empty } from "@shared/components/empty"
 import { useGradebook } from "@/lib/api/queries"
 import { GradebookTable } from "@/lib/features/teacher/components/gradebook-table"
 import { StudentPerformanceDrawer } from "@/lib/features/teacher/components/student-performance-drawer"
 
 const PER_PAGE = 15
+
+const PANEL = "rounded-xl border border-table-line bg-background shadow-md dark:shadow-none"
 
 export function GradebookPanel({ groupId, query }: { groupId: string; query: string }) {
   const { data: gradebook, isLoading, error } = useGradebook(groupId)
@@ -52,28 +56,50 @@ export function GradebookPanel({ groupId, query }: { groupId: string; query: str
   return (
     <div className="space-y-4">
       {gradebook && (
-        <GradebookTable
-          gradebook={gradebook}
-          groupId={groupId}
-          students={pageStudents}
-          onStudentClick={openStudent}
-        />
-      )}
+        <>
+          {gradebook.activities.length === 0 ? (
+            <div className={PANEL}>
+              <Empty
+                icon={BarChart3}
+                title="Sin actividades publicadas"
+                description="Este curso todavía no tiene actividades para calificar."
+              />
+            </div>
+          ) : gradebook.students.length === 0 ? (
+            <div className={PANEL}>
+              <Empty
+                icon={Users}
+                title="Sin estudiantes inscritos"
+                description="Aún no hay estudiantes en este curso."
+              />
+            </div>
+          ) : (
+            <>
+              <GradebookTable
+                gradebook={gradebook}
+                groupId={groupId}
+                students={pageStudents}
+                onStudentClick={openStudent}
+              />
 
-      {students.length > 0 && (
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            Mostrando {pageStudents.length} de {students.length} estudiantes
-          </span>
-          {totalPages > 1 && (
-            <TablePagination
-              page={safePage}
-              totalPages={totalPages}
-              onChange={setPage}
-              tone="primary"
-            />
+              {students.length > 0 && (
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>
+                    Mostrando {pageStudents.length} de {students.length} estudiantes
+                  </span>
+                  {totalPages > 1 && (
+                    <TablePagination
+                      page={safePage}
+                      totalPages={totalPages}
+                      onChange={setPage}
+                      tone="primary"
+                    />
+                  )}
+                </div>
+              )}
+            </>
           )}
-        </div>
+        </>
       )}
 
       <StudentPerformanceDrawer

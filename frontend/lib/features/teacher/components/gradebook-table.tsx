@@ -130,6 +130,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
 
   return (
     <div className="overflow-hidden rounded-xl border border-table-line bg-background shadow-md dark:shadow-none">
+      {activityCount > 0 && (
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-0">
           <thead>
@@ -281,17 +282,11 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
           </tfoot>
         </table>
       </div>
-
-      {activityCount === 0 && (
-        <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-          No hay actividades publicadas en este curso.
-        </div>
       )}
-      {activityCount > 0 && students.length === 0 && (
+
+      {students.length === 0 && (
         <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-          {gradebook.students.length === 0
-            ? "No hay estudiantes inscritos en este curso."
-            : "Ningún estudiante coincide con la búsqueda."}
+          Ningún estudiante coincide con la búsqueda.
         </div>
       )}
     </div>
