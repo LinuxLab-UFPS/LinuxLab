@@ -13,7 +13,7 @@ import {
   Plus,
   Search,
   BarChart3,
-  Activity,
+  FileSpreadsheet,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
@@ -22,13 +22,22 @@ import { ActionButton } from "@shared/components/action-button"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
 import { Input } from "@shared/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
+import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
+import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
 
-type Tab = "estudiantes" | "actividades"
+type Tab = "estudiantes" | "actividades" | "calificaciones"
 
 function GroupDetailContent() {
   const params = useParams<{ id: string }>()
@@ -39,6 +48,8 @@ function GroupDetailContent() {
   const [tab, setTab] = useState<Tab>((searchParams.get("tab") as Tab) || "estudiantes")
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
+  const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
+  const [evalFilter, setEvalFilter] = useState<"all" | "automatic" | "manual">("all")
 
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
@@ -57,6 +68,7 @@ function GroupDetailContent() {
       ])
       queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
+      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(id) })
       setAdding(false)
       notify.success("Estudiante agregado")
     },
@@ -114,49 +126,10 @@ function GroupDetailContent() {
         )}
       </div>
 
-      {/* Stat cards estilo admin */}
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div className="flex items-center gap-4 rounded-xl border border-border px-5 py-4">
-          <Users className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="font-mono text-2xl font-semibold leading-none text-foreground">
-              {group.studentCount}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">Estudiantes inscritos</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-border px-5 py-4">
-          <Activity className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="font-mono text-2xl font-semibold leading-none text-foreground">
-              {group.activeNow}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">Activos ahora</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-border px-5 py-4">
-          <Target className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="font-mono text-2xl font-semibold leading-none text-foreground">
-              {group.activityCount}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">Actividades publicadas</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border border-border px-5 py-4">
-          <BarChart3 className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <div>
-            <p className="font-mono text-2xl font-semibold leading-none text-foreground">
-              {group.averageScore != null ? `${group.averageScore}/100` : "—"}
-            </p>
-            <p className="mt-1.5 text-sm text-muted-foreground">Promedio general</p>
-          </div>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className="mb-4">
         <StatTabs
+          plain
           value={tab}
           onChange={(v) => {
             setTab(v as Tab)
@@ -166,59 +139,120 @@ function GroupDetailContent() {
             {
               value: "estudiantes",
               label: "Estudiantes",
-              statLabel: "Estudiantes totales",
-              count: group.studentCount,
               icon: Users,
               tone: "primary",
             },
             {
               value: "actividades",
               label: "Actividades",
-              statLabel: "Actividades totales",
-              count: group.activityCount,
               icon: Target,
-              tone: "amber",
+              tone: "primary",
+            },
+            {
+              value: "calificaciones",
+              label: "Calificaciones",
+              icon: BarChart3,
+              tone: "primary",
             },
           ]}
         />
       </div>
 
-      {/* Search + boton agregar */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={
-              tab === "estudiantes"
-                ? "Buscar estudiante por nombre o correo..."
-                : "Buscar actividad por nombre..."
-            }
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="border-table-line pl-9"
-          />
-        </div>
+      {/* Header del tab: titulo, busqueda y acciones */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+        <h2 className="text-base font-semibold text-foreground">
+          {tab === "estudiantes"
+            ? `Estudiantes del curso (${group.studentCount})`
+            : tab === "actividades"
+              ? `Actividades del curso (${group.activityCount})`
+              : "Calificaciones del curso"}
+        </h2>
 
-        {!group.archived &&
-          (tab === "estudiantes" ? (
-            <ActionButton tone="primary" className="ml-auto" onClick={() => setAdding(true)}>
-              <Plus className="h-4 w-4" />
-              Agregar estudiante
-            </ActionButton>
-          ) : (
-            <ActionButton tone="amber" className="ml-auto" href={`/groups/${id}/new-activity`}>
-              <Plus className="h-4 w-4" />
-              Agregar actividad
-            </ActionButton>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full max-w-xs flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder={
+                tab === "estudiantes"
+                  ? "Buscar estudiante por nombre o código..."
+                  : tab === "actividades"
+                    ? "Buscar actividad por nombre..."
+                    : "Buscar por nombre o código..."
+              }
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="border-table-line pl-9"
+            />
+          </div>
+
+          {tab === "actividades" && (
+            <>
+              <Select
+                value={activityTypeFilter}
+                onValueChange={(v) => setActivityTypeFilter(v as "all" | ActivityType)}
+              >
+                <SelectTrigger className="w-auto border-table-line">
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="quiz">Quiz</SelectItem>
+                  <SelectItem value="workshop">Taller</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={evalFilter}
+                onValueChange={(v) => setEvalFilter(v as "all" | "automatic" | "manual")}
+              >
+                <SelectTrigger className="w-auto border-table-line">
+                  <SelectValue placeholder="Evaluación" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="automatic">Automática</SelectItem>
+                  <SelectItem value="manual">Manual</SelectItem>
+                </SelectContent>
+              </Select>
+            </>
+          )}
+
+          {!group.archived &&
+            (tab === "estudiantes" ? (
+              <ActionButton tone="primary" onClick={() => setAdding(true)}>
+                <Plus className="h-4 w-4" />
+                Agregar estudiante
+              </ActionButton>
+            ) : tab === "actividades" ? (
+              <ActionButton tone="primary" href={`/groups/${id}/new-activity`}>
+                <Plus className="h-4 w-4" />
+                Agregar actividad
+              </ActionButton>
+            ) : (
+              <ActionButton tone="primary" type="button">
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportar Excel
+              </ActionButton>
+            ))}
+        </div>
       </div>
 
       {/* Tabla */}
       {tab === "estudiantes" ? (
         <GroupStudents students={studentsQuery.data ?? []} groupId={id} query={query} />
-      ) : (
+      ) : tab === "actividades" ? (
         <div data-section="actividades">
-          <GroupActivities activities={activitiesQuery.data ?? []} query={query} groupId={id} />
+          <GroupActivities
+            activities={activitiesQuery.data ?? []}
+            query={query}
+            groupId={id}
+            activityTypeFilter={activityTypeFilter}
+            evalFilter={evalFilter}
+          />
+        </div>
+      ) : (
+        <div data-section="calificaciones">
+          <GradebookPanel groupId={id} query={query} />
         </div>
       )}
 

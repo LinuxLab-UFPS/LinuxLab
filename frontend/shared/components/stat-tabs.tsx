@@ -9,8 +9,8 @@ export interface StatTabItem {
   /** Etiqueta corta cuando la pestaña está en reposo. */
   label: string
   /** Etiqueta larga que acompaña al número cuando está seleccionada. */
-  statLabel: string
-  count: number
+  statLabel?: string
+  count?: number
   icon: React.ComponentType<{ className?: string }>
   tone?: StatTabTone
 }
@@ -72,12 +72,14 @@ export function StatTabs({
   value,
   onChange,
   variant,
+  plain,
   className,
 }: {
   tabs: StatTabItem[]
   value: string
   onChange?: (value: string) => void
   variant?: "compact" | "card"
+  plain?: boolean
   className?: string
 }) {
   const mode = variant ?? (tabs.length === 1 ? "card" : "compact")
@@ -113,24 +115,30 @@ export function StatTabs({
                   >
                     <Icon className="h-5 w-5" />
                   </span>
-                  <span className="text-left">
-                    <span
-                      className={cn(
-                        "block font-mono text-2xl font-semibold leading-none",
-                        tone.value,
+<span className="text-left">
+                      {tab.count != null && (
+                        <span
+                          className={cn(
+                            "block font-mono text-2xl font-semibold leading-none",
+                            tone.value,
+                          )}
+                        >
+                          {tab.count}
+                        </span>
                       )}
-                    >
-                      {tab.count}
+                      {tab.statLabel && (
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {tab.statLabel}
+                        </span>
+                      )}
                     </span>
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {tab.statLabel}
-                    </span>
-                  </span>
                 </>
               ) : (
                 <span className="flex items-center gap-2">
                   {tab.label}
-                  <span className="font-mono text-xs opacity-70">{tab.count}</span>
+                  {tab.count != null && (
+                    <span className="font-mono text-xs opacity-70">{tab.count}</span>
+                  )}
                 </span>
               )}
             </button>
@@ -186,13 +194,15 @@ export function StatTabs({
             <span
               className={cn(
                 "grid transition-all duration-300 ease-out",
-                active ? "grid-cols-[1fr] opacity-100" : "grid-cols-[0fr] opacity-0",
+                active && !plain ? "grid-cols-[1fr] opacity-100" : "grid-cols-[0fr] opacity-0",
               )}
             >
               <span className="overflow-hidden">
                 <span className="flex items-center gap-2 whitespace-nowrap">
-                  <span className="font-mono text-base font-semibold">{tab.count}</span>
-                  <span>{tab.statLabel}</span>
+                  {!plain && tab.count != null && (
+                    <span className="font-mono text-base font-semibold">{tab.count}</span>
+                  )}
+                  {!plain && <span>{tab.statLabel}</span>}
                 </span>
               </span>
             </span>
@@ -200,13 +210,19 @@ export function StatTabs({
             <span
               className={cn(
                 "grid transition-all duration-300 ease-out",
-                active ? "grid-cols-[0fr] opacity-0" : "grid-cols-[1fr] opacity-100",
+                plain
+                  ? "grid-cols-[1fr] opacity-100"
+                  : active
+                    ? "grid-cols-[0fr] opacity-0"
+                    : "grid-cols-[1fr] opacity-100",
               )}
             >
               <span className="overflow-hidden">
                 <span className="flex items-center gap-2 whitespace-nowrap">
                   <span>{tab.label}</span>
-                  <span className="font-mono text-xs opacity-70">{tab.count}</span>
+                  {!plain && tab.count != null && (
+                    <span className="font-mono text-xs opacity-70">{tab.count}</span>
+                  )}
                 </span>
               </span>
             </span>
