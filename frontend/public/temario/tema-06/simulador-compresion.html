@@ -557,8 +557,8 @@ const modsInstalados = () => {
   return Boolean(d && MODS.every((m) => d.hijos.includes(m)));
 };
 
-/** Listo para jugar: los mods puestos y el paquete ya no anda por ahi. */
-const listoParaJugar = () => modsInstalados() && !fs[nombres.pack];
+/** Listo para jugar: los mods, puestos en el directorio del juego. */
+const listoParaJugar = () => modsInstalados();
 
 /* ============================================================
    DESAFIOS
@@ -959,9 +959,9 @@ function pintarJuego() {
   const cont = $("game-body");
   if (!cont) return;
 
-  // Jugable solo con los mods puestos y sin la descarga a medio instalar. Lo
-  // que hay que hacer para llegar ahi lo dice la ventana de objetivos: aqui no
-  // se repite, que es informacion de mas sobre la misma cabeza.
+  // Jugable en cuanto los mods estan en el directorio del juego. Lo que hay que
+  // hacer para llegar ahi lo dice la ventana de objetivos: aqui no se repite,
+  // que es informacion de mas sobre la misma cabeza.
   const activo = listoParaJugar() && !jugado;
 
   cont.innerHTML =
