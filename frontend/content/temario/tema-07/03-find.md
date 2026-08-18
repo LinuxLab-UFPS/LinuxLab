@@ -79,7 +79,25 @@ find ~/actividades -type f -mtime -1
 /home/prof_ruiz/grupos/g1/andres_torres/actividades/entrega.tar.gz
 ```
 
-Para intervalos más cortos está `-mmin`, que cuenta minutos. `find ~/actividades -mmin -10` muestra lo que se tocó en los últimos diez.
+El signo funciona igual que en `-size`: `-mtime +30` son los archivos de más de treinta días, los que llevan un mes sin tocarse.
+
+```bash
+find ~/actividades -type f -mtime +30
+```
+
+```
+/home/prof_ruiz/grupos/g1/andres_torres/actividades/borrador-viejo.txt
+```
+
+Para intervalos más cortos está `-mmin`, que cuenta minutos en lugar de días. Es lo que sirve para encontrar lo que alguien acaba de tocar:
+
+```bash
+find ~/actividades -mmin -60
+```
+
+```
+/home/prof_ruiz/grupos/g1/andres_torres/actividades/notas.txt
+```
 
 ## Combinar condiciones
 
@@ -140,6 +158,8 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 | `find ruta -type f` | Sólo archivos; `-type d` sólo directorios |
 | `find ruta -size +1M` | Archivos de más de un megabyte |
 | `find ruta -mtime -1` | Modificados en el último día |
+| `find ruta -mtime +30` | Sin tocar desde hace más de un mes |
+| `find ruta -mmin -60` | Modificados en la última hora |
 | `find ruta \( A -o B \)` | Cumple una condición u otra |
 | `find ruta -exec cmd {} \;` | Ejecuta un comando sobre cada resultado |
 | `find ruta -delete` | Borra lo encontrado |

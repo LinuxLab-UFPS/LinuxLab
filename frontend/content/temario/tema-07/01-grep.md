@@ -32,6 +32,20 @@ grep --color bash /etc/passwd
 
 Es útil en líneas largas, donde no siempre queda claro por qué salieron.
 
+## Buscar una frase
+
+Cuando lo que se busca lleva espacios hay que encerrarlo entre comillas. Sin ellas la shell parte la frase en varias palabras y `grep` toma la segunda como si fuera el nombre de un archivo.
+
+```bash
+grep "sin memoria" bitacora.txt
+```
+
+```
+14:02 ERROR el proceso murio sin memoria disponible
+```
+
+Escrito sin comillas, `grep sin memoria bitacora.txt` buscaría la palabra `sin` dentro de dos archivos llamados `memoria` y `bitacora.txt`, y el primero no existe.
+
 ## Contar las coincidencias
 
 La opción `-c` devuelve cuántas líneas coinciden, en lugar de mostrarlas.
@@ -182,6 +196,7 @@ Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la pa
 | Comando | Efecto |
 |---|---|
 | `grep texto archivo` | Muestra las líneas que contienen el texto |
+| `grep "una frase" archivo` | Entre comillas cuando el texto lleva espacios |
 | `grep -c` | Cuenta las líneas en vez de mostrarlas |
 | `grep -n` | Antepone el número de línea |
 | `grep -i` | Ignora mayúsculas y minúsculas |
