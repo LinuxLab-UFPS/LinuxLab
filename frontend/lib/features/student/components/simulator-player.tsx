@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Skeleton } from "@shared/components/skeleton"
 
 /**
@@ -12,6 +13,7 @@ import { Skeleton } from "@shared/components/skeleton"
  */
 export function SimulatorPlayer({ src, title }: { src: string; title: string }) {
   const router = useRouter()
+  const { resolvedTheme, setTheme } = useTheme()
   // El `loading.tsx` de la ruta solo cubre hasta que responde el servidor; el
   // simulador es un HTML de mil lineas que descarga el navegador despues, y ese
   // tramo quedaba en blanco. El iframe avisa al terminar.
@@ -20,16 +22,22 @@ export function SimulatorPlayer({ src, title }: { src: string; title: string }) 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.action === "close-simulator") router.back()
+      // A pantalla completa esta cabecera no se ve, asi que el simulador trae su
+      // propio interruptor de tema y pide el cambio desde dentro. Lo aplicamos
+      // aqui para que quede guardado como el del resto del sitio; el simulador
+      // se entera solo, leyendo la clase de este documento.
+      if (e.data?.action === "toggle-theme") {
+        setTheme(resolvedTheme === "dark" ? "light" : "dark")
+      }
     }
     window.addEventListener("message", handler)
     return () => window.removeEventListener("message", handler)
-  }, [router])
+  }, [router, resolvedTheme, setTheme])
 
   return (
-    // Colores fijos y no tokens del tema: debajo hay un simulador que siempre
-    // es oscuro, asi que en modo claro esta barra no debe volverse blanca. Mismo
-    // criterio que la barra de ajustes de la terminal.
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0D1117]">
+    // El fondo solo asoma mientras carga el iframe: va con el tema porque tres
+    // de los cinco simuladores ya tienen modo claro.
+    <div className="fixed inset-0 z-50 flex flex-col bg-background">
       <div className="relative min-h-0 flex-1">
         {!cargado && (
           <div role="status" aria-busy="true" className="absolute inset-0 p-4">
