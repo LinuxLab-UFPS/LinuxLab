@@ -7,7 +7,9 @@ import type {
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
+  Gradebook,
   StudentGroupDetail,
+  StudentPerformance,
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
@@ -169,6 +171,17 @@ export async function getStudentGroupDetail(
   _studentId: string,
 ): Promise<StudentGroupDetail | null> {
   return null
+}
+
+export async function getGradebook(groupId: string): Promise<Gradebook> {
+  return teacherApi.getGradebook(groupId)
+}
+
+export async function getStudentPerformance(
+  groupId: string,
+  studentId: string,
+): Promise<StudentPerformance> {
+  return teacherApi.getStudentPerformance(groupId, studentId)
 }
 
 export async function gradeSubmission(

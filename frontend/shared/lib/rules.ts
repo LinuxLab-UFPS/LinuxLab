@@ -15,6 +15,7 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: "/contents", roles: ["student", "admin"] },
   { path: "/group", roles: ["student", "teacher", "admin"], exact: true },
   { path: "/mi-grupo", roles: ["student", "admin"], exact: true },
+  { path: "/mis-calificaciones", roles: ["student", "admin"], exact: true },
   { path: "/simulators", roles: ["student", "admin"] },
   { path: "/activities", roles: ["student", "admin"] },
 ]

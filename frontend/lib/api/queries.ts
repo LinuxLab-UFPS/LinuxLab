@@ -15,6 +15,9 @@ export const queryKeys = {
   groupProgress: (id: string) => ["groups", id, "progress"] as const,
   groupStudents: (id: string) => ["groups", id, "students"] as const,
   groupActivities: (id: string) => ["groups", id, "activities"] as const,
+  gradebook: (id: string) => ["groups", id, "gradebook"] as const,
+  studentPerformance: (id: string, studentId: string) =>
+    ["groups", id, "gradebook", "students", studentId] as const,
   teacherJobs: ["admin", "teacher-jobs"] as const,
   teachers: (filters?: { search?: string; status?: string }) => ["admin", "teachers", filters] as const,
   provisioningStatus: ["provisioning", "status"] as const,
@@ -66,6 +69,24 @@ export function useGroupActivities(id: string) {
     queryKey: queryKeys.groupActivities(id),
     queryFn: () => teacherData.listGroupActivities(id),
     enabled: Boolean(id),
+  })
+}
+
+/** Cuaderno de calificaciones del curso (estudiante x actividad). */
+export function useGradebook(id: string) {
+  return useQuery({
+    queryKey: queryKeys.gradebook(id),
+    queryFn: () => teacherData.getGradebook(id),
+    enabled: Boolean(id),
+  })
+}
+
+/** Rendimiento individual de un estudiante (series y desglose por tema). */
+export function useStudentPerformance(id: string, studentId: string) {
+  return useQuery({
+    queryKey: queryKeys.studentPerformance(id, studentId),
+    queryFn: () => teacherData.getStudentPerformance(id, studentId),
+    enabled: Boolean(id) && Boolean(studentId),
   })
 }
 

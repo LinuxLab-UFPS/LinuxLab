@@ -14,6 +14,7 @@ import {
   Stamp,
   FileArchive,
   Users,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { notify } from "@shared/lib/toast"
@@ -151,6 +152,12 @@ export function SiteHeader({
                 <Link href="/mi-grupo">
                   <Users className="mr-2 h-4 w-4" />
                   Mi Grupo
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link href="/mis-calificaciones">
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Mis Calificaciones
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
