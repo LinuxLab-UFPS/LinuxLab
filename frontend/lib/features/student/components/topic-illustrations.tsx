@@ -290,6 +290,30 @@ export function SimulatorCompressionIllustration() {
   )
 }
 
+/** Simulador de busqueda: una lupa recorre un log y encuentra la linea que
+ *  no encaja, y el hallazgo sale por el chat. */
+export function SimulatorSearchIllustration() {
+  const BLUE = "#4a9eff"
+  return (
+    <Svg>
+      {/* el log: lineas de texto, una de ellas marcada */}
+      <path d="M26 30 h74 M26 42 h60 M26 66 h74 M26 78 h52 M26 90 h66" stroke={BASE} strokeWidth="1.8" opacity="0.55" />
+      <path d="M26 54 h48" stroke={RED} strokeWidth="2.4" />
+
+      {/* la lupa, justo sobre la linea marcada */}
+      <circle cx="86" cy="54" r="17" stroke={LINE} strokeWidth="2.2" />
+      <path d="M98 66 l12 12" stroke={LINE} strokeWidth="2.6" />
+
+      {/* el hallazgo se manda por el chat */}
+      <path d="M132 34 h38 a4 4 0 0 1 4 4 v24 a4 4 0 0 1 -4 4 h-22 l-10 8 v-8 h-6 a4 4 0 0 1 -4 -4 v-24 a4 4 0 0 1 4 -4 Z"
+        stroke={BLUE} strokeWidth="2" />
+      <circle cx="142" cy="50" r="2.2" fill={BLUE} />
+      <circle cx="151" cy="50" r="2.2" fill={BLUE} />
+      <circle cx="160" cy="50" r="2.2" fill={BLUE} />
+    </Svg>
+  )
+}
+
 const ILLUSTRATIONS: Record<number, ComponentType> = {
   1: IntroLinux,
   2: TerminalTopic,

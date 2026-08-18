@@ -1,0 +1,1442 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<title>El despliegue del viernes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
+<style>
+/* ============================================================
+   EL DESPLIEGUE DEL VIERNES
+   Tres datos repartidos por la copia local de un proyecto. Cada
+   uno se saca con una herramienta distinta del tema de busqueda,
+   y el chat es lo que convierte una respuesta leida en un estado
+   que el simulador puede comprobar: buscar no deja rastro en el
+   sistema de archivos, a diferencia de comprimir.
+   ============================================================ */
+:root{
+  /* La misma paleta que los otros simuladores del curso: la cabecera y la
+     portada tienen que verse como una familia, aunque dentro cambie el mundo. */
+  --fondo:  #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+  /* Lo propio de este simulador: el azul de la aplicacion de mensajes. Es el
+     mismo del icono del dock, para que la ventana y su icono se reconozcan. */
+  --azul-app:  #4A9EFF;
+  --azul-tenue:#1E4E88;
+  --azul-fondo:#0B1B2E;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--fondo);color:var(--text);font:14px/1.5 var(--mono);
+  display:flex;flex-direction:column;overflow:hidden;position:relative;
+  /* La misma escala que los otros cuatro simuladores. Sin ella este renderiza
+     al 100% y los demas al 130%: la barra salia mas fina y el texto de la
+     portada mas pequeno que en el resto. */
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+}
+
+/* La cabecera y la portada viven en /temario/comun/barra.css */
+
+/* ============================================================
+   EL ESCRITORIO
+   El mismo de la practica de compresion: dos ventanas sobre un
+   fondo de escritorio y un dock que las abre y las cierra. La
+   terminal es donde se busca y la aplicacion de mensajes donde se
+   responde. Esa division es la del tema: buscar no cambia nada y
+   el resultado hay que llevarlo a otro sitio.
+   ============================================================ */
+.desk{
+  position:relative;flex:1;min-height:0;overflow:hidden;
+  background:
+    linear-gradient(158deg,transparent 54%,rgba(163,113,247,.24) 54.2%),
+    linear-gradient(202deg,transparent 70%,rgba(120,80,200,.18) 70.2%),
+    linear-gradient(130deg,#1B1030 0%,#2E1550 47%,#45208A 100%);
+}
+
+.win{
+  position:absolute;background:var(--surf);border:1px solid var(--border);
+  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+.win[hidden]{display:none}
+.win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+/* El punto de minimizar es el unico que hace algo; el guion aparece al pasar
+   por encima, como en cualquier escritorio. */
+button.win-dot{border:none;padding:0;font:inherit;cursor:pointer;position:relative}
+button.win-dot::after{
+  content:"";position:absolute;left:2.5px;right:2.5px;top:5px;height:1.5px;
+  background:rgba(0,0,0,.55);border-radius:1px;opacity:0;transition:opacity .15s;
+}
+.win-bar:hover button.win-dot::after{opacity:1}
+
+/* La terminal ocupa el lado ancho: es donde se trabaja. El chat es estrecho,
+   como cualquier aplicacion de mensajes. Abrir y cerrar no las mueve de sitio. */
+#w-term{left:36%;top:6%;width:60%;height:76%}
+#w-chat{left:3%;top:9%;width:30%;height:70%}
+
+/* El guiño: vive en el cuadrante de la terminal, detras de ella. */
+.marca{
+  position:absolute;left:36%;top:6%;width:60%;height:76%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(26px,5.2vmin,54px);font-weight:700;letter-spacing:.04em;
+  color:var(--red);filter:drop-shadow(0 0 24px rgba(255,0,48,.5));
+  user-select:none;pointer-events:none;
+}
+.marca span{color:var(--bright);filter:none}
+
+/* ---------- dock ---------- */
+.dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
+.dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
+.dock-btn:hover{transform:translateY(-4px)}
+.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-7px;left:22%;width:56%;height:3px;border-radius:2px;background:#E8912F}
+.dock-btn svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.5))}
+
+/* terminal: fondo de los demas simuladores, simbolo del sistema en verde */
+.consola{flex:1;min-height:0;overflow-y:auto;background:#12161d;padding:12px 14px;font-size:12.5px;display:flex;flex-direction:column;gap:3px;color:#E8EDF2}
+.log{white-space:pre-wrap;word-break:break-word;line-height:1.45}
+.log.eco{color:#FFFFFF}
+.log.ok{color:var(--green)}
+.log.mal{color:#FF5C7A}
+.log.nota{color:#8FA3B8}
+.prompt{display:flex;gap:8px;flex-shrink:0;padding-top:2px;font-size:12.5px}
+.ps1{color:var(--azul-app);flex-shrink:0}
+.tecleado{color:#FFFFFF;white-space:pre-wrap;word-break:break-all}
+.caret{display:inline-block;width:8px;height:15px;background:#FFFFFF;vertical-align:-2px;animation:parpadeo 1s step-end infinite}
+@keyframes parpadeo{50%{opacity:0}}
+
+/* ---------- la aplicacion de mensajes ---------- */
+/* La cabecera del chat: quien escribe y desde donde. */
+.fono-top{display:flex;align-items:center;gap:10px;flex-shrink:0;padding:10px 12px;background:var(--surf);border-bottom:1px solid var(--border)}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(74,158,255,.14);border:1.5px solid var(--azul-app);color:var(--azul-app);
+  font-size:12px;font-weight:700;letter-spacing:.02em}
+.quien{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.quien b{font-size:13px;color:var(--bright);font-weight:700}
+.quien span{font-size:10.5px;color:var(--muted)}
+
+/* El hilo. Crece hacia abajo y se desplaza solo, como cualquier chat. */
+.chat{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--azul-fondo);
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.msg{max-width:88%;padding:7px 10px;border-radius:12px;font-size:12px;line-height:1.5;word-break:break-word}
+/* Lo que llega, en el verde de la consola; lo que se manda, en la superficie
+   del curso. El color separa las dos voces sin escribir quien habla. */
+.msg.ella{align-self:flex-start;border-bottom-left-radius:3px;
+  background:rgba(74,158,255,.10);border:1px solid var(--azul-tenue);color:#CFE6FF}
+.msg.yo{align-self:flex-end;border-bottom-right-radius:3px;
+  background:var(--surf2);border:1px solid var(--border);color:var(--bright)}
+.msg.mal{background:rgba(255,59,87,.10);border-color:#7A2233;color:#FFB3C0}
+.msg code{background:rgba(0,0,0,.35);border-radius:3px;padding:0 3px;color:var(--azul-app)}
+/* Los tres puntos mientras escribe. Se turnan, no parpadean a la vez. */
+.msg.escribiendo{display:flex;gap:4px;align-items:center;padding:10px 12px}
+.msg.escribiendo span{width:6px;height:6px;border-radius:50%;background:var(--azul-app);opacity:.35;animation:teclea 1.2s ease-in-out infinite}
+.msg.escribiendo span:nth-child(2){animation-delay:.2s}
+.msg.escribiendo span:nth-child(3){animation-delay:.4s}
+@keyframes teclea{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* La barra de escribir, pegada abajo como en un telefono de verdad. */
+.fono-in{display:flex;gap:8px;align-items:center;flex-shrink:0;padding:10px 12px;background:var(--surf);border-top:1px solid var(--border)}
+.fono-in input{flex:1;min-width:0;background:var(--azul-fondo);border:1.5px solid var(--azul-tenue);border-radius:16px;
+  padding:8px 12px;color:var(--azul-app);font:inherit;font-size:12.5px}
+.fono-in input:focus{outline:none;border-color:var(--azul-app);box-shadow:0 0 10px rgba(74,158,255,.3)}
+.fono-in input:disabled{opacity:.45}
+.fono-in button{flex-shrink:0;width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--azul-app);color:var(--azul-fondo);font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(74,158,255,.35)}
+.fono-in button:hover{background:#7CBBFF}
+.fono-in button:disabled{background:var(--border);color:var(--muted);box-shadow:none;cursor:default}
+
+/* Poco sitio: las dos columnas se apilan y el escritorio se desplaza. Lo que
+   no puede perderse es el alto para leer la salida de los comandos. */
+@media (max-width:900px),(max-height:520px){
+  .desk{display:block;overflow-y:auto;padding:12px}
+  #w-term,#w-chat{position:static;left:auto;top:auto;width:auto;height:auto;margin-bottom:12px}
+  #w-term{height:min(320px,52vh);min-height:240px}
+  #w-chat{height:min(380px,60vh)}
+  .dock{position:fixed;bottom:12px}
+}
+
+/* portada y final: mismo tamaño y mismos colores que los otros simuladores */
+
+/* pegado: el evento paste solo llega a algo editable */
+.pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0}
+
+@media (max-width:900px){
+  .desk{grid-template-columns:1fr;overflow-y:auto}
+  #w-term{min-height:300px}
+}
+</style>
+
+<!-- La barra la arma barra.js. -->
+<div class="hdr"></div>
+
+<div class="desk" id="desk">
+  <!-- Debajo de la terminal, para quien se le ocurra cerrarla. -->
+  <div class="marca" aria-hidden="true">Linux<span>Lab</span></div>
+
+  <!-- mensajes: donde Laura pide y donde se responde -->
+  <div class="win" id="w-chat">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-chat" data-dock="d-chat" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+    </div>
+    <div class="fono-top">
+      <div class="avatar">LR</div>
+      <div class="quien"><b>Laura Ramírez</b><span>SRE de guardia</span></div>
+    </div>
+    <div class="chat" id="chat"></div>
+    <div class="fono-in">
+      <input id="chat-in" placeholder="Escribe tu respuesta…" autocomplete="off" spellcheck="false" maxlength="60">
+      <button id="enviar" aria-label="Enviar">&#10148;</button>
+    </div>
+  </div>
+
+  <!-- terminal: donde se busca -->
+  <div class="win" id="w-term">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-term" data-dock="d-term" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+    </div>
+    <div class="consola" id="consola">
+      <div class="prompt">
+        <span class="ps1" id="ps1">~/escritorio $</span>
+        <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <button class="dock-btn" id="d-chat" title="Mensajes" data-abierta="true">
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="ic-chat" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5AAEFF"/><stop offset="1" stop-color="#2B6FD4"/>
+          </linearGradient>
+        </defs>
+        <rect width="64" height="64" rx="15" fill="url(#ic-chat)"/>
+        <!-- Un globo de mensaje con su rabito: la forma se lee a 36 px. -->
+        <path d="M16 20h32a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H30l-9 7v-7h-5a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4Z" fill="#FFFFFF"/>
+        <circle cx="25" cy="32" r="2.7" fill="#2B6FD4"/>
+        <circle cx="32" cy="32" r="2.7" fill="#2B6FD4"/>
+        <circle cx="39" cy="32" r="2.7" fill="#2B6FD4"/>
+      </svg>
+    </button>
+    <button class="dock-btn" id="d-term" title="Terminal" data-abierta="true">
+      <svg viewBox="0 0 64 64">
+        <rect width="64" height="64" rx="15" fill="#1E222B"/>
+        <path d="m19 24 9 8-9 8" fill="none" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M34 41h12" stroke="#F0F6FC" stroke-width="4.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
+
+</div>
+
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
+  <h2>El despliegue del viernes</h2>
+  <p>
+    Un despliegue tumbó producción y alguien revirtió la rama a mano. Laura, la
+    SRE de guardia, necesita tres datos para cerrar el informe y te va a ir
+    preguntando. Sácalos del proyecto con <b>grep</b>, <b>find</b> y <b>sort</b>,
+    y respóndele por el teléfono.
+  </p>
+</div>
+
+<div class="sim-fin" id="fin" hidden>
+  <div class="fin-box">
+    <div class="fin-frase">Informe cerrado</div>
+    <div class="fin-btns">
+      <button class="fin-btn primario" id="fin-again">Otro incidente</button>
+      <button class="fin-btn" id="fin-exit">Salir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+/* Este simulador no puntua: se resuelve o no se resuelve. Reiniciar reparte un
+   caso nuevo, que es lo que aqui significa empezar de cero. */
+const barra = Barra.montar({
+  puntos: false,
+  ayuda: [
+    { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
+    { clave: 'Laura',   tono: 'oro',  texto: 'Pide un dato cada vez y dice dónde mirar. Si la respuesta falla, insiste con una pista más concreta: no se queda nadie atascado.' },
+    { clave: 'Terminal', tono: 'azul', texto: 'Buscar no cambia nada en el disco. La terminal anuncia con qué herramienta se saca cada dato; la respuesta se escribe en el teléfono.' },
+  ],
+  onReiniciar: () => reiniciar(),
+});
+
+
+/* ============================================================
+   EL CASO
+   Cada partida pide tres datos, uno por familia de herramienta, y
+   cada familia tiene cuatro variantes. Lo que cambia al reiniciar
+   no son solo los valores: cambian los datos que se piden, los
+   archivos donde estan y las pistas.
+
+   Cada variante trae su `solucion`, la orden exacta que la resuelve.
+   El banco de pruebas la ejecuta contra el simulador y comprueba
+   que devuelve la respuesta: es el candado que evita publicar un
+   objetivo irresoluble, como paso con la cadena de las camaras.
+   ============================================================ */
+const alAzar = (xs) => xs[Math.floor(Math.random() * xs.length)];
+const entero = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const hhmm = (a, b) => String(entero(a, b)).padStart(2, "0") + ":" + String(entero(10, 59));
+/** Saca n elementos distintos de una lista. */
+function toma(xs, n) {
+  const copia = xs.slice();
+  const salida = [];
+  while (salida.length < n && copia.length) salida.push(copia.splice(entero(0, copia.length - 1), 1)[0]);
+  return salida;
+}
+
+const SERVICIOS = ["pagos", "sesiones", "catalogo", "notificaciones", "informes"];
+const COMPANEROS = ["lramirez", "jmedina", "carriaga", "dpineda", "mfajardo"];
+const RAMAS = ["hotfix/pagos", "release/2-4", "feature/carrito", "fix/sesiones"];
+const CAUSAS = ["Disco lleno", "Memoria agotada", "Puerto ocupado", "Certificado vencido"];
+const ENDPOINTS = ["/api/pagos", "/api/sesion", "/api/catalogo", "/api/informe", "/api/salud"];
+
+const DIA = 86400000;
+/** Un archivo del proyecto. `edad` en milisegundos.
+ *
+ * Por defecto entre cuatro y veinticinco dias: por debajo del mes a proposito,
+ * porque la variante del archivo mas antiguo busca con `-mtime +30` y tiene que
+ * devolver uno solo. */
+const F = (ruta, lineas, edad) => ({ ruta, lineas, edad: edad === undefined ? DIA * entero(4, 25) : edad });
+
+/* ---------- familia grep: una frase escrita en el contenido ---------- */
+const PISTAS_GREP = [
+  {
+    id: "causa",
+    etiqueta: "Causa raíz",
+    pista: "Ya escribieron el informe del incidente, está en incidencias/. Busca la línea de la causa raíz y dime qué pone.",
+    terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
+    arma() {
+      const causa = alAzar(CAUSAS);
+      return {
+        respuesta: causa,
+        solucion: 'grep -r "Causa raiz" incidencias',
+        archivos: [
+          F("incidencias/inc-0417.txt", [
+            "INFORME DE INCIDENTE",
+            `Causa raiz: ${causa}.`,
+            "El servicio volvio solo tras el reinicio.",
+            "Pendiente de revisar el despliegue anterior.",
+          ]),
+          F("incidencias/inc-0412.txt", [
+            "INFORME PRELIMINAR",
+            "Revision rutinaria sin hallazgos.",
+            "Causa pendiente de determinar.",
+          ]),
+        ],
+      };
+    },
+  },
+  {
+    id: "autor",
+    etiqueta: "Quién desplegó",
+    pista: "Nadie firmó el despliegue del viernes en el chat, pero el registro sí lo guarda. Mira en despliegues/.",
+    terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
+    arma() {
+      const quien = alAzar(COMPANEROS);
+      return {
+        respuesta: quien,
+        solucion: 'grep -r "Desplegado por" despliegues',
+        archivos: [
+          F("despliegues/viernes.txt", [
+            "Ventana de despliegue 18:40.",
+            `Desplegado por ${quien} sin aprobacion previa.`,
+            "Rollback manual a las 19:05.",
+          ]),
+          F("despliegues/jueves.txt", [
+            "Ventana de despliegue 11:00.",
+            "Aprobado en comite. Sin incidencias.",
+          ]),
+        ],
+      };
+    },
+  },
+  {
+    id: "rama",
+    etiqueta: "Rama revertida",
+    pista: "Alguien deshizo cambios a mano y lo dejó anotado en las notas del traspaso. La palabra clave es revertida.",
+    terminal: "Busca la palabra revertida con grep -ri sobre notas/.",
+    arma() {
+      const rama = alAzar(RAMAS);
+      return {
+        respuesta: rama,
+        solucion: "grep -ri revertida notas",
+        archivos: [
+          F("notas/traspaso.txt", [
+            "Turno de noche, resumen para el siguiente.",
+            `Rama revertida a mano: ${rama}.`,
+            "Queda pendiente rehacer el merge el lunes.",
+          ]),
+          F("notas/pendientes.txt", [
+            "Revisar alertas del catalogo.",
+            "Nadie ha revisado los avisos de ayer.",
+          ]),
+        ],
+      };
+    },
+  },
+  {
+    id: "afectado",
+    etiqueta: "Servicio afectado",
+    pista: "El aviso que mandó monitorización dice qué servicio se cayó. Está en avisos/, busca la frase del servicio afectado.",
+    terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
+    arma() {
+      const servicio = alAzar(SERVICIOS);
+      return {
+        respuesta: servicio,
+        solucion: 'grep -r "Servicio afectado" avisos',
+        archivos: [
+          F("avisos/aviso-18-42.txt", [
+            "ALERTA CRITICA",
+            `Servicio afectado: ${servicio}.`,
+            "Sin respuesta durante once minutos.",
+          ]),
+          F("avisos/aviso-09-15.txt", [
+            "AVISO INFORMATIVO",
+            "Uso de disco al 61 por ciento.",
+            "No requiere accion.",
+          ]),
+        ],
+      };
+    },
+  },
+];
+
+/* ---------- familia expresion regular: la forma, no el texto ---------- */
+const PISTAS_REGEX = [
+  {
+    id: "commit",
+    etiqueta: "Commit desplegado",
+    pista: "Necesito el commit que se subió el viernes. Son siete caracteres de 0 a 9 y de la a a la f, en algún sitio del proyecto.",
+    terminal: "El commit son siete caracteres hexadecimales seguidos. Descríbelo con grep -rE y llaves.",
+    arma() {
+      const hex = "0123456789abcdef";
+      let commit = "";
+      while (commit.length < 7) commit += hex[entero(0, 15)];
+      return {
+        respuesta: commit,
+        solucion: 'grep -rE "[0-9a-f]{7}" .',
+        archivos: [
+          F("historial/ultimo-despliegue.txt", [
+            "Etiqueta subida a produccion el viernes.",
+            `Commit ${commit} sobre la rama principal.`,
+            "Sin firmar.",
+          ]),
+          // Ninguno llega a siete: uno corto, uno con letra fuera del rango y
+          // uno partido por un guion, que rompe la racha.
+          F("historial/descartados.txt", [
+            "3f9a21 revertido antes de subir",
+            "9c1ez2b sin validar",
+            "aa10-4bc9 mal copiado",
+          ]),
+        ],
+      };
+    },
+  },
+  {
+    id: "build",
+    etiqueta: "Número de build",
+    pista: "El build que rompió producción viene con la etiqueta BUILD y cinco dígitos. Está anotado en alguna parte.",
+    terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
+    arma() {
+      const build = "BUILD-" + entero(10000, 99999);
+      return {
+        respuesta: build,
+        solucion: 'grep -rE "BUILD-[0-9]{5}" .',
+        archivos: [
+          F("integracion/ultima-ejecucion.txt", [
+            "Tuberia de integracion terminada con fallos.",
+            `Artefacto publicado en ${build}, sin pruebas.`,
+          ]),
+          F("integracion/anteriores.txt", [
+            "BUILD-4812 caducado",
+            "REF-48120 duplicado",
+            "BUILD-991 cancelado",
+          ]),
+        ],
+      };
+    },
+  },
+  {
+    id: "version",
+    etiqueta: "Versión publicada",
+    pista: "Quiero la versión que quedó publicada. Tiene tres números separados por puntos, con una v delante.",
+    terminal: "La versión es v y tres números separados por puntos. Usa grep -rE y escapa los puntos.",
+    arma() {
+      const v = `v${entero(2, 5)}.${entero(0, 9)}.${entero(0, 9)}`;
+      return {
+        respuesta: v,
+        solucion: 'grep -rE "v[0-9]+\\.[0-9]+\\.[0-9]+" .',
+        archivos: [
+          F("paquetes/publicado.txt", [
+            "Paquete subido al repositorio interno.",
+            `Version ${v} marcada como estable por error.`,
+          ]),
+          F("paquetes/retiradas.txt", ["v2.1 incompleta", "3.0.4 sin prefijo", "v1 borrador"]),
+        ],
+      };
+    },
+  },
+  {
+    id: "nodo",
+    etiqueta: "Nodo de producción",
+    pista: "El nodo donde se cayó está en la red interna: la dirección empieza por 10.20. Búscala por su forma.",
+    terminal: "El nodo es una dirección que empieza por 10.20. Usa grep -rE y escapa los puntos.",
+    arma() {
+      const ip = `10.20.${entero(1, 250)}.${entero(1, 250)}`;
+      return {
+        respuesta: ip,
+        solucion: 'grep -rE "10\\.20\\.[0-9]+\\.[0-9]+" .',
+        archivos: [
+          F("infra/inventario.txt", [
+            "Nodos del entorno de produccion.",
+            `Caido: ${ip}, sin responder al sondeo.`,
+          ]),
+          F("infra/retirados.txt", ["10.0.4.2 fuera de servicio", "10.20 sin completar", "172.16.0.9 ajena"]),
+        ],
+      };
+    },
+  },
+];
+
+/* ---------- familia find: un atributo del archivo, no su contenido ---------- */
+const PISTAS_FIND = [
+  {
+    id: "tocado",
+    etiqueta: "Configuración tocada",
+    pista: "Alguien editó una configuración hace un rato y no lo dijo. Por la fecha lo encuentras: es de hace menos de una hora.",
+    terminal: "Un archivo se modificó hace minutos. Búscalo con find y -mmin; su nombre es el que necesito.",
+    arma() {
+      const nombre = alAzar(["nginx.conf", "app.env", "pool.conf", "limites.conf"]);
+      return {
+        respuesta: nombre,
+        solucion: "find . -mmin -60",
+        archivos: [
+          F(`config/${nombre}`, ["timeout = 2", "reintentos = 0"], 1000 * 60 * entero(2, 9)),
+          F("config/base.conf", ["puerto = 8080"]),
+          F("config/registro.conf", ["nivel = info"]),
+        ],
+      };
+    },
+  },
+  {
+    id: "volcado",
+    etiqueta: "Volcado de la base",
+    pista: "Antes de revertir alguien sacó un volcado de la base. Es el único archivo .sql que hay por aquí.",
+    terminal: "Sólo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
+    arma() {
+      const nombre = "respaldo-" + entero(10, 99) + ".sql";
+      return {
+        respuesta: nombre,
+        solucion: "find . -name '*.sql'",
+        archivos: [
+          F(`volcados/${nombre}`, ["-- volcado parcial", "-- 1420 filas"]),
+          F("volcados/notas.txt", ["Volcado hecho a mano antes del rollback."]),
+          F("volcados/salida.log", ["exportacion terminada"]),
+        ],
+      };
+    },
+  },
+  {
+    id: "oculto",
+    etiqueta: "Carpeta oculta",
+    pista: "Hay una carpeta que empieza por punto y no sale con un ls normal. Dime cómo se llama.",
+    terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
+    arma() {
+      const nombre = "." + alAzar(["borradores", "cache", "parches", "local"]);
+      return {
+        respuesta: nombre,
+        solucion: "find . -type d -name '.*'",
+        archivos: [
+          F(`${nombre}/pendiente.diff`, ["--- a/pagos.js", "+++ b/pagos.js", "@@ -1,4 +1,4 @@"]),
+          F("volcados/salida.log", ["exportacion terminada"]),
+        ],
+      };
+    },
+  },
+  {
+    id: "viejo",
+    etiqueta: "Archivo más antiguo",
+    pista: "Queda un archivo de antes de que existiera el proyecto actual, de hace más de un mes. Ese nombre me sirve.",
+    terminal: "Un solo archivo tiene más de un mes. Búscalo con find y -mtime.",
+    arma() {
+      const nombre = "manual-" + entero(2015, 2019) + ".txt";
+      return {
+        respuesta: nombre,
+        solucion: "find . -mtime +30",
+        archivos: [
+          F(`documentos/${nombre}`, ["Guia de despliegue manual.", "Obsoleta desde la migracion."], DIA * entero(60, 400)),
+          // Rutas propias de esta variante: si dos variantes escriben el mismo
+          // archivo, la segunda borra el dato de la primera.
+          F("documentos/reciente.txt", ["Revision de esta semana.", "Sin cambios."], DIA * entero(2, 9)),
+          F("documentos/aviso.txt", ["Revisar la semana que viene."], DIA * entero(2, 9)),
+        ],
+      };
+    },
+  },
+];
+
+/* ---------- familia sort: ordenar una tabla y quedarse con el primero ---------- */
+const PISTAS_SORT = [
+  {
+    id: "servicio-fallos",
+    etiqueta: "Servicio con más fallos",
+    pista: "En metricas/errores.csv está el recuento por servicio. Dime cuál falló más veces.",
+    terminal: "En metricas/errores.csv cada línea es un servicio y sus fallos, separados por coma. Ordena por el segundo campo con sort -t, -k2 -n -r.",
+    arma() {
+      const lista = toma(SERVICIOS, 5);
+      const filas = lista.map((n) => ({ n, v: entero(2, 9) }));
+      filas[entero(0, filas.length - 1)].v = entero(15, 24);
+      const top = filas.slice().sort((a, b) => b.v - a.v)[0];
+      return {
+        respuesta: top.n,
+        solucion: "sort -t, -k2 -n -r metricas/errores.csv",
+        archivos: [F("metricas/errores.csv", filas.map((f) => `${f.n},${f.v}`))],
+      };
+    },
+  },
+  {
+    id: "endpoint",
+    etiqueta: "Ruta más lenta",
+    pista: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Necesito la ruta más lenta.",
+    terminal: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Ordena por la tercera con sort -t, -k3 -n -r.",
+    arma() {
+      const lista = toma(ENDPOINTS, 4);
+      const filas = lista.map((n) => ({ n, v: entero(20, 90) * 10 }));
+      filas[entero(0, filas.length - 1)].v = entero(200, 260) * 10;
+      const top = filas.slice().sort((a, b) => b.v - a.v)[0];
+      return {
+        respuesta: top.n,
+        solucion: "sort -t, -k3 -n -r metricas/latencias.csv",
+        archivos: [
+          F("metricas/latencias.csv", filas.map((f, i) => `0${i + 3}/06,${f.n},${f.v}`)),
+        ],
+      };
+    },
+  },
+  {
+    id: "quien-mas-subio",
+    etiqueta: "Quién subió más cambios",
+    pista: "En metricas/commits.csv está quién subió cuántos cambios esa semana. Dime quién va primero.",
+    terminal: "En metricas/commits.csv cada línea es una persona y sus cambios. Ordena por el segundo campo con sort -t, -k2 -n -r.",
+    arma() {
+      const lista = toma(COMPANEROS, 5);
+      const filas = lista.map((n) => ({ n, v: entero(3, 19) }));
+      filas[entero(0, filas.length - 1)].v = entero(40, 70);
+      const top = filas.slice().sort((a, b) => b.v - a.v)[0];
+      return {
+        respuesta: top.n,
+        solucion: "sort -t, -k2 -n -r metricas/commits.csv",
+        archivos: [F("metricas/commits.csv", filas.map((f) => `${f.n},${f.v}`))],
+      };
+    },
+  },
+  {
+    id: "primer-despliegue",
+    etiqueta: "Hora del primer despliegue",
+    pista: "En despliegues/horas.csv cada línea empieza por la hora. Quiero la del primer despliegue del día.",
+    terminal: "En despliegues/horas.csv cada línea empieza por la hora. Ordénalas con sort: la primera línea es la más temprana.",
+    arma() {
+      const horas = [];
+      while (horas.length < 5) {
+        const h = hhmm(0, 5);
+        if (!horas.includes(h)) horas.push(h);
+      }
+      const primera = horas.slice().sort()[0];
+      return {
+        respuesta: primera,
+        solucion: "sort despliegues/horas.csv",
+        archivos: [
+          F("despliegues/horas.csv", horas.map((h) => `${h},${alAzar(SERVICIOS)}`)),
+        ],
+      };
+    },
+  },
+];
+
+/* Las familias, en el orden de las lecciones. De cada partida se sortean tres,
+   conservando ese orden: el estudiante avanza como estudio el tema. */
+const FAMILIAS = [
+  { nombre: "grep", pistas: PISTAS_GREP },
+  { nombre: "regex", pistas: PISTAS_REGEX },
+  { nombre: "find", pistas: PISTAS_FIND },
+  { nombre: "sort", pistas: PISTAS_SORT },
+];
+const DATOS_POR_CASO = 3;
+
+/** Los senuelos que siempre estan: el proyecto nunca se ve vacio. */
+function archivosBase() {
+  // Bitacoras largas, que es lo que hace falta para que grep valga la pena.
+  // Nada de aqui puede encajar con las formas que buscan las expresiones
+  // regulares: ni siete hexadecimales seguidos, ni BUILD-#####, ni vN.N.N, ni
+  // una direccion 10.20.x.x. Un solo descuido y el objetivo sale por duplicado.
+  const niveles = ["INFO", "WARN", "INFO", "INFO", "DEBUG"];
+  const mensajes = [
+    "peticion atendida", "cache renovada", "sesion iniciada", "reintento programado",
+    "cola vacia", "conexion reutilizada", "plantilla compilada", "sondeo correcto",
+  ];
+  const bitacoras = [[], [], []];
+  for (let i = 0; i < 84; i++) {
+    bitacoras[i % 3].push(`${hhmm(0, 23)} ${alAzar(niveles)} ${alAzar(SERVICIOS)}: ${alAzar(mensajes)}`);
+  }
+  return [
+    F("logs/app-lunes.log", bitacoras[0]),
+    F("logs/app-martes.log", bitacoras[1]),
+    F("logs/app-miercoles.log", bitacoras[2]),
+    F("notas/leeme.txt", [
+      "Proyecto clonado en local para revisar el incidente del viernes.",
+      "No tocar nada: esto es una copia de trabajo.",
+    ]),
+    F("notas/descartado.txt", [
+      "Se descarto que fuera la red: el sondeo salio limpio toda la semana.",
+      "No perder tiempo por ahi.",
+    ]),
+  ];
+}
+
+let caso, fs, cwd, paso, resueltos;
+
+function nuevoCaso() {
+  // Una familia se queda fuera en cada partida, y las tres elegidas salen en el
+  // orden de las lecciones.
+  const fuera = entero(0, FAMILIAS.length - 1);
+  const datos = [];
+  FAMILIAS.forEach((familia, i) => {
+    if (i === fuera || datos.length >= DATOS_POR_CASO) return;
+    const variante = alAzar(familia.pistas);
+    datos.push({ familia: familia.nombre, ...variante, ...variante.arma() });
+  });
+
+  // El reloj del caso se congela al repartirlo. Con el reloj real, el archivo
+  // recien tocado envejecia mientras se juega y a los pocos minutos dejaba de
+  // caer dentro de `find -mmin`: el objetivo se volvia irresoluble solo.
+  const ahora = Date.now();
+  caso = { t0: ahora, datos };
+
+  const archivos = archivosBase();
+  for (const d of datos) archivos.push(...d.archivos);
+
+  fs = {};
+  for (const a of archivos) {
+    fs[a.ruta] = { tipo: "file", lineas: a.lineas, fecha: ahora - a.edad };
+    // los directorios se crean solos a partir de las rutas
+    const partes = a.ruta.split("/");
+    for (let i = 1; i < partes.length; i++) {
+      const dir = partes.slice(0, i).join("/");
+      if (!fs[dir]) fs[dir] = { tipo: "dir", fecha: ahora - DIA * 20 };
+    }
+  }
+
+  cwd = "";
+  paso = 0;
+  resueltos = {};
+  for (const d of datos) resueltos[d.id] = false;
+}
+
+/* ============================================================
+   SISTEMA DE ARCHIVOS
+   ============================================================ */
+function resolver(ruta) {
+  const t = (ruta || "").trim();
+  if (!t || t === ".") return cwd;
+  if (t === "~" || t === "~/escritorio") return "";
+  let partes;
+  if (t.startsWith("~/escritorio/")) partes = t.slice(13).split("/");
+  else if (t.startsWith("~/")) partes = t.slice(2).split("/");
+  else if (t.startsWith("/")) return null;
+  else partes = (cwd ? cwd.split("/") : []).concat(t.split("/"));
+  const pila = [];
+  for (const p of partes) {
+    if (!p || p === ".") continue;
+    if (p === "..") { pila.pop(); continue; }
+    pila.push(p);
+  }
+  return pila.join("/");
+}
+
+const existe = (clave) => clave === "" || Boolean(fs[clave]);
+const esDir = (clave) => clave === "" || (fs[clave] && fs[clave].tipo === "dir");
+
+/** Contenido de un directorio, sin bajar de nivel. */
+function hijos(dir) {
+  const pref = dir ? dir + "/" : "";
+  const set = new Set();
+  for (const k of Object.keys(fs)) {
+    if (!k.startsWith(pref)) continue;
+    const resto = k.slice(pref.length);
+    if (!resto) continue;
+    set.add(resto.split("/")[0]);
+  }
+  return [...set].sort();
+}
+
+/** Todos los archivos bajo una ruta, incluida ella misma. */
+function bajo(dir) {
+  const pref = dir ? dir + "/" : "";
+  return Object.keys(fs).filter((k) => k === dir || k.startsWith(pref)).sort();
+}
+
+/* ============================================================
+   CONSOLA
+   ============================================================ */
+function log(texto, clase) {
+  const d = document.createElement("div");
+  d.className = "log" + (clase ? " " + clase : "");
+  d.textContent = texto;
+  const c = $("consola");
+  const prompt = c.querySelector(".prompt");
+  if (prompt) c.insertBefore(d, prompt); else c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+const AYUDA = [
+  "Comandos disponibles:",
+  "  ls [-l] [ruta]                 lista un directorio",
+  "  cd <ruta>                      entra en un directorio",
+  "  cat <archivo>                  muestra un archivo",
+  "  head/tail [-n N] <archivo>     primeras o ultimas lineas",
+  "  wc -l <archivo>                cuenta lineas",
+  "  grep [-inrlcvowE] [-A/-B/-C n] <patron> [archivos]",
+  "  find <ruta> [-name X] [-type f|d] [-size +N] [-mmin -N]",
+  "  sort [-n] [-r] [-t X] [-k N]   ordena lo que recibe",
+  "  uniq [-c]                      colapsa repetidas seguidas",
+  "  clear                          limpia la consola",
+  "",
+  "Se pueden encadenar con | (pipe).",
+];
+
+/* ---------- utilidades de opciones ---------- */
+/**
+ * Parte los argumentos en banderas, valores y nombres sueltos.
+ *
+ * Cada comando dice cuales de sus opciones llevan valor, porque la misma letra
+ * significa cosas distintas segun el comando: `-n` en `head` es una cantidad y
+ * en `sort` es una bandera. Sin esa distincion, `sort -n archivo` se tragaba el
+ * nombre del archivo como si fuera el valor de `-n` y no ordenaba nada.
+ */
+function separa(args, conValor = []) {
+  const flags = [];
+  const libres = [];
+  const valores = {};
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (conValor.includes(a)) { valores[a] = args[++i]; continue; }
+    // Forma pegada: -t, -k2 -k1n
+    const pegado = conValor.find((f) => a.startsWith(f) && a.length > f.length);
+    if (pegado) { valores[pegado] = a.slice(pegado.length); continue; }
+    if (a.startsWith("-") && a.length > 1) {
+      for (const c of a.slice(1)) flags.push("-" + c);
+      continue;
+    }
+    libres.push(a);
+  }
+  return { flags, libres, valores };
+}
+
+const quita = (s) => (s || "").replace(/^['"]|['"]$/g, "");
+
+/* ---------- comandos ----------
+   Cada uno recibe lo que le llega por el pipe (lista de lineas o
+   null si es el primero de la cadena) y devuelve lista de lineas. */
+function cmdLs(args) {
+  const { flags, libres } = separa(args);
+  const clave = resolver(libres[0]);
+  if (clave === null || !existe(clave)) { log(`ls: ${libres[0] || ""}: no existe`, "mal"); return []; }
+  if (!esDir(clave)) return [libres[0]];
+  return hijos(clave).map((h) => {
+    const e = fs[clave ? clave + "/" + h : h];
+    const marca = e && e.tipo === "dir" ? "/" : "";
+    if (!flags.includes("-l")) return h + marca;
+    const n = e && e.lineas ? e.lineas.length : 0;
+    const fecha = new Date(e ? e.fecha : caso.t0);
+    const sello = `${String(fecha.getDate()).padStart(2, "0")}/${String(fecha.getMonth() + 1).padStart(2, "0")} ${String(fecha.getHours()).padStart(2, "0")}:${String(fecha.getMinutes()).padStart(2, "0")}`;
+    return `${e && e.tipo === "dir" ? "d" : "-"}  ${String(n).padStart(4)} lineas  ${sello}  ${h}${marca}`;
+  });
+}
+
+function cmdCd(args) {
+  const { libres } = separa(args);
+  const clave = resolver(libres[0] === undefined ? "~" : libres[0]);
+  if (clave === null || !existe(clave)) { log(`cd: ${libres[0]}: no existe`, "mal"); return []; }
+  if (!esDir(clave)) { log(`cd: ${libres[0]}: no es un directorio`, "mal"); return []; }
+  cwd = clave;
+  $("ps1").textContent = "~/escritorio" + (cwd ? "/" + cwd : "") + " $";
+  return [];
+}
+
+function leer(nombre) {
+  const clave = resolver(nombre);
+  if (clave === null || !fs[clave] || fs[clave].tipo !== "file") return null;
+  return fs[clave].lineas;
+}
+
+function cmdCat(args) {
+  const { libres } = separa(args);
+  const salida = [];
+  for (const n of libres) {
+    const l = leer(n);
+    if (!l) { log(`cat: ${n}: no existe o es un directorio`, "mal"); continue; }
+    salida.push(...l);
+  }
+  return salida;
+}
+
+function cmdHeadTail(args, entrada, cual) {
+  const { libres, valores } = separa(args, ["-n"]);
+  const n = parseInt(valores["-n"] || "10", 10);
+  const lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log(`${cual}: falta un archivo válido`, "mal"); return []; }
+  return cual === "head" ? lineas.slice(0, n) : lineas.slice(-n);
+}
+
+function cmdWc(args, entrada) {
+  const { libres } = separa(args);
+  if (entrada) return [String(entrada.length)];
+  const l = libres[0] ? leer(libres[0]) : null;
+  if (!l) { log("wc: falta un archivo válido", "mal"); return []; }
+  return [`${l.length} ${libres[0]}`];
+}
+
+/** Traduce una expresion regular basica a la sintaxis del motor de JavaScript. */
+function aBRE(p) {
+  const especiales = "{}()+?|";
+  let r = "", i = 0;
+  while (i < p.length) {
+    const c = p[i];
+    if (c === "\\" && i + 1 < p.length) {
+      const sig = p[i + 1];
+      r += especiales.includes(sig) ? sig : "\\" + sig;
+      i += 2;
+      continue;
+    }
+    r += especiales.includes(c) ? "\\" + c : c;
+    i++;
+  }
+  return r;
+}
+
+function cmdGrep(args, entrada) {
+  const { flags, libres, valores } = separa(args, ["-A", "-B", "-C"]);
+  const patron = quita(libres[0]);
+  if (!patron) { log("grep: falta el patrón", "mal"); return []; }
+
+  let banderas = flags.includes("-i") ? "i" : "";
+  // Sin -E las llaves, el mas, el interrogante y la barra son literales, igual
+  // que en el grep real: si el simulador los aceptara siempre, ensenaria a
+  // escribir expresiones que fuera de aqui no funcionan.
+  let fuente = flags.includes("-E") ? patron : aBRE(patron);
+  if (flags.includes("-w")) fuente = "\\b(?:" + fuente + ")\\b";
+  let re;
+  try { re = new RegExp(fuente, banderas + "g"); }
+  catch (e) { log("grep: la expresión regular no es válida", "mal"); return []; }
+
+  // De donde se lee: del pipe, de los archivos nombrados o de un directorio con -r
+  const objetivos = [];
+  if (entrada) objetivos.push({ nombre: null, lineas: entrada });
+  else {
+    const rutas = libres.slice(1);
+    if (flags.includes("-r")) {
+      const base = resolver(rutas[0] || ".");
+      for (const k of bajo(base)) if (fs[k].tipo === "file") objetivos.push({ nombre: k, lineas: fs[k].lineas });
+    } else {
+      for (const r of rutas) {
+        const l = leer(r);
+        if (!l) { log(`grep: ${r}: no existe`, "mal"); continue; }
+        objetivos.push({ nombre: r, lineas: l });
+      }
+    }
+  }
+  if (objetivos.length === 0) { log("grep: falta el archivo donde buscar", "mal"); return []; }
+
+  const varios = objetivos.length > 1;
+  const salida = [];
+  let total = 0;
+  const ctxA = parseInt(valores["-C"] || valores["-A"] || "0", 10);
+  const ctxB = parseInt(valores["-C"] || valores["-B"] || "0", 10);
+
+  for (const o of objetivos) {
+    const marcadas = [];
+    o.lineas.forEach((l, i) => {
+      re.lastIndex = 0;
+      const hay = re.test(l);
+      if (hay !== flags.includes("-v")) marcadas.push(i);
+    });
+    total += marcadas.length;
+    if (flags.includes("-l")) { if (marcadas.length) salida.push(o.nombre); continue; }
+    if (flags.includes("-c")) { salida.push((varios && o.nombre ? o.nombre + ":" : "") + marcadas.length); continue; }
+
+    const mostrar = new Set();
+    for (const i of marcadas) for (let j = i - ctxB; j <= i + ctxA; j++) if (j >= 0 && j < o.lineas.length) mostrar.add(j);
+    [...mostrar].sort((a, b) => a - b).forEach((i) => {
+      let texto = o.lineas[i];
+      if (flags.includes("-o")) {
+        re.lastIndex = 0;
+        const trozos = texto.match(re) || [];
+        trozos.forEach((t) => salida.push(t));
+        return;
+      }
+      if (flags.includes("-n")) texto = (i + 1) + ":" + texto;
+      if (varios && o.nombre && !flags.includes("-h")) texto = o.nombre + ":" + texto;
+      salida.push(texto);
+    });
+  }
+  if (flags.includes("-c") && !varios && salida.length === 0) return [String(total)];
+  return salida;
+}
+
+function cmdFind(args) {
+  const { flags, libres, valores } = separa(args);
+  // find lleva sus propias condiciones, que separa() no entiende: se releen aqui
+  const cond = { nombre: null, tipo: null, size: null, mmin: null, mtime: null };
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "-name" || args[i] === "-iname") cond.nombre = { patron: quita(args[++i]), i: args[i - 1] === "-iname" };
+    else if (args[i] === "-type") cond.tipo = args[++i];
+    else if (args[i] === "-size") cond.size = args[++i];
+    else if (args[i] === "-mmin") cond.mmin = args[++i];
+    else if (args[i] === "-mtime") cond.mtime = args[++i];
+  }
+  // La ruta es el primer argumento, si no empieza por guion. Buscarla entre los
+  // libres tomaria por ruta el valor de una condicion, por ejemplo el +5 de -size.
+  const inicio = args[0] && !args[0].startsWith("-") ? args[0] : ".";
+  const base = resolver(inicio);
+  if (base === null || !existe(base)) { log(`find: ${inicio}: no existe`, "mal"); return []; }
+
+  const aRegex = (p) => new RegExp("^" + p.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$", cond.nombre.i ? "i" : "");
+  const ahora = caso.t0;
+  const salida = [];
+  for (const k of bajo(base)) {
+    const e = fs[k];
+    const nombre = k.split("/").pop();
+    if (cond.tipo === "f" && e.tipo !== "file") continue;
+    if (cond.tipo === "d" && e.tipo !== "dir") continue;
+    if (cond.nombre && !aRegex(cond.nombre.patron).test(nombre)) continue;
+    if (cond.mmin !== null) {
+      const min = (ahora - e.fecha) / 60000;
+      const v = parseInt(cond.mmin.replace(/[+-]/, ""), 10);
+      if (cond.mmin.startsWith("-") ? !(min < v) : !(min > v)) continue;
+    }
+    if (cond.mtime !== null) {
+      const dias = (ahora - e.fecha) / 86400000;
+      const v = parseInt(cond.mtime.replace(/[+-]/, ""), 10);
+      if (cond.mtime.startsWith("-") ? !(dias < v) : !(dias > v)) continue;
+    }
+    if (cond.size !== null) {
+      const lineas = e.lineas ? e.lineas.length : 0;
+      const v = parseInt(cond.size.replace(/[+-kM]/g, ""), 10);
+      if (cond.size.startsWith("+") ? !(lineas > v) : !(lineas < v)) continue;
+    }
+    salida.push("~/escritorio" + (k ? "/" + k : ""));
+  }
+  return salida;
+}
+
+function cmdSort(args, entrada) {
+  const { flags, libres, valores } = separa(args, ["-t", "-k"]);
+  let lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log("sort: falta lo que hay que ordenar", "mal"); return []; }
+  const sep = valores["-t"];
+  const campo = valores["-k"] ? parseInt(valores["-k"], 10) : null;
+  const num = flags.includes("-n") || (valores["-k"] || "").includes("n");
+  const clave = (l) => {
+    if (!campo) return l.trim();
+    const partes = sep ? l.split(sep) : l.trim().split(/\s+/);
+    return (partes[campo - 1] || "").trim();
+  };
+  const ordenadas = lineas.slice().sort((a, b) => {
+    const x = clave(a), y = clave(b);
+    if (num) return (parseFloat(x) || 0) - (parseFloat(y) || 0);
+    return x.localeCompare(y);
+  });
+  if (flags.includes("-r")) ordenadas.reverse();
+  return ordenadas;
+}
+
+function cmdUniq(args, entrada) {
+  const { flags, libres } = separa(args);
+  const lineas = entrada || (libres[0] ? leer(libres[0]) : null);
+  if (!lineas) { log("uniq: falta lo que hay que revisar", "mal"); return []; }
+  const salida = [];
+  let previa = null, cuenta = 0;
+  const volcar = () => {
+    if (previa === null) return;
+    salida.push(flags.includes("-c") ? `${String(cuenta).padStart(7)} ${previa}` : previa);
+  };
+  for (const l of lineas) {
+    if (l === previa) { cuenta++; continue; }
+    volcar();
+    previa = l; cuenta = 1;
+  }
+  volcar();
+  return salida;
+}
+
+/* ---------- ejecutor con pipes ---------- */
+function ejecutarTramo(linea, entrada) {
+  const partes = linea.trim().match(/'[^']*'|"[^"]*"|\S+/g) || [];
+  if (partes.length === 0) return entrada || [];
+  const [cmd, ...args] = partes;
+  switch (cmd) {
+    case "ls": return cmdLs(args);
+    case "cd": return cmdCd(args);
+    case "cat": return cmdCat(args);
+    case "head": return cmdHeadTail(args, entrada, "head");
+    case "tail": return cmdHeadTail(args, entrada, "tail");
+    case "wc": return cmdWc(args, entrada);
+    case "grep": return cmdGrep(args, entrada);
+    case "find": return cmdFind(args);
+    case "sort": return cmdSort(args, entrada);
+    case "uniq": return cmdUniq(args, entrada);
+    case "help": AYUDA.forEach((l) => log(l, "nota")); return [];
+    case "clear": $("consola").querySelectorAll(".log").forEach((l) => l.remove()); return [];
+    default:
+      log(`${cmd}: no disponible aquí. Escribe "help" para ver la lista.`, "mal");
+      return [];
+  }
+}
+
+function ejecutar(linea) {
+  if (!linea.trim()) return;
+  log("$ " + linea, "eco");
+  let entrada = null;
+  for (const tramo of linea.split("|")) {
+    entrada = ejecutarTramo(tramo, entrada);
+  }
+  // Un limite alto pero real: volcar diez mil lineas cuelga el navegador y no
+  // ensena nada, y en una terminal de verdad se resuelve con head o con grep.
+  const salida = entrada || [];
+  if (salida.length > 200) {
+    salida.slice(0, 200).forEach((l) => log(l));
+    log(`… ${salida.length - 200} líneas más. Afina la búsqueda o usa head.`, "nota");
+  } else {
+    salida.forEach((l) => log(l));
+  }
+}
+
+/* ============================================================
+   OBJETIVOS Y PANEL
+   ============================================================ */
+function objetivos() {
+  // Una entrada por dato de esta partida. Ya no hay dos listas que puedan
+  // discrepar: antes `objetivos()` pedia un campo que `CAMPOS` no declaraba y el
+  // ultimo objetivo no se marcaba nunca.
+  return caso.datos.map((d) => ({ campo: d.id, pista: d.pista, terminal: d.terminal }));
+}
+
+/** Los datos que pide esta partida, en el orden en que se piden. */
+function campos() {
+  return caso.datos.map((d) => ({ id: d.id, etiqueta: d.etiqueta }));
+}
+
+/** La respuesta buena de un dato. */
+/** Compara sin castigar mayusculas, acentos ni espacios de mas. */
+const normal = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
+
+/** El dato dentro del mensaje, como palabra suelta.
+ *
+ * Los limites evitan el falso positivo obvio: si el dato es "pagos", una
+ * respuesta que diga "despagos" no cuenta. Y como el mensaje puede traer la
+ * frase entera, basta con que el dato aparezca en alguna parte. */
+function contiene(mensaje, dato) {
+  const d = normal(dato);
+  if (!d) return false;
+  const escapado = d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp("(^|[^a-z0-9])" + escapado + "($|[^a-z0-9])").test(normal(mensaje));
+}
+const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuesta || "";
+
+/* ============================================================
+   EL CHAT
+   Laura pide un dato cada vez y espera respuesta. Es una
+   conversacion, no un formulario: por eso va por turnos y por eso
+   al fallar responde con una pista mas concreta en vez de un "no".
+   Equivocarse aqui ensena algo, que es lo contrario de lo que
+   hacia la version anterior, en la que la pista mentia.
+   ============================================================ */
+let charla = [];
+/** Intentos fallidos del dato en curso: la ayuda sube de concrecion. */
+let tropiezos = 0;
+/* Lo que Laura tiene pendiente de escribir. Sus mensajes no salen de golpe:
+   primero se ven los tres puntos y luego llega el texto, como en cualquier
+   aplicacion de mensajes. El estado del juego, en cambio, avanza al momento,
+   asi que la espera no bloquea al que ya sabe la siguiente respuesta. */
+let cola = [], escribiendo = false, temporizador = null;
+
+function di(de, texto, mal) {
+  if (de === "yo") {
+    charla.push({ de, texto, mal: false });
+    pintarChat();
+    return;
+  }
+  cola.push({ de, texto, mal: Boolean(mal) });
+  bombear();
+}
+
+function bombear() {
+  if (escribiendo || !cola.length) return;
+  const m = cola.shift();
+  // En el banco de pruebas no hay reloj que esperar: los mensajes se entregan
+  // al momento, o cada comprobacion tendria que dormir tres segundos.
+  if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+    charla.push(m);
+    pintarChat();
+    bombear();
+    return;
+  }
+  escribiendo = true;
+  pintarChat();
+  temporizador = setTimeout(() => {
+    escribiendo = false;
+    temporizador = null;
+    charla.push(m);
+    pintarChat();
+    bombear();
+  }, entero(1000, 3000));
+}
+
+function pintarChat() {
+  const cont = $("chat");
+  if (!cont) return;
+  cont.innerHTML = "";
+  for (const m of charla) {
+    const d = document.createElement("div");
+    d.className = "msg " + m.de + (m.mal ? " mal" : "");
+    d.innerHTML = m.texto;
+    cont.appendChild(d);
+  }
+  if (escribiendo) {
+    const p = document.createElement("div");
+    p.className = "msg ella escribiendo";
+    p.innerHTML = "<span></span><span></span><span></span>";
+    cont.appendChild(p);
+  }
+  cont.scrollTop = cont.scrollHeight;
+}
+
+/** Lo que Laura pide ahora. */
+function pedir() {
+  const lista = objetivos();
+  if (paso >= lista.length) return;
+  di("ella", lista[paso].pista);
+}
+
+/** La respuesta del estudiante, contra el dato en curso. */
+function responderChat() {
+  const caja = $("chat-in");
+  const valor = caja.value.trim();
+  if (!valor) return;
+  caja.value = "";
+
+  const lista = objetivos();
+  if (paso >= lista.length) return;
+  const id = lista[paso].campo;
+  di("yo", escapar(valor));
+
+  if (contiene(valor, respuestaDe(id))) {
+    resueltos[id] = true;
+    tropiezos = 0;
+    log("dato confirmado: " + etiquetaDe(id).toLowerCase(), "ok");
+    const ultimo = Object.values(resueltos).every(Boolean);
+    di("ella", ultimo
+      ? "Con esto ya puedo cerrar el informe. Gracias, me has ahorrado el domingo."
+      : alAzar(["Eso es. Lo apunto en el informe.", "Confirmado, gracias.", "Bien, ya lo tengo."]));
+    revisar();
+    if (paso < lista.length) pedir();
+    return;
+  }
+
+  tropiezos++;
+  // Primero se repite lo pedido; a la segunda se dice con qué herramienta se
+  // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
+  di("ella", tropiezos === 1
+    ? "Eso no me cuadra. Vuelve a mirar, es lo que te dije."
+    : escapar(lista[paso].terminal), true);
+}
+
+/** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
+function etiquetaDe(id) {
+  return (caso.datos.find((d) => d.id === id) || {}).etiqueta || id;
+}
+
+const escapar = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+function revisar() {
+  const lista = objetivos();
+  while (paso < lista.length && resueltos[lista[paso].campo]) paso++;
+  pintar();
+  if (Object.values(resueltos).every(Boolean)) cerrarCuandoCalle();
+}
+
+/* La pantalla de fin espera a que Laura termine de escribir. Saliendo al
+   momento tapaba su ultima confirmacion antes de que diera tiempo a leerla. */
+function cerrarCuandoCalle() {
+  if (escribiendo || cola.length) {
+    setTimeout(cerrarCuandoCalle, 200);
+    return;
+  }
+  terminar();
+}
+
+let ultimoAnuncio = -1;
+
+function pintar() {
+  const lista = objetivos();
+  barra.objetivo(paso < lista.length
+    ? "Reúne los datos que pide Laura para el informe"
+    : "Informe cerrado", Math.min(paso, lista.length - 1), lista.length);
+  barra.marcas(lista.map((_, i) => (i < paso ? "done" : i === paso ? "cur" : "")));
+  // El objetivo no tiene ventana propia: se anuncia en la terminal cuando
+  // cambia, que es donde el estudiante ya esta mirando.
+  if (paso !== ultimoAnuncio && paso < lista.length) {
+    ultimoAnuncio = paso;
+    log("");
+    log(`[${paso + 1}/${lista.length}] ${lista[paso].terminal}`, "nota");
+  }
+}
+
+
+function terminar() {
+  // El resumen de los tres datos ya quedo en el chat, dicho por Laura. Aqui
+  // sobra repetirlo: lo unico que falta es cerrar o repetir.
+  $("fin").hidden = false;
+}
+
+/* ============================================================
+   ENTRADA
+   ============================================================ */
+let tecleado = "";
+const ocupado = () => !$("fin").hidden || !$("portada").classList.contains("hide");
+
+function enfocar() {
+  const t = $("pegar");
+  if (t && t.focus) t.focus({ preventScroll: true });
+}
+
+document.addEventListener("keydown", (ev) => {
+  if (ocupado()) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+  if (ev.key === "Enter") {
+    const linea = tecleado;
+    tecleado = "";
+    $("tecleado").textContent = "";
+    ejecutar(linea);
+    return;
+  }
+  if (ev.key === "Backspace") tecleado = tecleado.slice(0, -1);
+  else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) tecleado += ev.key;
+  else return;
+  ev.preventDefault();
+  $("tecleado").textContent = tecleado;
+});
+
+document.addEventListener("paste", (ev) => {
+  if (ocupado()) return;
+  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+  const datos = ev.clipboardData || window.clipboardData;
+  if (!datos) return;
+  ev.preventDefault();
+  tecleado += (datos.getData("text") || "").split(/\r?\n/)[0];
+  $("tecleado").textContent = tecleado;
+  const t = $("pegar");
+  if (t) t.value = "";
+});
+
+$("desk").addEventListener("click", (ev) => {
+  if (ev.target.tagName !== "INPUT") enfocar();
+});
+
+function reiniciar() {
+  nuevoCaso();
+  tecleado = "";
+  $("tecleado").textContent = "";
+  $("consola").querySelectorAll(".log").forEach((l) => l.remove());
+  $("ps1").textContent = "~/escritorio $";
+  $("fin").hidden = true;
+  $("portada").classList.remove("hide");
+  barra.jugando(false);
+  ultimoAnuncio = -1;
+  charla = [];
+  tropiezos = 0;
+  cola = [];
+  escribiendo = false;
+  if (temporizador) { clearTimeout(temporizador); temporizador = null; }
+  for (const [v, d] of [["w-chat", "d-chat"], ["w-term", "d-term"]]) {
+    $(v).hidden = false;
+    $(d).dataset.abierta = "true";
+  }
+  log("Copia local del proyecto lista.");
+  log(`Laura necesita ${caso.datos.length} datos para cerrar el informe del incidente:`);
+  log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
+  di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
+  di("ella", "Tienes el proyecto clonado en el escritorio. Te voy pidiendo los datos de uno en uno.");
+  di("ella", "Mándame el dato y escríbelo bien. Que venga en el mensaje sin errores.");
+  pedir();
+  pintar();
+}
+
+/* ---------- ventanas ---------- */
+/* Mismo trato que en la practica de compresion: el dock abre y cierra, y el
+   punto amarillo de cada ventana solo esconde. */
+function alternar(idVentana, idBoton) {
+  const v = $(idVentana);
+  v.hidden = !v.hidden;
+  $(idBoton).dataset.abierta = String(!v.hidden);
+}
+function cerrar(idVentana, idBoton) {
+  $(idVentana).hidden = true;
+  $(idBoton).dataset.abierta = "false";
+}
+$("d-chat").addEventListener("click", () => alternar("w-chat", "d-chat"));
+$("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
+document.querySelectorAll("button.win-dot.min").forEach((b) =>
+  b.addEventListener("click", () => cerrar(b.dataset.win, b.dataset.dock)));
+
+$("enviar").addEventListener("click", responderChat);
+$("chat-in").addEventListener("keydown", (ev) => {
+  if (ev.key !== "Enter") return;
+  ev.preventDefault();
+  responderChat();
+});
+
+$("play").addEventListener("click", () => {
+  $("portada").classList.add("hide");
+  barra.jugando(true);
+  enfocar();
+});
+$("fin-again").addEventListener("click", reiniciar);
+$("fin-exit").addEventListener("click", Barra.salir);
+
+reiniciar();
+
+// Gancho de pruebas: el arnes de Node empuja el estado sin DOM.
+if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+  globalThis.__api = {
+    ejecutar, ejecutarTramo, reiniciar, objetivos,
+    caso: () => caso, fs: () => fs, paso: () => paso, resueltos: () => resueltos,
+    campos, respuestaDe,
+    responder: (campo, valor) => { resueltos[campo] = contiene(valor, respuestaDe(campo)); revisar(); },
+  };
+}
+</script>

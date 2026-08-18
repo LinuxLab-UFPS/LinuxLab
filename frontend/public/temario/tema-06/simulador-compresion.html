@@ -219,13 +219,6 @@ button.win-dot::after{
 .dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-7px;left:22%;width:56%;height:3px;border-radius:2px;background:#E8912F}
 .dock-btn svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.5))}
 
-/* ---------- fin ---------- */
-.fin{position:absolute;inset:0;background:rgba(6,8,13,.9);display:flex;align-items:center;justify-content:center;z-index:60}
-.fin[hidden]{display:none}
-.fin-box{text-align:center;max-width:420px;padding:30px}
-.fin-t{font-size:20px;font-weight:700;color:var(--green);margin-bottom:10px}
-.fin-p{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:22px}
-.fin-btns{display:flex;gap:10px;justify-content:center}
 /* Poco sitio (pantalla pequeña o zoom fuerte): en vez de encoger las ventanas
    hasta que no quepa nada, se apilan con un alto minimo util y el escritorio se
    desplaza. Vale mas hacer scroll que leer una terminal de tres lineas.
@@ -380,14 +373,15 @@ button.win-dot::after{
     </button>
   </div>
 
-  <div class="fin" id="fin" hidden>
-    <div class="fin-box">
-      <div class="fin-t">Entrega enviada</div>
-      <div class="fin-p" id="fin-p"></div>
-      <div class="fin-btns">
-        <button class="restart-btn" id="fin-again">Otra vez</button>
-        <button class="restart-btn neutro" id="fin-exit">Salir</button>
-      </div>
+</div>
+
+<div class="sim-fin" id="fin" hidden>
+  <div class="fin-box">
+    <div class="fin-titulo">Entrega enviada</div>
+    <p class="fin-texto" id="fin-p"></p>
+    <div class="fin-btns">
+      <button class="fin-btn primario" id="fin-again">Otra vez</button>
+      <button class="fin-btn" id="fin-exit">Salir</button>
     </div>
   </div>
 </div>
@@ -408,7 +402,15 @@ const $ = (id) => document.getElementById(id);
 
 // Sin puntos: aqui no se puntua, se completa la entrega. Reiniciar vuelve a
 // la portada, que es de donde arranca la partida.
-const barra = Barra.montar({ puntos: false, onReiniciar: () => reiniciar() });
+const barra = Barra.montar({
+  puntos: false,
+  ayuda: [
+    { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
+    { clave: 'Correo', tono: 'azul',   texto: 'No admite carpetas. Lo que se envíe tiene que ser un archivo, y eso es lo que hay que preparar con <code>tar</code>.' },
+    { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Ya tienes una tubodeck y la tubomachine?' },
+  ],
+  onReiniciar: () => reiniciar(),
+});
 
 /* ============================================================
    ICONOS
@@ -563,8 +565,8 @@ const modsInstalados = () => {
   return Boolean(d && MODS.every((m) => d.hijos.includes(m)));
 };
 
-/** Listo para jugar: los mods puestos y el paquete ya no anda por ahi. */
-const listoParaJugar = () => modsInstalados() && !fs[nombres.pack];
+/** Listo para jugar: los mods, puestos en el directorio del juego. */
+const listoParaJugar = () => modsInstalados();
 
 /* ============================================================
    DESAFIOS
@@ -965,9 +967,9 @@ function pintarJuego() {
   const cont = $("game-body");
   if (!cont) return;
 
-  // Jugable solo con los mods puestos y sin la descarga a medio instalar. Lo
-  // que hay que hacer para llegar ahi lo dice la ventana de objetivos: aqui no
-  // se repite, que es informacion de mas sobre la misma cabeza.
+  // Jugable en cuanto los mods estan en el directorio del juego. Lo que hay que
+  // hacer para llegar ahi lo dice la ventana de objetivos: aqui no se repite,
+  // que es informacion de mas sobre la misma cabeza.
   const activo = listoParaJugar() && !jugado;
 
   cont.innerHTML =

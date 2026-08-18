@@ -51,6 +51,14 @@ const RAW = [
     topicNumber: 6,
     file: "simulador-compresion.html",
   },
+  {
+    id: "despliegue-del-viernes",
+    title: "El despliegue del viernes",
+    description:
+      "Un despliegue tumbó producción y hay que reconstruir qué pasó. Rastrea la copia local del proyecto con grep, find y sort, y responde por el chat lo que vayas encontrando.",
+    topicNumber: 7,
+    file: "simulador-busqueda.html",
+  },
 ]
 
 export const simulators: Simulator[] = RAW.map((s) => {
