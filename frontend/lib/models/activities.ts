@@ -238,7 +238,7 @@ export interface SubmissionGrade {
 export interface StudentActivityDetailManual {
   type: "manual"
   student: { id: string; name: string; email: string; code: string | null }
-  activity: { id: string; title: string; workdir: string; evaluationType: string; activityType: string; maxScore: number }
+  activity: { id: string; title: string; instructions: string; workdir: string; evaluationType: string; activityType: string; maxScore: number }
   submission: {
     id: string
     status: string
@@ -254,7 +254,7 @@ export interface StudentActivityDetailManual {
 export interface StudentActivityDetailAutomatic {
   type: "automatic"
   student: { id: string; name: string; email: string; code: string | null }
-  activity: { id: string; title: string; workdir: string; evaluationType: string; activityType: string; maxScore: number; gradingPolicy: string }
+  activity: { id: string; title: string; instructions: string; workdir: string; evaluationType: string; activityType: string; maxScore: number; gradingPolicy: string }
   attempts: {
     attemptNumber: number
     passed: boolean

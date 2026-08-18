@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, Download, FileText, Folder, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, FileText, Folder, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
@@ -23,29 +23,67 @@ interface Props {
 
 export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }: Props) {
   const { student, activity } = detail
+  const submission = detail.type === "manual" ? detail.submission : null
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-6">
         <Link
           href={`/groups/${groupId}/activities/${activityId}`}
-          className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Volver a la actividad
+          Volver
         </Link>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">
-            {student.name}
-            {student.code && (
-              <span className="ml-2 font-mono text-muted-foreground">({student.code})</span>
-            )}
-          </h1>
-          <Tag tone="neutral">{activity.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
-          <Tag tone="neutral">
-            {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
-          </Tag>
+        <div className="mt-4">
+          <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
+          {activity.instructions && (
+            <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">{activity.instructions}</p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Tag tone="neutral">{activity.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
+            <Tag tone="neutral">
+              {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
+            </Tag>
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <tbody>
+              <tr className="border-b border-border/50">
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Nombre del estudiante</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{student.name}</td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Código del estudiante</td>
+                <td className="px-4 py-2.5 font-mono text-muted-foreground">{student.code ?? "—"}</td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Estado de la calificación</td>
+                <td className="px-4 py-2.5">
+                  {submission ? (
+                    submission.status === "graded" && submission.score != null ? (
+                      <Tag tone={submission.score >= 80 ? "emerald" : submission.score >= 60 ? "amber" : "rose"}>
+                        Calificación: {submission.score}/{activity.maxScore}
+                      </Tag>
+                    ) : (
+                      <Tag tone="amber">Pendiente por calificar</Tag>
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Fecha de entrega</td>
+                <td className="px-4 py-2.5 text-muted-foreground">
+                  {submission ? formatBogotaDateTime(submission.submittedAt) : "—"}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -54,6 +92,113 @@ export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }
       ) : (
         <AutomaticDetail detail={detail} maxScore={activity.maxScore} />
       )}
+    </div>
+  )
+}
+
+interface TreeNode {
+  name: string
+  path: string
+  isDir: boolean
+  children?: TreeNode[]
+}
+
+function buildTree(paths: string[]): TreeNode[] {
+  const root: TreeNode[] = []
+  for (const path of paths) {
+    const parts = path.split("/").filter(Boolean)
+    let current = root
+    for (let i = 0; i < parts.length; i++) {
+      const name = parts[i]
+      const isLast = i === parts.length - 1
+      const existing = current.find((n) => n.name === name)
+      if (existing) {
+        if (!isLast) current = existing.children!
+      } else {
+        const node: TreeNode = {
+          name,
+          path: isLast ? path : parts.slice(0, i + 1).join("/") + "/",
+          isDir: !isLast,
+          children: isLast ? undefined : [],
+        }
+        current.push(node)
+        if (!isLast) current = node.children!
+      }
+    }
+  }
+  return root
+}
+
+function FileTreeNode({
+  node,
+  selectedFile,
+  onSelect,
+  depth = 0,
+}: {
+  node: TreeNode
+  selectedFile: string | null
+  onSelect: (path: string) => void
+  depth?: number
+}) {
+  return (
+    <div>
+      <div className={cn("group flex items-center", depth > 0 && "ml-3")}>
+        {node.isDir ? (
+          <span className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-foreground">
+            <Folder className="h-3.5 w-3.5 shrink-0" />
+            <span className="font-medium">{node.name}</span>
+          </span>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => onSelect(node.path)}
+              className={cn(
+                "flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
+                selectedFile === node.path
+                  ? "bg-secondary text-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+              )}
+            >
+              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate font-mono text-sm">{node.name}</span>
+            </button>
+          </>
+        )}
+      </div>
+      {node.children?.map((child) => (
+        <FileTreeNode
+          key={child.path}
+          node={child}
+          selectedFile={selectedFile}
+          onSelect={onSelect}
+          depth={depth + 1}
+        />
+      ))}
+    </div>
+  )
+}
+
+function FileTree({
+  tree,
+  selectedFile,
+  onSelect,
+}: {
+  tree: string[]
+  selectedFile: string | null
+  onSelect: (path: string) => void
+}) {
+  const nodes = buildTree(tree)
+  return (
+    <div className="space-y-0.5">
+      {nodes.map((node) => (
+        <FileTreeNode
+          key={node.path}
+          node={node}
+          selectedFile={selectedFile}
+          onSelect={onSelect}
+        />
+      ))}
     </div>
   )
 }
@@ -89,8 +234,8 @@ function ManualDetail({
 
   const handleGrade = async () => {
     const parsed = Number(score)
-    if (!Number.isInteger(parsed) || parsed < 0 || parsed > activity.maxScore) {
-      notify.error(null, `La calificación debe ser un entero entre 0 y ${activity.maxScore}`)
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
+      notify.error(null, "La calificación debe ser un entero entre 0 y 100")
       return
     }
     setGrading(true)
@@ -116,84 +261,29 @@ function ManualDetail({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Tag tone={submission.status === "graded" ? "emerald" : "amber"}>
-          {submission.status === "graded" ? "Calificada" : "Pendiente"}
-        </Tag>
-        <span className="text-xs text-muted-foreground">
-          Entregado: {formatBogotaDateTime(submission.submittedAt)}
-        </span>
-        {submission.score != null && (
-          <span className="text-xs font-medium text-foreground">
-            Calificación: {submission.score}/{activity.maxScore}
-          </span>
-        )}
-        <a
-          href={`/api/submissions/${submission.id}/download`}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <Download className="h-3.5 w-3.5" />
-          Descargar .zip
-        </a>
-      </div>
+      {submission.score != null && (
+        <p className="text-sm font-medium text-foreground">
+          Calificación: {submission.score}/{activity.maxScore}
+        </p>
+      )}
 
       <div className="flex min-h-[400px] overflow-hidden rounded-xl border border-border">
         <div className="w-60 shrink-0 overflow-y-auto border-r border-border bg-background p-3">
           <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">
             Archivos ({tree.length})
           </p>
-          <div className="space-y-0.5">
-            {tree.map((path) => {
-              const isDir = path.endsWith("/")
-              const name = path.split("/").filter(Boolean).pop() ?? path
-              return (
-                <div key={path} className="group flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => !isDir && loadFile(path)}
-                    className={cn(
-                      "flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
-                      selectedFile === path
-                        ? "bg-secondary text-foreground"
-                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
-                    )}
-                  >
-                    {isDir ? (
-                      <Folder className="h-3.5 w-3.5 shrink-0" />
-                    ) : (
-                      <FileText className="h-3.5 w-3.5 shrink-0" />
-                    )}
-                    <span className="truncate font-mono text-xs">{name}</span>
-                  </button>
-                  {!isDir && (
-                    <a
-                      href={`/api/submissions/${submission.id}/files/download/${encodeURIComponent(path)}`}
-                      className="ml-1 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-                      title="Descargar archivo"
-                    >
-                      <Download className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          <FileTree
+            tree={tree}
+            selectedFile={selectedFile}
+            onSelect={loadFile}
+          />
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center justify-between border-b border-border px-4 py-2">
+          <div className="flex items-center border-b border-border px-4 py-2">
             <span className="font-mono text-xs text-muted-foreground">
               {selectedFile ?? "Selecciona un archivo"}
             </span>
-            {selectedFile && (
-              <a
-                href={`/api/submissions/${submission.id}/files/download/${encodeURIComponent(selectedFile)}`}
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Download className="h-3 w-3" />
-                Descargar
-              </a>
-            )}
           </div>
           <div className="flex-1 overflow-auto bg-background p-4">
             {loadingFile ? (
@@ -217,31 +307,29 @@ function ManualDetail({
       {isTeacher && submission.status !== "graded" && (
         <div className="rounded-xl border border-border bg-background p-4">
           <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase">Calificación</h3>
-          <div className="flex gap-4">
-            <div className="w-32 space-y-1">
-              <Label className="text-xs text-muted-foreground">
-                Calificación (/{activity.maxScore})
-              </Label>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Calificación (0-100)</Label>
               <Input
                 type="number"
                 min={0}
-                max={activity.maxScore}
+                max={100}
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
-                className="border-table-line font-mono"
+                className="w-32 border-table-line font-mono"
               />
             </div>
-            <div className="flex-1 space-y-1">
+            <div className="space-y-1">
               <Label className="text-xs text-muted-foreground">Retroalimentación</Label>
               <Textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                rows={2}
+                rows={3}
                 placeholder="Comentarios para el estudiante..."
                 className="border-table-line text-sm"
               />
             </div>
-            <div className="flex items-end">
+            <div>
               <ActionButton tone="amber" onClick={handleGrade} disabled={grading}>
                 {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Calificar
@@ -285,8 +373,8 @@ function AutomaticDetail({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Tag tone={detail.finalScore > 0 ? "sky" : "neutral"}>
-          Calificación final: {detail.finalScore}/{maxScore}
+        <Tag tone={detail.finalScore >= 80 ? "emerald" : detail.finalScore >= 60 ? "amber" : detail.finalScore > 0 ? "rose" : "neutral"}>
+          <span className="text-sm">Calificación final: {detail.finalScore}/{maxScore}</span>
         </Tag>
         <span className="text-xs text-muted-foreground">
           {detail.attempts.length} {detail.attempts.length === 1 ? "intento" : "intentos"}

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, ExternalLink, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
@@ -231,11 +231,12 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {isManual ? (
-            submitted ? (
-              <span className="text-xs text-success">Entregada ✓</span>
-            ) : (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {isManual ? (
+              submitted ? (
+                <span className="text-sm text-success">Enviada para revisión</span>
+              ) : (
               <ActionButton
                 tone="amber"
                 onClick={handle_submit}
@@ -263,21 +264,12 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
               {checking ? "Comprobando..." : "Comprobar actividad"}
             </ActionButton>
           )}
+          </div>
 
           <ActionButton tone="neutral" onClick={goToWorkdir}>
             <FolderOpen className="h-4 w-4" />
             Ir a la carpeta
           </ActionButton>
-
-          {completed && (
-            <Link
-              href={`/groups/${detail.groupId}/activities/${detail.id}/students/${userId}`}
-              className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Ver detalle
-            </Link>
-          )}
         </div>
 
         {detail.evaluationType === "atomic" && !canCheck && (
