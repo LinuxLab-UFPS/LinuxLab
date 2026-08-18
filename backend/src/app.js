@@ -12,6 +12,8 @@ const preferenceRoutes = require("./routes/preferenceRoutes")
 const terminalRoutes = require("./routes/terminalRoutes")
 const activityRoutes = require("./routes/activityRoutes")
 const groupActivityRoutes = require("./routes/groupActivityRoutes")
+const submissionRoutes = require("./routes/submissionRoutes")
+const studentActivityDetailRoutes = require("./routes/studentActivityDetailRoutes")
 const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
@@ -43,6 +45,8 @@ app.use('/api/preferences', preferenceRoutes);
 app.use('/api/terminal', terminalRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/group-activities', groupActivityRoutes);
+app.use('/api/submissions', submissionRoutes);
+app.use('/api/groups/:id/activities/:activityId/students/:studentId', studentActivityDetailRoutes);
 
 app.get('/', (_req, res) => {
     res.json({ message: 'LinuxLab API' });

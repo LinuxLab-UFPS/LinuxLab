@@ -6,7 +6,6 @@ import type { GroupActivitySummary } from "@/lib/features/student/group-activiti
 
 /** Una actividad de curso (creada por el docente), con su estado y su nota. */
 export function GroupActivityCard({ activity }: { activity: GroupActivitySummary }) {
-  const limitReached = activity.attemptLimit != null && activity.attemptsCount >= activity.attemptLimit
   return (
     <Link
       href={`/terminal?ga=${activity.id}`}
@@ -21,20 +20,19 @@ export function GroupActivityCard({ activity }: { activity: GroupActivitySummary
             {activity.title}
           </h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {!activity.enabled ? (
-              <Tag tone="rose">Deshabilitada</Tag>
-            ) : activity.attemptLimit != null && limitReached ? (
-              <Tag tone="rose">Límite alcanzado</Tag>
+            {activity.completed ? (
+              activity.finalScore > 0 ? (
+                <Tag tone={activity.finalScore >= 80 ? "emerald" : activity.finalScore >= 60 ? "amber" : "rose"}>
+                  Calificación: {activity.finalScore}/100
+                </Tag>
+              ) : (
+                <Tag tone="amber">Pendiente por calificar</Tag>
+              )
             ) : (
-              <Tag tone={activity.completed ? "emerald" : "amber"}>
-                {activity.completed ? "Completada" : "Pendiente"}
-              </Tag>
+              <Tag tone="neutral">Pendiente</Tag>
             )}
             <Tag tone="neutral">
               {activity.activityType === "quiz" ? "Quiz" : "Taller"}
-            </Tag>
-            <Tag tone="violet">
-              Calificación: {activity.finalScore}/100
             </Tag>
           </div>
         </div>

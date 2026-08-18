@@ -46,7 +46,7 @@ ssh-keygen -A >/dev/null 2>&1
 # Re-aplicar sudoers
 cat > /etc/sudoers.d/labadmin << 'EOF'
 labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su, /bin/sh
-labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py
+labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py, /usr/local/lib/linuxlab/submitter.py
 EOF
 chmod 440 /etc/sudoers.d/labadmin
 

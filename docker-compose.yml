@@ -99,6 +99,7 @@ services:
       SSH_USER: labadmin
       SSH_KEY_PATH: /ssh/ssh_key
       JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET:-linux-lab-31fc0.firebasestorage.app}
       FRONTEND_URL: http://frontend:3000
     volumes:
       - ssh_keys:/ssh:ro

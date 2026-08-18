@@ -11,6 +11,7 @@ import type {
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
+  ManualSubmission,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -87,6 +88,13 @@ export async function listActivitySubmissions(
   activityId: string,
 ): Promise<ActivitySubmissionStudent[]> {
   return teacherApi.listActivitySubmissions(groupId, activityId)
+}
+
+export async function listManualSubmissions(
+  groupId: string,
+  activityId: string,
+): Promise<ManualSubmission[]> {
+  return teacherApi.listManualSubmissions(groupId, activityId)
 }
 
 export async function submitActivity(_activityId: string): Promise<void> {

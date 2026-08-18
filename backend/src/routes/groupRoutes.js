@@ -32,5 +32,6 @@ router.patch("/:id/activities/:activityId", activityController.updateGroupActivi
 router.post("/:id/activities/:activityId/publish", activityController.enableGroupActivity)
 router.post("/:id/activities/:activityId/disable", activityController.disableGroupActivity)
 router.get("/:id/activities/:activityId/submissions", activityController.getActivitySubmissions)
+router.get("/:id/activities/:activityId/manual-submissions", activityController.getManualSubmissions)
 
 module.exports = router

@@ -10,6 +10,10 @@ export type {
   Difficulty,
   EvaluationType,
   GradingPolicy,
+  ManualSubmission,
+  StudentActivityDetail,
+  SubmissionDetail,
+  SubmissionGrade,
 } from "@/lib/models/activities"
 export type { AuditEntry } from "@/lib/models/audit"
 export type {

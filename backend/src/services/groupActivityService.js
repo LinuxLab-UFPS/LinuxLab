@@ -418,11 +418,45 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
         attemptsCount: g._count.id,
         lastAttemptDate: g._max.created_at?.toISOString() ?? null,
         finalScore: finalScore(attempts, policy),
+        submissionId: null,
       }
     }),
   )
 
   return submissions
+}
+
+/**
+ * Entregas manuales para una actividad: la tabla de submissions del docente.
+ */
+async function getManualSubmissions({ groupId, activityId, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    select: { id: true, max_score: true },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  const subs = await prisma.activitySubmission.findMany({
+    where: { group_activity_id: ga.id },
+    orderBy: { submitted_at: "desc" },
+    include: {
+      student: { select: { id: true, name: true, email: true, code: true } },
+    },
+  })
+
+  return subs.map((s) => ({
+    submissionId: s.id,
+    studentId: s.student_id,
+    studentName: s.student.name,
+    studentEmail: s.student.email,
+    studentCode: s.student.code,
+    status: s.status,
+    score: s.score,
+    submittedAt: s.submitted_at.toISOString(),
+    files: Number(s.evidence?.files) || 0,
+  }))
 }
 
 module.exports = {
@@ -432,4 +466,5 @@ module.exports = {
   getGroupActivity,
   setGroupActivityEnabled,
   getActivitySubmissions,
+  getManualSubmissions,
 }
