@@ -87,30 +87,6 @@ body{
 #flash{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;}
 #flash.on{opacity:1}
 
-/* RESULTS overlay */
-#results-overlay{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:rgba(10,13,18,.92);
-  opacity:0;pointer-events:none;transition:opacity .4s;z-index:30;
-}
-#results-overlay.show{opacity:1;pointer-events:all}
-.res-box{
-  border:2px solid var(--gold);border-radius:12px;
-  padding:38px 52px;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-  box-shadow:0 0 48px rgba(255,196,0,.22),0 0 90px rgba(255,196,0,.07);
-  min-width:290px;
-}
-.res-title{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);filter:drop-shadow(0 0 8px rgba(255,196,0,.65));}
-.res-score{font-size:80px;font-weight:900;letter-spacing:-.03em;color:var(--bright);font-variant-numeric:tabular-nums;line-height:1;}
-.res-pts{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:-4px;}
-.res-btns{display:flex;gap:12px;margin-top:14px;}
-.res-btn{font-family:var(--mono);font-size:13px;font-weight:700;padding:10px 22px;border-radius:7px;cursor:pointer;border:none;transition:all .18s;}
-.res-btn.primary{background:var(--gold);color:#000;}
-.res-btn.primary:hover{background:#ffe033;box-shadow:0 0 18px rgba(255,196,0,.5);}
-.res-btn.secondary{background:transparent;color:var(--muted);border:1px solid var(--border);}
-.res-btn.secondary:hover{color:var(--text);border-color:var(--muted);}
 </style>
 
 <!-- La barra la arma barra.js con las piezas que este simulador declara. -->
@@ -124,17 +100,6 @@ body{
     <div id="mo-name"></div>
     <div id="mo-sub"></div>
   </div>
-  <div id="results-overlay">
-    <div class="res-box">
-      <div class="res-title">Resultado</div>
-      <div class="res-score" id="res-score-val">0</div>
-      <div class="res-pts">puntos</div>
-      <div class="res-btns">
-        <button class="res-btn primary" onclick="empezar()">↺ Jugar de nuevo</button>
-        <button class="res-btn secondary" onclick="exitSim()">Salir</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div class="term" id="term">
@@ -147,6 +112,18 @@ body{
 
 <!-- Fuera del arbol y de la terminal: la portada tapa el simulador entero
      menos la barra, que es lo unico que sigue en pie mientras espera. -->
+<div class="sim-fin" id="results-overlay" hidden>
+  <div class="fin-box">
+    <div class="fin-titulo">Resultado</div>
+    <div class="fin-cifra" id="res-score-val">0</div>
+    <div class="fin-pie">puntos</div>
+    <div class="fin-btns">
+      <button class="fin-btn primario" onclick="empezar()">Jugar de nuevo</button>
+      <button class="fin-btn" onclick="exitSim()">Salir</button>
+    </div>
+  </div>
+</div>
+
 <div class="sim-portada" id="portada">
   <button class="sim-play" id="play-btn"><span class="tri">&#9654;</span></button>
   <h2>Traves&iacute;a del &Aacute;rbol</h2>
@@ -430,7 +407,7 @@ function resetRound(){
 
 function limpiarCapas(){
   document.getElementById('mode-overlay').classList.remove('show');
-  document.getElementById('results-overlay').classList.remove('show');
+  document.getElementById('results-overlay').hidden = true;
   document.getElementById('inp').disabled=false;
 }
 
@@ -751,7 +728,7 @@ function check(){
 
 function showResults(){
   document.getElementById('res-score-val').textContent=score;
-  document.getElementById('results-overlay').classList.add('show');
+  document.getElementById('results-overlay').hidden = false;
   document.getElementById('inp').disabled=true;
 }
 
@@ -828,7 +805,7 @@ window.addEventListener('resize',redraw);
 
 function empezar(){
   document.getElementById('portada').classList.add('hide');
-  document.getElementById('results-overlay').classList.remove('show');
+  document.getElementById('results-overlay').hidden = true;
   barra.jugando(true);
   init();
   document.getElementById('inp').disabled = false;

@@ -169,15 +169,6 @@ button.win-dot::after{
 }
 
 /* portada y final: mismo tamaño y mismos colores que los otros simuladores */
-/* La pantalla de fin: misma caja que la portada comun, con su propio remate. */
-.velo{position:absolute;left:0;right:0;bottom:0;top:var(--hdr-h);background:rgba(13,17,23,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:40;padding:24px 32px;text-align:center}
-.velo[hidden]{display:none}
-.velo h2{font-size:24px;color:var(--bright);font-weight:700}
-.velo p{font-size:14px;color:var(--text);opacity:.75;max-width:56ch;line-height:1.8}
-.velo .interro{font-size:52px;color:var(--azul-app);line-height:1;text-shadow:0 0 18px rgba(74,158,255,.5)}
-.velo-btns{display:flex;gap:10px}
-.velo-btns button{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:4px;padding:8px 16px;font:inherit;font-size:12px;cursor:pointer}
-.velo-btns button:hover{border-color:var(--red);color:var(--bright)}
 
 /* pegado: el evento paste solo llega a algo editable */
 .pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0}
@@ -268,13 +259,13 @@ button.win-dot::after{
   </p>
 </div>
 
-<div class="velo" id="fin" hidden>
-  <div class="interro">?</div>
-  <h2>Informe cerrado</h2>
-  <p id="fin-p"></p>
-  <div class="velo-btns">
-    <button id="fin-again">Otro incidente</button>
-    <button id="fin-exit">Salir</button>
+<div class="sim-fin" id="fin" hidden>
+  <div class="fin-box">
+    <div class="fin-frase">Informe cerrado</div>
+    <div class="fin-btns">
+      <button class="fin-btn primario" id="fin-again">Otro incidente</button>
+      <button class="fin-btn" id="fin-exit">Salir</button>
+    </div>
   </div>
 </div>
 
@@ -1318,9 +1309,8 @@ function pintar() {
 
 
 function terminar() {
-  const linea = caso.datos.map((d) => `${d.etiqueta.toLowerCase()}: ${d.respuesta}`).join(" · ");
-  $("fin-p").textContent =
-    `${linea}. Tres búsquedas y tres herramientas distintas sobre el mismo proyecto.`;
+  // El resumen de los tres datos ya quedo en el chat, dicho por Laura. Aqui
+  // sobra repetirlo: lo unico que falta es cerrar o repetir.
   $("fin").hidden = false;
 }
 
@@ -1392,7 +1382,7 @@ function reiniciar() {
   log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
   di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
   di("ella", "Tienes el proyecto clonado en el escritorio. Te voy pidiendo los datos de uno en uno.");
-  di("ella", "Mándame el dato. Que venga en el mensaje.");
+  di("ella", "Mándame el dato y escríbelo bien. Que venga en el mensaje sin errores.");
   pedir();
   pintar();
 }
