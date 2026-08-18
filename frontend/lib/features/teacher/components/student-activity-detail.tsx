@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, FileText, Folder, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
@@ -12,24 +13,47 @@ import { Tag } from "@shared/components/tag"
 import { notify } from "@shared/lib/toast"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { teacherApi } from "@/lib/features/teacher/api"
+import { queryKeys } from "@/lib/api/queries"
 import type { StudentActivityDetail as StudentActivityDetailType } from "@/lib/features/teacher/types"
 
 interface Props {
   detail: StudentActivityDetailType
   groupId: string
-  activityId: string
+  backHref: string
   isTeacher: boolean
 }
 
-export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }: Props) {
+export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: Props) {
   const { student, activity } = detail
   const submission = detail.type === "manual" ? detail.submission : null
+  const attempts = detail.type === "automatic" ? detail.attempts : []
+
+  // La nota vive unicamente en la tabla de info: manuales y automaticas
+  // alimentan los mismos campos (nota, estado y fecha de entrega).
+  const score =
+    detail.type === "manual"
+      ? submission?.score ?? null
+      : attempts.length > 0
+        ? detail.finalScore
+        : null
+  const graded =
+    detail.type === "manual"
+      ? submission?.status === "graded" && submission.score != null
+      : attempts.length > 0
+  const pendingManual =
+    detail.type === "manual" && submission != null && submission.status !== "graded"
+  const submittedAt =
+    detail.type === "manual"
+      ? submission?.submittedAt
+      : attempts.length > 0
+        ? attempts[attempts.length - 1].createdAt
+        : null
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-6">
         <Link
-          href={`/groups/${groupId}/activities/${activityId}`}
+          href={backHref}
           className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
@@ -63,14 +87,16 @@ export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }
               <tr className="border-b border-border/50">
                 <td className="px-4 py-2.5 font-medium text-foreground w-56">Estado de la calificación</td>
                 <td className="px-4 py-2.5">
-                  {submission ? (
-                    submission.status === "graded" && submission.score != null ? (
-                      <Tag tone={submission.score >= 80 ? "emerald" : submission.score >= 60 ? "amber" : "rose"}>
-                        Calificación: {submission.score}/{activity.maxScore}
-                      </Tag>
-                    ) : (
-                      <Tag tone="amber">Pendiente por calificar</Tag>
-                    )
+                  {graded && score != null ? (
+                    <Tag
+                      tone={score >= 80 ? "emerald" : score >= 60 ? "amber" : "rose"}
+                    >
+                      <span className="text-sm">
+                        Calificación: {score}/{activity.maxScore}
+                      </span>
+                    </Tag>
+                  ) : pendingManual ? (
+                    <Tag tone="amber">Pendiente por calificar</Tag>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
@@ -79,7 +105,7 @@ export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }
               <tr>
                 <td className="px-4 py-2.5 font-medium text-foreground w-56">Fecha de entrega</td>
                 <td className="px-4 py-2.5 text-muted-foreground">
-                  {submission ? formatBogotaDateTime(submission.submittedAt) : "—"}
+                  {submittedAt ? formatBogotaDateTime(submittedAt) : "—"}
                 </td>
               </tr>
             </tbody>
@@ -88,7 +114,7 @@ export function StudentActivityDetail({ detail, groupId, activityId, isTeacher }
       </div>
 
       {detail.type === "manual" ? (
-        <ManualDetail detail={detail} isTeacher={isTeacher} />
+        <ManualDetail detail={detail} groupId={groupId} isTeacher={isTeacher} />
       ) : (
         <AutomaticDetail detail={detail} maxScore={activity.maxScore} />
       )}
@@ -205,18 +231,21 @@ function FileTree({
 
 function ManualDetail({
   detail,
+  groupId,
   isTeacher,
 }: {
   detail: Extract<StudentActivityDetailType, { type: "manual" }>
+  groupId: string
   isTeacher: boolean
 }) {
-  const { activity, submission } = detail
+  const { submission } = detail
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState("")
   const [loadingFile, setLoadingFile] = useState(false)
   const [score, setScore] = useState(submission?.score != null ? String(submission.score) : "")
   const [feedback, setFeedback] = useState(submission?.feedback ?? "")
   const [grading, setGrading] = useState(false)
+  const queryClient = useQueryClient()
 
   const loadFile = async (path: string) => {
     setSelectedFile(path)
@@ -241,6 +270,10 @@ function ManualDetail({
     setGrading(true)
     try {
       await teacherApi.gradeSubmission(submission!.id, parsed, feedback || undefined)
+      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(groupId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.studentPerformance(groupId, detail.student.id),
+      })
       notify.success("Calificación guardada")
     } catch (e) {
       notify.error(e, "No se pudo guardar la calificación")
@@ -261,12 +294,6 @@ function ManualDetail({
 
   return (
     <div className="space-y-4">
-      {submission.score != null && (
-        <p className="text-sm font-medium text-foreground">
-          Calificación: {submission.score}/{activity.maxScore}
-        </p>
-      )}
-
       <div className="flex min-h-[400px] overflow-hidden rounded-xl border border-border">
         <div className="w-60 shrink-0 overflow-y-auto border-r border-border bg-background p-3">
           <p className="mb-2 text-xs font-medium text-muted-foreground uppercase">
@@ -330,7 +357,7 @@ function ManualDetail({
               />
             </div>
             <div>
-              <ActionButton tone="amber" onClick={handleGrade} disabled={grading}>
+              <ActionButton tone="primary" onClick={handleGrade} disabled={grading}>
                 {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Calificar
               </ActionButton>
@@ -372,16 +399,12 @@ function AutomaticDetail({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Tag tone={detail.finalScore >= 80 ? "emerald" : detail.finalScore >= 60 ? "amber" : detail.finalScore > 0 ? "rose" : "neutral"}>
-          <span className="text-sm">Calificación final: {detail.finalScore}/{maxScore}</span>
-        </Tag>
-        <span className="text-xs text-muted-foreground">
-          {detail.attempts.length} {detail.attempts.length === 1 ? "intento" : "intentos"}
-        </span>
-      </div>
-
       <div className="overflow-hidden rounded-xl border border-border">
+        <div className="border-b border-border bg-card px-4 py-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase">
+            Intentos ({detail.attempts.length})
+          </p>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

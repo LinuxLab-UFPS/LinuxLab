@@ -6,12 +6,19 @@ import { StudentActivityDetail } from "@/lib/features/teacher/components/student
 
 export default async function StudentActivityDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; activityId: string; studentId: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const session = await requireServerRole(["teacher", "admin", "student"])
   const { user } = session
   const { id, activityId, studentId } = await params
+  const sp = await searchParams
+  const backHref =
+    sp.from === "calificaciones"
+      ? `/groups/${id}/activities/${activityId}?from=calificaciones`
+      : `/groups/${id}/activities/${activityId}`
 
   if (user.role === "student" && user.id !== studentId) {
     return (
@@ -48,7 +55,7 @@ export default async function StudentActivityDetailPage({
     <StudentActivityDetail
       detail={detail}
       groupId={id}
-      activityId={activityId}
+      backHref={backHref}
       isTeacher={user.role === "teacher" || user.role === "admin"}
     />
   )
