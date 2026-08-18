@@ -45,6 +45,7 @@ Formas habituales:
 - `[0-9]`: un dígito
 - `[a-z]`: una letra minúscula
 - `[A-Za-z]`: una letra, mayúscula o minúscula
+- `[0-9a-f]`: un dígito o una letra de la `a` a la `f`, que es como se escribe un carácter hexadecimal
 - `[^0-9]`: un carácter que no sea un dígito
 
 ## El principio y el final de la línea
@@ -140,6 +141,7 @@ grep -E '[0-9]{4}' matriculas.txt
 | `\.` | Un punto literal |
 | `[abc]` | Uno de esos caracteres |
 | `[0-9]` | Un dígito |
+| `[0-9a-f]` | Un dígito o una letra de la `a` a la `f` |
 | `[^0-9]` | Un carácter que no sea un dígito |
 | `*` | El anterior, repetido cero o más veces |
 | `.*` | Cualquier texto, incluso ninguno |
