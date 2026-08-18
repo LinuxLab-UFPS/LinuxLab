@@ -1258,11 +1258,10 @@ function responderChat() {
     resueltos[id] = true;
     tropiezos = 0;
     log("dato confirmado: " + etiquetaDe(id).toLowerCase(), "ok");
-    di("ella", alAzar([
-      "Eso es. Lo apunto en el informe.",
-      "Confirmado, gracias.",
-      "Bien, ya lo tengo.",
-    ]));
+    const ultimo = Object.values(resueltos).every(Boolean);
+    di("ella", ultimo
+      ? "Con esto ya puedo cerrar el informe. Gracias, me has ahorrado el domingo."
+      : alAzar(["Eso es. Lo apunto en el informe.", "Confirmado, gracias.", "Bien, ya lo tengo."]));
     revisar();
     if (paso < lista.length) pedir();
     return;
@@ -1287,7 +1286,17 @@ function revisar() {
   const lista = objetivos();
   while (paso < lista.length && resueltos[lista[paso].campo]) paso++;
   pintar();
-  if (Object.values(resueltos).every(Boolean)) terminar();
+  if (Object.values(resueltos).every(Boolean)) cerrarCuandoCalle();
+}
+
+/* La pantalla de fin espera a que Laura termine de escribir. Saliendo al
+   momento tapaba su ultima confirmacion antes de que diera tiempo a leerla. */
+function cerrarCuandoCalle() {
+  if (escribiendo || cola.length) {
+    setTimeout(cerrarCuandoCalle, 200);
+    return;
+  }
+  terminar();
 }
 
 let ultimoAnuncio = -1;
