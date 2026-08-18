@@ -69,6 +69,19 @@ export interface ActivitySubmissionStudent {
   attemptsCount: number
   lastAttemptDate: string | null
   finalScore: number
+  submissionId: string | null
+}
+
+export interface ManualSubmission {
+  submissionId: string
+  studentId: string
+  studentName: string
+  studentEmail: string
+  studentCode: string | null
+  status: string
+  score: number | null
+  submittedAt: string
+  files: number
 }
 
 export interface Activity {
@@ -183,4 +196,32 @@ export interface GroupCheckOutcome {
   attempts: GroupActivityDetail["attempts"]
   maxScore: number
   results: ActivityCheckResult[]
+}
+
+export interface SubmissionDetail {
+  id: string
+  status: "submitted" | "under_review" | "graded" | "returned"
+  attemptNumber: number
+  evidence: {
+    storagePath: string
+    tree: string[]
+    files: number
+    totalBytes: number
+    submittedAt: string
+  }
+  score: number | null
+  feedback: string | null
+  gradedBy: string | null
+  gradedAt: string | null
+  submittedAt: string
+  student: { id: string; name: string; email: string; code: string | null }
+  activity: { id: string; title: string; maxScore: number }
+}
+
+export interface SubmissionGrade {
+  id: string
+  status: string
+  score: number
+  feedback: string | null
+  gradedAt: string
 }

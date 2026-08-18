@@ -2,12 +2,12 @@ import Link from "next/link"
 import { ArrowLeft, Pencil, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { ActionButton } from "@shared/components/action-button"
-import { getGroupActivity, listActivitySubmissions } from "@/lib/features/teacher/data"
+import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
-import { ActivitySubmissionsPanel } from "@/lib/features/teacher/components/activity-submissions-panel"
+import { SubmissionsTable } from "@/lib/features/teacher/components/submissions-table"
 
 const ROW =
   "flex items-center justify-between gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"
@@ -25,10 +25,12 @@ function ActivityDetail({
   groupId,
   activity,
   submissions,
+  manualSubmissions,
 }: {
   groupId: string
   activity: Activity
   submissions: { studentId: string; studentName: string; studentEmail: string; studentCode: string | null; attemptsCount: number; lastAttemptDate: string | null; finalScore: number }[]
+  manualSubmissions: { submissionId: string; studentId: string; studentName: string; studentEmail: string; studentCode: string | null; status: string; score: number | null; submittedAt: string; files: number }[]
 }) {
   const topic = getTopic(activity.topicNumber)
   return (
@@ -129,66 +131,39 @@ function ActivityDetail({
         </div>
 
         {/* Columna derecha: entregas */}
-        {activity.evaluationType !== "manual" && (
-          <section className="space-y-4">
-            <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-              <BarChart3 className="h-4 w-4" />
-              Entregas ({submissions.length})
-            </h2>
+        <section className="space-y-4">
+          <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <BarChart3 className="h-4 w-4" />
+            {activity.evaluationType === "manual"
+              ? `Entregas (${manualSubmissions.length})`
+              : `Intentos (${submissions.length})`}
+          </h2>
+          {activity.evaluationType === "manual" ? (
+            <SubmissionsTable submissions={manualSubmissions} maxScore={activity.maxScore} />
+          ) : (
             <div className="overflow-hidden rounded-xl border border-border">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-card border-b border-border">
-                      <th className="w-28 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
-                        Codigo
-                      </th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
-                        Estudiante
-                      </th>
-                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Intentos
-                      </th>
-                      <th className="w-44 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
-                        Fecha de entrega
-                      </th>
-                      <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Calificacion
-                      </th>
+                      <th className="w-28 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Codigo</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Estudiante</th>
+                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Intentos</th>
+                      <th className="w-44 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Fecha</th>
+                      <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Calificacion</th>
                     </tr>
                   </thead>
                   <tbody>
                     {submissions.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                          Aun no hay entregas registradas.
-                        </td>
-                      </tr>
+                      <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aun no hay entregas registradas.</td></tr>
                     ) : (
                       submissions.map((sub) => (
-                        <tr key={sub.studentId} className="relative border-b border-border/50 bg-background last:border-0">
-                          <td className="px-4 py-2.5">
-                            <Link
-                              href="#"
-                              className="absolute inset-0 z-10"
-                              aria-label={`Ver entrega de ${sub.studentName}`}
-                            />
-                            <span className="font-mono text-sm text-muted-foreground">
-                              {sub.studentCode ?? "—"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-sm font-medium text-foreground">
-                            {sub.studentName}
-                          </td>
-                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
-                            {sub.attemptsCount}
-                          </td>
-                          <td className="px-4 py-2.5 text-sm text-muted-foreground">
-                            {sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}
-                          </td>
-                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
-                            {sub.finalScore}/{activity.maxScore}
-                          </td>
+                        <tr key={sub.studentId} className="border-b border-border/50 bg-background last:border-0">
+                          <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">{sub.studentCode ?? "—"}</td>
+                          <td className="px-4 py-2.5 text-sm font-medium text-foreground">{sub.studentName}</td>
+                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.attemptsCount}</td>
+                          <td className="px-4 py-2.5 text-sm text-muted-foreground">{sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}</td>
+                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.finalScore}/{activity.maxScore}</td>
                         </tr>
                       ))
                     )}
@@ -196,8 +171,8 @@ function ActivityDetail({
                 </table>
               </div>
             </div>
-          </section>
-        )}
+          )}
+        </section>
       </div>
     </div>
   )
@@ -210,9 +185,10 @@ export default async function ActivityDetailPage({
 }) {
   await requireServerRole(["teacher", "admin"])
   const { id, activityId } = await params
-  const [activity, submissions] = await Promise.all([
+  const [activity, submissions, manualSubmissions] = await Promise.all([
     getGroupActivity(id, activityId),
     listActivitySubmissions(id, activityId),
+    listManualSubmissions(id, activityId),
   ])
 
   if (!activity) {
@@ -229,5 +205,5 @@ export default async function ActivityDetailPage({
     )
   }
 
-  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} />
+  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} manualSubmissions={manualSubmissions} />
 }

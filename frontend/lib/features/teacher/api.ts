@@ -12,6 +12,9 @@ import type {
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
+  SubmissionDetail,
+  SubmissionGrade,
+  ManualSubmission,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -70,6 +73,21 @@ export const teacherApi = {
     apiFetch<ActivitySubmissionStudent[]>(
       `/api/groups/${groupId}/activities/${activityId}/submissions`,
     ),
+  listManualSubmissions: (groupId: string, activityId: string) =>
+    apiFetch<ManualSubmission[]>(
+      `/api/groups/${groupId}/activities/${activityId}/manual-submissions`,
+    ),
+  getSubmission: (submissionId: string) =>
+    apiFetch<SubmissionDetail>(`/api/submissions/${submissionId}`),
+  getSubmissionFile: (submissionId: string, filePath: string) =>
+    apiFetch<{ path: string; content: string }>(
+      `/api/submissions/${submissionId}/files?path=${encodeURIComponent(filePath)}`,
+    ),
+  gradeSubmission: (submissionId: string, score: number, feedback?: string) =>
+    apiFetch<SubmissionGrade>(`/api/submissions/${submissionId}/grade`, {
+      method: "PATCH",
+      body: JSON.stringify({ score, feedback }),
+    }),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
   validateActivity: (activityId: string) =>
@@ -115,9 +133,4 @@ export const teacherApi = {
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),
   getStudentGroupDetail: (groupId: string, studentId: string) =>
     apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/students/${studentId}`),
-  gradeSubmission: (submissionId: string, score: number, feedback?: string) =>
-    apiFetch<void>(`/api/submissions/${submissionId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ score, feedback }),
-    }),
 }

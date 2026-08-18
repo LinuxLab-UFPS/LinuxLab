@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
@@ -10,6 +10,7 @@ import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { describeCheck } from "@/lib/features/student/use-activity-check"
 import {
   checkGroupActivity,
+  submitGroupActivity,
   type GroupActivityDetail,
   type GroupCheckResult,
 } from "@/lib/features/student/group-activities"
@@ -36,6 +37,8 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
   const [attempts, setAttempts] = useState(detail.attempts)
   const [openedFolder, setOpenedFolder] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
   const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
@@ -62,6 +65,23 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
       notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
       setChecking(false)
+    }
+  }
+
+  const isManual = detail.evaluationType === "manual"
+  const canSubmit = isManual && detail.enabled && !closed && !submitted
+
+  const handle_submit = async () => {
+    setSubmitting(true)
+    try {
+      await submitGroupActivity(detail.id)
+      setSubmitted(true)
+      setCompleted(true)
+      notify.success("Actividad entregada")
+    } catch (e) {
+      notify.error(e, "No se pudo entregar la actividad")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -166,10 +186,23 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
         <div className="flex flex-wrap items-center gap-2">
-          {detail.evaluationType === "manual" ? (
-            <span className="text-xs text-muted-foreground">
-              Esta actividad se entrega para revisión del docente.
-            </span>
+          {isManual ? (
+            submitted ? (
+              <span className="text-xs text-success">Entregada ✓</span>
+            ) : (
+              <ActionButton
+                tone="amber"
+                onClick={handle_submit}
+                disabled={submitting || !canSubmit}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {submitting ? "Entregando..." : "Entregar actividad"}
+              </ActionButton>
+            )
           ) : (
             <ActionButton
               tone={passed ? "emerald" : "amber"}

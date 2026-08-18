@@ -32,6 +32,9 @@ const config = Object.freeze({
       path: "/",
     }),
   }),
+  firebase: Object.freeze({
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  }),
   ssh: Object.freeze({
     host: process.env.SSH_HOST || "entorno",
     port: Number.parseInt(process.env.SSH_PORT || "22", 10),

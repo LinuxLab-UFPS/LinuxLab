@@ -20,5 +20,6 @@ const checkLimiter = rateLimit({
 router.get("/mine", authMiddleware, activityController.getMyGroupActivities)
 router.get("/:id", authMiddleware, activityController.getGroupActivityForStudent)
 router.post("/:id/check", authMiddleware, checkLimiter, activityController.checkGroupActivity)
+router.post("/:id/submit", authMiddleware, activityController.submitGroupActivity)
 
 module.exports = router

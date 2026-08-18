@@ -80,7 +80,7 @@ RUN useradd -m -s /bin/bash labadmin \
 # Configurar sudoers para labadmin
 RUN printf '%s\n%s\n' \
     'labadmin ALL=(root) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/sbin/groupadd, /usr/bin/passwd, /bin/mkdir, /bin/chown, /bin/chmod, /bin/cp, /bin/rm, /usr/bin/su' \
-    'labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py' \
+    'labadmin ALL=(ALL) NOPASSWD: /usr/local/lib/linuxlab/checker.py, /usr/local/lib/linuxlab/setup.py, /usr/local/lib/linuxlab/submitter.py' \
     > /etc/sudoers.d/labadmin \
     && chmod 440 /etc/sudoers.d/labadmin
 
@@ -91,8 +91,11 @@ COPY scripts/checker.py /usr/local/lib/linuxlab/checker.py
 # checker solo lee: darle permiso de escritura al que evalua significaria que un
 # fallo suyo pueda estropear el trabajo que esta midiendo.
 COPY scripts/setup.py /usr/local/lib/linuxlab/setup.py
-RUN chmod 755 /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py \
-    && chown root:root /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py
+# Entregas manuales: captura el arbol de archivos y crea el tarball. Tambien
+# escribe, por eso corre aparte del checker.
+COPY scripts/submitter.py /usr/local/lib/linuxlab/submitter.py
+RUN chmod 755 /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py /usr/local/lib/linuxlab/submitter.py \
+    && chown root:root /usr/local/lib/linuxlab/checker.py /usr/local/lib/linuxlab/setup.py /usr/local/lib/linuxlab/submitter.py
 
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
