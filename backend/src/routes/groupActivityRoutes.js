@@ -18,6 +18,7 @@ const checkLimiter = rateLimit({
 // El estudiante sale de la sesion, nunca del cuerpo de la peticion. `/mine`
 // va ANTES de `/:id` para que "mine" no se coma el id.
 router.get("/mine", authMiddleware, activityController.getMyGroupActivities)
+router.get("/mine/grades", authMiddleware, activityController.getMyGrades)
 router.get("/:id", authMiddleware, activityController.getGroupActivityForStudent)
 router.post("/:id/check", authMiddleware, checkLimiter, activityController.checkGroupActivity)
 router.post("/:id/submit", authMiddleware, activityController.submitGroupActivity)
