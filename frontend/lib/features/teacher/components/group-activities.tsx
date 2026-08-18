@@ -96,11 +96,7 @@ export function GroupActivities({
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {activity.evaluationType === "manual"
-                    ? "Revisión manual"
-                    : activity.activityType === "quiz"
-                      ? "Quiz"
-                      : "Taller"}
+                  {activity.activityType === "quiz" ? "Quiz" : "Taller"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {activity.dueDate

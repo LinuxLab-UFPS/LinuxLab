@@ -12,6 +12,7 @@ import type {
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
+  StudentActivityDetail,
   SubmissionDetail,
   SubmissionGrade,
   ManualSubmission,
@@ -88,6 +89,10 @@ export const teacherApi = {
       method: "PATCH",
       body: JSON.stringify({ score, feedback }),
     }),
+  getStudentActivityDetail: (groupId: string, activityId: string, studentId: string) =>
+    apiFetch<StudentActivityDetail>(
+      `/api/groups/${groupId}/activities/${activityId}/students/${studentId}`,
+    ),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
   validateActivity: (activityId: string) =>

@@ -25,6 +25,21 @@ const getFileContent = asyncHandler(async (req, res) => {
   res.json({ path: filePath, content })
 })
 
+const downloadFile = asyncHandler(async (req, res) => {
+  const filePath = req.params.filePath
+  const buffer = await submissionService.getFileBuffer(
+    req.params.id,
+    filePath,
+    req.user.id,
+    req.user.role,
+  )
+  const fileName = filePath.split("/").pop() || filePath
+  res.setHeader("Content-Type", "application/octet-stream")
+  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`)
+  res.setHeader("Content-Length", buffer.length)
+  res.send(buffer)
+})
+
 const downloadSubmission = asyncHandler(async (req, res) => {
   const url = await submissionService.getDownloadUrl(req.params.id, req.user.id, req.user.role)
   res.redirect(url)
@@ -45,6 +60,7 @@ module.exports = {
   createSubmission,
   getSubmission,
   getFileContent,
+  downloadFile,
   downloadSubmission,
   gradeSubmission,
 }

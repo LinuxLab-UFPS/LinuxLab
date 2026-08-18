@@ -11,7 +11,7 @@ Acciones soportadas:
     {"action": "tree", "workdir": "T-0001"}
     -> {"ok": true, "tree": ["ejercicio1/respuesta.txt", ...]}
 
-    {"action": "tarball", "workdir": "T-0001", "dest": "/tmp/xxx.tar.gz"}
+    {"action": "zipball", "workdir": "T-0001", "dest": "/tmp/xxx.zip"}
     -> {"ok": true, "totalBytes": 12345}
 
 Toda ruta se resuelve dentro del home del estudiante, siguiendo el patron
@@ -25,8 +25,8 @@ import pwd
 import signal
 import subprocess
 import sys
-import tarfile
 import tempfile
+import zipfile
 
 TIMEOUT_SECONDS = 30
 MAX_TARBALL_BYTES = 5 * 1024 * 1024
@@ -78,10 +78,10 @@ def action_tree(workdir):
     return {"ok": True, "tree": tree}
 
 
-def action_tarball(workdir, dest):
-    """Crea un tarball.gz de la carpeta de trabajo.
+def action_zipball(workdir, dest):
+    """Crea un .zip de la carpeta de trabajo.
 
-    El tarball se escribe en `dest` (ruta absoluta, normalmente /tmp/).
+    El zip se escribe en `dest` (ruta absoluta, normalmente /tmp/).
     El backend limpia el archivo despues de subirlo a Storage.
     """
     root = resolve_workdir(workdir)
@@ -94,13 +94,13 @@ def action_tarball(workdir, dest):
     if not dest_real.startswith("/tmp/"):
         raise ValueError("El destino debe estar en /tmp/")
 
-    with tarfile.open(dest_real, "w:gz") as tar:
+    with zipfile.ZipFile(dest_real, "w", zipfile.ZIP_DEFLATED) as zf:
         for dirpath, dirnames, filenames in os.walk(root):
             dirnames.sort()
             for name in sorted(filenames):
                 full = os.path.join(dirpath, name)
                 arcname = os.path.relpath(full, root)
-                tar.add(full, arcname=arcname)
+                zf.write(full, arcname=arcname)
 
     total_bytes = os.path.getsize(dest_real)
     if total_bytes > MAX_TARBALL_BYTES:
@@ -112,7 +112,7 @@ def action_tarball(workdir, dest):
 
 ACTIONS = {
     "tree": lambda p: action_tree(p.get("workdir")),
-    "tarball": lambda p: action_tarball(p.get("workdir"), p.get("dest")),
+    "zipball": lambda p: action_zipball(p.get("workdir"), p.get("dest")),
 }
 
 

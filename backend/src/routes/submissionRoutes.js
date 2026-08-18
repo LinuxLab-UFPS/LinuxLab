@@ -6,6 +6,7 @@ const submissionController = require("../controllers/submissionController")
 const router = express.Router()
 
 router.get("/:id", authMiddleware, submissionController.getSubmission)
+router.get("/:id/files/download/*filePath", authMiddleware, submissionController.downloadFile)
 router.get("/:id/files", authMiddleware, submissionController.getFileContent)
 router.get("/:id/download", authMiddleware, submissionController.downloadSubmission)
 router.patch(

@@ -11,6 +11,7 @@ export type {
   EvaluationType,
   GradingPolicy,
   ManualSubmission,
+  StudentActivityDetail,
   SubmissionDetail,
   SubmissionGrade,
 } from "@/lib/models/activities"

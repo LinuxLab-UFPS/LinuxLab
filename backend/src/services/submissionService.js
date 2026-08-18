@@ -62,38 +62,39 @@ async function createSubmission(studentUserId, groupActivityId) {
     throw new AppError("La carpeta de trabajo está vacía; trabaja en ella antes de entregar", 400, "VALIDATION_ERROR")
   }
 
-  const tarballPath = `submissions/${ga.group_id}/${submissionId}.tar.gz`
-  const remoteTmp = `/tmp/${submissionId}.tar.gz`
+  const zipPath = `submissions/${ga.group_id}/${submissionId}.zip`
+  const remoteTmp = `/tmp/${submissionId}.zip`
 
-  const { stdout: tarOut } = await sshClient.execCommand(
+  const { stdout: zipOut } = await sshClient.execCommand(
     `sudo -u ${account.linux_username} ${SUBMISSION}`,
-    { stdin: JSON.stringify({ action: "tarball", workdir: ga.workdir, dest: remoteTmp }) },
+    { stdin: JSON.stringify({ action: "zipball", workdir: ga.workdir, dest: remoteTmp }) },
   )
-  let tarResult
+  let zipResult
   try {
-    tarResult = JSON.parse(tarOut)
+    zipResult = JSON.parse(zipOut)
   } catch {
     throw new AppError("No se pudo crear el archivo de entrega", 502, "INTERNAL_ERROR")
   }
-  if (!tarResult.ok) {
-    throw new AppError(tarResult.error || "No se pudo crear el archivo de entrega", 400, "VALIDATION_ERROR")
+  if (!zipResult.ok) {
+    throw new AppError(zipResult.error || "No se pudo crear el archivo de entrega", 400, "VALIDATION_ERROR")
   }
-  const totalBytes = tarResult.totalBytes
+  const totalBytes = zipResult.totalBytes
 
-  const { stdout: tarballB64 } = await sshClient.execCommand(
+  const { stdout: zipB64 } = await sshClient.execCommand(
     `base64 ${remoteTmp}`,
     { timeoutMs: 30000 },
   )
-  const tarballBuffer = Buffer.from(tarballB64, "base64")
+  const zipBuffer = Buffer.from(zipB64, "base64")
 
-  await bucket.file(tarballPath).save(tarballBuffer, {
-    contentType: "application/gzip",
+  await bucket.file(zipPath).save(zipBuffer, {
+    contentType: "application/zip",
     metadata: { customMetadata: { studentId: studentUserId, groupActivityId } },
   })
 
   await sshClient.execCommand(`rm ${remoteTmp}`)
 
-  const existingCount = await prisma.activitySubmission.count({
+  // Una sola entrega por estudiante: eliminar las anteriores.
+  await prisma.activitySubmission.deleteMany({
     where: { group_activity_id: ga.id, student_id: studentUserId },
   })
 
@@ -101,10 +102,10 @@ async function createSubmission(studentUserId, groupActivityId) {
     data: {
       group_activity_id: ga.id,
       student_id: studentUserId,
-      attempt_number: existingCount + 1,
+      attempt_number: 1,
       status: "submitted",
       evidence: {
-        storagePath: tarballPath,
+        storagePath: zipPath,
         tree,
         files: tree.length,
         totalBytes,
@@ -181,7 +182,11 @@ async function getSubmission(submissionId, userId, role) {
 }
 
 /**
- * Contenido de un archivo específico del tarball.
+ * Contenido de un archivo específico de la entrega.
+ *
+ * Detecta el formato por la extensión del storagePath:
+ * - .zip → yauzl
+ * - .tar.gz → tar + gunzip (backward compat)
  */
 async function getFileContent(submissionId, filePath, userId, role) {
   const submission = await prisma.activitySubmission.findUnique({
@@ -202,36 +207,175 @@ async function getFileContent(submissionId, filePath, userId, role) {
   }
 
   const storagePath = submission.evidence.storagePath
-  const [tarballBuffer] = await bucket.file(storagePath).download()
+  const [buffer] = await bucket.file(storagePath).download()
 
+  if (storagePath.endsWith(".zip")) {
+    return readFromZip(buffer, filePath)
+  }
+  return readFromTarGz(buffer, filePath)
+}
+
+function readFromZip(buffer, filePath) {
+  const yauzl = require("yauzl")
+  return new Promise((resolve, reject) => {
+    yauzl.fromBuffer(buffer, { lazyEntries: true }, (err, zipfile) => {
+      if (err) return reject(err)
+      let found = false
+      zipfile.readEntry()
+      zipfile.on("entry", (entry) => {
+        if (found) {
+          zipfile.readEntry()
+          return
+        }
+        const entryPath = entry.fileName
+        if (entryPath === filePath || entryPath === `./${filePath}`) {
+          found = true
+          zipfile.openReadStream(entry, (err2, readStream) => {
+            if (err2) return reject(err2)
+            const chunks = []
+            readStream.on("data", (chunk) => chunks.push(chunk))
+            readStream.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")))
+            readStream.on("error", reject)
+          })
+        } else {
+          zipfile.readEntry()
+        }
+      })
+      zipfile.on("end", () => {
+        if (!found) resolve("")
+      })
+      zipfile.on("error", reject)
+    })
+  })
+}
+
+function readFromTarGz(buffer, filePath) {
   const { Readable } = require("stream")
   const { createGunzip } = require("zlib")
   const tar = require("tar")
-  let content = ""
-  const gunzip = createGunzip()
-  const parser = new tar.Parser()
-  parser.on("entry", (entry) => {
-    const entryPath = entry.path
-    if (entryPath === filePath || entryPath === `./${filePath}`) {
-      const chunks = []
-      entry.on("data", (chunk) => chunks.push(chunk))
-      entry.on("end", () => {
-        content = Buffer.concat(chunks).toString("utf8")
-      })
-    } else {
-      entry.resume()
-    }
-  })
-  Readable.from(tarballBuffer).pipe(gunzip).pipe(parser)
-  await new Promise((resolve, reject) => {
-    parser.on("end", resolve)
+  return new Promise((resolve, reject) => {
+    let content = ""
+    const gunzip = createGunzip()
+    const parser = new tar.Parser()
+    parser.on("entry", (entry) => {
+      const entryPath = entry.path
+      if (entryPath === filePath || entryPath === `./${filePath}`) {
+        const chunks = []
+        entry.on("data", (chunk) => chunks.push(chunk))
+        entry.on("end", () => {
+          content = Buffer.concat(chunks).toString("utf8")
+        })
+      } else {
+        entry.resume()
+      }
+    })
+    parser.on("end", () => resolve(content))
     parser.on("error", reject)
+    Readable.from(buffer).pipe(gunzip).pipe(parser)
   })
-  return content
 }
 
 /**
- * URL firmada para descargar el tarball completo.
+ * Buffer de un archivo individual de la entrega (para descarga directa).
+ */
+async function getFileBuffer(submissionId, filePath, userId, role) {
+  const submission = await prisma.activitySubmission.findUnique({
+    where: { id: submissionId },
+    select: {
+      id: true,
+      evidence: true,
+      groupActivity: { select: { group_id: true } },
+    },
+  })
+  if (!submission) throw new NotFoundError("Entrega no encontrada")
+  if (role === "teacher") {
+    await accessService.ensureGroupAccess({
+      groupId: submission.groupActivity.group_id,
+      teacherUserId: userId,
+      role,
+    })
+  }
+
+  const storagePath = submission.evidence.storagePath
+  const [buffer] = await bucket.file(storagePath).download()
+
+  if (storagePath.endsWith(".zip")) {
+    return extractFileFromZip(buffer, filePath)
+  }
+  return extractFileFromTarGz(buffer, filePath)
+}
+
+function extractFileFromZip(buffer, filePath) {
+  const yauzl = require("yauzl")
+  return new Promise((resolve, reject) => {
+    yauzl.fromBuffer(buffer, { lazyEntries: true }, (err, zipfile) => {
+      if (err) return reject(err)
+      let found = false
+      zipfile.readEntry()
+      zipfile.on("entry", (entry) => {
+        if (found) {
+          zipfile.readEntry()
+          return
+        }
+        const entryPath = entry.fileName
+        if (entryPath === filePath || entryPath === `./${filePath}`) {
+          found = true
+          zipfile.openReadStream(entry, (err2, readStream) => {
+            if (err2) return reject(err2)
+            const chunks = []
+            readStream.on("data", (chunk) => chunks.push(chunk))
+            readStream.on("end", () => resolve(Buffer.concat(chunks)))
+            readStream.on("error", reject)
+          })
+        } else {
+          zipfile.readEntry()
+        }
+      })
+      zipfile.on("end", () => {
+        if (!found) reject(new NotFoundError("Archivo no encontrado en la entrega"))
+      })
+      zipfile.on("error", reject)
+    })
+  })
+}
+
+function extractFileFromTarGz(buffer, filePath) {
+  const { Readable } = require("stream")
+  const { createGunzip } = require("zlib")
+  const tar = require("tar")
+  return new Promise((resolve, reject) => {
+    let found = false
+    let result = Buffer.alloc(0)
+    const gunzip = createGunzip()
+    const parser = new tar.Parser()
+    parser.on("entry", (entry) => {
+      if (found) {
+        entry.resume()
+        return
+      }
+      const entryPath = entry.path
+      if (entryPath === filePath || entryPath === `./${filePath}`) {
+        found = true
+        const chunks = []
+        entry.on("data", (chunk) => chunks.push(chunk))
+        entry.on("end", () => {
+          result = Buffer.concat(chunks)
+        })
+      } else {
+        entry.resume()
+      }
+    })
+    parser.on("end", () => {
+      if (!found) return reject(new NotFoundError("Archivo no encontrado en la entrega"))
+      resolve(result)
+    })
+    parser.on("error", reject)
+    Readable.from(buffer).pipe(gunzip).pipe(parser)
+  })
+}
+
+/**
+ * URL firmada para descargar la entrega completa.
  */
 async function getDownloadUrl(submissionId, userId, role) {
   const submission = await prisma.activitySubmission.findUnique({
@@ -322,6 +466,7 @@ module.exports = {
   createSubmission,
   getSubmission,
   getFileContent,
+  getFileBuffer,
   getDownloadUrl,
   gradeSubmission,
 }

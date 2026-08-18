@@ -165,6 +165,7 @@ export interface MyGroupOverview {
 /** Detalle que ve el estudiante de una actividad de curso (sin criterios). */
 export interface GroupActivityDetail {
   id: string
+  groupId: string
   title: string
   instructions: string
   workdir: string
@@ -185,6 +186,14 @@ export interface GroupActivityDetail {
     score: number
   }[]
   lastAttempt: { passed: boolean; score: number } | null
+  submission: {
+    id: string
+    status: string
+    score: number | null
+    feedback: string | null
+    submittedAt: string
+    files: number
+  } | null
 }
 
 export interface GroupCheckOutcome {
@@ -225,3 +234,35 @@ export interface SubmissionGrade {
   feedback: string | null
   gradedAt: string
 }
+
+export interface StudentActivityDetailManual {
+  type: "manual"
+  student: { id: string; name: string; email: string; code: string | null }
+  activity: { id: string; title: string; workdir: string; evaluationType: string; activityType: string; maxScore: number }
+  submission: {
+    id: string
+    status: string
+    evidence: { storagePath: string; tree: string[]; files: number; totalBytes: number; submittedAt: string }
+    score: number | null
+    feedback: string | null
+    gradedBy: string | null
+    gradedAt: string | null
+    submittedAt: string
+  } | null
+}
+
+export interface StudentActivityDetailAutomatic {
+  type: "automatic"
+  student: { id: string; name: string; email: string; code: string | null }
+  activity: { id: string; title: string; workdir: string; evaluationType: string; activityType: string; maxScore: number; gradingPolicy: string }
+  attempts: {
+    attemptNumber: number
+    passed: boolean
+    score: number
+    results: { id: string; type: string; params: Record<string, unknown>; points: number; passed: boolean; detail: string }[]
+    createdAt: string
+  }[]
+  finalScore: number
+}
+
+export type StudentActivityDetail = StudentActivityDetailManual | StudentActivityDetailAutomatic

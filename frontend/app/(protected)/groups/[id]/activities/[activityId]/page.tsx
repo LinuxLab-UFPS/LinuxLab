@@ -86,6 +86,7 @@ function ActivityDetail({
             </section>
           )}
 
+          {activity.evaluationType !== "manual" && (
           <section>
             <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
               <ListChecks className="h-4 w-4" />
@@ -128,6 +129,7 @@ function ActivityDetail({
               </div>
             </div>
           </section>
+          )}
         </div>
 
         {/* Columna derecha: entregas */}
@@ -139,7 +141,7 @@ function ActivityDetail({
               : `Intentos (${submissions.length})`}
           </h2>
           {activity.evaluationType === "manual" ? (
-            <SubmissionsTable submissions={manualSubmissions} maxScore={activity.maxScore} />
+            <SubmissionsTable submissions={manualSubmissions} maxScore={activity.maxScore} groupId={groupId} activityId={activity.id} />
           ) : (
             <div className="overflow-hidden rounded-xl border border-border">
               <div className="overflow-x-auto">
@@ -158,13 +160,19 @@ function ActivityDetail({
                       <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aun no hay entregas registradas.</td></tr>
                     ) : (
                       submissions.map((sub) => (
-                        <tr key={sub.studentId} className="border-b border-border/50 bg-background last:border-0">
-                          <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">{sub.studentCode ?? "—"}</td>
-                          <td className="px-4 py-2.5 text-sm font-medium text-foreground">{sub.studentName}</td>
-                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.attemptsCount}</td>
-                          <td className="px-4 py-2.5 text-sm text-muted-foreground">{sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}</td>
-                          <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.finalScore}/{activity.maxScore}</td>
-                        </tr>
+                        <Link
+                          key={sub.studentId}
+                          href={`/groups/${groupId}/activities/${activity.id}/students/${sub.studentId}`}
+                          className="contents"
+                        >
+                          <tr className="cursor-pointer border-b border-border/50 bg-background transition-colors hover:bg-secondary/30 last:border-0">
+                            <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">{sub.studentCode ?? "—"}</td>
+                            <td className="px-4 py-2.5 text-sm font-medium text-foreground">{sub.studentName}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.attemptsCount}</td>
+                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}</td>
+                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.finalScore}/{activity.maxScore}</td>
+                          </tr>
+                        </Link>
                       ))
                     )}
                   </tbody>
