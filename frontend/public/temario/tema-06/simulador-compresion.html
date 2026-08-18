@@ -402,7 +402,15 @@ const $ = (id) => document.getElementById(id);
 
 // Sin puntos: aqui no se puntua, se completa la entrega. Reiniciar vuelve a
 // la portada, que es de donde arranca la partida.
-const barra = Barra.montar({ puntos: false, onReiniciar: () => reiniciar() });
+const barra = Barra.montar({
+  puntos: false,
+  ayuda: [
+    { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
+    { clave: 'Correo', tono: 'azul',   texto: 'No admite carpetas. Lo que se envíe tiene que ser un archivo, y eso es lo que hay que preparar con <code>tar</code>.' },
+    { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Ya tienes una tubodeck y la tubomachine?' },
+  ],
+  onReiniciar: () => reiniciar(),
+});
 
 /* ============================================================
    ICONOS
