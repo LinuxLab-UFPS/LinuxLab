@@ -23,6 +23,7 @@ export type TagTone =
   | "violet"
   | "neutral"
   | "muted"
+  | "brand"
 
 const TONE: Record<TagTone, string> = {
   emerald: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -34,6 +35,8 @@ const TONE: Record<TagTone, string> = {
   neutral: "bg-foreground/5 text-muted-foreground",
   /** Sobre fondos ya tenidos, donde `foreground/5` no llega a verse. */
   muted: "bg-secondary text-muted-foreground",
+  /** Rojo de marca con texto blanco (identidad del area del curso). */
+  brand: "bg-primary text-primary-foreground",
 }
 
 export const TAG_BASE =

@@ -15,8 +15,8 @@ const ROW =
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className={ROW}>
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium text-foreground">{children}</span>
+      <span className="font-medium text-foreground">{label}</span>
+      <span className="text-right text-muted-foreground">{children}</span>
     </div>
   )
 }
@@ -35,6 +35,28 @@ function ActivityDetail({
   backTab: string
 }) {
   const topic = getTopic(activity.topicNumber)
+  const studentDetailHref = (studentId: string) =>
+    `/groups/${groupId}/activities/${activity.id}/students/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
+  const manualRows = manualSubmissions.map((sub) => ({
+    studentId: sub.studentId,
+    studentName: sub.studentName,
+    studentCode: sub.studentCode,
+    middleLabel: sub.status === "graded" ? "Calificada" : "Pendiente",
+    middleTone: (sub.status === "graded" ? "success" : "warning") as "success" | "warning",
+    submittedAt: sub.submittedAt,
+    scoreLabel: sub.score != null ? `${sub.score}/${activity.maxScore}` : "—",
+    href: studentDetailHref(sub.studentId),
+  }))
+  const automaticRows = submissions.map((sub) => ({
+    studentId: sub.studentId,
+    studentName: sub.studentName,
+    studentCode: sub.studentCode,
+    middleLabel: String(sub.attemptsCount),
+    middleTone: "muted" as const,
+    submittedAt: sub.lastAttemptDate,
+    scoreLabel: `${sub.finalScore}/${activity.maxScore}`,
+    href: studentDetailHref(sub.studentId),
+  }))
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
       <ActionButton tone="neutral" href={`/groups/${groupId}?tab=${backTab}`}>
@@ -143,44 +165,9 @@ function ActivityDetail({
               : `Intentos (${submissions.length})`}
           </h2>
           {activity.evaluationType === "manual" ? (
-            <SubmissionsTable submissions={manualSubmissions} maxScore={activity.maxScore} groupId={groupId} activityId={activity.id} />
+            <SubmissionsTable variant="manual" rows={manualRows} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-card border-b border-border">
-                      <th className="w-28 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Codigo</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Estudiante</th>
-                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Intentos</th>
-                      <th className="w-44 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Fecha</th>
-                      <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Calificacion</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {submissions.length === 0 ? (
-                      <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aun no hay entregas registradas.</td></tr>
-                    ) : (
-                      submissions.map((sub) => (
-                        <Link
-                          key={sub.studentId}
-                          href={`/groups/${groupId}/activities/${activity.id}/students/${sub.studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`}
-                          className="contents"
-                        >
-                          <tr className="cursor-pointer border-b border-border/50 bg-background transition-colors hover:bg-secondary/30 last:border-0">
-                            <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">{sub.studentCode ?? "—"}</td>
-                            <td className="px-4 py-2.5 text-sm font-medium text-foreground">{sub.studentName}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.attemptsCount}</td>
-                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.finalScore}/{activity.maxScore}</td>
-                          </tr>
-                        </Link>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <SubmissionsTable variant="automatic" rows={automaticRows} />
           )}
         </section>
       </div>
