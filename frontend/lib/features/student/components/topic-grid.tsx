@@ -31,7 +31,6 @@ export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
             description={topic.description}
             illustration={topicIllustration(topic.number)}
             tags={preview ? previewTags(preview) : []}
-            meta={preview ? previewMeta(preview) : []}
             progress={pct}
           />
         )
@@ -50,6 +49,13 @@ export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
  *  queda gris porque no es contenido, es una medida. */
 function previewTags(preview: TopicPreview): CardTag[] {
   const tags: CardTag[] = []
+  if (preview.minutes > 0) {
+    tags.push({
+      icon: Clock,
+      label: `${preview.minutes} min`,
+      tone: "muted" as const,
+    })
+  }
   if (preview.activities > 0) {
     tags.push({
       icon: ListChecks,
@@ -72,11 +78,4 @@ function previewTags(preview: TopicPreview): CardTag[] {
     })
   }
   return tags
-}
-
-/** La duracion, en su propia fila encima del contenido: no es una cosa mas que
- *  el tema trae, es cuanto cuesta leerlo. Por eso va en gris y aparte. */
-function previewMeta(preview: TopicPreview): CardTag[] {
-  if (preview.minutes <= 0) return []
-  return [{ icon: Clock, label: `${preview.minutes} min`, tone: "muted" as const }]
 }
