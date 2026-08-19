@@ -2,13 +2,14 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, FileText, Folder, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { scoreColor } from "@shared/lib/score-color"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
 import { Textarea } from "@shared/components/ui/textarea"
-import { Label } from "@shared/components/ui/label"
 import { Tag } from "@shared/components/tag"
 import { notify } from "@shared/lib/toast"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
@@ -21,6 +22,22 @@ interface Props {
   groupId: string
   backHref: string
   isTeacher: boolean
+}
+
+function StatusBadge({ detail }: { detail: StudentActivityDetailType }) {
+  if (detail.type === "manual") {
+    if (!detail.submission) return <Tag tone="muted">Sin entrega</Tag>
+    return detail.submission.status === "graded" ? (
+      <Tag tone="emerald">Calificada</Tag>
+    ) : (
+      <Tag tone="amber">Pendiente por calificar</Tag>
+    )
+  }
+  return detail.attempts.length > 0 ? (
+    <Tag tone="emerald">Calificada</Tag>
+  ) : (
+    <Tag tone="muted">Sin intentos</Tag>
+  )
 }
 
 export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: Props) {
@@ -36,18 +53,58 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
       : attempts.length > 0
         ? detail.finalScore
         : null
-  const graded =
-    detail.type === "manual"
-      ? submission?.status === "graded" && submission.score != null
-      : attempts.length > 0
-  const pendingManual =
-    detail.type === "manual" && submission != null && submission.status !== "graded"
   const submittedAt =
     detail.type === "manual"
       ? submission?.submittedAt
       : attempts.length > 0
         ? attempts[attempts.length - 1].createdAt
         : null
+
+  const manualSubmission = detail.type === "manual" ? detail.submission : null
+  const feedback =
+    detail.type === "manual"
+      ? (submission?.feedback ?? "")
+      : ""
+  const showGradeForm =
+    detail.type === "manual" && isTeacher && manualSubmission != null && manualSubmission.status !== "graded"
+  const [scoreInput, setScoreInput] = useState(
+    manualSubmission?.score != null ? String(manualSubmission.score) : "",
+  )
+  const [feedbackInput, setFeedbackInput] = useState(manualSubmission?.feedback ?? "")
+  const [grading, setGrading] = useState(false)
+  const queryClient = useQueryClient()
+  const router = useRouter()
+
+  const scoreValue = Number(scoreInput)
+  const scoreError =
+    showGradeForm &&
+    scoreInput !== "" &&
+    (!Number.isInteger(scoreValue) || scoreValue < 0 || scoreValue > 100)
+
+  const handleGrade = async () => {
+    if (!manualSubmission || scoreError) return
+    const parsed = Number(scoreInput)
+    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
+      notify.error(null, "La calificación debe ser un entero entre 0 y 100")
+      return
+    }
+    setGrading(true)
+    try {
+      await teacherApi.gradeSubmission(manualSubmission.id, parsed, feedbackInput || undefined)
+      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(groupId) })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.studentPerformance(groupId, student.id),
+      })
+      notify.success("Calificación guardada")
+      // El detalle lo pinta el server component: refrescar re-trae la entrega
+      // calificada y oculta el formulario (submission.status === "graded").
+      router.refresh()
+    } catch (e) {
+      notify.error(e, "No se pudo guardar la calificación")
+    } finally {
+      setGrading(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -66,8 +123,8 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
             <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">{activity.instructions}</p>
           )}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Tag tone="neutral">{activity.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
-            <Tag tone="neutral">
+            <Tag tone="brand">{activity.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
+            <Tag tone="brand">
               {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
             </Tag>
           </div>
@@ -85,38 +142,84 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
                 <td className="px-4 py-2.5 font-mono text-muted-foreground">{student.code ?? "—"}</td>
               </tr>
               <tr className="border-b border-border/50">
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Fecha de entrega</td>
+                <td className="px-4 py-2.5 text-muted-foreground">
+                  {submittedAt ? formatBogotaDateTime(submittedAt) : "—"}
+                </td>
+              </tr>
+              <tr className="border-b border-border/50">
                 <td className="px-4 py-2.5 font-medium text-foreground w-56">Estado de la calificación</td>
                 <td className="px-4 py-2.5">
-                  {graded && score != null ? (
-                    <Tag
-                      tone={score >= 80 ? "emerald" : score >= 60 ? "amber" : "rose"}
-                    >
-                      <span className="text-sm">
-                        Calificación: {score}/{activity.maxScore}
-                      </span>
-                    </Tag>
-                  ) : pendingManual ? (
-                    <Tag tone="amber">Pendiente por calificar</Tag>
+                  <StatusBadge detail={detail} />
+                </td>
+              </tr>
+              <tr className="border-b border-border/50">
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Calificación</td>
+                <td className="px-4 py-2.5">
+                  {showGradeForm ? (
+                    <div className="space-y-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={scoreInput}
+                        onChange={(e) => setScoreInput(e.target.value)}
+                        aria-invalid={scoreError || undefined}
+                        className={cn(
+                          "w-32 border-table-line font-mono",
+                          scoreError && "border-danger focus:ring-danger",
+                        )}
+                      />
+                      {scoreError && (
+                        <p className="text-xs text-danger">Debe ser un entero entre 0 y 100.</p>
+                      )}
+                    </div>
+                  ) : score != null ? (
+                    <span className={cn("font-mono text-sm font-medium", scoreColor(score))}>
+                      {score}/{activity.maxScore}
+                    </span>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
                 </td>
               </tr>
               <tr>
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Fecha de entrega</td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {submittedAt ? formatBogotaDateTime(submittedAt) : "—"}
+                <td className="px-4 py-2.5 font-medium text-foreground w-56">Retroalimentación</td>
+                <td className={cn("px-4 py-2.5", (showGradeForm || detail.type === "automatic") && "align-top")}>
+                  {showGradeForm ? (
+                    <Textarea
+                      value={feedbackInput}
+                      onChange={(e) => setFeedbackInput(e.target.value)}
+                      placeholder="Comentarios para el estudiante..."
+                      className="h-28 resize-none overflow-y-auto border-table-line text-sm"
+                    />
+                  ) : detail.type === "automatic" ? (
+                    <AutomaticFeedback detail={detail} />
+                  ) : feedback ? (
+                    <p className="whitespace-pre-wrap text-muted-foreground">{feedback}</p>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        {showGradeForm && (
+          <div className="mt-3 flex justify-end">
+            <ActionButton tone="primary" onClick={handleGrade} disabled={grading || scoreError}>
+              {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Calificar
+            </ActionButton>
+          </div>
+        )}
       </div>
 
       {detail.type === "manual" ? (
-        <ManualDetail detail={detail} groupId={groupId} isTeacher={isTeacher} />
+        <ManualDetail detail={detail} />
       ) : (
-        <AutomaticDetail detail={detail} maxScore={activity.maxScore} />
+        <AutomaticDetail detail={detail} />
       )}
     </div>
   )
@@ -155,25 +258,46 @@ function buildTree(paths: string[]): TreeNode[] {
   return root
 }
 
+function countFiles(node: TreeNode): number {
+  if (!node.isDir) return 1
+  return (node.children ?? []).reduce((acc, child) => acc + countFiles(child), 0)
+}
+
 function FileTreeNode({
   node,
   selectedFile,
   onSelect,
+  collapsed,
+  onToggleCollapse,
   depth = 0,
 }: {
   node: TreeNode
   selectedFile: string | null
   onSelect: (path: string) => void
+  collapsed: Set<string>
+  onToggleCollapse: (path: string) => void
   depth?: number
 }) {
   return (
     <div>
       <div className={cn("group flex items-center", depth > 0 && "ml-3")}>
         {node.isDir ? (
-          <span className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-foreground">
-            <Folder className="h-3.5 w-3.5 shrink-0" />
+          <button
+            type="button"
+            onClick={() => onToggleCollapse(node.path)}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-foreground transition-colors hover:bg-primary/10"
+          >
+            {collapsed.has(node.path) ? (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-primary" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-primary" />
+            )}
+            <Folder className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span className="font-medium">{node.name}</span>
-          </span>
+            {collapsed.has(node.path) && (
+              <span className="text-xs text-muted-foreground">({countFiles(node)})</span>
+            )}
+          </button>
         ) : (
           <>
             <button
@@ -182,25 +306,33 @@ function FileTreeNode({
               className={cn(
                 "flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
                 selectedFile === node.path
-                  ? "bg-secondary text-foreground"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground",
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
               )}
             >
-              <FileText className="h-3.5 w-3.5 shrink-0" />
+              <FileText
+                className={cn(
+                  "h-3.5 w-3.5 shrink-0",
+                  selectedFile === node.path ? "text-primary" : "text-muted-foreground",
+                )}
+              />
               <span className="truncate font-mono text-sm">{node.name}</span>
             </button>
           </>
         )}
       </div>
-      {node.children?.map((child) => (
-        <FileTreeNode
-          key={child.path}
-          node={child}
-          selectedFile={selectedFile}
-          onSelect={onSelect}
-          depth={depth + 1}
-        />
-      ))}
+      {!collapsed.has(node.path) &&
+        node.children?.map((child) => (
+          <FileTreeNode
+            key={child.path}
+            node={child}
+            selectedFile={selectedFile}
+            onSelect={onSelect}
+            collapsed={collapsed}
+            onToggleCollapse={onToggleCollapse}
+            depth={depth + 1}
+          />
+        ))}
     </div>
   )
 }
@@ -214,6 +346,15 @@ function FileTree({
   selectedFile: string | null
   onSelect: (path: string) => void
 }) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const toggleCollapse = (path: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
   const nodes = buildTree(tree)
   return (
     <div className="space-y-0.5">
@@ -223,29 +364,19 @@ function FileTree({
           node={node}
           selectedFile={selectedFile}
           onSelect={onSelect}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapse}
         />
       ))}
     </div>
   )
 }
 
-function ManualDetail({
-  detail,
-  groupId,
-  isTeacher,
-}: {
-  detail: Extract<StudentActivityDetailType, { type: "manual" }>
-  groupId: string
-  isTeacher: boolean
-}) {
+function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, { type: "manual" }> }) {
   const { submission } = detail
   const [selectedFile, setSelectedFile] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState("")
   const [loadingFile, setLoadingFile] = useState(false)
-  const [score, setScore] = useState(submission?.score != null ? String(submission.score) : "")
-  const [feedback, setFeedback] = useState(submission?.feedback ?? "")
-  const [grading, setGrading] = useState(false)
-  const queryClient = useQueryClient()
 
   const loadFile = async (path: string) => {
     setSelectedFile(path)
@@ -258,27 +389,6 @@ function ManualDetail({
       setFileContent("")
     } finally {
       setLoadingFile(false)
-    }
-  }
-
-  const handleGrade = async () => {
-    const parsed = Number(score)
-    if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
-      notify.error(null, "La calificación debe ser un entero entre 0 y 100")
-      return
-    }
-    setGrading(true)
-    try {
-      await teacherApi.gradeSubmission(submission!.id, parsed, feedback || undefined)
-      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(groupId) })
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.studentPerformance(groupId, detail.student.id),
-      })
-      notify.success("Calificación guardada")
-    } catch (e) {
-      notify.error(e, "No se pudo guardar la calificación")
-    } finally {
-      setGrading(false)
     }
   }
 
@@ -307,7 +417,10 @@ function ManualDetail({
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex items-center border-b border-border px-4 py-2">
+          <div className="flex items-center gap-2 border-b border-border px-4 py-2">
+            <FileText
+              className={cn("h-3.5 w-3.5 shrink-0", selectedFile ? "text-primary" : "text-muted-foreground")}
+            />
             <span className="font-mono text-xs text-muted-foreground">
               {selectedFile ?? "Selecciona un archivo"}
             </span>
@@ -330,65 +443,50 @@ function ManualDetail({
           </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {isTeacher && submission.status !== "graded" && (
-        <div className="rounded-xl border border-border bg-background p-4">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase">Calificación</h3>
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Calificación (0-100)</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={score}
-                onChange={(e) => setScore(e.target.value)}
-                className="w-32 border-table-line font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Retroalimentación</Label>
-              <Textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                rows={3}
-                placeholder="Comentarios para el estudiante..."
-                className="border-table-line text-sm"
-              />
-            </div>
-            <div>
-              <ActionButton tone="primary" onClick={handleGrade} disabled={grading}>
-                {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                Calificar
-              </ActionButton>
-            </div>
-          </div>
-        </div>
-      )}
+/** Checks del último intento de una actividad automática.
+ * La retroalimentación descriptiva de cada check la construye el checker
+ * (backend), así que aquí solo se muestra `detail` tal cual viene. */
+function AutomaticFeedback({
+  detail,
+}: {
+  detail: Extract<StudentActivityDetailType, { type: "automatic" }>
+}) {
+  if (detail.attempts.length === 0) {
+    return <span className="text-muted-foreground">—</span>
+  }
 
-      {submission.status === "graded" && submission.feedback && (
-        <div className="rounded-xl border border-border bg-secondary/20 p-4">
-          <p className="mb-1 text-xs font-medium text-muted-foreground uppercase">Retroalimentación</p>
-          <p className="whitespace-pre-wrap text-sm text-foreground">{submission.feedback}</p>
+  const bestAttempt = detail.attempts.reduce((a, b) =>
+    new Date(a.createdAt) > new Date(b.createdAt) ? a : b,
+  )
+
+  return (
+    <div className="space-y-3">
+      {bestAttempt.results.map((r) => (
+        <div key={r.id} className="flex items-start gap-2.5 text-sm">
+          {r.passed ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+          ) : (
+            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          )}
+          <span className="flex-1 text-foreground">{r.detail}</span>
+          <span className="shrink-0 font-mono text-xs text-muted-foreground">
+            {r.passed ? r.points : 0}/{r.points}
+          </span>
         </div>
-      )}
+      ))}
     </div>
   )
 }
 
 function AutomaticDetail({
   detail,
-  maxScore,
 }: {
   detail: Extract<StudentActivityDetailType, { type: "automatic" }>
-  maxScore: number
 }) {
-  const [selectedAttempt, setSelectedAttempt] = useState<number | null>(
-    detail.attempts.length > 0 ? detail.attempts[detail.attempts.length - 1].attemptNumber : null,
-  )
-
-  const attempt = detail.attempts.find((a) => a.attemptNumber === selectedAttempt)
-
   if (detail.attempts.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-background p-8 text-center">
@@ -397,98 +495,54 @@ function AutomaticDetail({
     )
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="overflow-hidden rounded-xl border border-border">
-        <div className="border-b border-border bg-card px-4 py-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase">
-            Intentos ({detail.attempts.length})
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-card border-b border-border">
-                <th className="w-16 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                  N.°
-                </th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
-                  Fecha
-                </th>
-                <th className="w-24 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                  Estado
-                </th>
-                <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                  Calificación
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.attempts.map((a) => (
-                <tr
-                  key={a.attemptNumber}
-                  onClick={() => setSelectedAttempt(a.attemptNumber)}
-                  className={cn(
-                    "cursor-pointer border-b border-border/50 transition-colors last:border-0",
-                    selectedAttempt === a.attemptNumber
-                      ? "bg-secondary text-foreground"
-                      : "bg-background hover:bg-secondary/30",
-                  )}
-                >
-                  <td className="px-4 py-2.5 text-center font-mono text-sm">{a.attemptNumber}</td>
-                  <td className="px-4 py-2.5 text-sm text-muted-foreground">
-                    {formatBogotaDateTime(a.createdAt)}
-                  </td>
-                  <td className="px-4 py-2.5 text-center">
-                    {a.passed ? (
-                      <CheckCircle2 className="inline h-4 w-4 text-success" />
-                    ) : (
-                      <XCircle className="inline h-4 w-4 text-destructive" />
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-center font-mono text-sm">{a.score}/{maxScore}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  const maxScore = detail.activity.maxScore
+  const attemptsDesc = [...detail.attempts].reverse()
 
-      {attempt && (
-        <div className="rounded-xl border border-border bg-background p-4">
-          <h3 className="mb-3 text-sm font-medium text-muted-foreground uppercase">
-            Resultados del intento {attempt.attemptNumber}
-          </h3>
-          <div className="space-y-2">
-            {attempt.results.map((r) => (
-              <div
-                key={r.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm",
-                  r.passed
-                    ? "border-success/30 bg-success/5"
-                    : "border-destructive/30 bg-destructive/5",
-                )}
-              >
-                {r.passed ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-                ) : (
-                  <XCircle className="h-4 w-4 shrink-0 text-destructive" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <span className="font-medium text-foreground">{r.type}</span>
-                  {r.detail && (
-                    <span className="ml-2 text-muted-foreground">— {r.detail}</span>
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <div className="border-b border-border bg-card px-4 py-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase">
+          Intentos ({detail.attempts.length})
+        </p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-card border-b border-border">
+              <th className="w-16 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                N.°
+              </th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                Fecha
+              </th>
+              <th className="w-24 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                Estado
+              </th>
+              <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
+                Calificación
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {attemptsDesc.map((a) => (
+              <tr key={a.attemptNumber} className="border-b border-border/50 bg-background last:border-0">
+                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.attemptNumber}</td>
+                <td className="px-4 py-2.5 text-sm text-muted-foreground">
+                  {formatBogotaDateTime(a.createdAt)}
+                </td>
+                <td className="px-4 py-2.5 text-center">
+                  {a.passed ? (
+                    <CheckCircle2 className="inline h-4 w-4 text-success" />
+                  ) : (
+                    <XCircle className="inline h-4 w-4 text-destructive" />
                   )}
-                </div>
-                <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                  {r.passed ? r.points : 0}/{r.points}
-                </span>
-              </div>
+                </td>
+                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.score}/{maxScore}</td>
+              </tr>
             ))}
-          </div>
-        </div>
-      )}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

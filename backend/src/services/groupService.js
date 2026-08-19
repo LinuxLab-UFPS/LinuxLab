@@ -140,9 +140,8 @@ async function getGroup({ groupId, teacherUserId, role }) {
 
   const activities = await prisma.groupActivity.findMany({
     where: { group_id: groupId },
-    select: { id: true, activity_type: true },
+    select: { id: true },
   })
-  const actMap = new Map(activities.map((a) => [a.id, a]))
 
   let totalScore = 0
   let studentCount = 0
@@ -158,8 +157,7 @@ async function getGroup({ groupId, teacherUserId, role }) {
         orderBy: { created_at: "desc" },
         select: { score: true, created_at: true },
       })
-      const policy = act.activity_type === "quiz" ? "latest_score" : "best_score"
-      totalScore += finalScore(attempts, policy)
+      totalScore += finalScore(attempts)
       studentCount++
     }
   }

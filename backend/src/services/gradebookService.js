@@ -3,11 +3,6 @@ const accessService = require("./accessService")
 const { NotFoundError } = require("../lib/errors")
 const { finalScore } = require("../utils/finalScore")
 
-/** La nota final de una actividad sale de la politica, nunca del snapshot. */
-function gradingPolicyOf(ga) {
-  return ga.activity_type === "quiz" ? "latest_score" : "best_score"
-}
-
 function key(studentId, groupActivityId) {
   return `${studentId}::${groupActivityId}`
 }
@@ -60,7 +55,7 @@ function buildCell(ga, attempts, submissions, now) {
   }
 
   return {
-    score: finalScore(attempts, gradingPolicyOf(ga)),
+    score: finalScore(attempts),
     status: "completed",
     attempts: attempts.length,
     lastDate: attempts.reduce((acc, a) => {
@@ -203,7 +198,6 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
       dueAt: ga.due_at?.toISOString() ?? null,
       enabled: ga.enabled,
-      gradingPolicy: gradingPolicyOf(ga),
       maxScore: ga.max_score,
     })),
     cells,

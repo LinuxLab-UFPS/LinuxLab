@@ -72,6 +72,11 @@ export const teacherApi = {
       `/api/groups/${groupId}/activities/${activityId}/${enabled ? "publish" : "disable"}`,
       { method: "POST" },
     ),
+  extendActivityDueDate: (groupId: string, activityId: string, dueDate: string) =>
+    apiFetch<Activity>(`/api/groups/${groupId}/activities/${activityId}/extend-due`, {
+      method: "POST",
+      body: JSON.stringify({ dueDate }),
+    }),
   listActivitySubmissions: (groupId: string, activityId: string) =>
     apiFetch<ActivitySubmissionStudent[]>(
       `/api/groups/${groupId}/activities/${activityId}/submissions`,

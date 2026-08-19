@@ -27,6 +27,7 @@ export type TagTone =
   | "sky"
   | "neutral"
   | "muted"
+  | "brand"
 
 const TONE: Record<TagTone, string> = {
   /** El rojo de la marca: el tono por defecto de lo que lleva color. */
@@ -39,6 +40,8 @@ const TONE: Record<TagTone, string> = {
   neutral: "bg-foreground/5 text-muted-foreground",
   /** Sobre fondos ya tenidos, donde `foreground/5` no llega a verse. */
   muted: "bg-secondary text-muted-foreground",
+  /** Rojo de marca con texto blanco (identidad del area del curso). */
+  brand: "bg-primary text-primary-foreground",
 }
 
 export const TAG_BASE =

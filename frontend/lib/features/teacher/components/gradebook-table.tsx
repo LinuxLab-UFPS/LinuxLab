@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@shared/lib/utils"
+import { scoreColor } from "@shared/lib/score-color"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip"
 import { getTopic } from "@shared/lib/content/temario"
 import type {
@@ -9,13 +10,6 @@ import type {
   GradebookActivity,
   GradebookCell,
 } from "@/lib/models/groups"
-
-/** Color de la nota según la escala del curso: rojo < 60, ámbar >= 60, verde >= 80. */
-function scoreColor(score: number) {
-  if (score >= 80) return "text-success"
-  if (score >= 60) return "text-warning"
-  return "text-danger"
-}
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
 function topicTitleOf(topicNumber: number | null): string {
@@ -130,6 +124,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
 
   return (
     <div className="overflow-hidden rounded-xl border border-table-line bg-background shadow-md dark:shadow-none">
+      {activityCount > 0 && (
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-0">
           <thead>
@@ -281,17 +276,11 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
           </tfoot>
         </table>
       </div>
-
-      {activityCount === 0 && (
-        <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-          No hay actividades publicadas en este curso.
-        </div>
       )}
-      {activityCount > 0 && students.length === 0 && (
+
+      {students.length === 0 && (
         <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-          {gradebook.students.length === 0
-            ? "No hay estudiantes inscritos en este curso."
-            : "Ningún estudiante coincide con la búsqueda."}
+          Ningún estudiante coincide con la búsqueda.
         </div>
       )}
     </div>

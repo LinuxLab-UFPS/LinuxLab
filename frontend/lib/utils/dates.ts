@@ -36,3 +36,28 @@ export function currentBogotaInputValue(): string {
 export function formatBogotaDateParts(year: number, month: number, day: number, hour: number, minute: number): string {
   return `${year}-${twoDigits(month)}-${twoDigits(day)}T${twoDigits(hour)}:${twoDigits(minute)}`
 }
+
+/**
+ * Tiempo relativo en español, estilo "Hace 5 minutos". Usado para la ultima
+ * conexion. Devuelve "Hace un momento" para menos de un minuto.
+ */
+export function timeAgo(value: string | Date): string {
+  const diffMs = Date.now() - new Date(value).getTime()
+  if (diffMs < 60_000) return "Hace un momento"
+
+  const seconds = Math.floor(diffMs / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  const months = Math.floor(days / 30)
+  const years = Math.floor(days / 365)
+
+  const unit = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`
+
+  if (years > 0) return `Hace ${unit(years, "año", "años")}`
+  if (months > 0) return `Hace ${unit(months, "mes", "meses")}`
+  if (days > 0) return `Hace ${unit(days, "día", "días")}`
+  if (hours > 0) return `Hace ${unit(hours, "hora", "horas")}`
+  return `Hace ${unit(minutes, "minuto", "minutos")}`
+}

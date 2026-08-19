@@ -147,8 +147,6 @@ model GroupActivity {
   checks                 Json
   /// `null` para intentos ilimitados o un entero positivo como limite.
   attempt_limit          Int?                @map("attempt_limit")
-  /// `best_score` (mejor intento valido) o `latest_score` (ultimo valido).
-  grading_policy         String              @default("best_score") @map("grading_policy") @db.VarChar(16)
   required               Boolean             @default(true)
   enabled                Boolean             @default(true)
   due_at                 DateTime?           @map("due_at")

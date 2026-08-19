@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useQueryClient } from "@tanstack/react-query"
-import { FolderOpen } from "lucide-react"
+import { ClipboardList, FolderOpen } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@shared/components/ui/table"
 import { TablePanel, TableEmptyState, TablePagination } from "@/shared/components/data-table"
+import { Empty } from "@shared/components/empty"
 import { getTopic } from "@shared/lib/content/temario"
 import { Switch } from "@shared/components/ui/switch"
 import { setActivityEnabled } from "@/lib/features/teacher/data"
@@ -66,6 +67,18 @@ export function GroupActivities({
     } finally {
       setToggling(null)
     }
+  }
+
+  if (activities.length === 0) {
+    return (
+      <TablePanel>
+        <Empty
+          icon={ClipboardList}
+          title="Sin actividades publicadas"
+          description="Este curso todavía no tiene actividades habilitadas."
+        />
+      </TablePanel>
+    )
   }
 
   return (
@@ -133,11 +146,7 @@ export function GroupActivities({
         </Table>
 
         {filtered.length === 0 && (
-          <TableEmptyState>
-            {activities.length === 0
-              ? "Este curso todavía no tiene actividades habilitadas."
-              : "Ninguna actividad coincide con la búsqueda."}
-          </TableEmptyState>
+          <TableEmptyState>Ninguna actividad coincide con la búsqueda.</TableEmptyState>
         )}
       </TablePanel>
 

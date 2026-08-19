@@ -130,6 +130,18 @@ const disableGroupActivity = asyncHandler(async (req, res) => {
   )
 })
 
+const extendGroupActivityDueDate = asyncHandler(async (req, res) => {
+  res.json(
+    await groupActivityService.extendGroupActivityDueDate({
+      groupId: req.params.id,
+      activityId: req.params.activityId,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+      dueDate: req.body?.dueDate,
+    }),
+  )
+})
+
 const getActivitySubmissions = asyncHandler(async (req, res) => {
   res.json(
     await groupActivityService.getActivitySubmissions({
@@ -168,6 +180,7 @@ module.exports = {
   updateGroupActivity,
   enableGroupActivity,
   disableGroupActivity,
+  extendGroupActivityDueDate,
   getActivitySubmissions,
   getManualSubmissions,
   submitGroupActivity,

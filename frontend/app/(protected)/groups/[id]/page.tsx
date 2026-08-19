@@ -19,6 +19,8 @@ import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
 import { StatTabs } from "@shared/components/stat-tabs"
 import { ActionButton } from "@shared/components/action-button"
+import { downloadExcel } from "@shared/lib/excel"
+import { slugify } from "@shared/lib/utils"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
 import { Input } from "@shared/components/ui/input"
@@ -31,8 +33,9 @@ import {
 } from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
+import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
-import { queryKeys, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
+import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
 import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
@@ -48,12 +51,38 @@ function GroupDetailContent() {
   const [tab, setTab] = useState<Tab>((searchParams.get("tab") as Tab) || "estudiantes")
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
   const [evalFilter, setEvalFilter] = useState<"all" | "automatic" | "manual">("all")
 
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
   const activitiesQuery = useGroupActivities(id)
+  const gradebookQuery = useGradebook(id)
+
+  // Hay algo exportable cuando existen actividades con al menos un promedio
+  // calculado (algún estudiante con nota o vencida).
+  const hasGrades =
+    (gradebookQuery.data?.activities.length ?? 0) > 0 &&
+    Object.values(gradebookQuery.data?.activityAverages ?? {}).some((value) => value != null)
+
+  const handleExport = async () => {
+    if (!gradebookQuery.data) return
+    setExporting(true)
+    try {
+      await downloadExcel({
+        fileName: `calificaciones-${slugify(group?.name ?? "curso")}.xlsx`,
+        sheets: [buildGradebookSheet(gradebookQuery.data)],
+      })
+      notify.success("Excel generado", {
+        description: "Se descargó el cuaderno de calificaciones.",
+      })
+    } catch (e) {
+      notify.error(e, "No se pudo exportar el cuaderno")
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const group = groupQuery.data ?? null
   const loading = groupQuery.isLoading
@@ -229,9 +258,18 @@ function GroupDetailContent() {
                 Agregar actividad
               </ActionButton>
             ) : (
-              <ActionButton tone="primary" type="button">
-                <FileSpreadsheet className="h-4 w-4" />
-                Exportar Excel
+              <ActionButton
+                tone="primary"
+                type="button"
+                disabled={!hasGrades || exporting}
+                onClick={handleExport}
+              >
+                {exporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="h-4 w-4" />
+                )}
+                {exporting ? "Generando…" : "Exportar Excel"}
               </ActionButton>
             ))}
         </div>
@@ -239,7 +277,7 @@ function GroupDetailContent() {
 
       {/* Tabla */}
       {tab === "estudiantes" ? (
-        <GroupStudents students={studentsQuery.data ?? []} groupId={id} query={query} />
+        <GroupStudents students={studentsQuery.data ?? []} query={query} />
       ) : tab === "actividades" ? (
         <div data-section="actividades">
           <GroupActivities

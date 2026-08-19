@@ -2,12 +2,11 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { describeCheck } from "@/lib/features/student/use-activity-check"
 import {
   checkGroupActivity,
   submitGroupActivity,
@@ -28,7 +27,9 @@ import { formatBogotaDateTime } from "@/lib/utils/dates"
  * de que la conexión aún no esté lista).
  */
 export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDetail; userId: string }) {
-  const [results, setResults] = useState<GroupCheckResult[] | null>(null)
+  const [results, setResults] = useState<GroupCheckResult[] | null>(
+    detail.lastAttempt?.results ?? null,
+  )
   const [score, setScore] = useState(detail.lastAttempt?.score ?? 0)
   const [passed, setPassed] = useState(detail.lastAttempt?.passed ?? false)
   const [completed, setCompleted] = useState(detail.completed)
@@ -154,6 +155,25 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
                 </span>
               </p>
             )}
+
+            {results && (
+              <ul className="space-y-1.5">
+                {results.map((row) => (
+                  <li key={row.id} className="flex items-start gap-2.5 text-sm">
+                    {row.passed ? (
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                    ) : (
+                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                    )}
+                    <span className="flex-1 text-foreground">{row.detail}</span>
+                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                      {row.passed ? row.points : 0}/{row.points}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             <div className="space-y-3 text-xs text-muted-foreground">
               <p>
                 {attemptsCount} {attemptsCount === 1 ? "intento" : "intentos"}
@@ -181,18 +201,6 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
                 </table>
               </div>
             </div>
-            {results && (
-              <ul className="space-y-1.5">
-                {results
-                  .filter((row) => row.passed)
-                  .map((row) => (
-                    <li key={row.id} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
-                      <span className="text-foreground">{describeCheck(row.type, row.params)}</span>
-                    </li>
-                  ))}
-              </ul>
-            )}
           </div>
         )}
 

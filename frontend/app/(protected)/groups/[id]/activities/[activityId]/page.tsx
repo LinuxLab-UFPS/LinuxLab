@@ -1,13 +1,15 @@
 import Link from "next/link"
-import { ArrowLeft, Pencil, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
+import { ArrowLeft, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { ActionButton } from "@shared/components/action-button"
 import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
+import { describeCheck } from "@shared/lib/describe-check"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { SubmissionsTable } from "@/lib/features/teacher/components/submissions-table"
+import { ExtendDueDateButton } from "@/lib/features/teacher/components/extend-due-date-button"
 
 const ROW =
   "flex items-center justify-between gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"
@@ -15,8 +17,8 @@ const ROW =
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className={ROW}>
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium text-foreground">{children}</span>
+      <span className="font-medium text-foreground">{label}</span>
+      <span className="text-right text-muted-foreground">{children}</span>
     </div>
   )
 }
@@ -35,6 +37,31 @@ function ActivityDetail({
   backTab: string
 }) {
   const topic = getTopic(activity.topicNumber)
+  const hasEntregas = submissions.length > 0 || manualSubmissions.length > 0
+  const studentDetailHref = (studentId: string) =>
+    `/groups/${groupId}/activities/${activity.id}/students/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
+  const manualRows = manualSubmissions.map((sub) => ({
+    studentId: sub.studentId,
+    studentName: sub.studentName,
+    studentCode: sub.studentCode,
+    middleLabel: sub.status === "graded" ? "Calificada" : "Pendiente",
+    middleTone: (sub.status === "graded" ? "success" : "warning") as "success" | "warning",
+    submittedAt: sub.submittedAt,
+    scoreLabel: sub.score != null ? `${sub.score}/${activity.maxScore}` : "—",
+    scoreValue: sub.score ?? null,
+    href: studentDetailHref(sub.studentId),
+  }))
+  const automaticRows = submissions.map((sub) => ({
+    studentId: sub.studentId,
+    studentName: sub.studentName,
+    studentCode: sub.studentCode,
+    middleLabel: String(sub.attemptsCount),
+    middleTone: "muted" as const,
+    submittedAt: sub.lastAttemptDate,
+    scoreLabel: `${sub.finalScore}/${activity.maxScore}`,
+    scoreValue: sub.finalScore,
+    href: studentDetailHref(sub.studentId),
+  }))
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
       <ActionButton tone="neutral" href={`/groups/${groupId}?tab=${backTab}`}>
@@ -52,10 +79,17 @@ function ActivityDetail({
                 {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
-            <ActionButton tone="primary" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
-              <Pencil className="h-4 w-4" />
-              Editar
-            </ActionButton>
+            {hasEntregas ? (
+              <ExtendDueDateButton
+                groupId={groupId}
+                activityId={activity.id}
+                currentDueDate={activity.dueDate ?? null}
+              />
+            ) : (
+              <ActionButton tone="primary" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
+                Editar
+              </ActionButton>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -102,11 +136,8 @@ function ActivityDetail({
                       <th className="w-10 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                         #
                       </th>
-                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Tipo
-                      </th>
-                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Parametros
+                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Descripción
                       </th>
                       <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                         Puntos
@@ -117,9 +148,8 @@ function ActivityDetail({
                     {activity.checks.map((check, index) => (
                       <tr key={check.id} className="border-b border-border/50 bg-background last:border-0">
                         <td className="px-4 py-2.5 text-sm text-muted-foreground">{index + 1}</td>
-                        <td className="px-4 py-2.5 font-mono text-sm text-foreground">{check.type}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                          {JSON.stringify(check.params)}
+                        <td className="px-4 py-2.5 text-sm text-foreground">
+                          {describeCheck(check.type, check.params)}
                         </td>
                         <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
                           {check.points}
@@ -143,44 +173,9 @@ function ActivityDetail({
               : `Intentos (${submissions.length})`}
           </h2>
           {activity.evaluationType === "manual" ? (
-            <SubmissionsTable submissions={manualSubmissions} maxScore={activity.maxScore} groupId={groupId} activityId={activity.id} />
+            <SubmissionsTable variant="manual" rows={manualRows} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-card border-b border-border">
-                      <th className="w-28 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Codigo</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Estudiante</th>
-                      <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Intentos</th>
-                      <th className="w-44 px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">Fecha</th>
-                      <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">Calificacion</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {submissions.length === 0 ? (
-                      <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aun no hay entregas registradas.</td></tr>
-                    ) : (
-                      submissions.map((sub) => (
-                        <Link
-                          key={sub.studentId}
-                          href={`/groups/${groupId}/activities/${activity.id}/students/${sub.studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`}
-                          className="contents"
-                        >
-                          <tr className="cursor-pointer border-b border-border/50 bg-background transition-colors hover:bg-secondary/30 last:border-0">
-                            <td className="px-4 py-2.5 font-mono text-sm text-muted-foreground">{sub.studentCode ?? "—"}</td>
-                            <td className="px-4 py-2.5 text-sm font-medium text-foreground">{sub.studentName}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.attemptsCount}</td>
-                            <td className="px-4 py-2.5 text-sm text-muted-foreground">{sub.lastAttemptDate ? formatBogotaDateTime(sub.lastAttemptDate) : "—"}</td>
-                            <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{sub.finalScore}/{activity.maxScore}</td>
-                          </tr>
-                        </Link>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <SubmissionsTable variant="automatic" rows={automaticRows} />
           )}
         </section>
       </div>

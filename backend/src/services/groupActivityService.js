@@ -87,7 +87,7 @@ function buildChecks(list, { evaluationType, maxScore }) {
  * Validacion comun de la configuracion de una actividad de grupo, usada por la
  * creacion y la edicion. Devuelve los valores ya validados y normalizados.
  *
- * La forma (titulo, instrucciones, politica, tema) la valida zod en
+ * La forma (titulo, instrucciones, tema) la valida zod en
  * activityInputSchema; las aserciones dependen del catalogo y el puntaje
  * repartido, y las valida buildChecks.
  */
@@ -103,7 +103,6 @@ function validateActivityInput(body) {
   const maxScore = 100
 
   const activityType = parsed.activityType
-  const gradingPolicy = activityType === "quiz" ? "latest_score" : "best_score"
   const attemptLimit = parsed.attemptLimit ?? null
   if (activityType === "workshop" && attemptLimit !== null) {
     throw new AppError("Las actividades tipo taller no tienen límite de intentos", 400, "VALIDATION_ERROR")
@@ -131,7 +130,7 @@ function validateActivityInput(body) {
   const topicNumber = Number(parsed.topicNumber)
   const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
-  return { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks }
+  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks }
 }
 
 /**
@@ -148,7 +147,7 @@ function validateActivityInput(body) {
  */
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(input ?? {})
 
   // La definicion y la publicacion nacen juntas: si una de las dos falla, la
@@ -185,7 +184,6 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         max_score: maxScore,
         checks,
         attempt_limit: attemptLimit,
-        grading_policy: gradingPolicy,
         required: true,
         enabled: true,
         due_at: dueAt,
@@ -246,7 +244,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
   }
 
-  const { title, instructions, maxScore, gradingPolicy, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
     validateActivityInput(body)
 
   // La definicion del docente es 1:1 con la publicacion: se mantiene en
@@ -275,7 +273,6 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
         evaluation_type: evaluationType,
         checks,
         attempt_limit: attemptLimit,
-        grading_policy: gradingPolicy,
         due_at: dueAt,
       },
       include: { definition: { select: { topic_number: true, difficulty: true } } },
@@ -372,6 +369,62 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
 }
 
 /**
+ * Extiende la fecha de cierre de una actividad publicada.
+ *
+ * A diferencia de la edicion completa (que se bloquea con historial), extender
+ * el cierre solo relaja la regla: no cambia condiciones a mitad de partida, asi
+ * que se permite aunque ya haya intentos o entregas. Solo se permite mover la
+ * fecha hacia adelante; acortarla o quitarla sigue pasando por la edicion
+ * completa (que requiere no tener historial).
+ *
+ * La fila se bloquea con FOR UPDATE para que un check concurrente no pueda
+ * registrar el primer intento entre la revision y la escritura.
+ */
+async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, role, dueDate }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    include: { definition: { select: { topic_number: true, difficulty: true } } },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  const newDueAt = new Date(dueDate)
+  if (Number.isNaN(newDueAt.getTime())) {
+    throw new AppError("La fecha de cierre no es válida", 400, "VALIDATION_ERROR")
+  }
+  if (ga.due_at && newDueAt <= ga.due_at) {
+    throw new AppError("La nueva fecha debe ser posterior a la fecha de cierre actual", 400, "VALIDATION_ERROR")
+  }
+  if (newDueAt <= new Date()) {
+    throw new AppError("La fecha de cierre debe ser posterior a la fecha actual", 400, "VALIDATION_ERROR")
+  }
+  if (ga.due_at && newDueAt.getTime() === ga.due_at.getTime()) {
+    return serializeGroupActivity(ga, ga.definition)
+  }
+
+  const updated = await runInTransaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM group_activities WHERE id = ${ga.id} FOR UPDATE`
+    return tx.groupActivity.update({
+      where: { id: ga.id },
+      data: { due_at: newDueAt },
+      include: { definition: { select: { topic_number: true, difficulty: true } } },
+    })
+  })
+
+  audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "activity_due_extended",
+    target: updated.title,
+    metadata: { groupActivityId: ga.id, dueAt: newDueAt.toISOString() },
+  })
+
+  logger.info({ groupId, teacherUserId, activityId: ga.id }, "Group activity due date extended")
+  return serializeGroupActivity(updated, updated.definition)
+}
+
+/**
  * Intentos por estudiante para una actividad de grupo: la tabla de entregas
  * que ve el docente en el detalle de la actividad.
  */
@@ -380,7 +433,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    select: { id: true, grading_policy: true, activity_type: true },
+    select: { id: true },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
@@ -400,8 +453,6 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
   })
   const studentMap = new Map(students.map((s) => [s.id, s]))
 
-  const policy = ga.activity_type === "quiz" ? "latest_score" : "best_score"
-
   const submissions = await Promise.all(
     grouped.map(async (g) => {
       const attempts = await prisma.activityAttempt.findMany({
@@ -417,7 +468,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
         studentCode: student?.code ?? null,
         attemptsCount: g._count.id,
         lastAttemptDate: g._max.created_at?.toISOString() ?? null,
-        finalScore: finalScore(attempts, policy),
+        finalScore: finalScore(attempts),
         submissionId: null,
       }
     }),
@@ -465,6 +516,7 @@ module.exports = {
   listGroupActivities,
   getGroupActivity,
   setGroupActivityEnabled,
+  extendGroupActivityDueDate,
   getActivitySubmissions,
   getManualSubmissions,
 }

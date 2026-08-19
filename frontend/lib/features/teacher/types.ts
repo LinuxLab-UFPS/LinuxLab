@@ -9,7 +9,6 @@ export type {
   CreateActivityInput,
   Difficulty,
   EvaluationType,
-  GradingPolicy,
   ManualSubmission,
   StudentActivityDetail,
   SubmissionDetail,

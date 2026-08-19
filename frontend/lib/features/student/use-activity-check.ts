@@ -5,26 +5,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
 import { notify } from "@shared/lib/toast"
+import { describeCheck } from "@shared/lib/describe-check"
 import type { ActivityCheckResult, LessonActivity } from "@/lib/models/activities"
 
 export type { ActivityCheckResult as CheckResult, LessonActivity } from "@/lib/models/activities"
 
-/** Como se lee cada asercion del catalogo en la pantalla del estudiante. */
-const DESCRIBE: Record<string, (p: Record<string, string>) => string> = {
-  directorio_existe: (p) => `Existe el directorio ${p.ruta}`,
-  archivo_existe: (p) => `Existe el archivo ${p.ruta}`,
-  archivo_no_existe: (p) => `Ya no está ${p.ruta}`,
-  permisos_son: (p) => `${p.ruta} tiene permisos ${p.modo}`,
-  propietario_es: (p) => `${p.ruta} pertenece a ${p.usuario}`,
-  archivo_es: (p) => `${p.ruta} tiene el contenido exacto`,
-  minimo_lineas: (p) => `${p.ruta} tiene al menos ${p.cantidad} líneas`,
-  ultima_linea_es: (p) => `La última línea de ${p.ruta} es ${p.valor}`,
-  archivo_contiene: (p) => `${p.ruta} tiene el contenido esperado`,
-}
-
-export function describeCheck(type: string, params: Record<string, string>): string {
-  return DESCRIBE[type]?.(params) ?? type
-}
+export { describeCheck }
 
 /**
  * Loads an activity and evaluates it on demand.

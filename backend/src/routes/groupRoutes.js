@@ -33,6 +33,7 @@ router.patch("/:id/activities/:activityId", activityController.updateGroupActivi
 // inverso de "disable": la publicacion en si ocurre al crear (no hay borrador).
 router.post("/:id/activities/:activityId/publish", activityController.enableGroupActivity)
 router.post("/:id/activities/:activityId/disable", activityController.disableGroupActivity)
+router.post("/:id/activities/:activityId/extend-due", activityController.extendGroupActivityDueDate)
 router.get("/:id/activities/:activityId/submissions", activityController.getActivitySubmissions)
 router.get("/:id/activities/:activityId/manual-submissions", activityController.getManualSubmissions)
 

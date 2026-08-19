@@ -84,7 +84,7 @@ async function listMine(studentUserId) {
         attemptLimit: ga.attempt_limit,
         finalScore: ga.evaluation_type === "manual"
           ? (latestSubmission?.score ?? 0)
-          : finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+          : finalScore(attempts),
         dueAt: ga.due_at?.toISOString() ?? null,
         enabled: ga.enabled,
         evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
@@ -118,7 +118,6 @@ async function getForStudent(studentUserId, groupActivityId) {
       max_score: true,
       checks: true,
       attempt_limit: true,
-      grading_policy: true,
       enabled: true,
     },
   })
@@ -130,7 +129,7 @@ async function getForStudent(studentUserId, groupActivityId) {
   const attempts = await prisma.activityAttempt.findMany({
     where: { group_activity_id: ga.id, student_id: studentUserId },
     orderBy: { created_at: "desc" },
-    select: { attempt_number: true, passed: true, score: true, created_at: true },
+    select: { attempt_number: true, passed: true, score: true, results: true, created_at: true },
   })
 
   const submissions = await prisma.activitySubmission.findMany({
@@ -157,16 +156,17 @@ async function getForStudent(studentUserId, groupActivityId) {
     attemptsCount: attempts.length,
     finalScore: ga.evaluation_type === "manual"
       ? (latestSubmission?.score ?? 0)
-      : finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+      : finalScore(attempts),
     completed: attempts.length > 0 || hasSubmission,
-    gradingPolicy: ga.activity_type === "quiz" ? "latest_score" : "best_score",
     enabled: true,
     attempts: attempts.map((attempt) => ({
       attemptNumber: attempt.attempt_number,
       createdAt: attempt.created_at.toISOString(),
       score: attempt.score,
     })),
-    lastAttempt: attempts[0] ? { passed: attempts[0].passed, score: attempts[0].score } : null,
+    lastAttempt: attempts[0]
+      ? { passed: attempts[0].passed, score: attempts[0].score, results: attempts[0].results ?? [] }
+      : null,
     submission: latestSubmission ? {
       id: latestSubmission.id,
       status: latestSubmission.status,
@@ -201,7 +201,6 @@ async function checkForStudent(studentUserId, groupActivityId) {
       due_at: true,
       activity_definition_id: true,
       attempt_limit: true,
-      grading_policy: true,
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
@@ -296,7 +295,7 @@ async function checkForStudent(studentUserId, groupActivityId) {
     passed,
     completed: true,
     score,
-    finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+    finalScore: finalScore(attempts),
     attemptsCount: attempts.length,
     attempts: attempts.map((attempt) => ({
       attemptNumber: attempt.attempt_number,
@@ -326,7 +325,6 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
       evaluation_type: true,
       activity_type: true,
       max_score: true,
-      grading_policy: true,
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
@@ -392,7 +390,7 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
   return {
     type: "automatic",
     student,
-    activity: { ...activity, gradingPolicy: ga.grading_policy },
+    activity,
     attempts: attempts.map((a) => ({
       attemptNumber: a.attempt_number,
       passed: a.passed,
@@ -400,7 +398,7 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
       results: a.results,
       createdAt: a.created_at.toISOString(),
     })),
-    finalScore: finalScore(attempts, ga.grading_policy),
+    finalScore: finalScore(attempts),
   }
 }
 
