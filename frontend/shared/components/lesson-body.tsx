@@ -142,7 +142,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
               <div key={i} className="my-10 max-w-md">
                 <h2 className="mb-4 text-left text-2xl font-bold text-foreground">
                   Prueba tus conocimientos con un{" "}
-                  <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text font-extrabold text-transparent">
+                  <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text font-extrabold text-transparent">
                     Simulador
                   </span>
                 </h2>
