@@ -4,17 +4,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { scoreColor } from "@shared/lib/score-color"
 import { ActionButton } from "@shared/components/action-button"
-import { Input } from "@shared/components/ui/input"
-import { Textarea } from "@shared/components/ui/textarea"
 import { Tag } from "@shared/components/tag"
 import { notify } from "@shared/lib/toast"
-import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { teacherApi } from "@/lib/features/teacher/api"
 import { queryKeys } from "@/lib/api/queries"
+import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 import type { StudentActivityDetail as StudentActivityDetailType } from "@/lib/features/teacher/types"
 
 interface Props {
@@ -30,7 +27,7 @@ function StatusBadge({ detail }: { detail: StudentActivityDetailType }) {
     return detail.submission.status === "graded" ? (
       <Tag tone="emerald">Calificada</Tag>
     ) : (
-      <Tag tone="amber">Pendiente por calificar</Tag>
+      <Tag tone="amber">Pendiente de revisión</Tag>
     )
   }
   return detail.attempts.length > 0 ? (
@@ -57,7 +54,7 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
     detail.type === "manual"
       ? submission?.submittedAt
       : attempts.length > 0
-        ? attempts[attempts.length - 1].createdAt
+        ? attempts[0].createdAt
         : null
 
   const manualSubmission = detail.type === "manual" ? detail.submission : null
@@ -130,81 +127,38 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-xl border border-border">
-          <table className="w-full text-sm">
-            <tbody>
-              <tr className="border-b border-border/50">
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Nombre del estudiante</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{student.name}</td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Código del estudiante</td>
-                <td className="px-4 py-2.5 font-mono text-muted-foreground">{student.code ?? "—"}</td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Fecha de entrega</td>
-                <td className="px-4 py-2.5 text-muted-foreground">
-                  {submittedAt ? formatBogotaDateTime(submittedAt) : "—"}
-                </td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Estado de la calificación</td>
-                <td className="px-4 py-2.5">
-                  <StatusBadge detail={detail} />
-                </td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Calificación</td>
-                <td className="px-4 py-2.5">
-                  {showGradeForm ? (
-                    <div className="space-y-1">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={scoreInput}
-                        onChange={(e) => setScoreInput(e.target.value)}
-                        aria-invalid={scoreError || undefined}
-                        className={cn(
-                          "w-32 border-table-line font-mono",
-                          scoreError && "border-danger focus:ring-danger",
-                        )}
-                      />
-                      {scoreError && (
-                        <p className="text-xs text-danger">Debe ser un entero entre 0 y 100.</p>
-                      )}
-                    </div>
-                  ) : score != null ? (
-                    <span className={cn("font-mono text-sm font-medium", scoreColor(score))}>
-                      {score}/{activity.maxScore}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5 font-medium text-foreground w-56">Retroalimentación</td>
-                <td className={cn("px-4 py-2.5", (showGradeForm || detail.type === "automatic") && "align-top")}>
-                  {showGradeForm ? (
-                    <Textarea
-                      value={feedbackInput}
-                      onChange={(e) => setFeedbackInput(e.target.value)}
-                      placeholder="Comentarios para el estudiante..."
-                      className="h-28 resize-none overflow-y-auto border-table-line text-sm"
-                    />
-                  ) : detail.type === "automatic" ? (
-                    <AutomaticFeedback detail={detail} />
-                  ) : feedback ? (
-                    <p className="whitespace-pre-wrap text-muted-foreground">{feedback}</p>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <StudentInfoTable
+          studentName={student.name}
+          studentCode={student.code}
+          submittedAt={submittedAt}
+          statusNode={<StatusBadge detail={detail} />}
+          score={score}
+          maxScore={activity.maxScore}
+          feedbackVariant={detail.type}
+          feedbackNode={
+            detail.type === "manual"
+              ? feedback
+                ? <p className="whitespace-pre-wrap text-muted-foreground">{feedback}</p>
+                : null
+              : undefined
+          }
+          checks={
+            detail.type === "automatic" && detail.attempts.length > 0
+              ? detail.attempts[0].results
+              : []
+          }
+          gradeForm={
+            showGradeForm
+              ? {
+                  scoreInput,
+                  onScoreChange: setScoreInput,
+                  scoreError: !!scoreError,
+                  feedbackInput,
+                  onFeedbackChange: setFeedbackInput,
+                }
+              : undefined
+          }
+        />
 
         {showGradeForm && (
           <div className="mt-3 flex justify-end">
@@ -447,41 +401,6 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
   )
 }
 
-/** Checks del último intento de una actividad automática.
- * La retroalimentación descriptiva de cada check la construye el checker
- * (backend), así que aquí solo se muestra `detail` tal cual viene. */
-function AutomaticFeedback({
-  detail,
-}: {
-  detail: Extract<StudentActivityDetailType, { type: "automatic" }>
-}) {
-  if (detail.attempts.length === 0) {
-    return <span className="text-muted-foreground">—</span>
-  }
-
-  const bestAttempt = detail.attempts.reduce((a, b) =>
-    new Date(a.createdAt) > new Date(b.createdAt) ? a : b,
-  )
-
-  return (
-    <div className="space-y-3">
-      {bestAttempt.results.map((r) => (
-        <div key={r.id} className="flex items-start gap-2.5 text-sm">
-          {r.passed ? (
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-          ) : (
-            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-          )}
-          <span className="flex-1 text-foreground">{r.detail}</span>
-          <span className="shrink-0 font-mono text-xs text-muted-foreground">
-            {r.passed ? r.points : 0}/{r.points}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function AutomaticDetail({
   detail,
 }: {
@@ -495,54 +414,5 @@ function AutomaticDetail({
     )
   }
 
-  const maxScore = detail.activity.maxScore
-  const attemptsDesc = [...detail.attempts].reverse()
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-border">
-      <div className="border-b border-border bg-card px-4 py-2">
-        <p className="text-xs font-medium text-muted-foreground uppercase">
-          Intentos ({detail.attempts.length})
-        </p>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-card border-b border-border">
-              <th className="w-16 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                N.°
-              </th>
-              <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
-                Fecha
-              </th>
-              <th className="w-24 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                Estado
-              </th>
-              <th className="w-32 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                Calificación
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {attemptsDesc.map((a) => (
-              <tr key={a.attemptNumber} className="border-b border-border/50 bg-background last:border-0">
-                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.attemptNumber}</td>
-                <td className="px-4 py-2.5 text-sm text-muted-foreground">
-                  {formatBogotaDateTime(a.createdAt)}
-                </td>
-                <td className="px-4 py-2.5 text-center">
-                  {a.passed ? (
-                    <CheckCircle2 className="inline h-4 w-4 text-success" />
-                  ) : (
-                    <XCircle className="inline h-4 w-4 text-destructive" />
-                  )}
-                </td>
-                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.score}/{maxScore}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
+  return <AttemptsTable attempts={detail.attempts} maxScore={detail.activity.maxScore} />
 }

@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from "lucide-r
 import { cn } from "@shared/lib/utils"
 import { Markdown } from "@shared/components/markdown"
 import { ActionButton } from "@shared/components/action-button"
-import { CheckList } from "@/lib/features/student/components/check-list"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -14,6 +13,7 @@ import {
   type Activity,
 } from "@shared/lib/content/activities"
 import { Tag } from "@shared/components/tag"
+import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
 
@@ -39,7 +39,7 @@ export function ActivityPanel({
   /** Where the course continues after that lesson. */
   next?: LessonRef | null
 }) {
-  const { activity: data, rows, evaluated, passed, loading, checking, check, reset, resetting } =
+  const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
   return (
@@ -66,14 +66,13 @@ export function ActivityPanel({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
-          <Tag tone={activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"}>
-            {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
-          </Tag>
-          <Tag tone={passed ? "sky" : "neutral"}>
-            {passed ? "Completada" : "Sin completar"}
-          </Tag>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Tag tone={activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"}>
+              {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
+            </Tag>
+          </div>
         </div>
       </header>
 
@@ -86,16 +85,27 @@ export function ActivityPanel({
           <div className="flex justify-center py-6">
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-        ) : passed ? (
-          <CheckList rows={rows} evaluated={evaluated} className="mt-6" />
-        ) : (
-          evaluated && (
-            <p className="mt-6 text-sm text-muted-foreground">
-              {rows.filter((row) => row.passed).length} de {rows.length}{" "}
-              {rows.length === 1 ? "comprobación lista" : "comprobaciones listas"}.
-            </p>
-          )
-        )}
+        ) : data ? (
+          <div className="mt-6 space-y-4">
+            <StudentInfoTable
+              showIdentity={false}
+              submittedAt={data.lastAttempt?.at ?? null}
+              statusNode={
+                !data.lastAttempt
+                  ? <Tag tone="muted">Pendiente de entrega</Tag>
+                  : <Tag tone="emerald">Calificada</Tag>
+              }
+              score={data.lastAttempt?.score ?? null}
+              maxScore={data.maxScore}
+              feedbackVariant="automatic"
+              checks={data.lastAttempt?.results ?? []}
+            />
+
+            {data.attempts.length > 0 && (
+              <AttemptsTable attempts={data.attempts} maxScore={data.maxScore} />
+            )}
+          </div>
+        ) : null}
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">

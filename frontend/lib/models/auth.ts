@@ -7,6 +7,7 @@ export interface User {
   name: string
   email: string
   role: Role
+  code?: string | null
   googleId?: string
   active?: boolean
   linuxUsername?: string | null

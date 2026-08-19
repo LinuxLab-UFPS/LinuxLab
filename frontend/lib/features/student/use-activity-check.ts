@@ -42,7 +42,7 @@ export function useActivityCheck(slug: string) {
 
   const checkMutation = useMutation({
     mutationFn: () =>
-      apiFetch<{ passed: boolean; results: ActivityCheckResult[] }>(
+      apiFetch<{ passed: boolean; score: number; results: ActivityCheckResult[] }>(
         `/api/activities/${slug}/check`,
         { method: "POST" },
       ),
@@ -55,7 +55,7 @@ export function useActivityCheck(slug: string) {
               ...prev,
               lastAttempt: {
                 passed: outcome.passed,
-                score: 0,
+                score: outcome.score,
                 results: outcome.results,
                 at: new Date().toISOString(),
               },

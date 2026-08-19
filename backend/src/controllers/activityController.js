@@ -4,14 +4,16 @@ const studentActivityService = require("../services/studentActivityService")
 const submissionService = require("../services/submissionService")
 const checkCatalogService = require("../services/checkCatalogService")
 const gradebookService = require("../services/gradebookService")
+const attemptService = require("../services/attemptService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const getActivity = asyncHandler(async (req, res) => {
-  const [activity, attempt] = await Promise.all([
+  const [activity, attempt, attempts] = await Promise.all([
     lessonEvaluatorService.getBySlug(req.params.slug),
     lessonEvaluatorService.lastAttempt({ slug: req.params.slug, studentUserId: req.user.id }),
+    attemptService.listAttempts({ slug: req.params.slug, studentUserId: req.user.id }),
   ])
-  res.json({ ...activity, lastAttempt: attempt })
+  res.json({ ...activity, lastAttempt: attempt, attempts })
 })
 
 const getCatalog = asyncHandler(async (_req, res) => {

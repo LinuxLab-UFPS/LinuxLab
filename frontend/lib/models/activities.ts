@@ -53,6 +53,12 @@ export interface LessonActivity {
   maxScore: number
   checks: ActivityCheck[]
   lastAttempt: { passed: boolean; score: number; results: ActivityCheckResult[]; at: string } | null
+  attempts: {
+    attemptNumber: number
+    passed: boolean
+    score: number
+    createdAt: string
+  }[]
 }
 
 /**
@@ -179,6 +185,7 @@ export interface GroupActivityDetail {
   attempts: {
     attemptNumber: number
     createdAt: string
+    passed: boolean
     score: number
   }[]
   lastAttempt: { passed: boolean; score: number; results: ActivityCheckResult[] } | null
