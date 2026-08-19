@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Download, Trash2 } from "lucide-react"
+import { Search, Download } from "lucide-react"
 import { Input } from "@shared/components/ui/input"
 import { cn } from "@shared/lib/utils"
 import {
@@ -17,11 +17,9 @@ import {
   TableEmptyState,
   TablePagination,
 } from "@shared/components/data-table"
+import { downloadExcel, tableToSheet } from "@shared/lib/excel"
 import type { AuditEntry } from "@/lib/features/teacher/types"
 import type { Role } from "@/lib/features/auth/types"
-import { clearAuditLog } from "@/lib/features/teacher/data"
-import { ActionButton } from "@shared/components/action-button"
-import { notifyPromise } from "@shared/lib/toast"
 
 const PAGE_SIZE = 8
 
@@ -34,31 +32,25 @@ const ROLE: Record<Role, { label: string; className: string }> = {
   },
 }
 
-/** Exports the given rows as a CSV, honoring whatever search/date filter is active. */
-function exportCsv(rows: AuditEntry[]) {
-  const header = ["Fecha", "Hora", "Usuario", "Email", "Rol", "Acción", "Curso"]
-  const lines = rows.map((e) => {
-    const date = new Date(e.timestamp)
-    return [
-      date.toLocaleDateString("es-CO"),
-      date.toLocaleTimeString("es-CO"),
-      e.userName,
-      e.email,
-      ROLE[e.role].label,
-      e.target ? `${e.action}: ${e.target}` : e.action,
-      e.group,
-    ]
-      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-      .join(",")
+function roleBadge(role: AuditEntry["role"]) {
+  if (role === "student" || role === "teacher" || role === "admin") return ROLE[role]
+  return { label: "—", className: "bg-muted/10 text-muted-foreground border-border/30" }
+}
+
+/** Exporta las filas (con el filtro activo) a un .xlsx, igual que el gradebook. */
+async function exportXlsx(rows: AuditEntry[]) {
+  const data = rows.map((e) => [
+    new Date(e.timestamp).toLocaleString("es-CO"),
+    e.userName ?? "—",
+    e.email ?? "—",
+    roleBadge(e.role).label,
+    e.message,
+    e.groupName ?? "—",
+  ])
+  await downloadExcel({
+    fileName: `bitacora-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    sheets: [tableToSheet({ name: "Bitácora", headers: ["Fecha", "Usuario", "Email", "Rol", "Acción", "Curso"], rows: data })],
   })
-  const csv = [header.join(","), ...lines].join("\n")
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `bitacora-${new Date().toISOString().slice(0, 10)}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
 }
 
 export function AuditTable({ entries }: { entries: AuditEntry[] }) {
@@ -70,7 +62,9 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   const filtered = entries.filter((e) => {
     const q = search.toLowerCase()
     const matchesSearch =
-      e.userName.toLowerCase().includes(q) || e.email.toLowerCase().includes(q)
+      (e.message ?? "").toLowerCase().includes(q) ||
+      (e.userName ?? "").toLowerCase().includes(q) ||
+      (e.email ?? "").toLowerCase().includes(q)
     const date = e.timestamp.slice(0, 10)
     const matchesDesde = !desde || date >= desde
     const matchesHasta = !hasta || date <= hasta
@@ -81,14 +75,6 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
   const page_ = Math.min(page, totalPages)
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
-  const handleClear = async () => {
-    await notifyPromise(clearAuditLog(), {
-      loading: "Borrando la bitácora…",
-      success: "Bitácora borrada",
-      error: "No se pudo borrar la bitácora.",
-    })
-  }
-
   return (
     <div>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -96,7 +82,7 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
           <div className="relative max-w-sm flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar por nombre o email..."
+              placeholder="Buscar por mensaje, nombre o email..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value)
@@ -132,36 +118,33 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
         </div>
 
         <div className="flex shrink-0 gap-2">
-          <ActionButton tone="neutral" onClick={() => exportCsv(filtered)}>
-            <span className="inline-flex items-center gap-1.5">
-              <Download className="h-3.5 w-3.5" />
-              Descargar
-            </span>
-          </ActionButton>
-          <ActionButton tone="danger" onClick={handleClear}>
-            <span className="inline-flex items-center gap-1.5">
-              <Trash2 className="h-3.5 w-3.5" />
-              Borrar bitácora
-            </span>
-          </ActionButton>
+          <button
+            type="button"
+            onClick={() => exportXlsx(filtered)}
+            disabled={filtered.length === 0}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Exportar Excel
+          </button>
         </div>
       </div>
 
       <TablePanel>
-
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-36">Entrada</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-36">Entrada</TableHead>
               <TableHead>Usuario</TableHead>
               <TableHead className="w-36">Rol</TableHead>
-              <TableHead className="w-56">Acción</TableHead>
+              <TableHead className="w-1/2">Acción</TableHead>
               <TableHead>Curso</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageRows.map((entry) => {
               const date = new Date(entry.timestamp)
+              const badge = roleBadge(entry.role)
               return (
                 <TableRow key={entry.id}>
                   <TableCell>
@@ -174,30 +157,31 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                   </TableCell>
                   <TableCell>
                     <span className="block text-sm font-medium text-foreground">
-                      {entry.userName}
+                      {entry.userName ?? "—"}
                     </span>
-                    <span className="block text-xs text-muted-foreground">{entry.email}</span>
+                    <span className="block text-xs text-muted-foreground">{entry.email ?? "—"}</span>
                   </TableCell>
                   <TableCell>
                     <span
                       className={cn(
                         "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
-                        ROLE[entry.role].className,
+                        badge.className,
                       )}
                     >
-                      {ROLE[entry.role].label}
+                      {badge.label}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <span className="block text-sm text-foreground">{entry.action}</span>
+                    <span className="block text-sm text-foreground">{entry.message}</span>
                     {entry.target && (
                       <span className="block text-xs font-medium text-amber-500">
-                        {entry.target}
+                        {entry.action}
+                        {entry.target !== entry.action ? ` · ${entry.target}` : ""}
                       </span>
                     )}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
-                    {entry.group}
+                    {entry.groupName ?? "—"}
                   </TableCell>
                 </TableRow>
               )

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BookOpen, LogOut, TerminalSquare } from "lucide-react"
+import { BookOpen, LogOut, ScrollText, TerminalSquare } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { notify } from "@shared/lib/toast"
 import { Avatar, AvatarFallback } from "@shared/components/ui/avatar"
@@ -33,6 +33,13 @@ const NAV = [
     icon: TerminalSquare,
     hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
     active: "bg-emerald-500/15 text-emerald-400",
+  },
+  {
+    label: "Bitácora",
+    href: "/audit-log",
+    icon: ScrollText,
+    hover: "hover:bg-sky-500/15 hover:text-sky-400",
+    active: "bg-sky-500/15 text-sky-400",
   },
 ]
 
