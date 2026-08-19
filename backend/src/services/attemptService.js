@@ -79,4 +79,31 @@ async function lastAttempt({ slug, studentUserId }) {
   }
 }
 
-module.exports = { recordAttempt, passedSlugs, lastAttempt }
+/** Todos los intentos del estudiante en una actividad del temario, del mas
+ * reciente al mas antiguo, para la tabla de intentos de la vista del estudiante. */
+async function listAttempts({ slug, studentUserId }) {
+  const activity = await prisma.activityDefinition.findUnique({
+    where: { slug },
+    select: { id: true },
+  })
+  if (!activity) throw new NotFoundError("Actividad no encontrada")
+
+  const attempts = await prisma.activityAttempt.findMany({
+    where: { activity_definition_id: activity.id, student_id: studentUserId },
+    orderBy: { created_at: "desc" },
+    select: {
+      attempt_number: true,
+      passed: true,
+      score: true,
+      created_at: true,
+    },
+  })
+  return attempts.map((a) => ({
+    attemptNumber: a.attempt_number,
+    passed: a.passed,
+    score: a.score,
+    createdAt: a.created_at.toISOString(),
+  }))
+}
+
+module.exports = { recordAttempt, passedSlugs, lastAttempt, listAttempts }

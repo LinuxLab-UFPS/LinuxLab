@@ -66,6 +66,7 @@ export async function getServerSession(): Promise<Session | null> {
         email: payload.email as string,
         name: payload.name as string,
         role: payload.role as Role,
+        code: (payload.code as string | null | undefined) ?? null,
       },
     }
   } catch {

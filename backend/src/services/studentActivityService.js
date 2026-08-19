@@ -162,6 +162,7 @@ async function getForStudent(studentUserId, groupActivityId) {
     attempts: attempts.map((attempt) => ({
       attemptNumber: attempt.attempt_number,
       createdAt: attempt.created_at.toISOString(),
+      passed: attempt.passed,
       score: attempt.score,
     })),
     lastAttempt: attempts[0]
@@ -300,6 +301,7 @@ async function checkForStudent(studentUserId, groupActivityId) {
     attempts: attempts.map((attempt) => ({
       attemptNumber: attempt.attempt_number,
       createdAt: attempt.created_at.toISOString(),
+      passed: attempt.passed,
       score: attempt.score,
     })),
     maxScore: ga.max_score,
@@ -377,7 +379,7 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
 
   const attempts = await prisma.activityAttempt.findMany({
     where: { group_activity_id: ga.id, student_id: studentId },
-    orderBy: { created_at: "asc" },
+    orderBy: { created_at: "desc" },
     select: {
       attempt_number: true,
       passed: true,

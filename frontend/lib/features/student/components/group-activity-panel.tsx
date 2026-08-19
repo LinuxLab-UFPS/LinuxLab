@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck, XCircle } from "lucide-react"
+import { ArrowLeft, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
@@ -15,7 +15,7 @@ import {
 } from "@/lib/features/student/group-activities"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import { notify } from "@shared/lib/toast"
-import { formatBogotaDateTime } from "@/lib/utils/dates"
+import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 
 
 /**
@@ -26,13 +26,11 @@ import { formatBogotaDateTime } from "@/lib/utils/dates"
  * Al abrir, la terminal navega a esa carpeta (la cola del seam cubre el caso
  * de que la conexión aún no esté lista).
  */
-export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDetail; userId: string }) {
+export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupActivityDetail; userId: string }) {
   const [results, setResults] = useState<GroupCheckResult[] | null>(
     detail.lastAttempt?.results ?? null,
   )
-  const [score, setScore] = useState(detail.lastAttempt?.score ?? 0)
   const [passed, setPassed] = useState(detail.lastAttempt?.passed ?? false)
-  const [completed, setCompleted] = useState(detail.completed)
   const [finalScore, setFinalScore] = useState(detail.finalScore)
   const [checking, setChecking] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
@@ -57,9 +55,7 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
     try {
       const outcome = await checkGroupActivity(detail.id)
       setResults(outcome.results)
-      setScore(outcome.score)
       setPassed(outcome.passed)
-      setCompleted(outcome.completed)
       setFinalScore(outcome.finalScore)
       setAttemptsCount(outcome.attemptsCount)
       setAttempts(outcome.attempts)
@@ -78,7 +74,6 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
     try {
       const result = await submitGroupActivity(detail.id)
       setSubmitted(true)
-      setCompleted(true)
       setSubmission({
         id: result.id,
         status: result.status,
@@ -95,7 +90,7 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
     }
   }
 
-  const evaluated = results !== null
+  const hasEntrega = isManual ? !!submission : attempts.length > 0
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
@@ -110,18 +105,14 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
           </Link>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
-          <Tag tone={completed ? "sky" : "neutral"}>
-            {completed
-              ? isManual && submission?.status === "graded"
-                ? `Calificada: ${submission.score}/${detail.maxScore}`
-                : "Completada"
-              : "Sin completar"}
-          </Tag>
-          <Tag tone="neutral">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
-          {detail.evaluationType === "manual" && <Tag tone="amber">Revisión manual</Tag>}
-          {closed && <Tag tone="rose">Vencida</Tag>}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Tag tone="brand">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
+            <Tag tone="brand">
+              {detail.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
+            </Tag>
+          </div>
         </div>
         <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
           <FolderOpen className="h-3.5 w-3.5 shrink-0" />
@@ -138,102 +129,40 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
           <p className="text-sm text-muted-foreground">Sin instrucciones.</p>
         )}
 
-        {(evaluated || detail.lastAttempt || detail.attemptsCount > 0) && (
-          <div className="mt-6 space-y-3">
-            {detail.activityType === "workshop" ? (
-                <p className="text-sm text-foreground">
-                  Calificación obtenida:{" "}
-                  <span className="font-mono font-medium text-foreground">
-                    {finalScore}/{detail.maxScore}
-                  </span>
-                </p>
-            ) : (
-              <p className="text-sm text-foreground">
-                Nota final:{" "}
-                <span className="font-mono font-medium text-foreground">
-                  {finalScore}/{detail.maxScore}
-                </span>
-              </p>
-            )}
+        <div className="mt-6">
+          <StudentInfoTable
+            showIdentity={false}
+            submittedAt={
+              isManual
+                ? (submission?.submittedAt ?? null)
+                : (attempts.length > 0 ? attempts[0].createdAt : null)
+            }
+            statusNode={
+              closed && !hasEntrega
+                ? <Tag tone="rose">Vencida</Tag>
+                : !hasEntrega
+                  ? <Tag tone="muted">Pendiente de entrega</Tag>
+                  : isManual
+                    ? submission?.status === "graded"
+                      ? <Tag tone="emerald">Calificada</Tag>
+                      : <Tag tone="amber">Pendiente de revisión</Tag>
+                    : <Tag tone="emerald">Calificada</Tag>
+            }
+            score={isManual ? (submission?.score ?? null) : (attempts.length > 0 ? finalScore : null)}
+            maxScore={detail.maxScore}
+            feedbackVariant={isManual ? "manual" : "automatic"}
+            feedbackNode={
+              isManual && submission?.feedback
+                ? <p className="whitespace-pre-wrap text-muted-foreground">{submission.feedback}</p>
+                : undefined
+            }
+            checks={isManual ? undefined : (results ?? detail.lastAttempt?.results ?? [])}
+          />
+        </div>
 
-            {results && (
-              <ul className="space-y-1.5">
-                {results.map((row) => (
-                  <li key={row.id} className="flex items-start gap-2.5 text-sm">
-                    {row.passed ? (
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                    ) : (
-                      <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                    )}
-                    <span className="flex-1 text-foreground">{row.detail}</span>
-                    <span className="shrink-0 font-mono text-xs text-muted-foreground">
-                      {row.passed ? row.points : 0}/{row.points}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="space-y-3 text-xs text-muted-foreground">
-              <p>
-                {attemptsCount} {attemptsCount === 1 ? "intento" : "intentos"}
-                {detail.attemptLimit != null &&
-                  ` de ${detail.attemptLimit}${limitReached ? " · límite alcanzado" : ""}`}
-              </p>
-              <div className="overflow-hidden rounded-md border border-border">
-                <table className="w-full text-left">
-                  <thead className="bg-secondary/40 text-[11px] uppercase tracking-wide">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">N. intento</th>
-                      <th className="px-3 py-2 font-medium">Fecha</th>
-                      <th className="px-3 py-2 text-right font-medium">Calificación</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attempts.map((attempt) => (
-                      <tr key={attempt.attemptNumber} className="border-t border-border/60 text-foreground">
-                        <td className="px-3 py-2">{attempt.attemptNumber}</td>
-                        <td className="px-3 py-2">{formatBogotaDateTime(attempt.createdAt)}</td>
-                        <td className="px-3 py-2 text-right font-mono">{attempt.score}/{detail.maxScore}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isManual && submission && (
-          <div className="mt-6 space-y-3">
-            <div className="overflow-hidden rounded-md border border-border">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-secondary/40 text-[11px] uppercase tracking-wide">
-                  <tr>
-                    <th className="px-3 py-2 font-medium">Estado</th>
-                    <th className="px-3 py-2 font-medium">Fecha</th>
-                    <th className="px-3 py-2 text-right font-medium">Calificación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-t border-border/60 text-foreground">
-                    <td className="px-3 py-2">
-                      {submission.status === "graded" ? "Calificada" : "Pendiente"}
-                    </td>
-                    <td className="px-3 py-2">{formatBogotaDateTime(submission.submittedAt)}</td>
-                    <td className="px-3 py-2 text-right font-mono">
-                      {submission.score != null ? `${submission.score}/${detail.maxScore}` : "—"}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            {submission.feedback && (
-              <div className="rounded-md border border-border bg-secondary/20 p-3">
-                <p className="mb-1 text-xs font-medium text-muted-foreground uppercase">Retroalimentación</p>
-                <p className="whitespace-pre-wrap text-sm text-foreground">{submission.feedback}</p>
-              </div>
-            )}
+        {detail.evaluationType === "atomic" && attempts.length > 0 && (
+          <div className="mt-4">
+            <AttemptsTable attempts={attempts} maxScore={detail.maxScore} />
           </div>
         )}
       </div>
@@ -242,9 +171,7 @@ export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDe
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             {isManual ? (
-              submitted ? (
-                <span className="text-sm text-success">Enviada para revisión</span>
-              ) : (
+              !submitted && (
               <ActionButton
                 tone="amber"
                 onClick={handle_submit}
