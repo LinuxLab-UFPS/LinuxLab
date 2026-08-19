@@ -18,7 +18,7 @@ El kernel tiene cinco responsabilidades. Todo lo demás que hace se desprende de
 
 ### 1. Gestión de procesos
 
-Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos. Eso es la **multitarea** (Silberschatz et al., 2021), y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
+Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos. Eso es la **multitarea**, y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
 
 <!-- ILLUSTRATION: kernel-procesos -->
 
@@ -32,13 +32,13 @@ El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cua
 
 ### 3. Sistema de archivos
 
-Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo, porque el kernel se encarga de las diferencias por debajo (NDG, 2024), y por eso el mismo programa funciona igual sin importar dónde estén los datos.
+Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo, porque el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
 
 <!-- ILLUSTRATION: kernel-archivos -->
 
 ### 4. Gestión de dispositivos
 
-El kernel se comunica con el hardware a través de **controladores** (drivers). Cada dispositivo conectado necesita uno que le indique al kernel cómo interactuar con él (Tanenbaum y Bos, 2023). Linux incluye controladores para una enorme cantidad de hardware dentro del propio kernel, y por eso la mayoría de dispositivos funcionan sin instalar software adicional.
+El kernel se comunica con el hardware a través de **controladores** (drivers). Cada dispositivo conectado necesita uno que le indique al kernel cómo interactuar con él. Linux incluye controladores para una enorme cantidad de hardware dentro del propio kernel, y por eso la mayoría de dispositivos funcionan sin instalar software adicional.
 
 <!-- ILLUSTRATION: kernel-dispositivos -->
 

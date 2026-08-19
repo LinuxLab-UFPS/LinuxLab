@@ -17,7 +17,7 @@ Las partes entre corchetes son opcionales: hay comandos que funcionan solo con s
 
 ## Argumentos
 
-Un **argumento** es información que le pasas al comando para que actúe sobre algo específico (NDG, 2024). Por ejemplo, `ls` sin argumentos lista el contenido del directorio actual. Si le das un argumento, lista ese directorio:
+Un **argumento** es información que le pasas al comando para que actúe sobre algo específico. Por ejemplo, `ls` sin argumentos lista el contenido del directorio actual. Si le das un argumento, lista ese directorio:
 
 ```bash
 ls /etc
@@ -45,7 +45,7 @@ El comando recibirá los dos y procesará ambos en orden.
 
 ## Opciones
 
-Las **opciones** modifican el comportamiento del comando (NDG, 2024). Se escriben con un guion antes de la letra:
+Las **opciones** modifican el comportamiento del comando. Se escriben con un guion antes de la letra:
 
 ```bash
 ls -l
@@ -61,7 +61,7 @@ drwxr-xr-x 3 estudiante estudiante 4096 mar 12 11:02 proyectos
 
 La opción `-l` hace que `ls` muestre el listado en formato largo, con información detallada de cada archivo: permisos, propietario, tamaño y fecha. Sin `-l`, solo muestra los nombres.
 
-Las opciones se combinan juntas o separadas, y el resultado es el mismo (NDG, 2024):
+Las opciones se combinan juntas o separadas, y el resultado es el mismo:
 
 ```bash
 ls -l -r
@@ -95,7 +95,7 @@ drwxr-xr-x 3 estudiante estudiante 4.0K mar 12 11:02 proyectos
 
 ## Opciones largas
 
-Algunos comandos, especialmente los más modernos, aceptan opciones en formato de palabra completa precedida por dos guiones (NDG, 2024):
+Algunos comandos, especialmente los más modernos, aceptan opciones en formato de palabra completa precedida por dos guiones:
 
 ```bash
 ls -l --human-readable
@@ -131,7 +131,7 @@ total 142M
 
 Aquí `-lh` son las opciones y `/usr/bin` es el argumento. El resultado es un listado largo con tamaños legibles del directorio `/usr/bin`.
 
-El orden convencional es: primero las opciones, luego los argumentos. La mayoría de comandos lo esperan así (NDG, 2024).
+El orden convencional es: primero las opciones, luego los argumentos. La mayoría de comandos lo esperan así.
 
 ## Resumen
 

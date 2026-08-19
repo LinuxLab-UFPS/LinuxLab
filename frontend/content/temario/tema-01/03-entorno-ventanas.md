@@ -4,7 +4,7 @@ Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos 
 
 La **interfaz gráfica (GUI)** son ventanas, íconos y menús, y el sistema responde a los clics del ratón. Es lo que trae cualquier equipo con Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
 
-La **interfaz de línea de comandos (CLI)** es texto puro. Se escribe la orden y el sistema la ejecuta. La diferencia de fondo está ahí. Al pulsar un ícono es el computador el que le dice al usuario qué puede hacer; al escribir un comando es el usuario quien se lo dice al computador (NDG, 2024).
+La **interfaz de línea de comandos (CLI)** es texto puro. Se escribe la orden y el sistema la ejecuta. La diferencia de fondo está ahí. Al pulsar un ícono es el computador el que le dice al usuario qué puede hacer; al escribir un comando es el usuario quien se lo dice al computador.
 
 <!-- ILLUSTRATION: gui-cli -->
 
@@ -51,9 +51,9 @@ Lo importante no es qué entornos existen, sino que **en Linux la interfaz gráf
 
 ## Por qué aprender CLI aunque haya interfaz gráfica
 
-Para el uso del día a día la interfaz gráfica funciona perfecto, pero tiene límites. Windows y macOS están diseñados para ocultarle al usuario la complejidad de la línea de comandos; la comunidad de Linux hace lo contrario y la reivindica por su potencia y su velocidad (NDG, 2024). Para administrar un servidor, automatizar tareas, manejar archivos en cantidad o entender de verdad qué está haciendo el sistema, la línea de comandos no tiene competencia. Una sola línea reemplaza varios minutos de clics navegando menús, y da un control más preciso y la posibilidad de automatizar con guiones (Shotts, 2026).
+Para el uso del día a día la interfaz gráfica funciona perfecto, pero tiene límites. Windows y macOS están diseñados para ocultarle al usuario la complejidad de la línea de comandos; la comunidad de Linux hace lo contrario y la reivindica por su potencia y su velocidad. Para administrar un servidor, automatizar tareas, manejar archivos en cantidad o entender de verdad qué está haciendo el sistema, la línea de comandos no tiene competencia. Una sola línea reemplaza varios minutos de clics navegando menús, y da un control más preciso y la posibilidad de automatizar con guiones.
 
-La otra ventaja es que los comandos son los mismos en todas partes. El escritorio de Ubuntu se ve diferente al de Fedora, que se ve diferente al de Arch, pero la terminal es idéntica en las tres, así que quien aprende la línea de comandos es productivo casi de inmediato en cualquier distribución, sin perder tiempo en las variaciones de cada entorno gráfico (NDG, 2024).
+La otra ventaja es que los comandos son los mismos en todas partes. El escritorio de Ubuntu se ve diferente al de Fedora, que se ve diferente al de Arch, pero la terminal es idéntica en las tres, así que quien aprende la línea de comandos es productivo casi de inmediato en cualquier distribución, sin perder tiempo en las variaciones de cada entorno gráfico.
 
 En LinuxLab todo el trabajo ocurre en la terminal. No porque la interfaz gráfica no exista, sino porque dominar la terminal es lo que da control real sobre el sistema.
 

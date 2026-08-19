@@ -15,7 +15,7 @@ Linux empezó como el proyecto personal de un estudiante universitario y hoy sos
 
 ## Los orígenes: Unix
 
-En 1969, investigadores de los laboratorios Bell de AT&T desarrollaron **Unix**, el sistema operativo que marcó un antes y un después en la computación. Lo que lo hizo especial no fue lo que podía hacer, sino cómo estaba construido. Al escribirse en lenguaje C podía adaptarse a máquinas distintas con relativa facilidad, mientras que el resto de sistemas de la época estaban atados al hardware para el que fueron escritos. Esa portabilidad lo convirtió en el favorito de universidades, centros de investigación y programadores (NDG, 2024).
+En 1969, investigadores de los laboratorios Bell de AT&T desarrollaron **Unix**, el sistema operativo que marcó un antes y un después en la computación. Lo que lo hizo especial no fue lo que podía hacer, sino cómo estaba construido. Al escribirse en lenguaje C podía adaptarse a máquinas distintas con relativa facilidad, mientras que el resto de sistemas de la época estaban atados al hardware para el que fueron escritos. Esa portabilidad lo convirtió en el favorito de universidades, centros de investigación y programadores.
 
 Unix también introdujo conceptos que hoy se dan por sentados y que reaparecen a lo largo de este laboratorio:
 
@@ -39,18 +39,18 @@ and professional like gnu) for 386(486) AT clones.
 
 Ese "hobby" es hoy el kernel más usado del mundo, y lo que marcó la diferencia fue la licencia. Torvalds publicó el código fuente permitiendo que cualquiera lo estudiara, modificara y redistribuyera, así que programadores de todo el mundo empezaron a corregir errores y añadir funcionalidades sobre el trabajo de los demás.
 
-Aun así, Linux no es UNIX, sino **UNIX-like**. Cumple los requisitos de la especificación y se comporta de manera similar, pero nunca ha pasado la certificación de The Open Group (The Open Group, 2024).
+Aun así, Linux no es UNIX, sino **UNIX-like**. Cumple los requisitos de la especificación y se comporta de manera similar, pero nunca ha pasado la certificación de The Open Group.
 
 ## El proyecto GNU: las herramientas que completaron Linux
 
-Un kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix (NDG, 2024):
+Un kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix:
 
 - **GCC:** el compilador de C que convierte código fuente en programas ejecutables.
 - **Bash:** el intérprete de comandos que usarás en este curso.
 - **Emacs:** un editor de texto extensible que sigue en uso hoy.
 - **Coreutils:** las utilidades básicas del sistema (`ls`, `cp`, `mv`, `cat` y decenas más).
 
-Como el código de GNU era libre, los programadores de Linux pudieron incorporar esas herramientas y completar el sistema. A esa combinación se le llama técnicamente **GNU/Linux**, y es a lo que se refiere casi todo el mundo cuando dice simplemente "Linux", aunque el nombre a secas designa solo el kernel (NDG, 2024).
+Como el código de GNU era libre, los programadores de Linux pudieron incorporar esas herramientas y completar el sistema. A esa combinación se le llama técnicamente **GNU/Linux**, y es a lo que se refiere casi todo el mundo cuando dice simplemente "Linux", aunque el nombre a secas designa solo el kernel.
 
 ---
 

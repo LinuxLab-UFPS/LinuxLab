@@ -6,7 +6,7 @@ La **línea de comandos** es un sistema de entrada de texto donde se le indica a
 
 ## Cómo acceder a la terminal
 
-En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal (NDG, 2024):
+En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal:
 
 **Terminal de escritorio:** Es una aplicación dentro del entorno gráfico que abre una ventana con la línea de comandos. Según la distribución que uses, la encuentras buscando "terminal" en el menú de aplicaciones. En Ubuntu se llama GNOME Terminal, en KDE es Konsole. Todas hacen lo mismo.
 

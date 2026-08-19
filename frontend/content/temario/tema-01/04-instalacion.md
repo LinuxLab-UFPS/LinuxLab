@@ -2,9 +2,9 @@
 
 Linux no viene en una sola versión. El kernel es el núcleo, pero un sistema operativo completo y usable necesita mucho más: un gestor de paquetes para instalar software, herramientas del sistema, un entorno gráfico, configuraciones por defecto. Quien empaqueta todo eso junto y lo distribuye es lo que se llama una **distribución** (o simplemente "distro"). Además del kernel y las herramientas, incluye lo necesario para preparar el disco, instalar el sistema y, después, añadir o quitar software con un gestor de paquetes (NDG, 2024).
 
-Por eso existen tantas. Cada distribución toma el mismo kernel y lo combina con diferentes herramientas, filosofías y públicos objetivo. Casi todas las que se usan hoy descienden de tres troncos: Red Hat, Debian y Slackware. La diferencia más visible entre ellos es el gestor de paquetes (NDG, 2024). Ubuntu apunta a la facilidad de uso. Fedora va hacia desarrolladores que quieren lo más reciente. Arch es para quien quiere construir y entender cada parte del sistema. Hay distros para servidores, para equipos viejos, para privacidad, para diseño gráfico, para gaming.
+Por eso existen tantas. Cada distribución toma el mismo kernel y lo combina con diferentes herramientas, filosofías y públicos objetivo. Casi todas las que se usan hoy descienden de tres troncos: Red Hat, Debian y Slackware. La diferencia más visible entre ellos es el gestor de paquetes. Ubuntu apunta a la facilidad de uso. Fedora va hacia desarrolladores que quieren lo más reciente. Arch es para quien quiere construir y entender cada parte del sistema. Hay distros para servidores, para equipos viejos, para privacidad, para diseño gráfico, para gaming.
 
-Los comandos de este laboratorio funcionan igual en todas ellas. La terminal es la misma, y esa es la razón por la que aprenderla rinde en cualquier distribución (NDG, 2024; Shotts, 2026).
+Los comandos de este laboratorio funcionan igual en todas ellas. La terminal es la misma, y esa es la razón por la que aprenderla rinde en cualquier distribución (Shotts, 2026).
 
 ## El proceso de instalación
 
