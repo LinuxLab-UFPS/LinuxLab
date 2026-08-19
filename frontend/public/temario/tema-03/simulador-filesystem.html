@@ -1,4 +1,5 @@
 <!doctype html>
+<meta charset="utf-8">
 <title>Simulador de Directorios · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
 <link rel="stylesheet" href="/temario/comun/claro.css">
@@ -57,6 +58,7 @@ body{
 #badge-touch{color:var(--blue);border-color:var(--blue);background:rgba(88,166,255,.1)}
 #badge-hidden{color:var(--orange);border-color:var(--orange);background:rgba(232,128,58,.1)}
 .tree-wrap{flex:1;position:relative;overflow:hidden;min-height:0}
+html.claro .win{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27,31,36,.16)}
 #svg{width:100%;height:100%;display:block}
 .wm{position:absolute;bottom:14px;right:16px;font-size:12px;color:var(--red);opacity:.16;letter-spacing:.08em;font-weight:700;pointer-events:none;}
 
@@ -64,26 +66,61 @@ body{
 #nice{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .25s;z-index:10;}
 #nice.show{opacity:1}
 #nice-txt{font-size:90px;font-weight:900;letter-spacing:-.02em;color:var(--green-tinta);filter:drop-shadow(0 0 28px rgba(46,204,113,.95)) drop-shadow(0 0 70px rgba(46,204,113,.45));}
+/* En claro los dos resplandores verdes sobre fondo claro se comen la palabra:
+   se cambian por un halo blanco, que la despega del arbol sin lavarla. */
+html.claro #nice-txt{filter:none;text-shadow:0 0 18px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9),0 2px 10px rgba(255,255,255,.8)}
 @keyframes nice-pop{0%{transform:scale(.45);opacity:0}65%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
 #nice.show #nice-txt{animation:nice-pop .38s ease-out forwards}
 @keyframes nice-out{0%{transform:scale(1);opacity:1}100%{transform:scale(1.25);opacity:0}}
 #nice.hide #nice-txt{animation:nice-out .3s ease-in forwards}
 
 /* MODE overlay (BONUS / TOUCH / OCULTO) */
+/* Sin velo detras. Era un rgba oscuro fijo, y sobre el arbol claro se veia
+   como una pantalla gris apagada encima de todo. El rotulo se lee por su
+   propio color y su halo, que es lo que tiene que llamar la atencion. */
 #mode-overlay{
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  background:rgba(10,13,18,.85);
   pointer-events:none;opacity:0;transition:opacity .3s;z-index:15;
 }
+/* El color del rotulo sale de aqui y no del guion: asi en claro puede usar la
+   tinta —el mismo tono, mas oscuro— en vez del neon, que sobre fondo claro no
+   se leia. El halo blanco hace el resto. */
+#mode-overlay[data-modo="bonus"]  #mo-name{color:var(--gold-tinta);  filter:drop-shadow(0 0 28px rgba(255,196,0,.6))}
+#mode-overlay[data-modo="touch"]  #mo-name{color:var(--blue-tinta);  filter:drop-shadow(0 0 28px rgba(88,166,255,.6))}
+#mode-overlay[data-modo="hidden"] #mo-name{color:var(--orange-tinta);filter:drop-shadow(0 0 28px rgba(232,128,58,.6))}
+html.claro #mo-name{text-shadow:0 0 18px rgba(255,255,255,.95),0 0 4px rgba(255,255,255,.9)}
+html.claro #mo-sub{text-shadow:0 0 10px rgba(255,255,255,.95)}
 #mode-overlay.show{opacity:1}
 #mo-name{font-size:68px;font-weight:900;letter-spacing:-.02em;}
 #mode-overlay.show #mo-name{animation:nice-pop .38s ease-out forwards}
-#mo-sub{font-size:12px;color:var(--text);opacity:.55;letter-spacing:.12em;text-transform:uppercase;}
+#mo-sub{font-size:12px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;font-weight:700;}
 
+/* ---------- disposicion ----------
+   La terminal a la izquierda y el arbol a la derecha, uno al lado del otro. La
+   terminal estaba antes en una tira al pie de la pagina, ancha y baja, y el
+   arbol ocupaba todo lo de arriba: se escribia abajo del todo y el resultado
+   pasaba arriba, con media pantalla de por medio. Puestos en columnas se miran
+   los dos a la vez, y es ademas la misma ventana con marco que usan los
+   simuladores de vi y de compresion. */
+.stage{flex:1;display:flex;align-items:stretch;gap:22px;padding:20px 24px 24px;min-height:0}
+/* La ventana va centrada en su mitad, en los dos ejes. Pegada a la izquierda
+   dejaba un dedo de margen contra el borde y un palmo contra el arbol, que se
+   centra en la suya; asi los dos huecos salen iguales sin depender de por donde
+   caiga el dibujo del arbol, que cambia con cada partida.
+
+   El centrado vertical no puede ir en `.stage`: alli le quita el estiron a la
+   columna del arbol, y su SVG mide al 100% del alto de esa caja. */
+.term-col{display:flex;flex-direction:column;justify-content:center;align-items:center;width:42%;flex-shrink:0;min-height:0}
+
+/* Cuadrada y centrada, no de arriba abajo: estirada al alto de la pagina era
+   una columna larguisima con tres lineas escritas arriba y el resto vacio. */
+.win{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;width:min(30rem,100%);height:min(30rem,100%)}
+.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-dot{width:11px;height:11px;border-radius:50%}
 /* La terminal corre de arriba abajo: el prompt va detras de la ultima linea
    escrita, no clavado al fondo del recuadro. */
-.term{background:var(--surf);border-top:1px solid var(--border);flex-shrink:0;height:170px;padding:10px 16px 12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.console{background:#12161d;flex:1;min-height:0;padding:12px 14px;overflow-y:auto}
 .hist{font-size:13px;line-height:1.65;}
 .tl{color:var(--text)}
 .tl.cmd{color:var(--muted)}
@@ -132,21 +169,32 @@ html.claro .wm{opacity:.3}
 <!-- La barra la arma barra.js con las piezas que este simulador declara. -->
 <div class="hdr"></div>
 
-<div class="tree-wrap">
-  <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
-  <div class="wm">LinuxLab</div>
-  <div id="nice"><span id="nice-txt">NICE!</span></div>
-  <div id="mode-overlay" class="zona-oscura">
-    <div id="mo-name"></div>
-    <div id="mo-sub"></div>
+<div class="stage">
+  <div class="term-col">
+    <div class="win zona-oscura">
+      <div class="win-bar">
+        <span class="win-dot" style="background:#FF5F56"></span>
+        <span class="win-dot" style="background:#FFBD2E"></span>
+        <span class="win-dot" style="background:#27C93F"></span>
+      </div>
+      <div class="console" id="term">
+        <div class="hist" id="hist"></div>
+        <div class="inp-row">
+          <span class="prompt" id="pr">estudiante@linuxlab:~$</span>
+          <input class="inp" id="inp" type="text" autocomplete="off" spellcheck="false" autofocus>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="term zona-oscura" id="term">
-  <div class="hist" id="hist"></div>
-  <div class="inp-row">
-    <span class="prompt" id="pr">estudiante@linuxlab:~$</span>
-    <input class="inp" id="inp" type="text" autocomplete="off" spellcheck="false" autofocus>
+  <div class="tree-wrap">
+    <svg id="svg" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="wm">LinuxLab</div>
+    <div id="nice"><span id="nice-txt">NICE!</span></div>
+    <div id="mode-overlay">
+      <div id="mo-name"></div>
+      <div id="mo-sub"></div>
+    </div>
   </div>
 </div>
 
@@ -179,6 +227,7 @@ html.claro .wm{opacity:.3}
 // ─── BARRA ─────────────────────────────────────────────────────────────────
 
 const barra = Barra.montar({
+  titulo: 'Traves&iacute;a del &Aacute;rbol',
   extras:
     '<div class="rbadge" id="badge-bonus">&#9733; BONUS</div>' +
     '<div class="rbadge" id="badge-touch">&#10022; TOUCH</div>' +
@@ -195,38 +244,57 @@ const barra = Barra.montar({
 
 // ─── FILESYSTEMS ───────────────────────────────────────────────────────────
 
+/* Los arboles son estrechos y hondos a proposito.
+ *
+ * Antes colgaban cuatro directorios de la raiz y bajaban dos niveles: salia un
+ * arbol mas ancho que alto que se comia la pantalla de lado a lado y dejaba
+ * todo el objetivo a la vista de un vistazo, sin nada que recorrer. Ahora de /
+ * salen exactamente dos ramas —la de casa, donde empiezas, y la del sistema,
+ * donde estan los objetivos— y se baja hasta cinco niveles. El arbol se lee de
+ * arriba abajo, que es como se lee una ruta, y cabe en la mitad derecha de la
+ * pantalla dejandole la otra mitad a la terminal.
+ *
+ * Cada uno tiene que cumplir dos cosas: llevar /home/estudiante, que es donde
+ * arranca la partida, y ofrecer al menos cinco destinos fuera de casa con dos
+ * niveles o mas, que son los que se sortean como objetivos. */
+/* Los arboles son estrechos y hondos a proposito.
+ *
+ * Antes colgaban cuatro directorios de la raiz y bajaban dos niveles: salia un
+ * arbol mas ancho que alto que se comia la pantalla de lado a lado y dejaba
+ * todo el objetivo a la vista de un vistazo, sin nada que recorrer. Ahora de /
+ * salen tres ramas —la de casa, donde empiezas, y dos del sistema, donde estan
+ * los objetivos— y se baja hasta cuatro niveles mas. El arbol se lee de arriba
+ * abajo, que es como se lee una ruta, y cabe en la mitad derecha de la pantalla
+ * dejandole la otra mitad a la terminal.
+ *
+ * Cada uno tiene que cumplir dos cosas: llevar /home/estudiante, que es donde
+ * arranca la partida, y ofrecer al menos cinco destinos fuera de casa con dos
+ * niveles o mas, que son los que se sortean como objetivos. */
 const FS = [
   {name:'/',children:[
     {name:'home',children:[{name:'estudiante',children:[
-      {name:'Documentos',children:[{name:'tesis',children:[]},{name:'apuntes',children:[]}]},
-      {name:'Descargas',children:[]},
-      {name:'proyectos',children:[{name:'linux',children:[]},{name:'web',children:[]}]}
-    ]}]},
-    {name:'etc',children:[{name:'nginx',children:[]},{name:'ssh',children:[]}]},
-    {name:'var',children:[{name:'log',children:[]},{name:'www',children:[]}]},
-    {name:'usr',children:[{name:'bin',children:[]},{name:'local',children:[{name:'bin',children:[]}]}]}
-  ]},
-  {name:'/',children:[
-    {name:'home',children:[{name:'estudiante',children:[
-      {name:'codigo',children:[{name:'python',children:[]},{name:'bash',children:[]}]},
-      {name:'musica',children:[]},
-      {name:'config',children:[{name:'vim',children:[]},{name:'git',children:[]}]}
-    ]}]},
-    {name:'opt',children:[{name:'apps',children:[]},{name:'tools',children:[]}]},
-    {name:'etc',children:[{name:'cron.d',children:[]},{name:'ssh',children:[]}]},
-    {name:'srv',children:[{name:'www',children:[{name:'html',children:[]},{name:'assets',children:[]}]}]}
-  ]},
-  {name:'/',children:[
-    {name:'home',children:[{name:'estudiante',children:[
       {name:'proyectos',children:[
-        {name:'api',children:[{name:'src',children:[]},{name:'tests',children:[]}]},
-        {name:'web',children:[{name:'public',children:[]},{name:'src',children:[]}]}
-      ]},
-      {name:'notas',children:[]}
+        {name:'api',children:[]},
+        {name:'web',children:[]}
+      ]}
     ]}]},
-    {name:'etc',children:[{name:'apt',children:[]},{name:'hosts.d',children:[]}]},
-    {name:'var',children:[{name:'log',children:[{name:'syslog',children:[]},{name:'apache2',children:[]}]}]},
-    {name:'opt',children:[{name:'conda',children:[{name:'envs',children:[]}]},{name:'local',children:[]}]}
+    {name:'var',children:[{name:'log',children:[{name:'nginx',children:[]}]}]},
+    {name:'etc',children:[{name:'nginx',children:[{name:'sites',children:[{name:'activos',children:[]}]}]}]}
+  ]},
+  {name:'/',children:[
+    {name:'home',children:[{name:'estudiante',children:[
+      {name:'musica',children:[]},
+      {name:'codigo',children:[{name:'python',children:[]}]}
+    ]}]},
+    {name:'opt',children:[{name:'tools',children:[{name:'bin',children:[]}]}]},
+    {name:'srv',children:[{name:'www',children:[{name:'html',children:[{name:'css',children:[]}]}]}]}
+  ]},
+  {name:'/',children:[
+    {name:'home',children:[{name:'estudiante',children:[
+      {name:'documentos',children:[{name:'tesis',children:[]}]}
+    ]}]},
+    {name:'etc',children:[{name:'ssh',children:[{name:'claves',children:[]}]}]},
+    {name:'usr',children:[{name:'local',children:[{name:'share',children:[{name:'fonts',children:[]}]}]}]}
   ]}
 ];
 
@@ -421,7 +489,7 @@ function init(){
   root=clone(FS[Math.floor(Math.random()*FS.length)]);
   linkParents(root);
   current=byPath(root,HOME)||root;
-  score=0; updateScore();
+  score=0;
   completedSpecial=new Set();
 
   const nonHomeCands=shuffle(allPaths(root).filter(p=>!p.startsWith('/home')&&p!=='/'&&p.split('/').length>=3));
@@ -514,7 +582,6 @@ function setupHidden(){
 
 // ─── SCORING ───────────────────────────────────────────────────────────────
 
-function updateScore(){barra.puntos(score);}
 
 // ─── ACTIVATE ROUND ────────────────────────────────────────────────────────
 
@@ -532,7 +599,7 @@ function activateRound(){
 
   if(type==='bonus'){
     document.getElementById('badge-bonus').classList.add('show');
-    showModeOverlay('BONUS','#FFC400','llega al destino en un solo cd');
+    showModeOverlay('BONUS','bonus','llega al destino en un solo cd');
     log('bonus','★  BONUS: llega al destino con un solo cd desde donde estás');
     log('bonus','   ej: cd /ruta/absoluta/al/destino');
 
@@ -540,26 +607,27 @@ function activateRound(){
     document.getElementById('badge-touch').classList.add('show');
     touchInfo={file:shuffle([...TOUCH_FILES])[0]};
     current=root;
-    showModeOverlay('TOUCH','#58A6FF','crea el archivo con ruta absoluta');
+    showModeOverlay('TOUCH','touch','crea el archivo con ruta absoluta');
     log('touch',`✦  TOUCH: desde /, crea "${touchInfo.file}" en el directorio indicado`);
     log('touch',`   Usa touch con ruta absoluta. No uses cd`);
 
   } else if(type==='hidden'){
     document.getElementById('badge-hidden').classList.add('show');
     setupHidden();
-    showModeOverlay('OCULTO','#E8803A','sigue las pistas con ls -a');
+    showModeOverlay('OCULTO','hidden','sigue las pistas con ls -a');
     log('hidden','?  OCULTO: hay un archivo oculto en algún directorio del sistema');
     log('hidden','   Usa ls -a para buscar pistas. Empieza desde / y sigue las pistas');
   }
 }
 
-function showModeOverlay(name,color,sub,dur){
+/* `modo` es la clave del modo, no un color: el color lo pone el CSS, que es
+   quien sabe si estamos en claro o en oscuro. */
+function showModeOverlay(name,modo,sub,dur){
   const el=document.getElementById('mode-overlay');
   const nm=document.getElementById('mo-name');
   const sb=document.getElementById('mo-sub');
+  el.dataset.modo=modo;
   nm.textContent=name;
-  nm.style.color=color;
-  nm.style.filter=`drop-shadow(0 0 28px ${color}99)`;
   sb.textContent=sub||'';
   el.classList.add('show');
   setTimeout(()=>el.classList.remove('show'),dur||3200);
@@ -574,7 +642,7 @@ function completeObjective(wasNiceArg){
     ? true
     : (type==='bonus'&&roundState.cdCount===1);
   const pts=isNice?100:25;
-  score+=pts; updateScore();
+  score+=pts;
 
   if(isNice){
     completedSpecial.add(objIdx);
@@ -738,7 +806,6 @@ function doLsHidden(){
     }
   } else {
     score=Math.max(0,score-20);
-    updateScore();
     log('',[...dirs,...regularFiles].join('   ')||'(vacío)');
     log('err','  sin pistas aqui  -20 pts');
   }
@@ -816,9 +883,7 @@ function refresh(){
     type==='touch'&&touchInfo ? `Crea "${touchInfo.file}" en  ${objectives[objIdx]}` :
     type==='hidden'            ? `Encuentra el archivo oculto` :
                                  `Navega a  ${objectives[objIdx]}`;
-  barra.objetivo(tgtLabel,objIdx,objectives.length);
-  barra.marcas(objectives.map((_,i)=>
-    i<objIdx?(completedSpecial.has(i)?'done-gold':'done'):i===objIdx?'cur':''));
+  barra.objetivo(tgtLabel,objIdx);
 }
 
 // ─── ANIMATIONS ────────────────────────────────────────────────────────────
