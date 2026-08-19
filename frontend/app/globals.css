@@ -192,6 +192,12 @@
   --color-table-line: var(--table-line);
   --color-section: var(--section);
   --color-terminal-surface: var(--terminal-surface);
+  /* Registrado aqui y no usado como `bg-[var(--ilus-panel)]`: Tailwind v4 no
+     emite una utilidad arbitraria con var() si no se le dice de que tipo es, y
+     esa clase se quedaba sin generar. El panel se quedaba entonces sin fondo y
+     heredaba el de la tarjeta: en oscuro no se notaba, porque la tarjeta ya es
+     oscura, y en claro salia blanco con el trazo claro encima. */
+  --color-ilus-panel: var(--ilus-panel);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);

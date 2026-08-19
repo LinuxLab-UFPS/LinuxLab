@@ -52,7 +52,7 @@ export function ContentCard({
           globals.css), asi que en oscuro es el mismo color que el fondo de la
           pagina y en claro es el bloque que parte la tarjeta en dos. El dibujo
           se acerca al pasar el raton. */}
-      <div className="overflow-hidden border-b border-border bg-[var(--ilus-panel)]">
+      <div className="overflow-hidden border-b border-border bg-ilus-panel">
         <div className="flex aspect-[16/10] items-center justify-center p-6 transition-transform duration-500 ease-out group-hover:scale-110">
           <Illustration />
         </div>
