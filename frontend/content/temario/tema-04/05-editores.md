@@ -2,13 +2,13 @@
 
 Los comandos vistos hasta ahora crean archivos y muestran su contenido, pero no permiten modificarlo. Para eso existen los editores de texto, programas que funcionan dentro de la propia terminal.
 
-Linux incluye varios. `nano` es el más sencillo y muestra sus atajos en pantalla. `vi` (*visual editor*) es el que está presente en prácticamente cualquier sistema Unix, incluidos servidores mínimos donde no hay nada más instalado, y es el que se usa en esta asignatura.
+Linux incluye varios. `nano` es el más sencillo y muestra sus atajos en pantalla. `vi` (*visual editor*) es el que está presente en prácticamente cualquier sistema Unix, incluidos servidores mínimos donde no hay nada más instalado, y es el que se usa en esta asignatura (NDG, 2024).
 
 En este laboratorio `vi` ejecuta **Vim** (*Vi improved*), la versión moderna del editor original.
 
 ## Los modos
 
-`vi` no funciona como un editor de escritorio. Las teclas no escriben siempre: su efecto depende del modo activo. Entender esto antes de tocar el teclado evita la mayor parte de la frustración inicial.
+`vi` no funciona como un editor de escritorio. Las teclas no escriben siempre: su efecto depende del modo activo (Vim Project, 2026). Entender esto antes de tocar el teclado evita la mayor parte de la frustración inicial.
 
 | Modo | Para qué sirve | Cómo se entra |
 |---|---|---|
@@ -154,7 +154,7 @@ Desde el modo normal, `/` seguido de un texto busca hacia adelante:
 
 ## nano como alternativa
 
-`nano` no tiene modos: al abrirlo se escribe directamente y los atajos aparecen listados al pie de la pantalla, donde `^X` significa <kbd>Ctrl</kbd> + <kbd>X</kbd>.
+`nano` no tiene modos: al abrirlo se escribe directamente y los atajos aparecen listados al pie de la pantalla, donde `^X` significa <kbd>Ctrl</kbd> + <kbd>X</kbd> (Free Software Foundation, 2026).
 
 | Atajo | Efecto |
 |---|---|
@@ -212,6 +212,6 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
-- Vim documentation. vimdoc.sourceforge.net
+- Free Software Foundation. (2026). *GNU nano manual* (versión 9.2). https://www.nano-editor.org/dist/latest/nano.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Vim Project. (2026). *Vim user manual* (versión 9.2). https://vimhelp.org/usr_toc.txt.html
