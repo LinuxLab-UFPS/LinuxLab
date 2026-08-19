@@ -1,13 +1,19 @@
 import type { Role } from "./auth"
 
 export interface AuditEntry {
-  id: number
+  id: string
   timestamp: string
-  userName: string
-  email: string
-  role: Role
-  group: string
+  userId: string
+  userName: string | null
+  email: string | null
+  role: Role | null
+  eventType: string
+  /** Etiqueta corta legible del tipo de evento (para la UI). */
   action: string
-  /** Objeto sobre el que se actuó (actividad, tema...). Se resalta aparte. */
-  target?: string
+  /** Frase legible completa, redactada al momento del evento. */
+  message: string
+  target?: string | null
+  groupId?: string | null
+  groupName?: string | null
+  metadata?: unknown
 }

@@ -14,7 +14,8 @@ export type {
   SubmissionDetail,
   SubmissionGrade,
 } from "@/lib/models/activities"
-export type { AuditEntry } from "@/lib/models/audit"
+import type { AuditEntry } from "@/lib/models/audit"
+export { type AuditEntry }
 export type {
   CreateGroupInput,
   Enrollment,
@@ -40,3 +41,21 @@ export type {
   ProvisioningStatus,
 } from "@/lib/models/provisioning"
 export type { EnrollmentStudent } from "@/lib/models/auth"
+
+export interface AuditFilters {
+  eventType?: string
+  groupId?: string
+  from?: string
+  to?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+export interface AuditListResult {
+  entries: AuditEntry[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
