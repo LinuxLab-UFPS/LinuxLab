@@ -1,12 +1,12 @@
 ## Expresiones regulares
 
-Hasta ahora `grep` ha buscado texto exacto. Una expresión regular describe una forma en lugar de un texto fijo: líneas que empiezan por cierta palabra, que terminan de cierta manera o que contienen un número.
+Hasta ahora `grep` ha buscado texto exacto. Una expresión regular describe una forma en lugar de un texto fijo (NDG, 2024): líneas que empiezan por cierta palabra, que terminan de cierta manera o que contienen un número.
 
 Una expresión regular se escribe siempre entre comillas simples. Sin ellas, el shell interpreta algunos símbolos antes de que `grep` los reciba y la búsqueda deja de ser la que se escribió.
 
 ## Un carácter cualquiera
 
-El punto representa un carácter, el que sea.
+El punto representa un carácter, el que sea (Free Software Foundation, 2025).
 
 ```bash
 grep 'acta.txt' listado.txt
@@ -153,6 +153,5 @@ grep -E '[0-9]{4}' matriculas.txt
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 19: "Regular Expressions". linuxcommand.org
-- GNU Grep Manual, sección "Regular Expressions". gnu.org/software/grep/manual
+- Free Software Foundation. (2025). *GNU grep manual* (versión 3.12). https://www.gnu.org/software/grep/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

@@ -1,6 +1,6 @@
 ## Buscar dentro de los archivos
 
-Linux tiene dos comandos de búsqueda y cada uno responde una pregunta distinta.
+Linux tiene dos comandos de búsqueda y cada uno responde una pregunta distinta (Free Software Foundation, 2025).
 
 | Comando | Pregunta que responde |
 |---|---|
@@ -48,7 +48,7 @@ Escrito sin comillas, `grep sin memoria bitacora.txt` buscaría la palabra `sin`
 
 ## Contar las coincidencias
 
-La opción `-c` devuelve cuántas líneas coinciden, en lugar de mostrarlas.
+La opción `-c` devuelve cuántas líneas coinciden, en lugar de mostrarlas (NDG, 2024).
 
 ```bash
 grep -c bash /etc/passwd
@@ -211,6 +211,5 @@ Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la pa
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 19: "Regular Expressions". linuxcommand.org
-- GNU Grep Manual. gnu.org/software/grep/manual
+- Free Software Foundation. (2025). *GNU grep manual* (versión 3.12). https://www.gnu.org/software/grep/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

@@ -1,6 +1,6 @@
 ## Buscar archivos con find
 
-`find` busca archivos y directorios. No lee lo que hay dentro: los localiza por su nombre, su tipo, su tamaño o su fecha, y escribe la ruta de cada uno.
+`find` busca archivos y directorios. No lee lo que hay dentro: los localiza por su nombre, su tipo, su tamaño o su fecha, y escribe la ruta de cada uno (Free Software Foundation, 2026).
 
 Recibe siempre una ruta por donde empezar y busca ahí y en todo lo que cuelga de esa ruta. Sin más condiciones, devuelve todo lo que encuentra.
 
@@ -69,7 +69,7 @@ Es la forma habitual de averiguar qué está ocupando el espacio de una cuenta.
 
 ## Por fecha
 
-`-mtime` cuenta en días desde la última modificación, con los mismos signos. Lo modificado en las últimas veinticuatro horas:
+`-mtime` cuenta en días desde la última modificación, con los mismos signos (DevOps Daily, 2025). Lo modificado en las últimas veinticuatro horas:
 
 ```bash
 find ~/actividades -type f -mtime -1
@@ -168,5 +168,5 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 
 **Fuentes**
 
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 17: "Searching for Files". linuxcommand.org
-- GNU Findutils Manual. gnu.org/software/findutils/manual
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- Free Software Foundation. (2026). *GNU findutils manual* (versión 4.11). https://www.gnu.org/software/findutils/manual/
