@@ -1,0 +1,54 @@
+{
+  "id": "tema-08",
+  "number": 8,
+  "title": "Usuarios y grupos",
+  "description": "Quién es uno para el sistema, dónde guarda esa información y cómo se administran las cuentas y los grupos",
+  "subtopics": [
+    {
+      "id": "identidad",
+      "title": "Quién es uno para el sistema",
+      "file": "01-identidad.md"
+    },
+    {
+      "id": "passwd-y-group",
+      "title": "Dónde se guarda esa información",
+      "file": "02-passwd-y-group.md"
+    },
+    {
+      "id": "cuentas",
+      "title": "Administrar cuentas y grupos",
+      "file": "03-cuentas.md"
+    },
+    {
+      "id": "trabajo-en-grupo",
+      "title": "Compartir archivos con un grupo",
+      "file": "04-trabajo-en-grupo.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "link",
+      "title": "passwd(5), group(5) y shadow(5)",
+      "url": "https://man7.org/linux/man-pages/man5/passwd.5.html",
+      "detail": "man7.org · El formato exacto de los tres archivos, campo por campo"
+    },
+    {
+      "type": "link",
+      "title": "useradd(8) y usermod(8)",
+      "url": "https://man7.org/linux/man-pages/man8/useradd.8.html",
+      "detail": "man7.org · Todas las opciones de creación y modificación de cuentas"
+    },
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 9: dueño, grupo y permisos · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "User and Group Management",
+      "url": "https://devops-daily.com/guides/introduction-to-linux/06-user-management",
+      "detail": "devops-daily.com · Recorrido práctico por los comandos de administración"
+    }
+  ]
+}

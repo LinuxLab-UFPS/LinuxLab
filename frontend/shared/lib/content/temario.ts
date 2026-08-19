@@ -102,11 +102,13 @@ export const syllabus: Topic[] = [
     number: 8,
     slug: "usuarios-y-grupos",
     title: "Usuarios y grupos",
-    description: "passwd, shadow y creación de cuentas con useradd y groupadd.",
+    description:
+      "Quién es uno para el sistema, dónde guarda esa información y cómo se comparten archivos con un grupo.",
     subTopics: [
-      { number: 1, title: "passwd" },
-      { number: 2, title: "shadow" },
-      { number: 3, title: "useradd, groupadd" },
+      { number: 1, title: "Quién es uno para el sistema" },
+      { number: 2, title: "Dónde se guarda esa información" },
+      { number: 3, title: "Administrar cuentas y grupos" },
+      { number: 4, title: "Compartir archivos con un grupo" },
     ],
   },
   {
