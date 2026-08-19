@@ -13,6 +13,7 @@ import {
 import { cn } from "@shared/lib/utils"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import {
+  CATEGORIAS,
   CHEAT_SHEET_SIZE,
   COMMANDS,
   findCommand,
@@ -102,7 +103,11 @@ export function EssentialCommands({ className }: { className?: string }) {
   if (picked === null || learned.length === 0) return null
 
   return (
-    <div className={cn("flex items-start gap-2", className)}>
+    // `items-stretch` + `justify-between`: la columna de botones mide lo que
+    // midan las tarjetas y el «+» se apoya en su mismo bajo. Con `items-start`
+    // los dos botones se quedaban arriba y su borde inferior caia muy por
+    // encima del de las tarjetas, que son mas altas.
+    <div className={cn("flex items-stretch gap-2", className)}>
       {/* La hoja se despliega hacia abajo en vez de aparecer de golpe. La fila
           de la rejilla va de 0fr a 1fr, que es la única forma de animar un alto
           que no se conoce de antemano; el recorte lo hace la caja de dentro. */}
@@ -121,9 +126,8 @@ export function EssentialCommands({ className }: { className?: string }) {
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-1.5">
+      <div className="flex flex-col items-center justify-between gap-1.5">
         <CollapsedPanelButton
-          tone="primary"
           label={hidden ? "Mostrar comandos esenciales" : "Ocultar comandos esenciales"}
           icon={Command}
           onClick={toggleHidden}
@@ -131,7 +135,6 @@ export function EssentialCommands({ className }: { className?: string }) {
         />
         {!hidden && (
           <CollapsedPanelButton
-            tone="primary"
             label="Escoger comandos"
             icon={Plus}
             onClick={() => setPicking(true)}
@@ -168,7 +171,7 @@ function CommandChip({
         {command.name}
         {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
       </p>
-      <p className="mt-1 text-xs leading-snug break-words text-muted-foreground">
+      <p className="mt-0.5 line-clamp-2 text-xs leading-snug break-words text-muted-foreground">
         {command.description}
       </p>
     </>
@@ -176,8 +179,14 @@ function CommandChip({
 
   // `min-w-0`: una celda de rejilla no baja de su contenido por defecto, asi que
   // un comando largo ensanchaba su columna y la tira entera se desbordaba.
+  // El alto va clavado, no lo decide el texto. En una rejilla la fila entera
+  // crece hasta la tarjeta mas alta, asi que una descripcion de dos lineas
+  // engordaba su fila y las categorias salian de alturas distintas. Y son 72px
+  // porque es lo que miden los dos botones apilados de la tira (32 + 6 + 32 =
+  // 70, mas un pelo): asi el bajo de la ultima tarjeta y el del boton «+»
+  // caen en la misma linea.
   const style = cn(
-    "min-w-0 rounded-lg border p-2.5 text-left transition-colors",
+    "flex h-[72px] min-w-0 flex-col justify-center rounded-lg border px-3 py-2 text-left transition-colors",
     selected === false
       ? "border-border bg-transparent hover:border-primary/40"
       : "border-primary/40 bg-primary/10",
@@ -196,12 +205,12 @@ function CommandChip({
 /** El chip de un comando aun no aprendido: se ve, pero no se puede escoger. */
 function LockedChip({ command }: { command: EssentialCommand }) {
   return (
-    <div className="min-w-0 rounded-lg border border-border/60 p-2.5 text-left opacity-45">
+    <div className="flex h-[72px] min-w-0 flex-col justify-center rounded-lg border border-border/60 px-3 py-2 text-left opacity-45">
       <p className="font-mono text-sm font-bold break-words text-muted-foreground">
         {command.name}
         {command.args && <span className="ml-1 font-normal opacity-80">{command.args}</span>}
       </p>
-      <p className="mt-1 text-xs leading-snug break-words text-muted-foreground">
+      <p className="mt-0.5 line-clamp-2 text-xs leading-snug break-words text-muted-foreground">
         {command.description}
       </p>
     </div>
@@ -229,8 +238,6 @@ function CommandPicker({
   onToggle: (name: string) => void
   onOpenChange: (open: boolean) => void
 }) {
-  const pending = COMMANDS.filter((command) => !learned.includes(command))
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Cabecera fija y cuerpo con scroll propio, en vez de un bloque unico
@@ -240,7 +247,7 @@ function CommandPicker({
           misma linea que «Descargar», y no se va a ninguna parte. */}
       <DialogContent
         showCloseButton={false}
-        className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-primary/50 p-0 shadow-[var(--neon-glow-strong)] sm:max-w-3xl"
+        className="flex max-h-[85vh] flex-col gap-0 overflow-hidden border-primary/50 p-0 shadow-[var(--neon-glow-strong)] sm:max-w-5xl"
       >
         <div className="flex shrink-0 items-center gap-3 border-b border-border px-6 py-4">
           <div className="min-w-0 flex-1">
@@ -278,33 +285,37 @@ function CommandPicker({
           </DialogClose>
         </div>
 
+        {/* Por categorias y en su orden, no por "aprendidos" y "pendientes".
+            Quien abre esto busca como hacer algo —copiar un archivo, buscar
+            texto—, no repasar que lecciones lleva leidas; con el corte anterior
+            el mismo grupo salia partido en dos sitios de la lista. Lo que aun
+            no ha visto se queda en su grupo, apagado y sin poder escogerse. */}
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {learned.map((cmd) => (
-              <CommandChip
-                key={cmd.name}
-                command={cmd}
-                selected={picked.includes(cmd.name)}
-                onClick={() => onToggle(cmd.name)}
-              />
-            ))}
-          </div>
-
-          {pending.length > 0 && (
-            <>
-              <div className="my-5 flex items-center gap-3">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Aún no los has visto
-                </span>
-                <span className="h-px flex-1 bg-border" />
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {pending.map((cmd) => (
-                  <LockedChip key={cmd.name} command={cmd} />
-                ))}
-              </div>
-            </>
-          )}
+          {CATEGORIAS.map((categoria) => {
+            const delGrupo = COMMANDS.filter((cmd) => cmd.categoria === categoria)
+            if (delGrupo.length === 0) return null
+            return (
+              <section key={categoria} className="mb-5 last:mb-0">
+                <h3 className="mb-2 text-xs font-medium text-muted-foreground">
+                  {categoria}
+                </h3>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {delGrupo.map((cmd) =>
+                    learned.includes(cmd) ? (
+                      <CommandChip
+                        key={cmd.name}
+                        command={cmd}
+                        selected={picked.includes(cmd.name)}
+                        onClick={() => onToggle(cmd.name)}
+                      />
+                    ) : (
+                      <LockedChip key={cmd.name} command={cmd} />
+                    ),
+                  )}
+                </div>
+              </section>
+            )
+          })}
         </div>
       </DialogContent>
     </Dialog>
