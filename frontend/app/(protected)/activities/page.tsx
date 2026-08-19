@@ -15,11 +15,11 @@ export default async function ActivitiesPage() {
     <div className="min-h-full pb-24">
       <section className="mx-auto max-w-7xl px-6 pt-16 pb-8">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text text-transparent">
             Actividades
           </span>
         </h1>
-        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-amber-400 to-amber-600" />
+        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-[#ff5470] to-[#C41E3A]" />
         <p className="mt-5 text-lg text-muted-foreground">
           Pon en practica lo aprendido con estas actividades y demuestra tus habilidades en la terminal real.
         </p>

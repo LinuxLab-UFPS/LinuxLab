@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
+import { useTheme } from "next-themes"
 import { Play } from "lucide-react"
 import { LessonNav } from "@shared/components/lesson-nav"
 import { LessonContainer } from "@shared/components/terminal-ui"
@@ -21,21 +22,28 @@ export function SimulatorLesson({
   // Opened straight from a "play" link (e.g. the simulators list), it starts
   // fullscreen instead of showing the launcher card first.
   const searchParams = useSearchParams()
+  const { resolvedTheme, setTheme } = useTheme()
   const [fullscreen, setFullscreen] = useState(() => searchParams.get("play") === "1")
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data?.action === 'close-simulator') setFullscreen(false)
+      // El interruptor de tema de la barra del simulador: lo aplica el sitio,
+      // que es quien guarda la preferencia, y el simulador se entera leyendo la
+      // clase de este documento.
+      if (e.data?.action === 'toggle-theme') {
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [])
+  }, [resolvedTheme, setTheme])
 
   if (fullscreen) {
     return (
       // Sin barra propia: la salida vive dentro del simulador, en la misma
       // barra que lleva el objetivo y los puntos.
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#0D1117]">
+      <div className="fixed inset-0 z-50 flex flex-col bg-background">
         <iframe
           src={src}
           className="flex-1 w-full border-0"

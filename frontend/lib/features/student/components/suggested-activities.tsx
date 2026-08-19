@@ -56,13 +56,14 @@ export function SuggestedActivities({
     <section
       className={cn(
         "flex min-h-0 flex-1 flex-col rounded-xl border bg-background p-5 transition-colors",
-        visible ? "border-border" : "border-transparent",
+        // La misma sombra que el panel de contenidos del curso, y por lo mismo:
+        // en claro el borde solo no despega la caja del fondo.
+        visible ? "border-border shadow-md dark:shadow-none" : "border-transparent",
       )}
     >
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-foreground">Actividades recomendadas</h2>
         <CollapsedPanelButton
-          tone="amber"
           label="Ocultar actividades"
           icon={PanelLeft}
           onClick={onHide}
@@ -71,29 +72,36 @@ export function SuggestedActivities({
       </div>
 
       {pending.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {loading ? "Buscando actividades…" : "No tienes actividades pendientes."}
-        </p>
-      ) : (
-        // El halo de las tarjetas mide 30px de desenfoque y el `scale` del hover
-        // añade un poco más: necesita unos 18px de aire por lado. Pedir
-        // `overflow-y-auto` convierte también el eje horizontal en recorte, así
-        // que la caja se ensancha 20px y se compensa con padding para que la
-        // columna siga alineada donde estaba. Con 12px el halo salía cortado.
-        <div className="-mx-5 -my-2 min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-2">
-          {pending.map((activity) => (
-            <ActivityCard key={activity.slug} activity={activity} compact />
-          ))}
-          {/* Con la lista corta ya se ve todo, así que el enlace sobra. */}
-          {pending.length === SHOWN && (
-            <Link
-              href="/activities"
-              className="block rounded-md bg-amber-500/15 px-3 py-2 text-center text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/25"
-            >
-              Ver más
-            </Link>
-          )}
+        // Centrado en el hueco que queda: la columna mide siempre lo mismo, así
+        // que sin esto el aviso se quedaba solo arriba del todo.
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            {loading ? "Buscando actividades…" : "No hay más actividades disponibles"}
+          </p>
         </div>
+      ) : (
+        <>
+          {/* El halo de las tarjetas mide 30px de desenfoque y el `scale` del
+              hover añade un poco más: necesita unos 18px de aire por lado. Pedir
+              `overflow-y-auto` convierte también el eje horizontal en recorte,
+              así que la caja se ensancha 20px y se compensa con padding para que
+              la columna siga alineada donde estaba. Con 12px el halo salía
+              cortado. */}
+          <div className="-mx-5 -mt-2 min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-2">
+            {pending.map((activity) => (
+              <ActivityCard key={activity.slug} activity={activity} compact />
+            ))}
+          </div>
+          {/* Fuera del área que hace scroll: el enlace es la salida de esta
+              columna y tiene que estar a la vista haya cuatro tarjetas o
+              quince, sin obligar a llegar al final para encontrarlo. */}
+          <Link
+            href="/activities"
+            className="mt-3 block shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Ver más
+          </Link>
+        </>
       )}
     </section>
   )

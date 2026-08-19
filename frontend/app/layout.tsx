@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@shared/components/ui/sonner'
 import { TooltipProvider } from '@shared/components/ui/tooltip'
+import { DevRoleSwitcher } from '@/components/dev/role-switcher'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -49,7 +50,7 @@ export default function RootLayout({
             transicion la declaran ellos con `transition-colors`. */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
@@ -61,6 +62,9 @@ export default function RootLayout({
               </TooltipProvider>
             </QueryProvider>
           </AuthProvider>
+          {/* Fuera de los proveedores a proposito: no depende de la sesion, la
+              lee de una cookie. En produccion no renderiza nada. */}
+          <DevRoleSwitcher />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

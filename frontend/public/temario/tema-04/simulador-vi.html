@@ -1,6 +1,8 @@
 <!doctype html>
+<meta charset="utf-8">
 <title>Retos de vi · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/claro.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 :root {
@@ -73,6 +75,14 @@ body{
 .flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
 .flash.on{opacity:.13}
 .flash.err{background:var(--red)}
+
+/* ---------- modo claro ----------
+   La paleta esta en /temario/comun/claro.css. La ventana del editor se queda
+   entera como estaba —marco, barra de titulo y contenido— porque es una
+   terminal: lleva `zona-oscura` y ni sus cuadros de colores ni el recuadro
+   del cursor cambian. Lo que pasa a claro es lo de alrededor: el fondo, la
+   barra de tiempo y el panel de ayudas. */
+html.claro .hint{box-shadow:0 1px 2px rgba(27,31,36,.05)}
 </style>
 
 <!-- La barra la arma barra.js. -->
@@ -81,7 +91,7 @@ body{
 <div class="stage">
   <div class="term-col">
     <div class="timer"><div class="timer-fill" id="timer"></div></div>
-    <div class="win">
+    <div class="win zona-oscura">
       <div class="win-bar">
         <span class="win-dot" style="background:#FF5F56"></span>
         <span class="win-dot" style="background:#FFBD2E"></span>
@@ -296,33 +306,16 @@ const MODOS = [
 const $ = (id) => document.getElementById(id);
 
 // Reiniciar aqui devuelve a la portada: los retos van contrarreloj y empezar
-// de golpe sin avisar es empezar ya perdiendo. Al lado, el interruptor que
-// baja la velocidad del contrarreloj a la mitad.
+// de golpe sin avisar es empezar ya perdiendo.
 const barra = Barra.montar({
-  acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  titulo: 'Retos de vi',
   ayuda: [
     { clave: 'Deshacer',  tono: 'verde', texto: '¿Borraste algo que no debías? <code>u</code> devuelve el tablero al paso anterior, tantas veces como haga falta.' },
     { clave: 'Tiempo',    tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde ese reto y empieza el siguiente.' },
-    { clave: 'x0.5',      tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de reto.' },
   ],
+  tema: true,
   onReiniciar: () => volverAlInicio(),
 });
-
-// x0.5 es el doble de tiempo para el mismo reto.
-const RITMOS = { normal: 1, calma: 2 };
-let ritmo = "normal";
-
-function cambiarRitmo() {
-  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
-  ritmo = ritmo === "normal" ? "calma" : "normal";
-  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
-  // pegue un salto al cambiar de velocidad a mitad de reto.
-  limite *= factor;
-  restante *= factor;
-  const b = $("ritmo");
-  b.textContent = ritmo === "calma" ? "x0.5" : "x1";
-  b.dataset.activo = String(ritmo === "calma");
-}
 
 let orden = [], reto = 0, puntos = 0;
 let lineas = [], meta = [], fila = 0, col = 0;
@@ -366,13 +359,11 @@ function pintar() {
 function pintarCabecera() {
   const m = orden[reto];
   barra.objetivo(m ? m.goal : "", Math.min(reto, orden.length - 1), orden.length);
-  barra.puntos(puntos);
-  barra.marcas(orden.map((_, i) => (i < reto ? "done" : i === reto ? "cur" : "")));
 }
 
 /* ---------- tiempo ---------- */
 function arrancarTiempo() {
-  limite = orden[reto].segundos * RITMOS[ritmo];
+  limite = orden[reto].segundos;
   restante = limite;
   const barraT = $("timer");
   barraT.className = "timer-fill";
@@ -579,7 +570,6 @@ document.addEventListener("keydown", (e) => {
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
 $("res-exit").addEventListener("click", Barra.salir);
-$("ritmo").addEventListener("click", cambiarRitmo);
 
 barajarModos();
 pintarCabecera();

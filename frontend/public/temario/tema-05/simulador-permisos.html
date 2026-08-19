@@ -1,6 +1,8 @@
 <!doctype html>
+<meta charset="utf-8">
 <title>Filtro de permisos · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/claro.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 :root {
@@ -70,9 +72,12 @@ body{
    la ronda cambia de amarillo a rojo o a verde. */
 .desk{display:flex;flex-direction:column;gap:10px;width:420px;flex-shrink:0}
 .ficha{display:flex;align-items:center;gap:16px}
-.ficha[data-estado="espera"]{--acento:var(--gold)}
-.ficha[data-estado="error"] {--acento:var(--red)}
-.ficha[data-estado="ok"]    {--acento:var(--green)}
+/* El acento va en dos formas: el color tal cual para el marco, las lineas y el
+   resplandor, y su tinta para lo que es texto. En oscuro son el mismo color;
+   en claro la tinta es lo unico que hace legible el amarillo sobre blanco. */
+.ficha[data-estado="espera"]{--acento:var(--gold); --acento-tinta:var(--gold-tinta)}
+.ficha[data-estado="error"] {--acento:var(--red);  --acento-tinta:var(--red-tinta)}
+.ficha[data-estado="ok"]    {--acento:var(--green);--acento-tinta:var(--green-tinta)}
 
 .visor{
   position:relative;width:148px;height:148px;flex-shrink:0;overflow:hidden;
@@ -104,11 +109,11 @@ body{
 .doc-name{font-size:15px;color:var(--bright);font-weight:700;word-break:break-all;margin-bottom:7px}
 .doc-label{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700}
 .doc-mode{font-size:15px;color:var(--bright);letter-spacing:.08em;margin-bottom:9px}
-.doc-mode b{color:var(--acento);font-weight:400}
+.doc-mode b{color:var(--acento-tinta);font-weight:400}
 .doc-need{display:flex;flex-direction:column;gap:4px}
 .need{font-size:12.5px;line-height:1.35;color:var(--text);transition:color .25s}
 .ficha[data-estado="error"] .need:not(.hecho),
-.ficha[data-estado="ok"]    .need{color:var(--acento)}
+.ficha[data-estado="ok"]    .need{color:var(--acento-tinta)}
 .need.hecho{color:var(--muted);text-decoration:line-through}
 
 .card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
@@ -118,12 +123,24 @@ body{
 .key span{color:var(--text);display:flex;align-items:center;gap:7px;flex:1}
 /* El numero va al final de su fila, alineado con los demas, para que se lea la
    columna de valores de un vistazo. */
-.key span i{margin-left:auto;font-style:normal;color:var(--gold);font-weight:700}
+.key span i{margin-left:auto;font-style:normal;color:var(--gold-tinta);font-weight:700}
 
 
 .flash{position:absolute;inset:0;background:var(--green);opacity:0;pointer-events:none;transition:opacity .18s;z-index:15}
 .flash.on{opacity:.13}
 .flash.err{background:var(--red)}
+
+/* ---------- modo claro ----------
+   La paleta esta en /temario/comun/claro.css. Lo que pasa a claro es el fondo,
+   la barra de tiempo, la ficha del archivo y el panel de ayudas.
+
+   La ventana de la terminal se queda entera como estaba —marco, barra de
+   titulo y contenido— porque es una terminal. El visor si pasa a claro: es la
+   hoja del archivo, y en claro se lee como una hoja. Su marco, sus lineas, su
+   resplandor y el icono siguen siendo del color de la ronda, sin apagar, que
+   es lo que dice de un vistazo si el archivo esta bien o mal. */
+html.claro .visor{background:var(--surf)}
+html.claro .card{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27,31,36,.16)}
 </style>
 
 <!-- La barra la arma barra.js. -->
@@ -132,7 +149,7 @@ body{
 <div class="stage">
   <div class="term-col">
     <div class="timer"><div class="timer-fill" id="timer"></div></div>
-    <div class="win">
+    <div class="win zona-oscura">
       <div class="win-bar">
         <span class="win-dot" style="background:#FF5F56"></span>
         <span class="win-dot" style="background:#FFBD2E"></span>
@@ -329,23 +346,17 @@ function leerChmod(argumento, modo) {
 
 const $ = (id) => document.getElementById(id);
 
-// La velocidad del contrarreloj se cambia en marcha: la barra le deja su hueco
-// antes de los puntos. Reiniciar devuelve a la portada.
+// Reiniciar devuelve a la portada.
 const barra = Barra.montar({
-  acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  titulo: 'Filtro de permisos',
   ayuda: [
     { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver las formas de cambiar permisos.' },
     { clave: 'Tiempo', tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde esa ronda y empieza la siguiente.' },
-    { clave: 'x0.5',   tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de ronda.' },
   ],
+  tema: true,
   onReiniciar: () => volverAlInicio(),
 });
 
-/* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
-   con mas margen para pensar la cuenta, que es de lo que va el tema. */
-// x0.5 es el doble de tiempo para el mismo reto.
-const RITMOS = { normal: 1, calma: 2 };
-let ritmo = "normal";
 // El mismo hueco que en vi: entre una ronda y la siguiente el teclado no
 // cuenta, o lo pulsado ahi cae sobre el archivo recien puesto en la mesa.
 let transicion = false;
@@ -372,8 +383,6 @@ function pintarCabecera() {
     r.tipo === "chmod" ? "Deja el archivo como lo pide su ficha"
                        : "Ajusta la umask para lo que va a llegar",
     Math.min(ronda, orden.length - 1), orden.length);
-  barra.puntos(puntos);
-  barra.marcas(orden.map((_, i) => (i < ronda ? "done" : i === ronda ? "cur" : "")));
 }
 
 function pintarExpediente() {
@@ -447,21 +456,8 @@ function pintarBarra() {
   barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
 }
 
-function cambiarRitmo() {
-  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
-  ritmo = ritmo === "normal" ? "calma" : "normal";
-  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
-  // pegue un salto al cambiar de modo a mitad de ronda.
-  limite *= factor;
-  restante *= factor;
-  pintarBarra();
-  const b = $("ritmo");
-  b.textContent = ritmo === "calma" ? "x0.5" : "x1";
-  b.dataset.activo = String(ritmo === "calma");
-}
-
 function arrancarTiempo() {
-  limite = orden[ronda].segundos * RITMOS[ritmo];
+  limite = orden[ronda].segundos;
   restante = limite;
   $("timer").className = "timer-fill";
   $("timer").style.width = "100%";
@@ -638,7 +634,6 @@ document.addEventListener("keydown", (e) => {
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
 $("res-exit").addEventListener("click", Barra.salir);
-$("ritmo").addEventListener("click", cambiarRitmo);
 
 armarPartida();
 pintarCabecera();

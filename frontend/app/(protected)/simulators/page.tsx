@@ -10,11 +10,11 @@ export default async function SimulatorsPage() {
     <div className="min-h-full pb-24">
       <section className="mx-auto max-w-7xl px-6 pt-16 pb-12">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text text-transparent">
             Simuladores
           </span>
         </h1>
-        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600" />
+        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-[#ff5470] to-[#C41E3A]" />
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
           Aprende haciendo: practica en entornos interactivos donde exploras,
           ejecutas comandos y resuelves retos, sin miedo a romper nada.

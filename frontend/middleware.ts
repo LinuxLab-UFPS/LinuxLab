@@ -17,6 +17,17 @@ export async function middleware(request: NextRequest) {
 
   const token = request.cookies.get("token")?.value
 
+  // ######################################################################
+  // ## DEV: sin backend no hay token que verificar, así que se deja      ##
+  // ## pasar todo y el rol lo decide la cookie `dev-role` (selector de   ##
+  // ## rol). Se apaga solo en producción.                                ##
+  // ## Ver: lib/features/auth/session.ts y context.tsx.                  ##
+  // ######################################################################
+  const devRole = request.cookies.get("dev-role")?.value
+  if (process.env.NODE_ENV !== "production" && (!token || devRole)) {
+    return NextResponse.next()
+  }
+
   // Root redirect for authed users
   if (pathname === "/") {
     if (token) {
