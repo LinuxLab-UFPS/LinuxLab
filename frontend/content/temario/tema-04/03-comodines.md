@@ -134,6 +134,36 @@ datos[3-1].csv
 
 Y de ahí sale también que los comodines funcionen igual en cualquier comando. No son una característica de `ls` ni de `cp`, sino del shell que los invoca, así que sirven en todos por igual.
 
+## Los ocultos no entran
+
+Hay una excepción que conviene conocer antes de fiarse de un patrón. Un comodín no alcanza nunca los archivos ocultos, los que empiezan por punto (Shotts, 2026). En el mismo directorio, esta vez con un `.bashrc` y un `.perfil` dentro:
+
+```bash
+echo *
+```
+
+```
+datos1.csv datos2.csv datos3.csv foto.png fotos.png informe.txt notas.txt tareas.txt
+```
+
+Ninguno de los dos aparece, y tampoco los alcanzaría un `rm *`. Para llegar a ellos el patrón tiene que empezar por el punto:
+
+```bash
+echo .*
+```
+
+```
+.bashrc .perfil
+```
+
+En versiones antiguas de Bash ese patrón arrastraba además `.` y `..`, que son el propio directorio y el superior, y el resultado salía mal. La forma que no falla combina el punto con la negación ya vista:
+
+```bash
+echo .[!.]*
+```
+
+Se lee como un punto seguido de algo que no sea otro punto, de modo que `.` y `..` quedan descartados.
+
 ## Comprobar antes de borrar
 
 Ese mismo mecanismo explica el comportamiento con `rm`:
@@ -159,6 +189,7 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 | `[!abc]` | Un carácter, ninguno de los de la lista |
 | `*.txt` | Todo lo que termine en `.txt` |
 | `*[0-9]*` | Todo lo que contenga un dígito |
+| `.[!.]*` | Los archivos ocultos, que `*` no alcanza |
 
 ---
 
@@ -166,3 +197,4 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 
 - Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
