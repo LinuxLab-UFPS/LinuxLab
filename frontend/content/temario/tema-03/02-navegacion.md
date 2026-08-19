@@ -79,7 +79,7 @@ cd ..
 cd
 ```
 
-`cd` sin argumentos vuelve siempre al directorio de inicio.
+`cd` sin argumentos vuelve siempre al directorio de inicio, y `cd -` vuelve al anterior, el de antes del último salto. Repetido, alterna entre los dos, que ahorra bastante cuando hay que ir y venir entre dos carpetas alejadas.
 
 ## mkdir: crear un directorio
 
@@ -136,6 +136,7 @@ proyectos
 | `cd ruta` | Entra en un directorio |
 | `cd ..` | Sube un nivel |
 | `cd` | Vuelve al directorio de inicio |
+| `cd -` | Vuelve al directorio anterior |
 | `mkdir nombre` | Crea un directorio |
 | `touch nombre` | Crea un archivo vacío |
 | `tree` | Dibuja la jerarquía completa |

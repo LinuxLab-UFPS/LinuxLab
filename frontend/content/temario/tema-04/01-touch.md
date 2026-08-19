@@ -113,6 +113,20 @@ Linux distingue mayúsculas de minúsculas: `Notas.txt`, `notas.txt` y `NOTAS.TX
 
 La extensión (`.txt`, `.sh`, `.pdf`) es parte del nombre y nada más. A diferencia de Windows, el sistema no decide qué es un archivo por su extensión sino por su contenido; la extensión está ahí para que las personas se orienten.
 
+El comando `file` lo demuestra, porque mira dentro del archivo en lugar de fiarse del nombre (Shotts, 2026):
+
+```bash
+cp notas.txt notas.jpg
+file notas.txt notas.jpg
+```
+
+```
+notas.txt: ASCII text
+notas.jpg: ASCII text
+```
+
+La copia se llama `.jpg` y sigue siendo texto. Cambiarle la extensión a un archivo no cambia lo que hay dentro.
+
 Los espacios en los nombres funcionan, pero obligan a escribir comillas o a escapar cada espacio, y eso se vuelve molesto rápido:
 
 ```bash
@@ -153,6 +167,7 @@ ls -a
 | `echo texto > archivo` | Escribe el texto, reemplazando lo que hubiera |
 | `echo texto >> archivo` | Añade el texto al final |
 | `ls -a` | Muestra también los archivos ocultos |
+| `file archivo` | Dice qué contiene de verdad, sin mirar la extensión |
 
 ---
 
@@ -162,3 +177,4 @@ ls -a
 - Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
 - Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
