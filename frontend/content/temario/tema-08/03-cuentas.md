@@ -51,7 +51,7 @@ sudo passwd laura_pena
 
 Sin argumento, `passwd` cambia la contraseña de quien lo ejecuta, y eso sí lo puede hacer cualquier usuario con su propia cuenta.
 
-Lo que trae la cuenta al nacer no es casual. Con `-m`, los archivos del directorio esqueleto se copian dentro del directorio personal (manual de `useradd`). Ese directorio es `/etc/skel`, y de él salen los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha; la cuenta nueva queda además como dueña de esas copias (NDG Linux Essentials, cap. 13).
+Con `-m`, los archivos del directorio esqueleto se copian dentro del directorio personal (manual de `useradd`). Ese directorio es `/etc/skel`, y de él salen los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha; la cuenta nueva queda además como dueña de esas copias (NDG Linux Essentials, cap. 13).
 
 ```bash
 ls -a /etc/skel

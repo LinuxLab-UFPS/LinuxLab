@@ -1,6 +1,6 @@
 ## Compartir archivos con un grupo
 
-Los grupos existen para un problema concreto: varias personas necesitan trabajar sobre los mismos archivos. La receta es siempre la misma —hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG Linux Essentials, cap. 13)—. Sin grupos habría que conceder permisos a **otros**, que significa todo el mundo, o no conceder nada.
+Un grupo permite que varias personas trabajen sobre los mismos archivos. La receta es siempre la misma: hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG Linux Essentials, cap. 13). Sin grupos habría que conceder permisos a **otros**, que significa todo el mundo, o no conceder nada.
 
 Este subtema arma ese montaje con lo ya visto y resuelve, de paso, un detalle que viene apareciendo desde el módulo de permisos sin explicación.
 
@@ -42,7 +42,7 @@ ls -ld taller
 drwxrwx--- 1 andres_torres proyecto 0 Aug 18 11:24 taller
 ```
 
-Parece resuelto. No lo está. En cuanto alguien crea un archivo dentro, aparece el fallo:
+El montaje falla en cuanto alguien crea un archivo dentro:
 
 ```bash
 touch taller/notas.txt
@@ -55,7 +55,7 @@ ls -l taller/notas.txt
 
 El archivo nuevo no salió con el grupo `proyecto`, sino con el grupo **primario** de quien lo creó. Es lo que decía el primer subtema: el grupo primario es el que se le pone a lo que se crea. Y el resultado es que el resto del equipo no puede escribir en ese archivo, aunque el directorio sea suyo.
 
-Corregirlo a mano con `chgrp` cada vez no es una solución: nadie se acuerda siempre.
+Corregirlo a mano con `chgrp` cada vez depende de que alguien se acuerde, así que el sistema ofrece una forma de que lo haga solo.
 
 ## setgid, la `s` del directorio
 

@@ -1,6 +1,6 @@
 ## Dónde se guarda esa información
 
-`id` no inventa nada: lee unos archivos de texto que están en `/etc`. Saber leerlos sirve para responder preguntas que ningún comando resuelve de un tirón, como qué shell tiene una cuenta o quién pertenece a un grupo.
+`id` toma la información de unos archivos de texto que están en `/etc`. Leerlos directamente responde preguntas que ningún comando resuelve de un tirón, como qué shell tiene una cuenta o quién pertenece a un grupo.
 
 Son tres, y cada uno guarda una cosa distinta:
 
@@ -50,9 +50,7 @@ andres_torres : x : 1004 : 1006 : Andrés Torres : /home/andres_torres : /bin/ba
       └──────────────────────────────────────────────────────────────────────── nombre de la cuenta
 ```
 
-Dos campos merecen atención.
-
-La **`x` del segundo campo** no es la contraseña, sino una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, *User and Group Management*). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
+La **`x` del segundo campo** es una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, *User and Group Management*). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
 
 El **último campo es el shell**, y hace de interruptor de acceso. Un valor como `/usr/sbin/nologin` significa que la cuenta existe y puede ser dueña de archivos, pero nadie puede abrir una sesión con ella:
 
@@ -68,7 +66,7 @@ sys:x:3:3:sys:/dev:/usr/sbin/nologin
 
 ## Cuentas de persona y cuentas de servicio
 
-Esas tres primeras líneas no son de nadie. Son **cuentas de sistema**: existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado (NDG Linux Essentials, cap. 13).
+Esas tres líneas son **cuentas de sistema**. Existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado (NDG Linux Essentials, cap. 13).
 
 Se distinguen por el UID. En Ubuntu y Debian las cuentas de persona empiezan en **1000**; por debajo de esa cifra el rango está reservado para el sistema. La convención está escrita en `/etc/login.defs`:
 
@@ -106,9 +104,9 @@ grp_cec1648c:x:1006:laura_pena,carlos_ruiz
 
 En orden: nombre del grupo, marca de contraseña, GID y la lista de los nombres de usuario que son miembros del grupo, separados por comas (manual del archivo `group`).
 
-Aquí está la trampa clásica, y explica una confusión muy común:
+El cuarto campo tiene una particularidad que suele confundir:
 
-**Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c` —lo dijo `id` en el subtema anterior— y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
+**Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c`, como mostró `id` en el subtema anterior, y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
 
 De ahí que contar miembros leyendo sólo `/etc/group` dé siempre de menos. Para saber los grupos reales de una cuenta, `id` es la respuesta fiable:
 
@@ -141,7 +139,7 @@ ls -l /etc/shadow /etc/passwd
 
 `/etc/passwd` deja leer a otros; `/etc/shadow` no concede nada al bloque de otros. Es el mismo mecanismo de `r`, `w` y `x` de siempre, aplicado a un archivo que importa.
 
-Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad —cuándo se cambió por última vez, cuántos días puede durar, cuántos días antes se avisa—. Y sobre el estado de la cuenta, el manual del archivo es claro: si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada (manual del archivo `shadow`). La cuenta existe y conserva sus archivos, pero no puede entrar.
+Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Sobre el estado de la cuenta, si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada (manual del archivo `shadow`). La cuenta existe y conserva sus archivos, pero no puede entrar.
 
 ---
 
