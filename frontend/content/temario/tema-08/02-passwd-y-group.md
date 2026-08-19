@@ -8,13 +8,13 @@ Son tres, y cada uno guarda una cosa distinta:
 |---|---|---|
 | `/etc/passwd` | Las cuentas y sus datos básicos | Todo el mundo |
 | `/etc/group` | Los grupos y sus miembros | Todo el mundo |
-| `/etc/shadow` | Las contraseñas cifradas | Sólo `root` |
+| `/etc/shadow` | Las contraseñas cifradas | Solo `root` |
 
-Modificarlos a mano es posible y desaconsejado: un error de edición puede dejar a todos los usuarios sin poder iniciar sesión (NDG Linux Essentials, cap. 13). Para eso existen los comandos del siguiente subtema.
+Modificarlos a mano es posible y desaconsejado: un error de edición puede dejar a todos los usuarios sin poder iniciar sesión (NDG, 2024). Para eso existen los comandos del siguiente subtema.
 
 ## getent, mejor que cat
 
-Los dos primeros son texto plano y `cat` los muestra sin problema. Aun así conviene acostumbrarse a `getent`, que consulta lo mismo pero también encuentra cuentas que no están en el archivo, como las que vienen de un directorio de red (NDG Linux Essentials, cap. 13):
+Los dos primeros son texto plano y `cat` los muestra sin problema. Aun así conviene acostumbrarse a `getent`, que consulta lo mismo pero también encuentra cuentas que no están en el archivo, como las que vienen de un directorio de red:
 
 ```bash
 getent passwd andres_torres
@@ -50,7 +50,7 @@ andres_torres : x : 1004 : 1006 : Andrés Torres : /home/andres_torres : /bin/ba
       └──────────────────────────────────────────────────────────────────────── nombre de la cuenta
 ```
 
-La **`x` del segundo campo** es una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, *User and Group Management*). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
+La **`x` del segundo campo** es una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, 2025). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
 
 El **último campo es el shell**, y hace de interruptor de acceso. Un valor como `/usr/sbin/nologin` significa que la cuenta existe y puede ser dueña de archivos, pero nadie puede abrir una sesión con ella:
 
@@ -66,7 +66,7 @@ sys:x:3:3:sys:/dev:/usr/sbin/nologin
 
 ## Cuentas de persona y cuentas de servicio
 
-Esas tres líneas son **cuentas de sistema**. Existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado (NDG Linux Essentials, cap. 13).
+Esas tres líneas son **cuentas de sistema**. Existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado.
 
 Se distinguen por el UID. En Ubuntu y Debian las cuentas de persona empiezan en **1000**; por debajo de esa cifra el rango está reservado para el sistema. La convención está escrita en `/etc/login.defs`:
 
@@ -78,7 +78,7 @@ grep UID_MIN /etc/login.defs
 UID_MIN			 1000
 ```
 
-Con eso, listar sólo las cuentas de persona es un `awk` sobre el tercer campo:
+Con eso, listar solo las cuentas de persona es un `awk` sobre el tercer campo:
 
 ```bash
 getent passwd | awk -F: '$3 >= 1000 {print $1, $3}'
@@ -102,13 +102,13 @@ getent group grp_cec1648c
 grp_cec1648c:x:1006:laura_pena,carlos_ruiz
 ```
 
-En orden: nombre del grupo, marca de contraseña, GID y la lista de los nombres de usuario que son miembros del grupo, separados por comas (manual del archivo `group`).
+En orden: nombre del grupo, marca de contraseña, GID y la lista de los nombres de usuario que son miembros del grupo, separados por comas (Shadow Project, 2026).
 
 El cuarto campo tiene una particularidad que suele confundir:
 
 **Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c`, como mostró `id` en el subtema anterior, y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
 
-De ahí que contar miembros leyendo sólo `/etc/group` dé siempre de menos. Para saber los grupos reales de una cuenta, `id` es la respuesta fiable:
+De ahí que contar miembros leyendo solo `/etc/group` dé siempre de menos. Para saber los grupos reales de una cuenta, `id` es la respuesta fiable:
 
 ```bash
 id laura_pena
@@ -116,7 +116,7 @@ id laura_pena
 
 ## /etc/shadow, el que no se puede leer
 
-El tercer archivo guarda las contraseñas cifradas, y por eso está cerrado:
+El tercer archivo guarda las contraseñas cifradas, y por eso está cerrado incluso a la lectura (Shotts, 2026):
 
 ```bash
 cat /etc/shadow
@@ -139,12 +139,13 @@ ls -l /etc/shadow /etc/passwd
 
 `/etc/passwd` deja leer a otros; `/etc/shadow` no concede nada al bloque de otros. Es el mismo mecanismo de `r`, `w` y `x` de siempre, aplicado a un archivo que importa.
 
-Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Sobre el estado de la cuenta, si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada (manual del archivo `shadow`). La cuenta existe y conserva sus archivos, pero no puede entrar.
+Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Sobre el estado de la cuenta, si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada. La cuenta existe y conserva sus archivos, pero no puede entrar.
 
 ---
 
 **Fuentes**
 
-- Manuales de los archivos `passwd`, `group` y `shadow`, sección de formatos. man7.org/linux/man-pages
-- NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: "Managing Users and Groups".
-- *User and Group Management*. DevOps Daily. devops-daily.com/guides/introduction-to-linux
+- DevOps Daily. (2025). *User and group management*. https://devops-daily.com/guides/introduction-to-linux/06-user-management
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shadow Project. (2026). *Shadow utilities* (versión 4.20.2). https://github.com/shadow-maint/shadow
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

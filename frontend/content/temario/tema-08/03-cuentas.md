@@ -6,7 +6,7 @@ Se estudian igual por dos razones. Aparecen en cualquier documentación y en cua
 
 ## Cómo se ejecuta un comando privilegiado
 
-No se entra como `root` para trabajar. Lo habitual es `sudo`, que ejecuta **un solo comando** con privilegios y deja registro de quién lo hizo:
+No se entra como `root` para trabajar. Lo habitual es `sudo`, que ejecuta **un solo comando** con privilegios y deja registro de quién lo hizo (DevOps Daily, 2025):
 
 ```bash
 sudo useradd laura_pena
@@ -51,7 +51,7 @@ sudo passwd laura_pena
 
 Sin argumento, `passwd` cambia la contraseña de quien lo ejecuta, y eso sí lo puede hacer cualquier usuario con su propia cuenta.
 
-Con `-m`, los archivos del directorio esqueleto se copian dentro del directorio personal (manual de `useradd`). Ese directorio es `/etc/skel`, y de él salen los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha; la cuenta nueva queda además como dueña de esas copias (NDG Linux Essentials, cap. 13).
+Con `-m`, los archivos del directorio esqueleto se copian dentro del directorio personal (Shadow Project, 2026). Ese directorio es `/etc/skel`, y de él salen los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha; la cuenta nueva queda además como dueña de esas copias.
 
 ```bash
 ls -a /etc/skel
@@ -69,13 +69,13 @@ ls -a /etc/skel
 sudo usermod -aG proyecto laura_pena
 ```
 
-La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza.** Usarla sola obliga a listar todos los grupos a los que la cuenta deba pertenecer, y olvidarlo saca al usuario de todos sus grupos suplementarios anteriores (NDG Linux Essentials, cap. 13). Este comando, tan parecido al anterior, deja a la cuenta únicamente en `proyecto`:
+La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza.** Usarla sola obliga a listar todos los grupos a los que la cuenta deba pertenecer, y olvidarlo saca al usuario de todos sus grupos suplementarios anteriores (NDG, 2024). Este comando, tan parecido al anterior, deja a la cuenta únicamente en `proyecto`:
 
 ```bash
 sudo usermod -G proyecto laura_pena
 ```
 
-No avisa ni pide confirmación. Es un error fácil de cometer y difícil de detectar, porque la cuenta sigue funcionando y sólo falla al intentar entrar en archivos a los que antes llegaba. La regla es simple: **con `-G` siempre `-a`**, salvo que la intención sea justamente vaciar la lista.
+No avisa ni pide confirmación. Es un error fácil de cometer y difícil de detectar, porque la cuenta sigue funcionando y solo falla al intentar entrar en archivos a los que antes llegaba. La regla es simple: **con `-G` siempre `-a`**, salvo que la intención sea justamente vaciar la lista.
 
 Otras dos opciones útiles:
 
@@ -110,10 +110,14 @@ sudo groupmod -n practicas proyecto
 sudo groupdel practicas
 ```
 
+`groupadd` admite `-g` para imponer un GID concreto, igual que `-u` en `useradd`. Sin esa opción el sistema toma el siguiente número libre.
+
+Y `groupdel` tiene una restricción que conviene conocer antes de tropezar con ella: **no borra un grupo que sea el primario de alguna cuenta**. Hay que cambiar antes el grupo primario de esas cuentas, o borrarlas.
+
 `groupmod` tiene dos opciones y la diferencia entre ellas es grande:
 
-- **`-n` cambia el nombre.** No rompe nada: los archivos pertenecen a GID, no a nombres de grupo, así que todos sus miembros conservan el acceso (NDG Linux Essentials, cap. 13).
-- **`-g` cambia el GID.** Sí rompe. Los archivos siguen apuntando al número viejo, que ya no corresponde a ningún grupo, y pasan a llamarse **archivos huérfanos** (NDG Linux Essentials, cap. 13).
+- **`-n` cambia el nombre.** No rompe nada: los archivos pertenecen a GID, no a nombres de grupo, así que todos sus miembros conservan el acceso.
+- **`-g` cambia el GID.** Sí rompe. Los archivos siguen apuntando al número viejo, que ya no corresponde a ningún grupo, y pasan a llamarse **archivos huérfanos**.
 
 Esos archivos se localizan con `find`, ya conocido del módulo de búsqueda:
 
@@ -143,6 +147,6 @@ Leer esas tres salidas y reconocer qué opción de `useradd` produjo cada campo 
 
 **Fuentes**
 
-- Manuales de `useradd`, `usermod`, `userdel`, `groupadd`, `groupmod` y `gpasswd`. man7.org/linux/man-pages
-- NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: creación de grupos, archivos huérfanos y opciones de `useradd`.
-- *User and Group Management*. DevOps Daily. devops-daily.com/guides/introduction-to-linux
+- DevOps Daily. (2025). *User and group management*. https://devops-daily.com/guides/introduction-to-linux/06-user-management
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shadow Project. (2026). *Shadow utilities* (versión 4.20.2). https://github.com/shadow-maint/shadow
