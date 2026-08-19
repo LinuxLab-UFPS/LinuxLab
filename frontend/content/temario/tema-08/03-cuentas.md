@@ -51,7 +51,7 @@ sudo passwd laura_pena
 
 Sin argumento, `passwd` cambia la contraseña de quien lo ejecuta, y eso sí lo puede hacer cualquier usuario con su propia cuenta.
 
-Lo que trae la cuenta al nacer no es casual: el contenido de `/etc/skel` se copia dentro del directorio personal nuevo. Ahí están los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha.
+Lo que trae la cuenta al nacer no es casual. Con `-m`, los archivos del directorio esqueleto se copian dentro del directorio personal (manual de `useradd`). Ese directorio es `/etc/skel`, y de él salen los `.bashrc` y demás archivos de configuración con los que aparece cualquier cuenta recién hecha; la cuenta nueva queda además como dueña de esas copias (NDG Linux Essentials, cap. 13).
 
 ```bash
 ls -a /etc/skel
@@ -69,7 +69,7 @@ ls -a /etc/skel
 sudo usermod -aG proyecto laura_pena
 ```
 
-La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza.** Este comando, tan parecido al anterior, saca a la cuenta de todos sus grupos secundarios y la deja únicamente en `proyecto`:
+La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza.** Usarla sola obliga a listar todos los grupos a los que la cuenta deba pertenecer, y olvidarlo saca al usuario de todos sus grupos suplementarios anteriores (NDG Linux Essentials, cap. 13). Este comando, tan parecido al anterior, deja a la cuenta únicamente en `proyecto`:
 
 ```bash
 sudo usermod -G proyecto laura_pena
@@ -112,8 +112,8 @@ sudo groupdel practicas
 
 `groupmod` tiene dos opciones y la diferencia entre ellas es grande:
 
-- **`-n` cambia el nombre.** No rompe nada. Los archivos guardan el GID, no el nombre, así que siguen perteneciendo al mismo grupo y todos sus miembros conservan el acceso.
-- **`-g` cambia el GID.** Sí rompe. Los archivos siguen apuntando al número viejo, que ya no corresponde a ningún grupo, y quedan **huérfanos**.
+- **`-n` cambia el nombre.** No rompe nada: los archivos pertenecen a GID, no a nombres de grupo, así que todos sus miembros conservan el acceso (NDG Linux Essentials, cap. 13).
+- **`-g` cambia el GID.** Sí rompe. Los archivos siguen apuntando al número viejo, que ya no corresponde a ningún grupo, y pasan a llamarse **archivos huérfanos** (NDG Linux Essentials, cap. 13).
 
 Esos archivos se localizan con `find`, ya conocido del módulo de búsqueda:
 
@@ -129,7 +129,7 @@ sudo gpasswd -d laura_pena proyecto
 
 ## Lo que sí se puede probar aquí
 
-Ninguno de los comandos anteriores, pero sí su resultado. Todas las cuentas del curso se crearon exactamente así, y la huella queda a la vista con lo del subtema anterior:
+Ninguno de los comandos anteriores, pero sí su resultado. Todas las cuentas del laboratorio se crearon exactamente así, y la huella queda a la vista con lo del subtema anterior:
 
 ```bash
 getent passwd andres_torres
@@ -143,6 +143,6 @@ Leer esas tres salidas y reconocer qué opción de `useradd` produjo cada campo 
 
 **Fuentes**
 
-- man7.org — `useradd(8)`, `usermod(8)`, `userdel(8)`, `groupadd(8)`, `groupmod(8)`, `gpasswd(8)`.
+- Manuales de `useradd`, `usermod`, `userdel`, `groupadd`, `groupmod` y `gpasswd`. man7.org/linux/man-pages
 - NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: creación de grupos, archivos huérfanos y opciones de `useradd`.
-- *User and Group Management*. devops-daily.com/guides/introduction-to-linux
+- *User and Group Management*. DevOps Daily. devops-daily.com/guides/introduction-to-linux

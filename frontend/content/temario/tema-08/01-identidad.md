@@ -2,7 +2,9 @@
 
 El módulo de permisos dejó una pregunta a medias. Cada archivo lleva anotado un usuario dueño y un grupo dueño, y el sistema decide qué se puede hacer según a cuál de los dos se pertenezca. Falta la otra mitad: qué es exactamente un usuario, qué es un grupo y de dónde sale la identidad que el sistema compara.
 
-Tres comandos responden eso, y los tres funcionan sin permisos especiales.
+Una cuenta representa a cualquiera que pueda acceder al sistema, y eso incluye a los programas: los servicios que corren en segundo plano también tienen la suya (DevOps Daily, *User and Group Management*). Por eso una cuenta no equivale a una persona, y eso explica buena parte de lo que aparece al listar las cuentas de un sistema.
+
+Tres comandos responden quién es uno, y los tres funcionan sin permisos especiales.
 
 ## whoami
 
@@ -50,7 +52,7 @@ id root
 uid=0(root) gid=0(root) groups=0(root)
 ```
 
-El UID de `root` es `0`, y ese cero es lo que le da el mando. No es el nombre: cualquier cuenta con UID 0 tendría los mismos privilegios.
+Ese cero no es un número cualquiera: es lo que le concede a la cuenta sus privilegios especiales, y cualquier cuenta con UID 0 actuaría en la práctica como administrador (NDG Linux Essentials, cap. 13). El mando no está en el nombre `root` sino en el número, así que renombrar la cuenta no le quitaría nada.
 
 ## Grupo primario y grupos secundarios
 
@@ -88,7 +90,7 @@ Sirve para una comprobación rápida, y sobre todo para entender un *Permission 
 
 ## Cambios de grupo y sesión
 
-Un detalle que confunde la primera vez: cuando un administrador añade una cuenta a un grupo nuevo, `groups` **sigue mostrando la lista antigua**. La pertenencia se calcula al iniciar sesión y queda fija hasta la siguiente.
+Un detalle que confunde la primera vez: cuando un administrador añade una cuenta a un grupo nuevo, `groups` **sigue mostrando la lista antigua**. La pertenencia se calcula al iniciar sesión y queda fija hasta la siguiente, de modo que un cambio de grupos no le llega al usuario hasta que vuelve a entrar (NDG Linux Essentials, cap. 13).
 
 ```bash
 groups
@@ -108,7 +110,7 @@ Preguntando por el nombre de la cuenta, `id` lee la configuración actual del si
 
 ## En este laboratorio
 
-Nada de esto es una simulación. La cuenta con la que se trabaja aquí es una cuenta de Linux de verdad dentro de un sistema compartido, y cada grupo del curso es un grupo de Linux con su propio GID. Por eso `id` devuelve números reales y los archivos creados llevan el grupo del curso.
+Nada de esto es una simulación. La cuenta con la que se trabaja aquí es una cuenta de Linux de verdad dentro de un sistema compartido, y cada grupo del laboratorio es un grupo de Linux con su propio GID. Por eso `id` devuelve números reales y los archivos creados llevan el grupo del laboratorio.
 
 Eso trae una consecuencia que conviene tener clara desde ya: **esta cuenta no es administradora**. Los comandos que crean y modifican cuentas se estudian en el tercer subtema, pero ejecutarlos aquí devolverá un error de permisos. No es un fallo del entorno, es exactamente lo que le pasaría a cualquier usuario normal en cualquier servidor.
 
@@ -117,5 +119,6 @@ Eso trae una consecuencia que conviene tener clara desde ya: **esta cuenta no es
 **Fuentes**
 
 - NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: "Managing Users and Groups".
-- man7.org — `id(1)`, `groups(1)`, `whoami(1)`.
+- *User and Group Management*. DevOps Daily. devops-daily.com/guides/introduction-to-linux
+- Manuales de `id`, `groups` y `whoami`. man7.org/linux/man-pages
 - Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org

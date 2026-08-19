@@ -1,6 +1,6 @@
 ## Compartir archivos con un grupo
 
-Los grupos existen para un problema concreto: varias personas necesitan trabajar sobre los mismos archivos. Sin ellos habría que conceder permisos a **otros**, que significa todo el mundo, o no conceder nada.
+Los grupos existen para un problema concreto: varias personas necesitan trabajar sobre los mismos archivos. La receta es siempre la misma —hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG Linux Essentials, cap. 13)—. Sin grupos habría que conceder permisos a **otros**, que significa todo el mundo, o no conceder nada.
 
 Este subtema arma ese montaje con lo ya visto y resuelve, de paso, un detalle que viene apareciendo desde el módulo de permisos sin explicación.
 
@@ -17,7 +17,7 @@ ls -l informe.txt
 -rw-rw-r-- 1 andres_torres proyecto 42 Aug 18 11:20 informe.txt
 ```
 
-A diferencia de `chown`, que cambia el usuario dueño y exige ser administrador, `chgrp` sí lo puede usar un usuario normal, con dos condiciones: **ser el dueño del archivo** y **pertenecer al grupo de destino**. Ambas son razonables, y se comprueban con `id` cuando el comando falla:
+A diferencia de `chown`, que cambia el usuario dueño y exige ser administrador, `chgrp` sí lo puede usar un usuario normal, con dos condiciones: **ser el dueño del archivo** y **pertenecer al grupo de destino** (manual de `chgrp`). Ambas son razonables, y se comprueban con `id` cuando el comando falla:
 
 ```bash
 chgrp contabilidad informe.txt
@@ -86,7 +86,7 @@ ls -l taller
 
 El archivo nuevo hereda `proyecto`. El anterior no cambia: setgid actúa al crear, no hacia atrás. Los que ya existían se arreglan con `chgrp`.
 
-En notación octal el bit es un cuarto dígito por delante, y por eso en la documentación de administración se ve escrito así:
+En notación octal el bit es un cuarto dígito por delante, y por eso en la documentación de administración se ve escrito así (NDG Linux Essentials, cap. 13):
 
 ```bash
 chmod 2770 taller
@@ -102,7 +102,7 @@ Este listado apareció en el tema de permisos:
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:09 apuntes
 ```
 
-Esa `s` estaba ahí desde el principio. Y allí se dijo que en este laboratorio todos los archivos creados llevan el grupo del curso «sin necesidad de hacer nada». Ahora se puede decir por qué: el directorio personal tiene setgid con el grupo del curso, así que cada archivo nuevo lo hereda. No es magia del entorno, es este bit.
+Esa `s` estaba ahí desde el principio. Y allí se dijo que en este laboratorio todos los archivos creados llevan el grupo del laboratorio sin necesidad de hacer nada. Ahora se puede decir por qué: el directorio personal tiene setgid con ese grupo, así que cada archivo nuevo lo hereda. No es magia del entorno, es este bit.
 
 ## Práctica
 
@@ -141,5 +141,5 @@ rm -r compartido suelto.txt
 **Fuentes**
 
 - NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: directorio compartido con propiedad de grupo y bit setgid.
-- man7.org — `chgrp(1)`, `chmod(1)`. El bit setgid sobre directorios.
+- Manuales de `chgrp` y `chmod`, apartado del bit setgid sobre directorios. man7.org/linux/man-pages
 - Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org

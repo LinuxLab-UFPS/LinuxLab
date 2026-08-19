@@ -10,9 +10,11 @@ Son tres, y cada uno guarda una cosa distinta:
 | `/etc/group` | Los grupos y sus miembros | Todo el mundo |
 | `/etc/shadow` | Las contraseñas cifradas | Sólo `root` |
 
+Modificarlos a mano es posible y desaconsejado: un error de edición puede dejar a todos los usuarios sin poder iniciar sesión (NDG Linux Essentials, cap. 13). Para eso existen los comandos del siguiente subtema.
+
 ## getent, mejor que cat
 
-Los dos primeros son texto plano y `cat` los muestra sin problema. Aun así conviene acostumbrarse a `getent`, que consulta lo mismo pero también encuentra cuentas que no están en el archivo, como las que vienen de un directorio de red:
+Los dos primeros son texto plano y `cat` los muestra sin problema. Aun así conviene acostumbrarse a `getent`, que consulta lo mismo pero también encuentra cuentas que no están en el archivo, como las que vienen de un directorio de red (NDG Linux Essentials, cap. 13):
 
 ```bash
 getent passwd andres_torres
@@ -50,7 +52,7 @@ andres_torres : x : 1004 : 1006 : Andrés Torres : /home/andres_torres : /bin/ba
 
 Dos campos merecen atención.
 
-La **`x` del segundo campo** no es la contraseña. Es una marca que significa "la contraseña real está en `/etc/shadow`". Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
+La **`x` del segundo campo** no es la contraseña, sino una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, *User and Group Management*). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
 
 El **último campo es el shell**, y hace de interruptor de acceso. Un valor como `/usr/sbin/nologin` significa que la cuenta existe y puede ser dueña de archivos, pero nadie puede abrir una sesión con ella:
 
@@ -66,7 +68,7 @@ sys:x:3:3:sys:/dev:/usr/sbin/nologin
 
 ## Cuentas de persona y cuentas de servicio
 
-Esas tres primeras líneas no son de nadie. Son **cuentas de sistema**: existen para que los programas que corren en segundo plano tengan un dueño con pocos permisos, de modo que si uno es comprometido el daño quede acotado.
+Esas tres primeras líneas no son de nadie. Son **cuentas de sistema**: existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado (NDG Linux Essentials, cap. 13).
 
 Se distinguen por el UID. En Ubuntu y Debian las cuentas de persona empiezan en **1000**; por debajo de esa cifra el rango está reservado para el sistema. La convención está escrita en `/etc/login.defs`:
 
@@ -102,9 +104,9 @@ getent group grp_cec1648c
 grp_cec1648c:x:1006:laura_pena,carlos_ruiz
 ```
 
-En orden: nombre del grupo, marca de contraseña, GID y la lista de miembros separados por comas.
+En orden: nombre del grupo, marca de contraseña, GID y la lista de los nombres de usuario que son miembros del grupo, separados por comas (manual del archivo `group`).
 
-Aquí está la trampa clásica del archivo, y explica una confusión muy común:
+Aquí está la trampa clásica, y explica una confusión muy común:
 
 **Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c` —lo dijo `id` en el subtema anterior— y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
 
@@ -139,12 +141,12 @@ ls -l /etc/shadow /etc/passwd
 
 `/etc/passwd` deja leer a otros; `/etc/shadow` no concede nada al bloque de otros. Es el mismo mecanismo de `r`, `w` y `x` de siempre, aplicado a un archivo que importa.
 
-Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad —cuándo se cambió por última vez, cuántos días puede durar, cuántos días antes se avisa—. Y si el campo de la contraseña empieza por `!`, la cuenta está **bloqueada**: existe, conserva sus archivos, pero no puede entrar.
+Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad —cuándo se cambió por última vez, cuántos días puede durar, cuántos días antes se avisa—. Y sobre el estado de la cuenta, el manual del archivo es claro: si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada (manual del archivo `shadow`). La cuenta existe y conserva sus archivos, pero no puede entrar.
 
 ---
 
 **Fuentes**
 
-- man7.org — `passwd(5)`, `group(5)`, `shadow(5)`. Formato y significado de cada campo.
+- Manuales de los archivos `passwd`, `group` y `shadow`, sección de formatos. man7.org/linux/man-pages
 - NDG Linux Essentials. Cisco Networking Academy, 2024. Cap. 13: "Managing Users and Groups".
-- *User and Group Management*. devops-daily.com/guides/introduction-to-linux
+- *User and Group Management*. DevOps Daily. devops-daily.com/guides/introduction-to-linux
