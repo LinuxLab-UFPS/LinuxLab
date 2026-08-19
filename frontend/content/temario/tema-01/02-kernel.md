@@ -64,8 +64,6 @@ Esa separación es la que mantiene el sistema estable y seguro, porque si una ap
 
 **Fuentes**
 
-- Linux Kernel Organization. (s.f.). *The Linux kernel documentation*. https://www.kernel.org/doc/html/latest/
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
 - Silberschatz, A., Galvin, P. B. y Gagne, G. (2021). *Operating system concepts* (10.ª ed.). Wiley.
 - Tanenbaum, A. S. y Bos, H. (2023). *Modern operating systems* (5.ª ed.). Pearson.
-- The Linux Foundation. (2024). *Linux kernel development report*. https://www.linuxfoundation.org/
