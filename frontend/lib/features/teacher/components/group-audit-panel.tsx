@@ -34,7 +34,7 @@ import type { Role } from "@/lib/features/auth/types"
 const PAGE_SIZE = 20
 
 const CATEGORIES = [
-  { value: "", label: "Todas las categorías" },
+  { value: "all", label: "Todas las categorías" },
   { value: "sesiones", label: "Sesiones" },
   { value: "actividades", label: "Actividades" },
   { value: "administracion", label: "Administración" },
@@ -94,7 +94,7 @@ async function exportAll(base: AuditFilters, groupId: string, setBusy: (b: boole
 }
 
 export function GroupAuditPanel({ groupId }: { groupId: string }) {
-  const [category, setCategory] = useState("")
+  const [category, setCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [desde, setDesde] = useState("")
   const [hasta, setHasta] = useState("")
@@ -102,7 +102,7 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
   const [exporting, setExporting] = useState(false)
 
   const filters: AuditFilters = {
-    category: category || undefined,
+    category: category === "all" ? undefined : category,
     search: search || undefined,
     from: desde || undefined,
     to: hasta || undefined,
