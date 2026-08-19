@@ -354,9 +354,8 @@ export function topicIllustration(topicNumber: number): ComponentType {
  *
  * Lo que distingue a este simulador es que hay un sitio donde estas, otro al
  * que tienes que llegar y una ruta entre los dos. Eso es todo lo que se dibuja:
- * la raiz con el punto de la posicion, un desvio que no se toma, el directorio
- * por el que se pasa y el objetivo con el recuadro de puntos que el propio
- * simulador le pone.
+ * la raiz, un desvio que no se toma, el directorio por el que se pasa y el
+ * objetivo con el recuadro de puntos que el propio simulador le pone.
  *
  * Llego a tener dos niveles mas, cuatro carpetas sueltas y un prompt dibujado
  * abajo. A tamaño de tarjeta no se leia ninguno: era una maraña de recuadros, y
@@ -371,9 +370,8 @@ export function SimulatorTreeIllustration() {
       {/* el camino, por encima */}
       <path d="M99.5 32 v12 M99.5 44 H138.5 M138.5 44 v12 M138.5 72 v12" stroke={RED} strokeWidth="2.6" />
 
-      {/* la raiz, con el punto de "estas aqui" */}
+      {/* la raiz */}
       <Folder x={88} y={16} color={LINE} />
-      <circle cx={106} cy={22} r={2.8} fill={RED} />
 
       {/* el desvio, y el directorio de paso */}
       <Folder x={48} y={56} color={BASE} />
