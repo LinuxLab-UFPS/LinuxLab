@@ -8,7 +8,7 @@ Los comandos de este laboratorio funcionan igual en todas ellas. La terminal es 
 
 ## El proceso de instalación
 
-Instalar Linux en un computador sigue siempre la misma lógica, sin importar la distribución que elijas.
+Instalar Linux en un computador sigue siempre la misma lógica, sin importar la distribución que elijas (Tuxnauta, 2025).
 
 <!-- IMAGE: instalacion-linux-portada.png | Proceso de instalación de Linux -->
 
@@ -69,3 +69,4 @@ No hay una respuesta universal, pero sí opciones que encajan mejor según el us
 
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
 - Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
+- Tuxnauta. (2025, 8 de marzo). *Instalación de Linux*. Instituto Linux. https://www.institutolinux.com/instalacion-de-linux/
