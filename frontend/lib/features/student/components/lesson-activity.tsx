@@ -28,7 +28,7 @@ export function LessonActivity({ slug }: { slug: string }) {
     <div className="my-10 max-w-md">
       <h2 className="mb-4 text-left text-2xl font-bold text-foreground">
         Ponlo en práctica con una{" "}
-        <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text font-extrabold text-transparent">
+        <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text font-extrabold text-transparent">
           Actividad
         </span>
       </h2>

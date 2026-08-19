@@ -11,27 +11,19 @@ export interface CardTag {
   tone?: TagTone
 }
 
-type Accent = "red" | "green"
-
-/** Per-accent hover treatment: title tint, underline gradient and card glow. */
-const ACCENT: Record<Accent, { title: string; underline: string; card: string }> = {
-  red: {
-    title: "group-hover:text-primary",
-    underline: "from-[#ff5470] to-[#C41E3A]",
-    card: "hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)]",
-  },
-  green: {
-    title: "group-hover:text-emerald-400",
-    underline: "from-emerald-400 to-emerald-600",
-    card: "hover:border-emerald-500/50 hover:shadow-[0_0_10px_rgba(16,185,129,0.45),0_0_30px_rgba(16,185,129,0.3)]",
-  },
-}
+/* El hover: tinte del titulo, degradado del subrayado y halo de la tarjeta.
+   Habia un segundo juego en verde para los simuladores, pero una tarjeta de
+   simulador y una de tema son la misma pieza haciendo lo mismo, y verlas de dos
+   colores solo decia que venian de dos sitios. Ahora las dos van al rojo de la
+   marca. */
+const HOVER_TITLE = "group-hover:text-primary"
+const HOVER_UNDERLINE = "from-[#ff5470] to-[#C41E3A]"
+const HOVER_CARD = "hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)]"
 
 /**
  * The AlgoMaster-style card, reused by the topic grid and the simulators grid.
  * The illustration zooms and the whole card lifts and glows on hover while the
- * text stays put. Progress bar and tags are optional; the accent drives the
- * hover colors (red for topics, green for simulators).
+ * text stays put. Progress bar and tags are optional.
  */
 export function ContentCard({
   href,
@@ -40,7 +32,6 @@ export function ContentCard({
   illustration: Illustration,
   tags = [],
   progress,
-  accent = "red",
 }: {
   href: string
   title: string
@@ -48,20 +39,20 @@ export function ContentCard({
   illustration: ComponentType
   tags?: CardTag[]
   progress?: number
-  accent?: Accent
 }) {
-  const a = ACCENT[accent]
-
   return (
     <Link
       href={href}
       className={cn(
         "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02]",
-        a.card,
+        HOVER_CARD,
       )}
     >
-      {/* Illustration panel: dark, and the drawing zooms on hover. */}
-      <div className="overflow-hidden border-b border-border bg-[#0d1117]">
+      {/* El panel del dibujo: oscuro en los dos temas (ver --ilus-panel en
+          globals.css), asi que en oscuro es el mismo color que el fondo de la
+          pagina y en claro es el bloque que parte la tarjeta en dos. El dibujo
+          se acerca al pasar el raton. */}
+      <div className="overflow-hidden border-b border-border bg-[var(--ilus-panel)]">
         <div className="flex aspect-[16/10] items-center justify-center p-6 transition-transform duration-500 ease-out group-hover:scale-110">
           <Illustration />
         </div>
@@ -72,7 +63,7 @@ export function ContentCard({
         <h3
           className={cn(
             "text-lg font-bold tracking-tight text-foreground transition-colors",
-            a.title,
+            HOVER_TITLE,
           )}
         >
           {title}
@@ -80,7 +71,7 @@ export function ContentCard({
         <span
           className={cn(
             "mt-1.5 h-0.5 w-0 rounded-full bg-gradient-to-r transition-all duration-300 ease-out group-hover:w-12",
-            a.underline,
+            HOVER_UNDERLINE,
           )}
         />
         {description && (

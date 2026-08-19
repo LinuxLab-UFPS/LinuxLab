@@ -86,7 +86,7 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
             {completed ? "Completada" : "Sin completar"}
           </Tag>
           <Tag tone="neutral">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
-          {detail.evaluationType === "manual" && <Tag tone="amber">Revisión manual</Tag>}
+          {detail.evaluationType === "manual" && <Tag tone="primary">Revisión manual</Tag>}
           {closed && <Tag tone="rose">Vencida</Tag>}
         </div>
         <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
