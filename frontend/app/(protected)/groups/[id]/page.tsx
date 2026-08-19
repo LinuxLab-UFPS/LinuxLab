@@ -34,13 +34,14 @@ import {
 } from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
-import { GroupAuditPanel } from "@/lib/features/teacher/components/group-audit-panel"
+import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
 import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 
 type Tab = "estudiantes" | "actividades" | "calificaciones" | "bitacora"
 
@@ -110,9 +111,18 @@ function GroupDetailContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <SkeletonScreen className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8 space-y-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <div className="mb-6 flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-24" />
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </SkeletonScreen>
     )
   }
 
@@ -290,20 +300,41 @@ function GroupDetailContent() {
 
       {/* Tabla */}
       {tab === "estudiantes" ? (
-        <GroupStudents students={studentsQuery.data ?? []} query={query} />
+        studentsQuery.isLoading ? (
+          <SkeletonScreen className="rounded-xl border border-table-line p-5">
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-1/3" />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full" />
+              ))}
+            </div>
+          </SkeletonScreen>
+        ) : (
+          <GroupStudents students={studentsQuery.data ?? []} query={query} />
+        )
       ) : tab === "actividades" ? (
         <div data-section="actividades">
-          <GroupActivities
-            activities={activitiesQuery.data ?? []}
-            query={query}
-            groupId={id}
-            activityTypeFilter={activityTypeFilter}
-            evalFilter={evalFilter}
-          />
+          {activitiesQuery.isLoading ? (
+            <SkeletonScreen>
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </SkeletonScreen>
+          ) : (
+            <GroupActivities
+              activities={activitiesQuery.data ?? []}
+              query={query}
+              groupId={id}
+              activityTypeFilter={activityTypeFilter}
+              evalFilter={evalFilter}
+            />
+          )}
         </div>
       ) : tab === "bitacora" ? (
         <div data-section="bitacora">
-          <GroupAuditPanel groupId={id} />
+          <AuditPanel groupId={id} courseScoped />
         </div>
       ) : (
         <div data-section="calificaciones">

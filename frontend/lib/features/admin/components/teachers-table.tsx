@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Loader2, Search, Terminal, UserCheck, UserX, Users, X } from "lucide-react"
+import { Search, Terminal, UserCheck, UserX, Users, X } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
@@ -33,6 +33,7 @@ import {
   TablePagination,
 } from "@shared/components/data-table"
 import { StatTabs } from "@shared/components/stat-tabs"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 
 type StatusFilter = "all" | "active" | "inactive"
 
@@ -162,9 +163,32 @@ export function TeachersTable() {
         <RegisterTeacherDialog onRegister={register} submitting={submitting} />
       </div>
       {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <SkeletonScreen>
+          <TablePanel>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <TableHead key={i}>
+                      <Skeleton className="h-3 w-14" />
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 6 }).map((_, r) => (
+                  <TableRow key={r}>
+                    {Array.from({ length: 5 }).map((_, c) => (
+                      <TableCell key={c}>
+                        <Skeleton className="mx-auto h-3.5 w-20" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TablePanel>
+        </SkeletonScreen>
       ) : (
         <>
           <TablePanel>

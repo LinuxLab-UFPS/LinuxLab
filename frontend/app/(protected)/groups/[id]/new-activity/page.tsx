@@ -4,9 +4,10 @@ import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Loader2, Send } from "lucide-react"
+import { ArrowLeft, Send } from "lucide-react"
 import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
+import { Skeleton } from "@shared/components/skeleton"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Textarea } from "@shared/components/ui/textarea"
@@ -183,9 +184,11 @@ function NewActivityPage() {
 
   if (loadingDetail) {
     return (
-      <div className="mx-auto flex max-w-3xl items-center gap-2 px-6 py-20 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Cargando la actividad…
+      <div className="mx-auto max-w-3xl space-y-5 px-6 py-10">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-10 w-40" />
       </div>
     )
   }

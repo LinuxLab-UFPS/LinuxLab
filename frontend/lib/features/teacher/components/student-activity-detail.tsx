@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
+import { Skeleton } from "@shared/components/skeleton"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { Tag } from "@shared/components/tag"
@@ -381,9 +382,10 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
           </div>
           <div className="flex-1 overflow-auto bg-background p-4">
             {loadingFile ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Cargando...
+              <div className="space-y-2">
+                <Skeleton className="h-3.5 w-3/4" />
+                <Skeleton className="h-3.5 w-1/2" />
+                <Skeleton className="h-3.5 w-2/3" />
               </div>
             ) : selectedFile ? (
               <pre className="whitespace-pre-wrap font-mono text-sm text-foreground">

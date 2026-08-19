@@ -5,6 +5,7 @@ import { PanelLeft } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import Link from "next/link"
 import { CollapsedPanelButton } from "@shared/components/collapsed-panel-button"
+import { Skeleton } from "@shared/components/skeleton"
 import { ActivityCard } from "@/lib/features/student/components/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { useLessonProgress } from "@/lib/features/student/progress"
@@ -72,13 +73,17 @@ export function SuggestedActivities({
       </div>
 
       {pending.length === 0 ? (
-        // Centrado en el hueco que queda: la columna mide siempre lo mismo, así
-        // que sin esto el aviso se quedaba solo arriba del todo.
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <p className="text-sm text-muted-foreground">
-            {loading ? "Buscando actividades…" : "No hay más actividades disponibles"}
-          </p>
-        </div>
+        loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 items-center justify-center">
+            <p className="text-sm text-muted-foreground">No hay más actividades disponibles</p>
+          </div>
+        )
       ) : (
         <>
           {/* El halo de las tarjetas mide 30px de desenfoque y el `scale` del

@@ -20,7 +20,6 @@ import {
   BarChart,
   Bar,
 } from "recharts"
-import { Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -30,6 +29,7 @@ import {
 } from "@shared/components/ui/dialog"
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { useStudentPerformance } from "@/lib/api/queries"
 import type { GradebookCellStatus, GradeSummary } from "@/lib/models/groups"
 
@@ -139,9 +139,14 @@ export function StudentPerformanceDrawer({
         </DialogHeader>
 
         {loading && (
-          <div className="flex h-40 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
+          <SkeletonScreen className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-16" />
+              ))}
+            </div>
+            <Skeleton className="h-40 w-full" />
+          </SkeletonScreen>
         )}
 
         {!loading && data && (
