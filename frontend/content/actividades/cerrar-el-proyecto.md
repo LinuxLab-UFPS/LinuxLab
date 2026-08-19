@@ -15,10 +15,10 @@ Dejar cada cosa como corresponde antes de entregar:
 
 | Objeto | Lo que se espera de él |
 |---|---|
-| `desplegar.sh` | Tiene que poder ejecutarse: cualquiera lo lee y lo ejecuta, sólo tú lo modificas |
-| `leeme.txt` | Cualquiera puede leerlo, sólo tú modificarlo |
+| `desplegar.sh` | Tiene que poder ejecutarse: cualquiera lo lee y lo ejecuta, solo tú lo modificas |
+| `leeme.txt` | Cualquiera puede leerlo, solo tú modificarlo |
 | `config` | Nadie más entra ni ve qué contiene; tú sí trabajas dentro |
-| `config/credenciales.txt` | Sólo tú, ni leerlo pueden los demás |
+| `config/credenciales.txt` | Solo tú, ni leerlo pueden los demás |
 | `respaldo.tmp` | Una copia temporal que no debe quedar en la entrega |
 
 Al mirar `config` con `ls -l` aparece una `s` en el bloque de grupo: es el bit heredado que se explicó en la lección de directorios. Un `chmod` de tres dígitos deja la carpeta exactamente en el modo pedido y de paso se lleva ese bit, que aquí no hace falta.

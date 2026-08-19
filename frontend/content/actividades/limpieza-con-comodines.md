@@ -19,6 +19,6 @@ documentos/   imagenes/
 2. Mover los `.txt` dentro de `documentos`.
 3. Mover los `.png` dentro de `imagenes`.
 
-(Hint: Se puede hacer nombrando los nueve archivos uno por uno, pero el tema de comodines existe justamente para no tener que hacerlo).
+(Pista: Se puede hacer nombrando los nueve archivos uno por uno, pero el tema de comodines existe justamente para no tener que hacerlo).
 
 Un patrón de más se lleva por delante archivos que todavía hacían falta, y eso ya no se deshace.

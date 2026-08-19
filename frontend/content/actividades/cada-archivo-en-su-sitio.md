@@ -13,11 +13,11 @@ Dejar cada archivo con los permisos que pide su función:
 
 | Archivo | Para qué es |
 |---|---|
-| `notas.txt` | Apuntes privados: sólo tú puedes leerlo y modificarlo |
-| `informe.txt` | Se entrega: cualquiera puede leerlo, sólo tú modificarlo |
-| `arranque.sh` | Es un programa: cualquiera puede leerlo y ejecutarlo, sólo tú modificarlo |
+| `notas.txt` | Apuntes privados: solo tú puedes leerlo y modificarlo |
+| `informe.txt` | Se entrega: cualquiera puede leerlo, solo tú modificarlo |
+| `arranque.sh` | Es un programa: cualquiera puede leerlo y ejecutarlo, solo tú modificarlo |
 | `plantilla.txt` | Documento oficial: cualquiera puede leerlo y nadie modificarlo, tú tampoco |
 
 Cada descripción admite una única combinación. Traducirla a permisos es el ejercicio.
 
-(Hint: `ls -l` muestra cómo están ahora, y comparar lo que hay con lo que se pide suele ser más rápido que calcular el número desde cero).
+(Pista: `ls -l` muestra cómo están ahora, y comparar lo que hay con lo que se pide suele ser más rápido que calcular el número desde cero).
