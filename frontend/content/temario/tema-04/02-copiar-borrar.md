@@ -26,7 +26,7 @@ cp notas.txt tareas.txt informe.pdf Documentos/
 
 ### Cuidado al sobrescribir
 
-Si el destino ya existe, `cp` lo reemplaza sin preguntar y sin avisar. La opción `-i` (interactive) pide confirmación antes:
+Si el destino ya existe, `cp` lo reemplaza sin preguntar y sin avisar (NDG, 2024). La opción `-i` (interactive) pide confirmación antes:
 
 ```bash
 cp -i notas.txt respaldo.txt
@@ -44,7 +44,7 @@ cp: ¿sobrescribir 'respaldo.txt'? y
 mv notas.txt Documentos/
 ```
 
-Lo interesante es que renombrar es exactamente lo mismo que mover: cambiarle el nombre a un archivo es moverlo a otro nombre dentro del mismo directorio.
+Lo interesante es que renombrar es exactamente lo mismo que mover: cambiarle el nombre a un archivo es moverlo a otro nombre dentro del mismo directorio (Free Software Foundation, 2026).
 
 ```bash
 mv notas.txt apuntes.txt
@@ -79,58 +79,6 @@ rm -i respaldo.txt
 rm: ¿borrar el archivo regular 'respaldo.txt'? y
 ```
 
-## Comodines
-
-Escribir los nombres uno a uno deja de ser viable en cuanto hay unos cuantos archivos. Los comodines permiten nombrar varios a la vez por su forma.
-
-El asterisco `*` sustituye cualquier cantidad de caracteres, incluida ninguna:
-
-```bash
-ls *.txt
-```
-
-```
-informe.txt
-notas.txt
-```
-
-El signo de interrogación `?` sustituye exactamente un carácter:
-
-```bash
-ls foto?.png
-```
-
-```
-foto2.png
-```
-
-Con `foto?.png` queda fuera `foto.png`, porque ahí no hay ningún carácter entre `foto` y el punto.
-
-Conviene entender quién hace el trabajo: **el comodín lo resuelve el shell, no el comando**. Bash expande el patrón a la lista de nombres que coinciden y entrega esa lista ya resuelta. `echo` lo deja a la vista:
-
-```bash
-echo *.png
-```
-
-```
-foto.png foto2.png
-```
-
-El comando `echo` nunca vio un asterisco. Recibió dos nombres de archivo.
-
-Eso explica el comportamiento con `rm`:
-
-```bash
-rm *.png
-```
-
-`rm` recibe la lista completa y la borra de una vez. Es la forma habitual de limpiar por extensión, y también la razón por la que conviene comprobar el patrón antes con `ls` o `echo`: lo que esos dos muestran es exactamente lo que `rm` va a recibir.
-
-Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el contenido del directorio, y `rm *.txt` en el directorio equivocado borra los archivos equivocados.
-
-
-<!-- ACTIVIDAD: limpieza-con-comodines -->
-
 ## Resumen
 
 | Comando | Qué hace |
@@ -138,14 +86,14 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 | `cp origen destino` | Copia, deja el original |
 | `mv origen destino` | Mueve o renombra |
 | `rm archivo` | Borra sin papelera |
-| `rm *.ext` | Borra todos los de esa extensión |
 
 Las variantes recursivas de `cp` y `rm`, junto con `rmdir`, se cubrieron en
-Operaciones con directorios.
+Operaciones con directorios. Para aplicar estos tres comandos a muchos archivos
+a la vez, la lección siguiente cubre los comodines.
 
 ---
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

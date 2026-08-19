@@ -2,7 +2,7 @@
   "id": "tema-04",
   "number": 4,
   "title": "Manejo de Archivos",
-  "description": "Crear archivos, copiarlos, moverlos y borrarlos, encadenar comandos con pipes y editarlos con vi",
+  "description": "Crear archivos, copiarlos, moverlos y borrarlos, seleccionarlos con comodines, encadenar comandos con pipes y editarlos con vi",
   "subtopics": [
     {
       "id": "touch",
@@ -15,14 +15,19 @@
       "file": "02-copiar-borrar.md"
     },
     {
+      "id": "comodines",
+      "title": "Comodines",
+      "file": "03-comodines.md"
+    },
+    {
       "id": "pipes",
       "title": "Encadenar comandos",
-      "file": "03-pipes.md"
+      "file": "04-pipes.md"
     },
     {
       "id": "editores",
       "title": "Editores de texto",
-      "file": "04-editores.md"
+      "file": "05-editores.md"
     }
   ],
   "resources": [

@@ -55,12 +55,13 @@ export const syllabus: Topic[] = [
     slug: "manejo-de-archivos",
     title: "Manejo de Archivos",
     description:
-      "Crear, copiar, mover y borrar archivos, encadenar comandos con pipes y los editores de texto.",
+      "Crear, copiar, mover y borrar archivos, seleccionarlos con comodines, encadenar comandos con pipes y los editores de texto.",
     subTopics: [
       { number: 1, title: "Crear archivos" },
       { number: 2, title: "Copiar, mover y borrar" },
-      { number: 3, title: "Encadenar comandos" },
-      { number: 4, title: "Editores de texto" },
+      { number: 3, title: "Comodines" },
+      { number: 4, title: "Encadenar comandos" },
+      { number: 5, title: "Editores de texto" },
     ],
   },
   {

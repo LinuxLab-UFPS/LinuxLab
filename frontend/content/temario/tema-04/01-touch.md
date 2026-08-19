@@ -10,7 +10,7 @@ En Linux casi todo termina siendo un archivo: unos apuntes, la configuración de
 touch notas.txt
 ```
 
-Si el archivo no existía, queda creado con cero bytes, y `ls -l` lo confirma:
+Si el archivo no existía, queda creado con cero bytes, y `ls -l` lo confirma (NDG, 2024):
 
 ```bash
 ls -l notas.txt
@@ -30,7 +30,7 @@ Ese `0` es el tamaño. El archivo existe, pero no tiene contenido.
 touch enero.txt febrero.txt marzo.txt
 ```
 
-Y con llaves se genera la lista sin escribirla entera. Bash expande `{1..3}` antes de que `touch` la vea:
+Y con llaves se genera la lista sin escribirla entera. Bash expande `{1..3}` antes de que `touch` la vea (Free Software Foundation, 2025):
 
 ```bash
 touch practica-{1..3}.txt
@@ -46,7 +46,7 @@ practica-1.txt  practica-2.txt  practica-3.txt
 
 ### El otro trabajo de touch
 
-El nombre viene de "tocar", y ese es su comportamiento cuando el archivo **ya existe**: no lo borra ni lo modifica, sólo actualiza su fecha de modificación a ahora mismo.
+El nombre viene de "tocar", y ese es su comportamiento cuando el archivo **ya existe**: no lo borra ni lo modifica, sólo actualiza su fecha de modificación a ahora mismo (Free Software Foundation, 2026).
 
 ```bash
 touch notas.txt
@@ -158,5 +158,6 @@ ls -a
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
