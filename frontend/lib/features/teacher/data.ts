@@ -85,6 +85,15 @@ export async function setActivityEnabled(
   return teacherApi.setActivityEnabled(groupId, activityId, enabled)
 }
 
+/** Extiende la fecha de cierre de una actividad (permitida aunque haya historial). */
+export async function extendActivityDueDate(
+  groupId: string,
+  activityId: string,
+  dueDate: string,
+): Promise<Activity> {
+  return teacherApi.extendActivityDueDate(groupId, activityId, dueDate)
+}
+
 export async function listActivitySubmissions(
   groupId: string,
   activityId: string,

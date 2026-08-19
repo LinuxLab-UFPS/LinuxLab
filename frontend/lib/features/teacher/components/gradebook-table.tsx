@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@shared/lib/utils"
+import { scoreColor } from "@shared/lib/score-color"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip"
 import { getTopic } from "@shared/lib/content/temario"
 import type {
@@ -9,13 +10,6 @@ import type {
   GradebookActivity,
   GradebookCell,
 } from "@/lib/models/groups"
-
-/** Color de la nota según la escala del curso: rojo < 60, ámbar >= 60, verde >= 80. */
-function scoreColor(score: number) {
-  if (score >= 80) return "text-success"
-  if (score >= 60) return "text-warning"
-  return "text-danger"
-}
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
 function topicTitleOf(topicNumber: number | null): string {

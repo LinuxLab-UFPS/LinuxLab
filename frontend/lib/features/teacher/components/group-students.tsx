@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link"
 import {
   Table,
   TableBody,
@@ -19,11 +18,9 @@ import type { EnrollmentStudent } from "@/lib/features/auth/types"
  */
 export function GroupStudents({
   students,
-  groupId,
   query,
 }: {
   students: EnrollmentStudent[]
-  groupId: string
   query: string
 }) {
   const q = query.trim().toLowerCase()
@@ -51,13 +48,8 @@ export function GroupStudents({
             </TableHeader>
             <TableBody>
               {visible.map((student) => (
-                <TableRow key={student.id} className="relative">
+                <TableRow key={student.id}>
                   <TableCell>
-                    <Link
-                      href={`/groups/${groupId}/student/${student.id}`}
-                      className="absolute inset-0 z-10"
-                      aria-label={`Ver estudiante ${student.name}`}
-                    />
                     <span className="font-mono text-sm text-muted-foreground">
                       {student.code ?? "—"}
                     </span>

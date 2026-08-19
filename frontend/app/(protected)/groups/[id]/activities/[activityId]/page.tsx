@@ -1,13 +1,15 @@
 import Link from "next/link"
-import { ArrowLeft, Pencil, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
+import { ArrowLeft, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { ActionButton } from "@shared/components/action-button"
 import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
+import { describeCheck } from "@shared/lib/describe-check"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { SubmissionsTable } from "@/lib/features/teacher/components/submissions-table"
+import { ExtendDueDateButton } from "@/lib/features/teacher/components/extend-due-date-button"
 
 const ROW =
   "flex items-center justify-between gap-4 border-b border-border/50 px-4 py-2.5 text-sm last:border-0"
@@ -35,6 +37,7 @@ function ActivityDetail({
   backTab: string
 }) {
   const topic = getTopic(activity.topicNumber)
+  const hasEntregas = submissions.length > 0 || manualSubmissions.length > 0
   const studentDetailHref = (studentId: string) =>
     `/groups/${groupId}/activities/${activity.id}/students/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
   const manualRows = manualSubmissions.map((sub) => ({
@@ -45,6 +48,7 @@ function ActivityDetail({
     middleTone: (sub.status === "graded" ? "success" : "warning") as "success" | "warning",
     submittedAt: sub.submittedAt,
     scoreLabel: sub.score != null ? `${sub.score}/${activity.maxScore}` : "—",
+    scoreValue: sub.score ?? null,
     href: studentDetailHref(sub.studentId),
   }))
   const automaticRows = submissions.map((sub) => ({
@@ -55,6 +59,7 @@ function ActivityDetail({
     middleTone: "muted" as const,
     submittedAt: sub.lastAttemptDate,
     scoreLabel: `${sub.finalScore}/${activity.maxScore}`,
+    scoreValue: sub.finalScore,
     href: studentDetailHref(sub.studentId),
   }))
   return (
@@ -74,10 +79,17 @@ function ActivityDetail({
                 {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
-            <ActionButton tone="primary" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
-              <Pencil className="h-4 w-4" />
-              Editar
-            </ActionButton>
+            {hasEntregas ? (
+              <ExtendDueDateButton
+                groupId={groupId}
+                activityId={activity.id}
+                currentDueDate={activity.dueDate ?? null}
+              />
+            ) : (
+              <ActionButton tone="primary" href={`/groups/${groupId}/new-activity?edit=${activity.id}`}>
+                Editar
+              </ActionButton>
+            )}
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-card">
@@ -124,11 +136,8 @@ function ActivityDetail({
                       <th className="w-10 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                         #
                       </th>
-                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Tipo
-                      </th>
-                      <th className="px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
-                        Parametros
+                      <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase">
+                        Descripción
                       </th>
                       <th className="w-20 px-4 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase">
                         Puntos
@@ -139,9 +148,8 @@ function ActivityDetail({
                     {activity.checks.map((check, index) => (
                       <tr key={check.id} className="border-b border-border/50 bg-background last:border-0">
                         <td className="px-4 py-2.5 text-sm text-muted-foreground">{index + 1}</td>
-                        <td className="px-4 py-2.5 font-mono text-sm text-foreground">{check.type}</td>
-                        <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">
-                          {JSON.stringify(check.params)}
+                        <td className="px-4 py-2.5 text-sm text-foreground">
+                          {describeCheck(check.type, check.params)}
                         </td>
                         <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
                           {check.points}

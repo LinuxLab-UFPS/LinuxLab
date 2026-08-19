@@ -21,9 +21,6 @@ const activityInputSchema = z.object({
     .max(2000, "La descripción no puede superar los 2000 caracteres")
     .optional()
     .nullable(),
-  gradingPolicy: z
-    .enum(["best_score", "latest_score"], { errorMap: () => ({ message: "La política de calificación no es válida" }) })
-    .default("best_score"),
   // null o ausente = intentos ilimitados; un entero positivo = límite.
   attemptLimit: z.number().int().positive().nullable().optional(),
   activityType: z.enum(["workshop", "quiz"]).default("workshop"),
@@ -49,7 +46,6 @@ function serializeGroupActivity(ga, definition) {
     evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
     activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
     attemptLimit: ga.attempt_limit,
-    gradingPolicy: ga.activity_type === "quiz" ? "latest_score" : "best_score",
     workdir: ga.workdir,
     enabled: ga.enabled,
     checks: (ga.checks ?? []).map((c) => ({

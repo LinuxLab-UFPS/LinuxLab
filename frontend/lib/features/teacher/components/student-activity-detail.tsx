@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { scoreColor } from "@shared/lib/score-color"
 import { ActionButton } from "@shared/components/action-button"
 import { Input } from "@shared/components/ui/input"
 import { Textarea } from "@shared/components/ui/textarea"
@@ -20,13 +22,6 @@ interface Props {
   groupId: string
   backHref: string
   isTeacher: boolean
-}
-
-/** Color de la nota según la escala del curso: rojo < 60, ámbar >= 60, verde >= 80. */
-function scoreColor(score: number) {
-  if (score >= 80) return "text-success"
-  if (score >= 60) return "text-warning"
-  return "text-danger"
 }
 
 function StatusBadge({ detail }: { detail: StudentActivityDetailType }) {
@@ -78,9 +73,16 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
   const [feedbackInput, setFeedbackInput] = useState(manualSubmission?.feedback ?? "")
   const [grading, setGrading] = useState(false)
   const queryClient = useQueryClient()
+  const router = useRouter()
+
+  const scoreValue = Number(scoreInput)
+  const scoreError =
+    showGradeForm &&
+    scoreInput !== "" &&
+    (!Number.isInteger(scoreValue) || scoreValue < 0 || scoreValue > 100)
 
   const handleGrade = async () => {
-    if (!manualSubmission) return
+    if (!manualSubmission || scoreError) return
     const parsed = Number(scoreInput)
     if (!Number.isInteger(parsed) || parsed < 0 || parsed > 100) {
       notify.error(null, "La calificación debe ser un entero entre 0 y 100")
@@ -94,6 +96,9 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
         queryKey: queryKeys.studentPerformance(groupId, student.id),
       })
       notify.success("Calificación guardada")
+      // El detalle lo pinta el server component: refrescar re-trae la entrega
+      // calificada y oculta el formulario (submission.status === "graded").
+      router.refresh()
     } catch (e) {
       notify.error(e, "No se pudo guardar la calificación")
     } finally {
@@ -152,14 +157,23 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
                 <td className="px-4 py-2.5 font-medium text-foreground w-56">Calificación</td>
                 <td className="px-4 py-2.5">
                   {showGradeForm ? (
-                    <Input
-                      type="number"
-                      min={0}
-                      max={100}
-                      value={scoreInput}
-                      onChange={(e) => setScoreInput(e.target.value)}
-                      className="w-32 border-table-line font-mono"
-                    />
+                    <div className="space-y-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={scoreInput}
+                        onChange={(e) => setScoreInput(e.target.value)}
+                        aria-invalid={scoreError || undefined}
+                        className={cn(
+                          "w-32 border-table-line font-mono",
+                          scoreError && "border-danger focus:ring-danger",
+                        )}
+                      />
+                      {scoreError && (
+                        <p className="text-xs text-danger">Debe ser un entero entre 0 y 100.</p>
+                      )}
+                    </div>
                   ) : score != null ? (
                     <span className={cn("font-mono text-sm font-medium", scoreColor(score))}>
                       {score}/{activity.maxScore}
@@ -194,7 +208,7 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
 
         {showGradeForm && (
           <div className="mt-3 flex justify-end">
-            <ActionButton tone="primary" onClick={handleGrade} disabled={grading}>
+            <ActionButton tone="primary" onClick={handleGrade} disabled={grading || scoreError}>
               {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Calificar
             </ActionButton>
@@ -433,7 +447,7 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
   )
 }
 
-/** Checks de la mejor entrega de una actividad automática, según su política.
+/** Checks del último intento de una actividad automática.
  * La retroalimentación descriptiva de cada check la construye el checker
  * (backend), así que aquí solo se muestra `detail` tal cual viene. */
 function AutomaticFeedback({
@@ -445,13 +459,9 @@ function AutomaticFeedback({
     return <span className="text-muted-foreground">—</span>
   }
 
-  const policy = detail.activity.gradingPolicy
-  const bestAttempt =
-    policy === "latest_score"
-      ? detail.attempts.reduce((a, b) =>
-          new Date(a.createdAt) > new Date(b.createdAt) ? a : b,
-        )
-      : detail.attempts.reduce((a, b) => (b.score > a.score ? b : a))
+  const bestAttempt = detail.attempts.reduce((a, b) =>
+    new Date(a.createdAt) > new Date(b.createdAt) ? a : b,
+  )
 
   return (
     <div className="space-y-3">
@@ -486,6 +496,7 @@ function AutomaticDetail({
   }
 
   const maxScore = detail.activity.maxScore
+  const attemptsDesc = [...detail.attempts].reverse()
 
   return (
     <div className="overflow-hidden rounded-xl border border-border">
@@ -513,7 +524,7 @@ function AutomaticDetail({
             </tr>
           </thead>
           <tbody>
-            {detail.attempts.map((a) => (
+            {attemptsDesc.map((a) => (
               <tr key={a.attemptNumber} className="border-b border-border/50 bg-background last:border-0">
                 <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.attemptNumber}</td>
                 <td className="px-4 py-2.5 text-sm text-muted-foreground">

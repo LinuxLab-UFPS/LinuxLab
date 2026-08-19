@@ -4,8 +4,6 @@ export type Difficulty = "basic" | "intermediate" | "advanced"
 
 export type EvaluationType = "atomic" | "manual"
 
-export type GradingPolicy = "best_score" | "latest_score"
-
 /** Taller: intentos ilimitados. Quiz: permite límite de intentos. */
 export type ActivityType = "workshop" | "quiz"
 
@@ -96,7 +94,6 @@ export interface Activity {
   required: boolean
   evaluationType: EvaluationType
   activityType: ActivityType
-  gradingPolicy?: GradingPolicy
   /** Límite de intentos; null o ausente = ilimitado. */
   attemptLimit?: number | null
   /** Habilita/deshabilita la actividad (publicar/deshabilitar). */
@@ -177,7 +174,6 @@ export interface GroupActivityDetail {
   attemptLimit: number | null
   attemptsCount: number
   finalScore: number
-  gradingPolicy: GradingPolicy
   enabled: boolean
   completed: boolean
   attempts: {
@@ -185,7 +181,7 @@ export interface GroupActivityDetail {
     createdAt: string
     score: number
   }[]
-  lastAttempt: { passed: boolean; score: number } | null
+  lastAttempt: { passed: boolean; score: number; results: ActivityCheckResult[] } | null
   submission: {
     id: string
     status: string
@@ -254,7 +250,7 @@ export interface StudentActivityDetailManual {
 export interface StudentActivityDetailAutomatic {
   type: "automatic"
   student: { id: string; name: string; email: string; code: string | null }
-  activity: { id: string; title: string; instructions: string; workdir: string; evaluationType: string; activityType: string; maxScore: number; gradingPolicy: string }
+  activity: { id: string; title: string; instructions: string; workdir: string; evaluationType: string; activityType: string; maxScore: number }
   attempts: {
     attemptNumber: number
     passed: boolean

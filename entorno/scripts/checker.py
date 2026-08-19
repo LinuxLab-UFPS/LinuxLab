@@ -82,28 +82,33 @@ def display_name(path):
     return name or "el elemento"
 
 
-def perms_to_sentence(modo):
-    """Traduce un modo octal (ej: '755') a permisos en lenguaje natural, p.ej.
-    'lectura, escritura y ejecución para el propietario, lectura y ejecución
-    para el grupo y lectura y ejecución para otros'. Solo usa los ultimos tres
-    digitos (el cuarto es el bit especial)."""
-    DIGITS = {
-        "7": "lectura, escritura y ejecución",
-        "6": "lectura y escritura",
-        "5": "lectura y ejecución",
-        "4": "solo lectura",
-        "3": "escritura y ejecución",
-        "2": "solo escritura",
-        "1": "solo ejecución",
-        "0": "sin permisos",
-    }
-    LABELS = ["el propietario", "el grupo", "otros"]
-    digits = list(modo[-3:])
-    if len(digits) != 3:
-        return "los permisos esperados"
-    return ", ".join(
-        f"{DIGITS.get(d, 'sin permisos')} para {LABELS[i]}" for i, d in enumerate(digits)
-    )
+def natural_join(items):
+    """Une una lista en espanol: 'a', 'b y c', 'a, b y c'."""
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} y {items[1]}"
+    return f"{', '.join(items[:-1])} y {items[-1]}"
+
+
+def perms_deltas(expected, actual):
+    """Compara dos modos octales (3 digitos) y devuelve (faltan, sobran): las
+    listas de permisos que faltan o que sobran, expresadas como 'X para <rol>'."""
+    BITS = {"4": "lectura", "2": "escritura", "1": "ejecución"}
+    ROLES = ["el propietario", "el grupo", "otros"]
+    faltan, sobran = [], []
+    for i in range(3):
+        e = int(expected[i])
+        a = int(actual[i])
+        for bit, label in BITS.items():
+            b = int(bit)
+            if e & b and not (a & b):
+                faltan.append(f"{label} para {ROLES[i]}")
+            elif a & b and not (e & b):
+                sobran.append(f"{label} para {ROLES[i]}")
+    return faltan, sobran
 
 
 def check_directorio_existe(params, home):
@@ -114,8 +119,8 @@ def check_directorio_existe(params, home):
     if not os.path.isdir(path):
         raise CheckError(f"Se esperaba un directorio en '{name}'. Existe, pero es un archivo")
     if not owned_by_me(path):
-        raise CheckError(f"El directorio '{name}' existe, pero no es tuyo")
-    return f"El directorio '{name}' existe y es tuyo"
+        raise CheckError(f"El directorio '{name}' existe, pero no pertenece a {me().pw_name}")
+    return f"El directorio '{name}' existe y pertenece a {me().pw_name}"
 
 
 def check_archivo_existe(params, home):
@@ -126,8 +131,8 @@ def check_archivo_existe(params, home):
     if os.path.isdir(path):
         raise CheckError(f"Se esperaba un archivo en '{name}'. Existe, pero es un directorio")
     if not owned_by_me(path):
-        raise CheckError(f"El archivo '{name}' existe, pero no es tuyo")
-    return f"El archivo '{name}' existe y es tuyo"
+        raise CheckError(f"El archivo '{name}' existe, pero no pertenece a {me().pw_name}")
+    return f"El archivo '{name}' existe y pertenece a {me().pw_name}"
 
 
 def check_archivo_no_existe(params, home):
@@ -148,12 +153,16 @@ def check_permisos_son(params, home):
     if not expected.isdigit() or not 3 <= len(expected) <= 4:
         raise CheckError("El modo esperado no es un octal válido")
     actual = oct(stat.S_IMODE(os.stat(path).st_mode))[2:].zfill(len(expected))
-    if actual != expected.zfill(len(expected)):
-        raise CheckError(
-            f"Se esperaban permisos de {perms_to_sentence(expected)} en '{name}'. "
-            f"Tienes {perms_to_sentence(actual)}"
-        )
-    return f"Los permisos de '{name}' son correctos: {perms_to_sentence(actual)}."
+    expected_padded = expected.zfill(len(actual))
+    if actual != expected_padded:
+        faltan, sobran = perms_deltas(expected_padded, actual)
+        partes = []
+        if faltan:
+            partes.append(("falta" if len(faltan) == 1 else "faltan") + " " + natural_join(faltan))
+        if sobran:
+            partes.append(("sobra" if len(sobran) == 1 else "sobran") + " " + natural_join(sobran))
+        raise CheckError(f"Para '{name}' " + " y ".join(partes) + ".")
+    return f"Los permisos de '{name}' son correctos: {actual}."
 
 
 def check_propietario_es(params, home):

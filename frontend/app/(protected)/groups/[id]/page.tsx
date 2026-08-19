@@ -277,7 +277,7 @@ function GroupDetailContent() {
 
       {/* Tabla */}
       {tab === "estudiantes" ? (
-        <GroupStudents students={studentsQuery.data ?? []} groupId={id} query={query} />
+        <GroupStudents students={studentsQuery.data ?? []} query={query} />
       ) : tab === "actividades" ? (
         <div data-section="actividades">
           <GroupActivities

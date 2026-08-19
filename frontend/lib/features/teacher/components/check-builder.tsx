@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Plus, Trash2, ShieldCheck, Loader2 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { describeCheck } from "@shared/lib/describe-check"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
 import { Checkbox } from "@shared/components/ui/checkbox"
@@ -205,6 +206,11 @@ export function CheckBuilder({
                     />
                   </div>
                 ))}
+              </div>
+
+              {/* Preview: qué evaluaría esta aserción con los parámetros actuales. */}
+              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 pl-9 text-sm text-foreground">
+                {describeCheck(check.type, check.params)}
               </div>
 
               <p className="pl-9 text-xs text-muted-foreground">{entry.hint}</p>

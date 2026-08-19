@@ -114,7 +114,6 @@ export interface GradebookActivity {
   activityType: "workshop" | "quiz"
   dueAt: string | null
   enabled: boolean
-  gradingPolicy: "best_score" | "latest_score"
   maxScore: number
 }
 

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Inbox } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { scoreColor } from "@shared/lib/score-color"
 import { Empty } from "@shared/components/empty"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 
@@ -14,6 +15,7 @@ export interface SubmissionRow {
   middleTone: "success" | "warning" | "muted"
   submittedAt: string | null
   scoreLabel: string
+  scoreValue: number | null
   href: string
 }
 
@@ -84,8 +86,10 @@ export function SubmissionsTable({
                   <td className="px-4 py-2.5 text-sm text-muted-foreground">
                     {row.submittedAt ? formatBogotaDateTime(row.submittedAt) : "—"}
                   </td>
-                  <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">
-                    {row.scoreLabel}
+                  <td className="px-4 py-2.5 text-center font-mono text-sm">
+                    <span className={cn(row.scoreValue != null && scoreColor(row.scoreValue))}>
+                      {row.scoreLabel}
+                    </span>
                   </td>
                 </tr>
               </Link>
