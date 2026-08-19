@@ -2,7 +2,7 @@
 
 ## Permisos por defecto
 
-Los archivos creados hasta ahora nunca han llevado los mismos permisos que un directorio recién hecho, y nadie ha elegido ninguno de los dos. Eso lo decide la `umask`, un valor que cada sesión arrastra y que determina con qué permisos se crea todo lo nuevo.
+Los archivos creados hasta ahora nunca han llevado los mismos permisos que un directorio recién hecho, y nadie ha elegido ninguno de los dos. Eso lo decide la `umask` (Free Software Foundation, 2025), un valor que cada sesión arrastra y que determina con qué permisos se crea todo lo nuevo.
 
 ```bash
 umask
@@ -16,7 +16,7 @@ El primer dígito corresponde a permisos especiales y en la práctica se ignora.
 
 ## Cómo se calcula
 
-La `umask` no indica los permisos que se conceden, sino los que se **retiran**. Se parte de un máximo fijo y se le resta:
+La `umask` no indica los permisos que se conceden, sino los que se **retiran**. Se parte de un máximo fijo y se le resta (NDG, 2024):
 
 | | Archivos | Directorios |
 |---|---|---|
@@ -96,7 +96,5 @@ El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, File permissions. gnu.org/software/coreutils/manual
-- AlgoMaster. *Users, Groups and Permissions*. algomaster.io/learn/operating-systems
+- Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

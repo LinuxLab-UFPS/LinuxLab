@@ -1,6 +1,6 @@
 ## Permisos sobre directorios
 
-Las letras son las mismas, `r`, `w` y `x`, pero sobre un directorio significan otra cosa. Un directorio no es un texto que se pueda leer ni un programa que se pueda ejecutar: es una lista de nombres. Los permisos regulan qué se puede hacer con esa lista.
+Las letras son las mismas, `r`, `w` y `x`, pero sobre un directorio significan otra cosa (NDG, 2024). Un directorio no es un texto que se pueda leer ni un programa que se pueda ejecutar: es una lista de nombres. Los permisos regulan qué se puede hacer con esa lista.
 
 | Letra | Sobre un directorio |
 |---|---|
@@ -169,7 +169,7 @@ ls -ld recien
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:21 recien
 ```
 
-En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea. Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
+En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea (DevOps Daily, 2025). Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
 
 <!-- ACTIVIDAD: cerrar-el-proyecto -->
 
@@ -177,7 +177,5 @@ En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especi
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, File permissions. gnu.org/software/coreutils/manual
-- AlgoMaster. *Users, Groups and Permissions*. algomaster.io/learn/operating-systems
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

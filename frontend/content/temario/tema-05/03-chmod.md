@@ -1,29 +1,12 @@
 ## Cambiar permisos con chmod
 
-`chmod` (change mode) modifica los permisos de un archivo o un directorio. Sólo puede usarlo el dueño del archivo, o el administrador.
+`chmod` (change mode) modifica los permisos de un archivo o un directorio (Free Software Foundation, 2026). Sólo puede usarlo el dueño del archivo, o el administrador.
 
 Admite dos formas de escribir el permiso nuevo. La numérica resume cada bloque en un dígito y reescribe los nueve permisos de una vez. La simbólica los nombra con letras, `u+x` o `g-w`, y modifica sólo lo que menciona. Conviene manejar las dos, pero la de letras es la que resuelve la mayoría de los casos del día a día y la que se usa cuando el archivo ya tiene permisos que no hay que estropear.
 
 ## Forma numérica
 
-Cada permiso vale un número, y esos valores se suman dentro de cada bloque:
-
-| Valor | Permiso |
-|---|---|
-| `4` | Lectura |
-| `2` | Escritura |
-| `1` | Ejecución |
-
-Un bloque queda entonces resumido en un dígito del 0 al 7. Las ocho combinaciones posibles:
-
-| Dígito | Bloque | Dígito | Bloque |
-|---|---|---|---|
-| `7` | `rwx` | `3` | `-wx` |
-| `6` | `rw-` | `2` | `-w-` |
-| `5` | `r-x` | `1` | `--x` |
-| `4` | `r--` | `0` | `---` |
-
-Tres dígitos describen el archivo entero, en el orden de siempre: dueño, grupo, otros.
+Cada bloque de permisos se resume en un dígito octal, según la tabla del subtema anterior. Tres dígitos describen el archivo entero, en el orden de siempre: dueño, grupo, otros.
 
 ```bash
 chmod 640 notas.txt
@@ -47,7 +30,7 @@ La forma numérica siempre escribe los nueve permisos de golpe. Eso la hace ráp
 
 ## Forma simbólica
 
-La forma simbólica nombra qué se toca y lo modifica sin alterar el resto. Se compone de tres partes:
+La forma simbólica nombra qué se toca y lo modifica sin alterar el resto (NDG, 2024). Se compone de tres partes:
 
 | Parte | Valores |
 |---|---|
@@ -202,6 +185,5 @@ Conviene mirar ese resultado con atención. El `700` era el permiso adecuado par
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, chmod. gnu.org/software/coreutils/manual
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

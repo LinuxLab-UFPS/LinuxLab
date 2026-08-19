@@ -1,6 +1,6 @@
 ## Dueño, grupo y permisos
 
-Linux es un sistema multiusuario: varias personas trabajan sobre la misma máquina al mismo tiempo. Por eso cada archivo lleva anotado quién es su dueño y qué puede hacer con él cada quien. Esa información aparece en `ls -l`, en la parte que hasta ahora se ha ignorado.
+Linux es un sistema multiusuario: varias personas trabajan sobre la misma máquina al mismo tiempo. Por eso cada archivo lleva anotado quién es su dueño y qué puede hacer con él cada quien (NDG, 2024). Esa información aparece en `ls -l`, en la parte que hasta ahora se ha ignorado.
 
 ```bash
 ls -l
@@ -110,11 +110,11 @@ ls -l notas.txt
 
 Los nombres son una comodidad para leer. Si se borra la cuenta de un usuario, sus archivos no quedan sin dueño: siguen apuntando al mismo UID, y como ya no hay nombre que le corresponda, `ls -l` pasa a mostrar el número.
 
-Cambiar de dueño un archivo requiere privilegios de administrador, así que en la práctica el dueño es quien lo creó.
+Cambiar de dueño un archivo requiere privilegios de administrador, así que en la práctica el dueño es quien lo creó (DevOps Daily, 2025).
 
 ## La misma información, en números
 
-`stat` muestra lo mismo que `ls -l` pero añade la forma numérica de los permisos, que es la que se usa para cambiarlos:
+`stat` muestra lo mismo que `ls -l` pero añade la forma numérica de los permisos, que es la que se usa para cambiarlos (Free Software Foundation, 2026):
 
 ```bash
 stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
@@ -126,7 +126,7 @@ stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
 -rwxr-xr-x  755  andres_torres  grp_cec1648c  saludo.sh
 ```
 
-Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido del siguiente subtema.
+Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido de los dos subtemas siguientes.
 
 ## Práctica
 
@@ -188,7 +188,6 @@ rm: remove write-protected regular file 'solo-lectura.txt'?
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, File permissions. gnu.org/software/coreutils/manual
-- AlgoMaster. *Users, Groups and Permissions*. algomaster.io/learn/operating-systems
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
