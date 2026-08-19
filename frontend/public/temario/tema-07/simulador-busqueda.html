@@ -281,7 +281,7 @@ const barra = Barra.montar({
     { clave: 'Laura',   tono: 'oro',  texto: 'Pide un dato cada vez y dice dónde mirar. Si la respuesta falla, insiste con una pista más concreta: no se queda nadie atascado.' },
     { clave: 'Terminal', tono: 'azul', texto: 'Buscar no cambia nada en el disco. La terminal anuncia con qué herramienta se saca cada dato; la respuesta se escribe en el teléfono.' },
   ],
-  onReiniciar: () => reiniciar(),
+  onReiniciar: () => empezar(),
 });
 
 
@@ -1366,7 +1366,15 @@ $("desk").addEventListener("click", (ev) => {
   if (ev.target.tagName !== "INPUT") enfocar();
 });
 
-function reiniciar() {
+/* Preparar y empezar son dos cosas distintas.
+ *
+ * Antes eran una sola: al cargar el HTML se armaba el caso y Laura soltaba de
+ * inmediato sus tres mensajes de apertura y la primera peticion. Con la portada
+ * todavia puesta, claro, asi que quien tardaba en pulsar play entraba con media
+ * conversacion ya escrita y sin haber leido nada. Ahora al cargar solo se deja
+ * el escritorio montado detras de la portada, callado, y la conversacion no
+ * arranca hasta que se pulsa play. */
+function preparar() {
   nuevoCaso();
   tecleado = "";
   $("tecleado").textContent = "";
@@ -1388,11 +1396,19 @@ function reiniciar() {
   log("Copia local del proyecto lista.");
   log(`Laura necesita ${caso.datos.length} datos para cerrar el informe del incidente:`);
   log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
+  pintar();
+}
+
+/** Quita la portada y da la palabra a Laura. */
+function empezar() {
+  preparar();
+  $("portada").classList.add("hide");
+  barra.jugando(true);
   di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
   di("ella", "Tienes el proyecto clonado en el escritorio. Te voy pidiendo los datos de uno en uno.");
   di("ella", "Mándame el dato y escríbelo bien. Que venga en el mensaje sin errores.");
   pedir();
-  pintar();
+  enfocar();
 }
 
 /* ---------- ventanas ---------- */
@@ -1419,20 +1435,16 @@ $("chat-in").addEventListener("keydown", (ev) => {
   responderChat();
 });
 
-$("play").addEventListener("click", () => {
-  $("portada").classList.add("hide");
-  barra.jugando(true);
-  enfocar();
-});
-$("fin-again").addEventListener("click", reiniciar);
+$("play").addEventListener("click", empezar);
+$("fin-again").addEventListener("click", empezar);
 $("fin-exit").addEventListener("click", Barra.salir);
 
-reiniciar();
+preparar();
 
 // Gancho de pruebas: el arnes de Node empuja el estado sin DOM.
 if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
   globalThis.__api = {
-    ejecutar, ejecutarTramo, reiniciar, objetivos,
+    ejecutar, ejecutarTramo, reiniciar: empezar, objetivos,
     caso: () => caso, fs: () => fs, paso: () => paso, resueltos: () => resueltos,
     campos, respuestaDe,
     responder: (campo, valor) => { resueltos[campo] = contiene(valor, respuestaDe(campo)); revisar(); },
