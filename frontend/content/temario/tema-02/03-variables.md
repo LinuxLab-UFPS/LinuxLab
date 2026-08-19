@@ -1,10 +1,10 @@
 ## Variables en Bash
 
-El shell Bash mantiene un conjunto de variables que guardan información usada durante la sesión: el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que se quiera almacenar. Existen dos tipos: locales y de entorno.
+El shell Bash mantiene un conjunto de variables que guardan información usada durante la sesión (Free Software Foundation, 2025): el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que se quiera almacenar. Existen dos tipos: locales y de entorno.
 
 ## Variables locales
 
-Una variable local existe solo mientras dura la sesión de Bash actual. Cuando cierras la terminal, desaparece. Por convención, los nombres de variables locales se escriben en minúsculas.
+Una variable local existe solo mientras dura la sesión de Bash actual. Cuando cierras la terminal, desaparece. Por convención, los nombres de variables locales se escriben en minúsculas (NDG, 2024).
 
 Para crear una variable y asignarle un valor, usa el signo igual sin espacios:
 
@@ -48,7 +48,7 @@ Si la variable no existe, `echo $variable` simplemente no imprime nada. Si ya ex
 
 ## Variables de entorno
 
-Las variables de entorno, también llamadas globales, están disponibles en todos los shells abiertos por Bash. El sistema las recrea automáticamente en cada terminal nueva. Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`.
+Las variables de entorno, también llamadas globales, están disponibles en todos los shells abiertos por Bash. El sistema las recrea automáticamente en cada terminal nueva (NDG, 2024). Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`.
 
 El valor de cualquiera se consulta con `echo`:
 
@@ -60,7 +60,7 @@ echo $HISTSIZE
 1000
 ```
 
-Para convertir una variable local en variable de entorno se usa `export`:
+Para convertir una variable local en variable de entorno se usa `export` (Free Software Foundation, 2025):
 
 ```bash
 export nombre
@@ -92,7 +92,7 @@ Después de `unset`, la variable deja de existir en el entorno.
 
 ## La variable PATH
 
-`PATH` es una de las variables de entorno más importantes. Contiene la lista de directorios donde el shell busca los programas al ejecutar un comando. Cada directorio está separado por dos puntos:
+`PATH` es una de las variables de entorno más importantes. Contiene la lista de directorios donde el shell busca los programas al ejecutar un comando (NDG, 2024). Cada directorio está separado por dos puntos:
 
 ```bash
 echo $PATH
@@ -114,7 +114,7 @@ bash: programa-inexistente: command not found
 
 Ese error casi siempre significa una de dos cosas: el programa no está instalado, o está instalado pero en un directorio que no está en `PATH`.
 
-Para añadir un directorio a `PATH`, incluyes el valor actual `$PATH` en la nueva asignación para no perder las rutas existentes:
+Para añadir un directorio a `PATH`, incluyes el valor actual `$PATH` en la nueva asignación para no perder las rutas existentes (NDG, 2024):
 
 ```bash
 PATH=/usr/bin/custom:$PATH
@@ -143,5 +143,6 @@ El nuevo directorio queda al inicio, por lo que el shell lo revisará primero.
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 11: "The Environment". linuxcommand.org
+- Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

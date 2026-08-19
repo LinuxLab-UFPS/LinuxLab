@@ -1,12 +1,12 @@
 ## La línea de comandos
 
-La **línea de comandos** es un sistema de entrada de texto donde se le indica al computador exactamente qué debe hacer. Admite desde un comando simple hasta un script completo de cien líneas. Es directa, sin capas visuales en el medio.
+La **línea de comandos** es un sistema de entrada de texto donde se le indica al computador exactamente qué debe hacer (NDG, 2024). Admite desde un comando simple hasta un script completo de cien líneas. Es directa, sin capas visuales en el medio.
 
 <!-- ILLUSTRATION: terminal -->
 
 ## Cómo acceder a la terminal
 
-En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal:
+En un sistema Linux con entorno gráfico hay dos formas de llegar a la terminal (NDG, 2024):
 
 **Terminal de escritorio:** Es una aplicación dentro del entorno gráfico que abre una ventana con la línea de comandos. Según la distribución que uses, la encuentras buscando "terminal" en el menú de aplicaciones. En Ubuntu se llama GNOME Terminal, en KDE es Konsole. Todas hacen lo mismo.
 
@@ -16,7 +16,7 @@ En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona 
 
 ## El shell
 
-Al escribir un comando y pulsar <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, el programa encargado de interpretar esa línea y decirle al sistema operativo qué tiene que hacer. Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
+Al escribir un comando y pulsar <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, el programa encargado de interpretar esa línea y decirle al sistema operativo qué tiene que hacer (Free Software Foundation, 2025). Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
 
 El shell es el puente entre tú y el kernel.
 
@@ -53,5 +53,6 @@ Ese texto antes del `$` es el **prompt**: indica el nombre de usuario, el nombre
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
