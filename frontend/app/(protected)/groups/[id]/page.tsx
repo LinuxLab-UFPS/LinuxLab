@@ -14,6 +14,7 @@ import {
   Search,
   BarChart3,
   FileSpreadsheet,
+  ScrollText,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
@@ -33,7 +34,7 @@ import {
 } from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
-import { GroupActivityFeed } from "@/lib/features/teacher/components/group-activity-feed"
+import { GroupAuditPanel } from "@/lib/features/teacher/components/group-audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
@@ -41,7 +42,7 @@ import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
 
-type Tab = "estudiantes" | "actividades" | "calificaciones"
+type Tab = "estudiantes" | "actividades" | "calificaciones" | "bitacora"
 
 function GroupDetailContent() {
   const params = useParams<{ id: string }>()
@@ -184,6 +185,12 @@ function GroupDetailContent() {
               icon: BarChart3,
               tone: "primary",
             },
+            {
+              value: "bitacora",
+              label: "Bitácora",
+              icon: ScrollText,
+              tone: "sky",
+            },
           ]}
         />
       </div>
@@ -195,25 +202,29 @@ function GroupDetailContent() {
             ? `Estudiantes del curso (${group.studentCount})`
             : tab === "actividades"
               ? `Actividades del curso (${group.activityCount})`
-              : "Calificaciones del curso"}
+              : tab === "bitacora"
+                ? "Bitácora del curso"
+                : "Calificaciones del curso"}
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full max-w-xs flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={
-                tab === "estudiantes"
-                  ? "Buscar estudiante por nombre o código..."
-                  : tab === "actividades"
-                    ? "Buscar actividad por nombre..."
-                    : "Buscar por nombre o código..."
-              }
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="border-table-line pl-9"
-            />
-          </div>
+          {tab !== "bitacora" && (
+            <div className="relative w-full max-w-xs flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={
+                  tab === "estudiantes"
+                    ? "Buscar estudiante por nombre o código..."
+                    : tab === "actividades"
+                      ? "Buscar actividad por nombre..."
+                      : "Buscar por nombre o código..."
+                }
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="border-table-line pl-9"
+              />
+            </div>
+          )}
 
           {tab === "actividades" && (
             <>
@@ -248,6 +259,7 @@ function GroupDetailContent() {
           )}
 
           {!group.archived &&
+            tab !== "bitacora" &&
             (tab === "estudiantes" ? (
               <ActionButton tone="primary" onClick={() => setAdding(true)}>
                 <Plus className="h-4 w-4" />
@@ -289,14 +301,13 @@ function GroupDetailContent() {
             evalFilter={evalFilter}
           />
         </div>
+      ) : tab === "bitacora" ? (
+        <div data-section="bitacora">
+          <GroupAuditPanel groupId={id} />
+        </div>
       ) : (
-        <div data-section="calificaciones" className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div>
-            <GradebookPanel groupId={id} query={query} />
-          </div>
-          <div className="lg:sticky lg:top-4 lg:self-start">
-            <GroupActivityFeed groupId={id} />
-          </div>
+        <div data-section="calificaciones">
+          <GradebookPanel groupId={id} query={query} />
         </div>
       )}
 

@@ -143,6 +143,7 @@ export const teacherApi = {
   listAuditLog: (filters?: AuditFilters) => {
     const params = new URLSearchParams()
     if (filters?.eventType) params.set("eventType", filters.eventType)
+    if (filters?.category) params.set("category", filters.category)
     if (filters?.groupId) params.set("groupId", filters.groupId)
     if (filters?.from) params.set("from", filters.from)
     if (filters?.to) params.set("to", filters.to)

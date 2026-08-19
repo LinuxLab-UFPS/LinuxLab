@@ -44,6 +44,7 @@ export type { EnrollmentStudent } from "@/lib/models/auth"
 
 export interface AuditFilters {
   eventType?: string
+  category?: string
   groupId?: string
   from?: string
   to?: string
