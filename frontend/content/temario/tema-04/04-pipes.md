@@ -48,7 +48,7 @@ wc -l materia.txt
 
 ## El pipe
 
-Los comandos anteriores reciben un archivo como argumento y escriben el resultado en la pantalla. El carácter `|`, llamado *pipe* o tubería, redirige ese resultado: la salida de un comando se convierte en la entrada del siguiente.
+Los comandos anteriores reciben un archivo como argumento y escriben el resultado en la pantalla. El carácter `|`, llamado *pipe* o tubería, redirige ese resultado (Free Software Foundation, 2025): la salida de un comando se convierte en la entrada del siguiente.
 
 El directorio `/etc` almacena la configuración del sistema y contiene cientos de entradas:
 
@@ -111,7 +111,7 @@ El resultado son las primeras veinte entradas, y de esas, las últimas cinco: la
 
 ## El orden de los factores, si altera el producto
 
-El comando `nl` numera las líneas que recibe. Comparar dos encadenamientos con los mismos comandos en distinto orden muestra el efecto:
+El comando `nl` numera las líneas que recibe. Comparar dos encadenamientos con los mismos comandos en distinto orden muestra el efecto (NDG, 2024):
 
 ```bash
 ls /etc/ssh | nl | tail -n 3
@@ -201,6 +201,5 @@ cat logo.txt
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Barrett, D. J. *Efficient Linux at the Command Line*. O'Reilly Media, 2022.
-- GNU. *Bash Reference Manual*, Pipelines. gnu.org/software/bash/manual
+- Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
