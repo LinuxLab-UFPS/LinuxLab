@@ -31,13 +31,17 @@ export function ContentCard({
   description,
   illustration: Illustration,
   tags = [],
+  meta = [],
   progress,
 }: {
   href: string
   title: string
   description?: string
   illustration: ComponentType
+  /** Que hay dentro: videos, simuladores, actividades. Van en la fila de abajo. */
   tags?: CardTag[]
+  /** Datos de la ficha, como cuanto dura. Abren, en su propia fila. */
+  meta?: CardTag[]
   progress?: number
 }) {
   return (
@@ -80,13 +84,29 @@ export function ContentCard({
           </p>
         )}
 
-        {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <Tag key={tag.label} icon={tag.icon} tone={tag.tone}>
-                {tag.label}
-              </Tag>
-            ))}
+        {/* Dos filas: arriba lo que cuesta el tema y debajo lo que trae dentro.
+            En una sola, las cuatro etiquetas se leian como una lista de cosas
+            del mismo tipo, y el tiempo no lo es. */}
+        {(meta.length > 0 || tags.length > 0) && (
+          <div className="mt-4 flex flex-col items-start gap-1.5">
+            {meta.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {meta.map((tag) => (
+                  <Tag key={tag.label} icon={tag.icon} tone={tag.tone}>
+                    {tag.label}
+                  </Tag>
+                ))}
+              </div>
+            )}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <Tag key={tag.label} icon={tag.icon} tone={tag.tone}>
+                    {tag.label}
+                  </Tag>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
