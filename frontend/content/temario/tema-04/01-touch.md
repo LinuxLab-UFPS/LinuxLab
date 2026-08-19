@@ -121,7 +121,7 @@ touch "mi archivo.txt"
 
 Por eso la costumbre en Linux es usar guiones o guiones bajos: `mi-archivo.txt`, `mi_archivo.txt`.
 
-Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que se use `ls -a`. No es un mecanismo de seguridad, es sólo una convención para que la configuración no estorbe al listar una carpeta.
+Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que se use `ls -a` (DevOps Daily, 2025). No es un mecanismo de seguridad, es sólo una convención para que la configuración no estorbe al listar una carpeta.
 
 ```bash
 touch .configuracion
@@ -158,6 +158,7 @@ ls -a
 
 **Fuentes**
 
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
 - Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
 - Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
