@@ -1,6 +1,7 @@
 const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
 const reconcileService = require("../services/reconcileService")
+const gradebookService = require("../services/gradebookService")
 const accessService = require("../services/accessService")
 const asyncHandler = require("../utils/asyncHandler")
 
@@ -111,6 +112,27 @@ const reconcileGroup = asyncHandler(async (req, res) => {
   res.json(outcome)
 })
 
+const getGradebook = asyncHandler(async (req, res) => {
+  res.json(
+    await gradebookService.getGroupGradebook({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
+const getStudentPerformance = asyncHandler(async (req, res) => {
+  res.json(
+    await gradebookService.getStudentPerformance({
+      groupId: req.params.id,
+      studentId: req.params.studentId,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 module.exports = {
   createGroup,
   listGroups,
@@ -123,4 +145,6 @@ module.exports = {
   listProvisioningJobs,
   teacherProvisioningStatus,
   reconcileGroup,
+  getGradebook,
+  getStudentPerformance,
 }

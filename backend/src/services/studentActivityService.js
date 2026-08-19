@@ -49,6 +49,12 @@ async function listMine(studentUserId) {
         orderBy: { created_at: "desc" },
         select: { passed: true, score: true, created_at: true },
       },
+      submissions: {
+        where: { student_id: studentUserId },
+        orderBy: { submitted_at: "desc" },
+        take: 1,
+        select: { id: true, status: true, score: true, feedback: true, submitted_at: true, evidence: true },
+      },
     },
     orderBy: { created_at: "desc" },
   })
@@ -62,6 +68,9 @@ async function listMine(studentUserId) {
     },
     activities: rows.map((ga) => {
       const attempts = ga.attempts ?? []
+      const submissions = ga.submissions ?? []
+      const latestSubmission = submissions[0] ?? null
+      const hasSubmission = latestSubmission !== null
       return {
         id: ga.id,
         title: ga.title,
@@ -69,15 +78,25 @@ async function listMine(studentUserId) {
         topicNumber: ga.definition?.topic_number ?? 0,
         checksCount: (ga.checks ?? []).length,
         passed: attempts[0]?.passed ?? false,
-        completed: attempts.length > 0,
+        completed: attempts.length > 0 || hasSubmission,
         lastScore: attempts[0]?.score ?? null,
         attemptsCount: attempts.length,
         attemptLimit: ga.attempt_limit,
-        finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+        finalScore: ga.evaluation_type === "manual"
+          ? (latestSubmission?.score ?? 0)
+          : finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
         dueAt: ga.due_at?.toISOString() ?? null,
         enabled: ga.enabled,
         evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
         activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+        submission: latestSubmission ? {
+          id: latestSubmission.id,
+          status: latestSubmission.status,
+          score: latestSubmission.score,
+          feedback: latestSubmission.feedback,
+          submittedAt: latestSubmission.submitted_at.toISOString(),
+          files: latestSubmission.evidence?.files ?? 0,
+        } : null,
       }
     }),
   }
@@ -114,8 +133,18 @@ async function getForStudent(studentUserId, groupActivityId) {
     select: { attempt_number: true, passed: true, score: true, created_at: true },
   })
 
+  const submissions = await prisma.activitySubmission.findMany({
+    where: { group_activity_id: ga.id, student_id: studentUserId },
+    orderBy: { submitted_at: "desc" },
+    take: 1,
+    select: { id: true, status: true, score: true, feedback: true, submitted_at: true, evidence: true },
+  })
+  const latestSubmission = submissions[0] ?? null
+  const hasSubmission = latestSubmission !== null
+
   return {
     id: ga.id,
+    groupId: ga.group_id,
     title: ga.title,
     instructions: ga.instructions ?? "",
     workdir: ga.workdir,
@@ -126,8 +155,10 @@ async function getForStudent(studentUserId, groupActivityId) {
     checksCount: (ga.checks ?? []).length,
     attemptLimit: ga.attempt_limit,
     attemptsCount: attempts.length,
-    finalScore: finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
-    completed: attempts.length > 0,
+    finalScore: ga.evaluation_type === "manual"
+      ? (latestSubmission?.score ?? 0)
+      : finalScore(attempts, ga.activity_type === "quiz" ? "latest_score" : "best_score"),
+    completed: attempts.length > 0 || hasSubmission,
     gradingPolicy: ga.activity_type === "quiz" ? "latest_score" : "best_score",
     enabled: true,
     attempts: attempts.map((attempt) => ({
@@ -136,6 +167,14 @@ async function getForStudent(studentUserId, groupActivityId) {
       score: attempt.score,
     })),
     lastAttempt: attempts[0] ? { passed: attempts[0].passed, score: attempts[0].score } : null,
+    submission: latestSubmission ? {
+      id: latestSubmission.id,
+      status: latestSubmission.status,
+      score: latestSubmission.score,
+      feedback: latestSubmission.feedback,
+      submittedAt: latestSubmission.submitted_at.toISOString(),
+      files: latestSubmission.evidence?.files ?? 0,
+    } : null,
   }
 }
 
@@ -269,4 +308,100 @@ async function checkForStudent(studentUserId, groupActivityId) {
   }
 }
 
-module.exports = { listMine, getForStudent, checkForStudent }
+/**
+ * Detalle de la actividad de un estudiante específico (vista docente/estudiante).
+ *
+ * Para actividades manuales: retorna la submission con evidence (archivos).
+ * Para actividades automáticas: retorna los intentos con results (aserciones).
+ */
+async function getStudentActivityDetail(groupId, activityId, studentId, userId, role) {
+  const ga = await prisma.groupActivity.findFirst({
+    where: { id: activityId, group_id: groupId },
+    select: {
+      id: true,
+      group_id: true,
+      title: true,
+      instructions: true,
+      workdir: true,
+      evaluation_type: true,
+      activity_type: true,
+      max_score: true,
+      grading_policy: true,
+    },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  if (role === "teacher") {
+    await accessService.ensureGroupAccess({ groupId, teacherUserId: userId, role })
+  } else if (role === "student" && studentId !== userId) {
+    throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
+  }
+
+  const student = await prisma.user.findUnique({
+    where: { id: studentId },
+    select: { id: true, name: true, email: true, code: true },
+  })
+  if (!student) throw new NotFoundError("Estudiante no encontrado")
+
+  const activity = {
+    id: ga.id,
+    title: ga.title,
+    instructions: ga.instructions ?? "",
+    workdir: ga.workdir,
+    evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
+    activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+    maxScore: ga.max_score,
+  }
+
+  if (ga.evaluation_type === "manual") {
+    const submission = await prisma.activitySubmission.findFirst({
+      where: { group_activity_id: ga.id, student_id: studentId },
+      orderBy: { submitted_at: "desc" },
+      include: { grader: { select: { name: true } } },
+    })
+
+    return {
+      type: "manual",
+      student,
+      activity,
+      submission: submission ? {
+        id: submission.id,
+        status: submission.status,
+        evidence: submission.evidence,
+        score: submission.score,
+        feedback: submission.feedback,
+        gradedBy: submission.grader?.name ?? null,
+        gradedAt: submission.graded_at?.toISOString() ?? null,
+        submittedAt: submission.submitted_at.toISOString(),
+      } : null,
+    }
+  }
+
+  const attempts = await prisma.activityAttempt.findMany({
+    where: { group_activity_id: ga.id, student_id: studentId },
+    orderBy: { created_at: "asc" },
+    select: {
+      attempt_number: true,
+      passed: true,
+      score: true,
+      results: true,
+      created_at: true,
+    },
+  })
+
+  return {
+    type: "automatic",
+    student,
+    activity: { ...activity, gradingPolicy: ga.grading_policy },
+    attempts: attempts.map((a) => ({
+      attemptNumber: a.attempt_number,
+      passed: a.passed,
+      score: a.score,
+      results: a.results,
+      createdAt: a.created_at.toISOString(),
+    })),
+    finalScore: finalScore(attempts, ga.grading_policy),
+  }
+}
+
+module.exports = { listMine, getForStudent, checkForStudent, getStudentActivityDetail }

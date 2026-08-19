@@ -72,7 +72,7 @@ export function GroupStudents({
                   </TableCell>
                   <TableCell>
                     {student.linuxUsername ? (
-                      <span className="font-mono text-sm text-sky-500">
+                      <span className="font-mono text-sm text-primary">
                         {student.linuxUsername}
                       </span>
                     ) : (

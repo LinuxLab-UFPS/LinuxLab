@@ -7,10 +7,13 @@ import type {
   CreateActivityInput,
   AuditEntry,
   GroupProgressSummary,
+  Gradebook,
   StudentGroupDetail,
+  StudentPerformance,
   Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
+  ManualSubmission,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -89,6 +92,13 @@ export async function listActivitySubmissions(
   return teacherApi.listActivitySubmissions(groupId, activityId)
 }
 
+export async function listManualSubmissions(
+  groupId: string,
+  activityId: string,
+): Promise<ManualSubmission[]> {
+  return teacherApi.listManualSubmissions(groupId, activityId)
+}
+
 export async function submitActivity(_activityId: string): Promise<void> {
   throw new Error("Actividades: no implementado todavía")
 }
@@ -161,6 +171,17 @@ export async function getStudentGroupDetail(
   _studentId: string,
 ): Promise<StudentGroupDetail | null> {
   return null
+}
+
+export async function getGradebook(groupId: string): Promise<Gradebook> {
+  return teacherApi.getGradebook(groupId)
+}
+
+export async function getStudentPerformance(
+  groupId: string,
+  studentId: string,
+): Promise<StudentPerformance> {
+  return teacherApi.getStudentPerformance(groupId, studentId)
 }
 
 export async function gradeSubmission(

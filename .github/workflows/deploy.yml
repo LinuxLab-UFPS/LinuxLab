@@ -46,6 +46,7 @@ jobs:
           FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }}
           FIREBASE_CLIENT_CERT_URL=${{ secrets.FIREBASE_CLIENT_CERT_URL }}
+          FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
           EOF
 
       - name: Install SSH key

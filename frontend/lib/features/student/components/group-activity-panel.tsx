@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, ShieldCheck } from "lucide-react"
+import { ArrowLeft, CheckCircle2, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
@@ -10,6 +10,7 @@ import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { describeCheck } from "@/lib/features/student/use-activity-check"
 import {
   checkGroupActivity,
+  submitGroupActivity,
   type GroupActivityDetail,
   type GroupCheckResult,
 } from "@/lib/features/student/group-activities"
@@ -26,7 +27,7 @@ import { formatBogotaDateTime } from "@/lib/utils/dates"
  * Al abrir, la terminal navega a esa carpeta (la cola del seam cubre el caso
  * de que la conexión aún no esté lista).
  */
-export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) {
+export function GroupActivityPanel({ detail, userId }: { detail: GroupActivityDetail; userId: string }) {
   const [results, setResults] = useState<GroupCheckResult[] | null>(null)
   const [score, setScore] = useState(detail.lastAttempt?.score ?? 0)
   const [passed, setPassed] = useState(detail.lastAttempt?.passed ?? false)
@@ -36,6 +37,9 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
   const [attempts, setAttempts] = useState(detail.attempts)
   const [openedFolder, setOpenedFolder] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(!!detail.submission)
+  const [submission, setSubmission] = useState(detail.submission)
 
   const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
   const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
@@ -65,6 +69,31 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
     }
   }
 
+  const isManual = detail.evaluationType === "manual"
+  const canSubmit = isManual && detail.enabled && !closed && !submitted
+
+  const handle_submit = async () => {
+    setSubmitting(true)
+    try {
+      const result = await submitGroupActivity(detail.id)
+      setSubmitted(true)
+      setCompleted(true)
+      setSubmission({
+        id: result.id,
+        status: result.status,
+        score: null,
+        feedback: null,
+        submittedAt: result.submittedAt,
+        files: 0,
+      })
+      notify.success("Actividad entregada")
+    } catch (e) {
+      notify.error(e, "No se pudo entregar la actividad")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const evaluated = results !== null
 
   return (
@@ -83,7 +112,11 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
           <Tag tone={completed ? "sky" : "neutral"}>
-            {completed ? "Completada" : "Sin completar"}
+            {completed
+              ? isManual && submission?.status === "graded"
+                ? `Calificada: ${submission.score}/${detail.maxScore}`
+                : "Completada"
+              : "Sin completar"}
           </Tag>
           <Tag tone="neutral">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
           {detail.evaluationType === "manual" && <Tag tone="primary">Revisión manual</Tag>}
@@ -162,14 +195,61 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
             )}
           </div>
         )}
+
+        {isManual && submission && (
+          <div className="mt-6 space-y-3">
+            <div className="overflow-hidden rounded-md border border-border">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-secondary/40 text-[11px] uppercase tracking-wide">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Estado</th>
+                    <th className="px-3 py-2 font-medium">Fecha</th>
+                    <th className="px-3 py-2 text-right font-medium">Calificación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-t border-border/60 text-foreground">
+                    <td className="px-3 py-2">
+                      {submission.status === "graded" ? "Calificada" : "Pendiente"}
+                    </td>
+                    <td className="px-3 py-2">{formatBogotaDateTime(submission.submittedAt)}</td>
+                    <td className="px-3 py-2 text-right font-mono">
+                      {submission.score != null ? `${submission.score}/${detail.maxScore}` : "—"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {submission.feedback && (
+              <div className="rounded-md border border-border bg-secondary/20 p-3">
+                <p className="mb-1 text-xs font-medium text-muted-foreground uppercase">Retroalimentación</p>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{submission.feedback}</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {detail.evaluationType === "manual" ? (
-            <span className="text-xs text-muted-foreground">
-              Esta actividad se entrega para revisión del docente.
-            </span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {isManual ? (
+              submitted ? (
+                <span className="text-sm text-success">Enviada para revisión</span>
+              ) : (
+              <ActionButton
+                tone="amber"
+                onClick={handle_submit}
+                disabled={submitting || !canSubmit}
+              >
+                {submitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                {submitting ? "Entregando..." : "Entregar actividad"}
+              </ActionButton>
+            )
           ) : (
             <ActionButton
               tone={passed ? "emerald" : "amber"}
@@ -184,6 +264,7 @@ export function GroupActivityPanel({ detail }: { detail: GroupActivityDetail }) 
               {checking ? "Comprobando..." : "Comprobar actividad"}
             </ActionButton>
           )}
+          </div>
 
           <ActionButton tone="neutral" onClick={goToWorkdir}>
             <FolderOpen className="h-4 w-4" />

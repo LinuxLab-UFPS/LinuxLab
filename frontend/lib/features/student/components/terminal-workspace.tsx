@@ -128,7 +128,7 @@ export function TerminalWorkspace({
                   next={next}
                 />
               ) : open && groupActivity ? (
-                <GroupActivityPanel detail={groupActivity} />
+                <GroupActivityPanel detail={groupActivity} userId={user.id} />
               ) : (
                 <SuggestedActivities
                   onHide={() => setHiddenPersisted(true)}

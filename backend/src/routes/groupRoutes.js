@@ -19,6 +19,8 @@ router.delete("/:id", groupController.deleteGroup)
 router.post("/:id/students", groupController.registerStudent)
 router.post("/:id/students/csv", groupController.importCsv)
 router.get("/:id/students", groupController.listStudents)
+router.get("/:id/gradebook", groupController.getGradebook)
+router.get("/:id/gradebook/students/:studentId", groupController.getStudentPerformance)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 
@@ -32,5 +34,6 @@ router.patch("/:id/activities/:activityId", activityController.updateGroupActivi
 router.post("/:id/activities/:activityId/publish", activityController.enableGroupActivity)
 router.post("/:id/activities/:activityId/disable", activityController.disableGroupActivity)
 router.get("/:id/activities/:activityId/submissions", activityController.getActivitySubmissions)
+router.get("/:id/activities/:activityId/manual-submissions", activityController.getManualSubmissions)
 
 module.exports = router

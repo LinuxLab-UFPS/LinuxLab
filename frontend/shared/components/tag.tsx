@@ -42,7 +42,7 @@ const TONE: Record<TagTone, string> = {
 }
 
 export const TAG_BASE =
-  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium"
 
 export function Tag({
   icon: Icon,

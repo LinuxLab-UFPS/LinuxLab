@@ -1,7 +1,9 @@
 const lessonEvaluatorService = require("../services/lessonEvaluatorService")
 const groupActivityService = require("../services/groupActivityService")
 const studentActivityService = require("../services/studentActivityService")
+const submissionService = require("../services/submissionService")
 const checkCatalogService = require("../services/checkCatalogService")
+const gradebookService = require("../services/gradebookService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const getActivity = asyncHandler(async (req, res) => {
@@ -42,12 +44,21 @@ const getMyGroupActivities = asyncHandler(async (req, res) => {
   res.json(await studentActivityService.listMine(req.user.id))
 })
 
+const getMyGrades = asyncHandler(async (req, res) => {
+  res.json(await gradebookService.getMyGrades(req.user.id))
+})
+
 const getGroupActivityForStudent = asyncHandler(async (req, res) => {
   res.json(await studentActivityService.getForStudent(req.user.id, req.params.id))
 })
 
 const checkGroupActivity = asyncHandler(async (req, res) => {
   res.json(await studentActivityService.checkForStudent(req.user.id, req.params.id))
+})
+
+const submitGroupActivity = asyncHandler(async (req, res) => {
+  const result = await submissionService.createSubmission(req.user.id, req.params.id)
+  res.status(201).json(result)
 })
 
 // Lado docente: CRUD de actividades de curso (GroupActivity).
@@ -130,6 +141,17 @@ const getActivitySubmissions = asyncHandler(async (req, res) => {
   )
 })
 
+const getManualSubmissions = asyncHandler(async (req, res) => {
+  res.json(
+    await groupActivityService.getManualSubmissions({
+      groupId: req.params.id,
+      activityId: req.params.activityId,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 module.exports = {
   getCatalog,
   getActivity,
@@ -137,6 +159,7 @@ module.exports = {
   checkActivity,
   resetActivity,
   getMyGroupActivities,
+  getMyGrades,
   getGroupActivityForStudent,
   checkGroupActivity,
   listGroupActivities,
@@ -146,4 +169,6 @@ module.exports = {
   enableGroupActivity,
   disableGroupActivity,
   getActivitySubmissions,
+  getManualSubmissions,
+  submitGroupActivity,
 }

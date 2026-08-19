@@ -28,17 +28,26 @@ export function GroupActivities({
   activities,
   query,
   groupId,
+  activityTypeFilter,
+  evalFilter,
 }: {
   activities: Activity[]
   query: string
   groupId: string
+  activityTypeFilter: "all" | Activity["activityType"]
+  evalFilter: "all" | "automatic" | "manual"
 }) {
   const [page, setPage] = useState(1)
   const [toggling, setToggling] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const q = query.trim().toLowerCase()
-  const filtered = activities.filter((a) => !q || a.title.toLowerCase().includes(q))
+  const filtered = activities.filter(
+    (a) =>
+      (!q || a.title.toLowerCase().includes(q)) &&
+      (activityTypeFilter === "all" || a.activityType === activityTypeFilter) &&
+      (evalFilter === "all" || (a.evaluationType === "atomic" ? "automatic" : a.evaluationType) === evalFilter),
+  )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
@@ -50,6 +59,7 @@ export function GroupActivities({
     try {
       await setActivityEnabled(groupId, activity.id, !activity.enabled)
       queryClient.invalidateQueries({ queryKey: queryKeys.groupActivities(groupId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.gradebook(groupId) })
       notify.success(activity.enabled ? "Actividad deshabilitada" : "Actividad habilitada")
     } catch (err) {
       notify.error(err, "No se pudo cambiar el estado de la actividad")
@@ -68,6 +78,7 @@ export function GroupActivities({
               <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
               <TableHead className="w-36">Tipo</TableHead>
+              <TableHead className="w-40">Evaluación</TableHead>
               <TableHead className="w-44">Fecha de entrega</TableHead>
               <TableHead className="w-24 text-center">Habilitada</TableHead>
             </TableRow>
@@ -96,11 +107,10 @@ export function GroupActivities({
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {activity.evaluationType === "manual"
-                    ? "Revisión manual"
-                    : activity.activityType === "quiz"
-                      ? "Quiz"
-                      : "Taller"}
+                  {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  {activity.evaluationType === "manual" ? "Manual" : "Automática"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {activity.dueDate
@@ -132,7 +142,7 @@ export function GroupActivities({
       </TablePanel>
 
       {filtered.length > 0 && (
-        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="amber" />
+        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="primary" />
       )}
     </section>
   )
