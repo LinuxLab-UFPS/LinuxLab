@@ -48,6 +48,43 @@ Formas habituales:
 - `[0-9a-f]`: un dígito o una letra de la `a` a la `f`, que es como se escribe un carácter hexadecimal
 - `[^0-9]`: un carácter que no sea un dígito
 
+## Clases de caracteres
+
+Los rangos como `[a-z]` describen el alfabeto inglés, y en español se quedan cortos. Un apellido con `ñ` o con tilde queda fuera:
+
+```bash
+grep '^[a-z]*$' apellidos.txt
+```
+
+```
+ruiz
+ana
+```
+
+Para eso están las clases de caracteres, que nombran el conjunto en lugar de enumerarlo y sí incluyen las letras propias del idioma (Shotts, 2026):
+
+```bash
+grep '^[[:alpha:]]*$' apellidos.txt
+```
+
+```
+ruiz
+muñoz
+josé
+ana
+```
+
+| Clase | Qué acepta |
+|---|---|
+| `[[:digit:]]` | Un dígito |
+| `[[:alpha:]]` | Una letra, con tildes y `ñ` incluidas |
+| `[[:alnum:]]` | Una letra o un dígito |
+| `[[:upper:]]` | Una mayúscula |
+| `[[:lower:]]` | Una minúscula |
+| `[[:space:]]` | Un espacio, un tabulador o un salto de línea |
+
+Los dos corchetes no son una errata. El par de fuera es el de la lista y el de dentro forma parte del nombre de la clase, de modo que `[[:digit:]]` es una lista cuyo único elemento es la clase de los dígitos.
+
 ## El principio y el final de la línea
 
 El acento circunflejo ancla el patrón al principio de la línea y el signo de dólar al final.
@@ -143,6 +180,8 @@ grep -E '[0-9]{4}' matriculas.txt
 | `[0-9]` | Un dígito |
 | `[0-9a-f]` | Un dígito o una letra de la `a` a la `f` |
 | `[^0-9]` | Un carácter que no sea un dígito |
+| `[[:alpha:]]` | Una letra, con tildes y `ñ` |
+| `[[:digit:]]` | Un dígito |
 | `*` | El anterior, repetido cero o más veces |
 | `.*` | Cualquier texto, incluso ninguno |
 | `^` | El principio de la línea |
@@ -155,3 +194,4 @@ grep -E '[0-9]{4}' matriculas.txt
 
 - Free Software Foundation. (2025). *GNU grep manual* (versión 3.12). https://www.gnu.org/software/grep/manual/
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
