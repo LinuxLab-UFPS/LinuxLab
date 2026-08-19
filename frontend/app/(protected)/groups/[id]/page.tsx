@@ -33,6 +33,7 @@ import {
 } from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
+import { GroupActivityFeed } from "@/lib/features/teacher/components/group-activity-feed"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
@@ -289,8 +290,13 @@ function GroupDetailContent() {
           />
         </div>
       ) : (
-        <div data-section="calificaciones">
-          <GradebookPanel groupId={id} query={query} />
+        <div data-section="calificaciones" className="grid gap-4 lg:grid-cols-[1fr_320px]">
+          <div>
+            <GradebookPanel groupId={id} query={query} />
+          </div>
+          <div className="lg:sticky lg:top-4 lg:self-start">
+            <GroupActivityFeed groupId={id} />
+          </div>
         </div>
       )}
 
