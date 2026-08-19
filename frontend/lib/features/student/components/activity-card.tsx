@@ -6,7 +6,7 @@ import { Tag } from "@shared/components/tag"
 import type { ActivityListing } from "@/lib/models/activities"
 
 const GLOW =
-  "hover:border-amber-500/50 hover:shadow-[0_0_10px_rgba(245,158,11,0.45),0_0_30px_rgba(245,158,11,0.3)]"
+  "hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)]"
 
 /**
  * An activity, wherever it is offered: the catalog, the panel next to the
@@ -34,10 +34,13 @@ export function ActivityCard({
         compact ? "p-4" : "p-5",
       )}
     >
-      <div className="flex items-start gap-3">
+      {/* `items-center` y no `items-start`: el titulo se alinea con el centro
+          del icono en vez de con su borde de arriba, que es lo que se lee como
+          alineado cuando el icono es un circulo. */}
+      <div className="flex items-center gap-3">
         <span
           className={cn(
-            "flex shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500",
+            "flex shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary",
             compact ? "h-8 w-8" : "h-10 w-10",
           )}
         >
@@ -47,20 +50,20 @@ export function ActivityCard({
         <div className="min-w-0 flex-1">
           <h3
             className={cn(
-              "font-bold tracking-tight text-foreground transition-colors group-hover:text-amber-400",
+              "font-bold tracking-tight text-foreground transition-colors group-hover:text-primary",
               compact ? "text-sm" : "text-base",
             )}
           >
             {activity.title}
           </h3>
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {activity.difficulty && (
-              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
-                {DIFFICULTY_LABEL[activity.difficulty]}
-              </Tag>
-            )}
-            {completed && <Tag tone="sky">Completada</Tag>}
-          </div>
+          {/* Junto al titulo queda solo el estado, que es lo unico que cambia
+              con el tiempo. La dificultad baja con el tema: las dos dicen que
+              clase de actividad es, no como va. */}
+          {completed && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <Tag tone="sky">Completada</Tag>
+            </div>
+          )}
         </div>
       </div>
 
@@ -73,8 +76,15 @@ export function ActivityCard({
         {activity.description}
       </p>
 
+      {/* En una fila y con el tema delante: primero de que va la actividad y
+          despues lo que cuesta. */}
       <div className="mt-4 flex flex-wrap gap-1.5">
         <Tag icon={BookOpen}>{activity.topicTitle}</Tag>
+        {activity.difficulty && (
+          <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
+            {DIFFICULTY_LABEL[activity.difficulty]}
+          </Tag>
+        )}
       </div>
     </Link>
   )
