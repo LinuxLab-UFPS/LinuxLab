@@ -7,19 +7,15 @@
  * sola vez y cada simulador declara que piezas usa.
  *
  *   const barra = Barra.montar({
- *     progreso: true,          // los puntos y el "1 / 5"
- *     puntos:   true,          // la pastilla de la estrella
+ *     titulo:   "Retos de vi",  // el nombre del simulador, junto a la marca
  *     ayuda:    [ { clave, tono, texto } ],   // la tarjeta del signo de ?
  *     extras:   "<div class='rbadge' id='badge-bonus'>...</div>",
- *     acciones: "<button ...>",               // botones propios antes de los puntos
- *     tema:     true,          // el interruptor de claro/oscuro
+ *     tema:     true,           // el interruptor de claro/oscuro
  *     onReiniciar: empezar,
  *   });
  *
- *   barra.objetivo("Navega a /var/www", 0, 5);
- *   barra.marcas(["done", "cur", "", "", ""]);
- *   barra.puntos(150);
- *   barra.jugando(false);   // deja solo el logo y la salida
+ *   barra.objetivo("Navega a /var/www", 0);
+ *   barra.jugando(false);   // deja solo la marca, el tema y la salida
  *
  * El marcado se inyecta dentro del <div class="hdr"> que el simulador ya
  * tiene en su HTML, asi que la barra existe antes de que corra este script y
@@ -93,6 +89,11 @@
     'stroke-linecap="round" stroke-linejoin="round">' +
     '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
 
+  const ICONO_REINICIAR =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>';
+
   const ICONO_X =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" ' +
     'stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
@@ -112,7 +113,7 @@
       )
       .join("");
     return (
-      '<div class="help-wrap"><div class="help-btn">?</div>' +
+      '<div class="help-wrap"><div class="help-btn"><span>?</span></div>' +
       '<div class="help-card">' + cuerpo + "</div></div>"
     );
   }
@@ -122,13 +123,17 @@
     const hdr = document.querySelector(".hdr");
     if (!hdr) throw new Error("barra.js: falta el <div class=\"hdr\"> en el HTML");
 
+    // El orden es el de la cabecera del sitio: la marca a la izquierda, lo que
+    // identifica la pagina justo detras, y las acciones a la derecha. En medio,
+    // el objetivo, que es lo unico que cambia durante la partida.
+    // Todo va dentro de .hdr-inner: es el equivalente del contenedor centrado
+    // que la cabecera del sitio pone con `mx-auto max-w-7xl px-6`, y sin el la
+    // barra quedaba a sangre mientras la del sitio iba metida hacia dentro.
     hdr.innerHTML =
-      '<img class="hdr-logo" src="/icon-dark-32x32.png" alt="" width="32" height="32">' +
+      '<div class="hdr-inner">' +
       '<span class="hdr-marca">Linux<span class="wh">Lab</span></span>' +
-      '<div class="hdr-sep"></div>' +
-      (opc.progreso === false
-        ? ""
-        : '<div class="hdr-dots" id="dots"></div><span class="hdr-n" id="obj-n"></span>') +
+      (opc.titulo ? '<span class="hdr-sim">' + opc.titulo + "</span>" : "") +
+      (opc.ayuda && opc.ayuda.length ? tarjetaAyuda(opc.ayuda) : "") +
       '<div class="hdr-obj">' +
       '<span class="hdr-eyebrow" id="obj-num">Objetivo</span>' +
       '<span class="hdr-goal" id="obj-goal"></span>' +
@@ -136,20 +141,13 @@
       (opc.extras || "") +
       '<div class="hdr-fill"></div>' +
       (opc.tema ? '<button class="theme-btn" id="hdr-tema"></button>' : "") +
-      (opc.ayuda && opc.ayuda.length ? tarjetaAyuda(opc.ayuda) : "") +
-      (opc.acciones || "") +
-      (opc.puntos === false
-        ? ""
-        : '<div class="score-pill">&#9733; <span id="score-val">0</span></div>') +
-      '<button class="restart-btn" id="hdr-restart">Reiniciar</button>' +
-      '<button class="exit-btn" id="hdr-exit">' + ICONO_X + "Salir</button>";
+      '<button class="restart-btn" id="hdr-restart">' + ICONO_REINICIAR + "Reiniciar</button>" +
+      '<button class="exit-btn" id="hdr-exit">' + ICONO_X + "Salir</button>" +
+      "</div>";
 
     const $ = (id) => document.getElementById(id);
-    const elDots = $("dots");
-    const elN = $("obj-n");
     const elNum = $("obj-num");
     const elGoal = $("obj-goal");
-    const elScore = $("score-val");
 
     $("hdr-exit").addEventListener("click", salir);
     if (opc.onReiniciar) $("hdr-restart").addEventListener("click", opc.onReiniciar);
@@ -170,6 +168,21 @@
       window.addEventListener("tema-cambiado", pintarTema);
     }
 
+    /* El sitio tapa el simulador con un giro mientras carga, y `onLoad` del
+       iframe no sirve para quitarlo: espera hasta el ultimo subrecurso y se
+       queda puesto un rato largo despues de que el simulador ya se ve. Este
+       aviso sale en el fotograma siguiente a montar la barra, y para entonces
+       el guion del simulador —que corre justo detras de esta llamada, sin
+       cortes— ya ha armado el tablero. Es decir: se manda cuando hay algo que
+       enseñar, que es lo que el giro esta esperando. */
+    requestAnimationFrame(() => {
+      try {
+        window.parent.postMessage({ action: "simulator-ready" }, "*");
+      } catch (e) {
+        /* abierto suelto, sin sitio al que avisar */
+      }
+    });
+
     // La portada tapa todo menos la barra, y para eso necesita saber cuanto
     // mide la barra de verdad y no el minimo que dice la hoja de estilos.
     const medir = () =>
@@ -180,28 +193,10 @@
     return {
       el: hdr,
 
-      /** Texto del objetivo. Con indice y total, ademas lo numera. */
-      objetivo(texto, indice, total) {
+      /** Texto del objetivo. Con indice, ademas lo numera. */
+      objetivo(texto, indice) {
         elGoal.textContent = texto || "";
-        if (typeof indice === "number") {
-          elNum.textContent = "Objetivo " + (indice + 1);
-          if (elN && typeof total === "number") elN.textContent = indice + 1 + " / " + total;
-        }
-      },
-
-      /** Un estado por objetivo: "done", "done-gold", "cur" o "". */
-      marcas(estados) {
-        if (!elDots) return;
-        elDots.innerHTML = "";
-        estados.forEach((e) => {
-          const d = document.createElement("div");
-          d.className = "dot" + (e ? " " + e : "");
-          elDots.appendChild(d);
-        });
-      },
-
-      puntos(n) {
-        if (elScore) elScore.textContent = n;
+        if (typeof indice === "number") elNum.textContent = "Objetivo " + (indice + 1);
       },
 
       /** Con la partida parada la barra se queda en el logo y la salida. */
