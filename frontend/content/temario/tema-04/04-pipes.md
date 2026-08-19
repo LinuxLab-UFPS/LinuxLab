@@ -144,6 +144,7 @@ Ambos operadores cambian el destino de la salida y suelen confundirse:
 | | Envía la salida a | Ejemplo |
 |---|---|---|
 | `>` | un archivo, reemplazando lo que hubiera | `ls /etc > listado.txt` |
+| `2>` | un archivo, solo los mensajes de error | `ls noexiste 2> errores.txt` |
 | `>>` | un archivo, después de lo que ya hay | `ls /etc/ssh >> listado.txt` |
 | `|` | otro comando | `ls /etc \| head` |
 
@@ -156,6 +157,32 @@ ls /etc | head -n 20 > primeras.txt
 ```
 
 Los veinte primeros nombres quedan guardados en `primeras.txt` sin pasar por la pantalla.
+
+### Los errores van por otro lado
+
+Hay un detalle que sorprende la primera vez. `>` desvía la salida normal del comando, pero **no los mensajes de error**, que viajan por un canal aparte y siguen apareciendo en pantalla (Shotts, 2026):
+
+```bash
+ls existe noexiste > salida.txt
+```
+
+```
+ls: cannot access 'noexiste': No such file or directory
+```
+
+El archivo se creó con lo que sí funcionó, y el error se quedó fuera. Para capturarlo hay que nombrar ese segundo canal con un `2` delante del operador:
+
+```bash
+ls existe noexiste 2> errores.txt
+```
+
+Y para guardar las dos cosas en el mismo archivo se redirige primero la salida normal y después se manda el canal de errores al mismo sitio:
+
+```bash
+ls existe noexiste > todo.txt 2>&1
+```
+
+El orden importa. `2>&1` significa "manda el canal 2 adonde ya va el 1", así que tiene que ir después de haber decidido adónde va el 1.
 
 ## Práctica
 
@@ -203,3 +230,4 @@ cat logo.txt
 
 - Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
