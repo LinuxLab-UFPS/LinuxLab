@@ -19,9 +19,20 @@ import { GroupActivityPanel } from "@/lib/features/student/components/group-acti
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
-/** La consola mide siempre lo mismo: ni la columna ni la hoja le quitan sitio. */
+/** El ancho de la consola: ni la columna ni la hoja le quitan sitio. */
 const TERMINAL_WIDTH = "min(64rem, calc(100vw - 6rem))"
-const TERMINAL_HEIGHT = "min(38rem, calc(100vh - 18rem))"
+
+/**
+ * El alto de la fila entera, y lo que mide tambien la columna de actividades.
+ *
+ * Antes el alto fijo era el de la consola y la tira de comandos se sumaba
+ * debajo, asi que abrir o cerrar la tira cambiaba el alto de la fila y con el
+ * la columna de la izquierda, que no tiene nada que ver con esa tira. Ahora el
+ * que manda es este numero: la columna mide esto siempre, y dentro de la
+ * derecha es la consola la que se estira o se encoge para dejarle sitio a la
+ * tira. Cerrar los comandos alarga la consola hasta el bajo de la columna.
+ */
+const ALTO_FILA = "min(44rem, calc(100vh - 12rem))"
 
 /**
  * The student's terminal and everything that sits around it: the suggested
@@ -98,10 +109,12 @@ export function TerminalWorkspace({
         }}
       >
         {isStudent && (
-          // `h-0 min-h-full`: la columna se estira a lo que mida la fila pero no
-          // la estira ella. Sin eso, un enunciado largo empujaba el alto de la
-          // fila y el panel se quedaba sin tope contra el que hacer scroll.
-          <aside className="flex h-0 min-h-full flex-col overflow-hidden">
+          // Alto fijo y anclada arriba: mide ALTO_FILA pase lo que pase con la
+          // tira de comandos de la derecha.
+          <aside
+            className="flex flex-col self-start overflow-hidden"
+            style={{ height: ALTO_FILA }}
+          >
             {/* Ancho propio: la columna se cierra por fuera y el contenido se
                 queda quieto en vez de recomponerse mientras sale. El padding le
                 deja sitio al halo de las tarjetas, que si no lo corta el recorte
@@ -132,7 +145,6 @@ export function TerminalWorkspace({
             un momento parecerían dos. */}
         {isStudent && !open && (
           <CollapsedPanelButton
-            tone="amber"
             label="Mostrar actividades"
             icon={PanelLeft}
             onClick={() => setHiddenPersisted(false)}
@@ -148,8 +160,14 @@ export function TerminalWorkspace({
         {/* El docente no lleva columna, y sin ella la consola sería el primer
             hijo de la rejilla: iría a parar al carril de 0rem. Se ancla al
             segundo, que es el suyo tenga o no vecina a la izquierda. */}
-        <div className="flex min-w-0 flex-col gap-4" style={{ gridColumn: 2 }}>
-          <div className="shrink-0" style={{ height: TERMINAL_HEIGHT }}>
+        <div
+          className="flex min-w-0 flex-col gap-4"
+          style={{ gridColumn: 2, height: ALTO_FILA }}
+        >
+          {/* `flex-1`: la consola se queda con lo que la tira de comandos no
+              use, asi que al cerrarla crece hasta el bajo de la columna en vez
+              de dejar un hueco. */}
+          <div className="min-h-0 flex-1">
             <TerminalFrame
               className="h-full"
               toolbar={
