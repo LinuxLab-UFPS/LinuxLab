@@ -1,32 +1,27 @@
 import { cn } from "@shared/lib/utils"
 
-const TONE = {
-  amber: {
-    idle: "border-amber-500/60 text-amber-500 hover:border-amber-500 hover:bg-amber-500/10",
-    active: "border-amber-500 bg-amber-500/15 text-amber-500 hover:bg-amber-500/25",
-  },
-  primary: {
-    idle: "border-primary/60 text-primary hover:border-primary hover:bg-primary/10",
-    active: "border-primary bg-primary/15 text-primary hover:bg-primary/25",
-  },
-} as const
+/* Un solo color: el panel de actividades iba en ambar y era el unico sitio
+   donde este boton no era rojo. */
+const IDLE = "border-primary/60 text-primary hover:border-primary hover:bg-primary/10"
+/* Abierto va con relleno pleno y el icono en blanco, como el boton de terminal
+   del curso: es un interruptor encendido y tiene que leerse como tal de un
+   vistazo. Cerrado se queda perfilado, que es una invitacion, no un estado. */
+const ACTIVE = "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
 
 /**
  * The switch for a panel around the terminal: a small square with the icon of
- * whatever is inside it, in that panel's colour. Two of them stacked come out
- * the height of one command chip, so the row under the terminal lines up. Outlined it means "open this"; filled it
- * means the panel is showing and this closes it. Both sides use the same square,
- * so an open panel and a closed one always read the same.
+ * whatever is inside it. Two of them stacked come out the height of one command
+ * chip, so the row under the terminal lines up. Outlined it means "open this";
+ * filled it means the panel is showing and this closes it. Both sides use the
+ * same square, so an open panel and a closed one always read the same.
  */
 export function CollapsedPanelButton({
-  tone,
   label,
   icon: Icon,
   onClick,
   active = false,
   className,
 }: {
-  tone: keyof typeof TONE
   label: string
   icon: React.ComponentType<{ className?: string }>
   onClick: () => void
@@ -42,7 +37,7 @@ export function CollapsedPanelButton({
       aria-pressed={active}
       className={cn(
         "flex h-8 w-8 items-center justify-center rounded-lg border transition-colors",
-        active ? TONE[tone].active : TONE[tone].idle,
+        active ? ACTIVE : IDLE,
         className,
       )}
     >

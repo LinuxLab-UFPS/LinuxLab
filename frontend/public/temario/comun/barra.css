@@ -8,56 +8,98 @@
  *
  * Depende de las variables de color que cada simulador declara en su :root
  * (--surf, --border, --red, --green, --gold, --bright, --muted, --mono...).
+ *
+ * La barra, la portada y la pantalla final son oscuras en los dos temas, asi
+ * que aqui no hay nada que cambiar. Lo unico que se aclara son las teclas de
+ * los paneles de ayuda, que viven en la zona clara del simulador: toman su
+ * color de variables con el valor de siempre como reserva, de modo que los
+ * simuladores sin paleta clara se siguen viendo exactamente igual.
  */
 
-:root { --hdr-h: 48px; }
+/* La misma tipografia que el sitio. Es la unica pieza que el iframe no puede
+   heredar: el sitio la sirve por next/font con un nombre de archivo con hash,
+   asi que aqui se pide a Google Fonts. */
+@import url("https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;800&display=swap");
 
-/* ── la barra ─────────────────────────────────────────────────────────── */
+:root {
+  /* El cuerpo de todos los simuladores va a `transform: scale(1.3)`, y la barra
+     esta dentro. Por eso cada medida es la del sitio dividida por esa escala:
+     asi se ve del mismo tamaño que la de verdad. Sin esto la barra salia un 30%
+     mas grande y era lo primero que delataba que no era la misma. */
+  --hdr-escala: 1.3;
+  --hdr-h: calc(64px / var(--hdr-escala));           /* h-16 */
+  --hdr-font: "Onest", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
 
+/* ── la barra ─────────────────────────────────────────────────────────────
+ * Es la cabecera del sitio, no una parecida: los valores salen uno a uno de
+ * site-header.tsx —el negro, el borde, el alto, el contenedor centrado, los
+ * tamaños de letra y la forma de los botones—. Lo unico que cambia es el
+ * contenido, porque aqui no hay navegacion ni perfil: hay un objetivo, unos
+ * puntos y dos acciones.
+ */
 .hdr {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px; min-height: var(--hdr-h);
-  background: var(--surf); border-bottom: 1px solid var(--border);
   flex-shrink: 0; position: relative; z-index: 60;
+  background: #0a0a0a;                                /* bg-[#0a0a0a] */
+  border-bottom: 1px solid rgba(255, 255, 255, .1);   /* border-white/10 */
+  color: #fff;
+  font-family: var(--hdr-font);
 }
 
-/* El icono de la plataforma, el mismo de la pestaña del navegador. Trae su
-   propio fondo redondeado, asi que no lleva marco: el recuadro rojo era del
-   dibujo del prompt al que sustituye. */
-.hdr-logo {
-  width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px;
-  filter: drop-shadow(0 0 7px rgba(255, 0, 48, .35));
+/* mx-auto flex h-full max-w-7xl items-center gap-4 px-6 */
+.hdr-inner {
+  display: flex; align-items: center;
+  gap: calc(8px / var(--hdr-escala));
+  /* Alto fijo y no minimo: con `min-height` la fila crecia con el elemento mas
+     alto y el resto quedaba pegado arriba en vez de centrado. */
+  height: var(--hdr-h);
+  max-width: calc(1280px / var(--hdr-escala));
+  margin: 0 auto;
+  padding: 0 calc(24px / var(--hdr-escala));
 }
+
+/* El logo, calcado: text-xl font-extrabold tracking-tight, el rojo de la
+   paleta y su resplandor. Ya no lleva el icono al lado —el sitio tampoco— y
+   entre dibujo y palabra se decia dos veces lo mismo. */
 .hdr-marca {
-  font-size: 14px; font-weight: 700; letter-spacing: .03em; color: var(--red);
-  filter: drop-shadow(0 0 8px rgba(255, 0, 48, .3)); flex-shrink: 0;
+  flex-shrink: 0;
+  font-size: calc(20px / var(--hdr-escala));
+  font-weight: 800; letter-spacing: -.025em;
+  color: #C41E3A; text-shadow: 0 0 18px rgba(196, 30, 58, .55);
+  /* gap-4 hasta lo siguiente, como del logo a la navegacion en el sitio. */
+  margin-right: calc(8px / var(--hdr-escala));
 }
-.hdr-marca .wh { color: var(--bright); filter: none; }
-.hdr-sep { width: 1px; height: 18px; background: var(--border); flex-shrink: 0; }
+.hdr-marca .wh { color: #fff; text-shadow: none; }
 
-/* El progreso va antes del objetivo y el objetivo va numerado: los puntos
-   solos no decian de que eran, y el numero los explica sin leyenda. */
-.hdr-dots { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
-.dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--dim);
-  transition: background .3s, box-shadow .3s;
-}
-.dot.done { background: var(--green); }
-.dot.done-gold { background: var(--gold); box-shadow: 0 0 5px rgba(255, 196, 0, .5); }
-.dot.cur { background: var(--red); box-shadow: 0 0 7px rgba(255, 0, 48, .75); }
-.hdr-n {
-  font-size: 12px; color: var(--muted); flex-shrink: 0;
-  font-variant-numeric: tabular-nums;
+/* El nombre del simulador ocupa el sitio de la navegacion y se escribe como
+   ella: text-sm font-medium. */
+.hdr-sim {
+  flex-shrink: 0;
+  font-size: calc(14px / var(--hdr-escala)); font-weight: 500; color: #fff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.hdr-obj { display: flex; align-items: baseline; gap: 8px; flex: 1; min-width: 0; overflow: hidden; }
+/* ── el objetivo ──────────────────────────────────────────────────────── */
+
+/* En el hueco que en el sitio queda libre entre la navegacion y el perfil. Sin
+   los puntos de progreso que lo precedian: el rotulo ya dice por cual vas. */
+.hdr-obj {
+  display: flex; align-items: baseline; justify-content: center;
+  gap: calc(8px / var(--hdr-escala));
+  flex: 1; min-width: 0; overflow: hidden;
+}
+/* En el ambar de siempre: es lo unico de la barra que no pertenece a la paleta
+   del sitio, y precisamente por eso separa el rotulo del objetivo del texto del
+   objetivo sin necesidad de otra señal. */
 .hdr-eyebrow {
-  font-size: 9px; text-transform: uppercase; letter-spacing: .16em;
-  color: var(--gold); font-weight: 700; flex-shrink: 0;
+  flex-shrink: 0;
+  font-size: calc(14px / var(--hdr-escala)); font-weight: 600;
+  color: var(--gold);
   filter: drop-shadow(0 0 6px rgba(255, 196, 0, .4));
 }
 .hdr-goal {
-  font-size: 13px; color: var(--bright);
+  font-size: calc(14px / var(--hdr-escala)); font-weight: 400;
+  color: rgba(255, 255, 255, .8);                     /* text-white/80 */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
@@ -77,18 +119,28 @@
 /* ── ayuda ────────────────────────────────────────────────────────────── */
 
 .help-wrap { position: relative; flex-shrink: 0; }
-/* En rojo de neon, como el logo: es lo unico de la barra que abre algo. */
+/* Pegado al nombre del simulador y no en el grupo de la derecha: lo que explica
+   es de que va este simulador, asi que se lee donde se lee su nombre. */
 .help-btn {
-  width: 20px; height: 20px; border-radius: 50%;
-  border: 1px solid var(--red); color: var(--red);
-  font-size: 11px; font-weight: 700; line-height: 1;
+  width: calc(32px / var(--hdr-escala)); height: calc(32px / var(--hdr-escala));
+  border-radius: 50%;
+  border: 1px solid rgba(255, 84, 112, .55); color: #ff5470;
+  font-size: calc(18px / var(--hdr-escala)); font-weight: 600; line-height: 1;
   display: flex; align-items: center; justify-content: center;
-  cursor: default; transition: box-shadow .15s, background .15s;
-  font-family: var(--mono); box-shadow: 0 0 8px rgba(255, 0, 48, .3);
+  cursor: default; transition: border-color .15s, background .15s;
 }
-.help-wrap:hover .help-btn { background: rgba(255, 0, 48, .12); box-shadow: 0 0 12px rgba(255, 0, 48, .55); }
+.help-wrap:hover .help-btn { background: rgba(255, 84, 112, .14); border-color: #ff5470; }
+/* Centrado optico y no geometrico: `align-items: center` centra la caja de
+   linea, no el dibujo de la letra. Los valores estan medidos, no estimados:
+   pintado a 400px, el rectangulo de tinta de la "?" cae en 181x291+106+46, o
+   sea con su centro en (196.5, 191.5) en vez de (200, 200). De ahi salen los
+   3.5px y 8.5px que hay que devolver, que en em son estos dos numeros.
+   Va por transform y no por padding: el padding le come al circulo y lo deja
+   ovalado. */
+.help-btn span { display: block; transform: translate(.009em, .021em); }
+/* Cuelga por la izquierda, que es donde vive el boton desde que se mudo. */
 .help-card {
-  display: none; position: absolute; top: calc(100% + 8px); right: 0;
+  display: none; position: absolute; top: calc(100% + 8px); left: 0;
   background: var(--surf2); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px 16px;
   z-index: 200; min-width: 300px;
@@ -117,47 +169,53 @@
 
 /* ── acciones ─────────────────────────────────────────────────────────── */
 
-.score-pill {
-  background: var(--surf2); border: 1px solid var(--border); border-radius: 4px;
-  padding: 4px 10px; font-size: 12px; font-weight: 700; color: var(--gold);
-  flex-shrink: 0; min-width: 58px; text-align: center;
-  font-variant-numeric: tabular-nums;
+/* Reiniciar y Salir, sin caja y con el fondo solo al pasar por encima, como el
+   boton de perfil del sitio. Reiniciar paso por verde, por rojo y por un marco
+   de cristal, y en las tres pedia mas atencion que el objetivo: son acciones
+   disponibles, no acciones que haya que tomar. Lo unico que las distingue entre
+   si es su icono. */
+/* Los tres van al mismo alto y a la misma esquina —size-9 del sitio— para que
+   el fondo del hover sea del mismo tamaño en los tres. Con el alto dado por el
+   contenido, el de tema quedaba un cuadrado y los otros dos dos rectangulos mas
+   bajos, y al pasar el raton se veia el desajuste. */
+.restart-btn,
+.exit-btn,
+.theme-btn {
+  height: calc(36px / var(--hdr-escala));
+  border-radius: calc(8px / var(--hdr-escala));
 }
-
-/* Reiniciar en verde y sin icono: es la unica accion que devuelve el
-   simulador a cero, y tiene que distinguirse de la ayuda de un vistazo. */
-.restart-btn {
-  background: rgba(46, 204, 113, .08); border: 1px solid var(--green);
-  border-radius: 4px; color: var(--green); font-family: var(--mono);
-  font-size: 11px; padding: 4px 12px; cursor: pointer; flex-shrink: 0;
-  transition: background .2s;
-}
-.restart-btn:hover { background: rgba(46, 204, 113, .18); }
-/* Mismo boton en las pantallas de fin, cuando lo que hace no es reiniciar. */
-.restart-btn.neutro { background: transparent; border-color: var(--border); color: var(--muted); }
-.restart-btn.neutro:hover { color: var(--text); border-color: var(--muted); }
-
-/* Interruptor de velocidad del contrarreloj. Va en dorado, la familia del
-   tiempo y los puntos, y no en el verde de reiniciar: no reinicia nada. */
-.speed-btn {
-  background: rgba(255, 196, 0, .07); border: 1px solid var(--gold);
-  border-radius: 4px; color: var(--gold); font-family: var(--mono);
-  font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer;
-  flex-shrink: 0; min-width: 42px; transition: background .2s;
-}
-.speed-btn:hover { background: rgba(255, 196, 0, .16); }
-.speed-btn[data-activo="true"] { background: rgba(255, 196, 0, .24); }
-
-/* Salir vive aqui desde que el sitio dejo de dibujar su propia barra encima. */
+.restart-btn,
 .exit-btn {
-  display: flex; align-items: center; gap: 6px;
-  background: none; border: none; border-radius: 4px;
-  color: var(--muted); font-family: var(--mono); font-size: 11px;
-  padding: 4px 8px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center;
+  gap: calc(8px / var(--hdr-escala));
+  background: none; border: none;
+  padding: 0 calc(10px / var(--hdr-escala));
+  color: rgba(255, 255, 255, .55);
+  font-family: inherit; font-size: calc(14px / var(--hdr-escala)); font-weight: 500;
+  cursor: pointer; flex-shrink: 0;
   transition: background .2s, color .2s;
 }
-.exit-btn:hover { background: rgba(255, 255, 255, .07); color: var(--bright); }
-.exit-btn svg { width: 11px; height: 11px; }
+.restart-btn:hover,
+.exit-btn:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.restart-btn svg,
+.exit-btn svg {
+  width: calc(16px / var(--hdr-escala)); height: calc(16px / var(--hdr-escala));
+  flex-shrink: 0;
+}
+/* Mismo boton en las pantallas de fin, cuando lo que hace no es reiniciar. */
+.restart-btn.neutro { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.restart-btn.neutro:hover { color: var(--text); border-color: var(--muted); }
+
+/* El mismo cuadrado que el interruptor de tema del sitio: size-9 en fantasma. */
+.theme-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: calc(36px / var(--hdr-escala));
+  padding: 0; background: none; border: none;
+  color: rgba(255, 255, 255, .55); cursor: pointer; flex-shrink: 0;
+  transition: background .2s, color .2s;
+}
+.theme-btn:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.theme-btn svg { width: calc(20px / var(--hdr-escala)); height: calc(20px / var(--hdr-escala)); }
 
 /* ── teclas ───────────────────────────────────────────────────────────── */
 
@@ -168,19 +226,22 @@
 .key b {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: 24px; padding: 1px 5px; border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, .13);
-  border-bottom: 2px solid rgba(255, 255, 255, .22);
-  background: rgba(255, 255, 255, .07); color: #E5E7EB;
+  border: 1px solid var(--tecla-borde, rgba(255, 255, 255, .13));
+  border-bottom: 2px solid var(--tecla-canto, rgba(255, 255, 255, .22));
+  background: var(--tecla-fondo, rgba(255, 255, 255, .07));
+  color: var(--tecla-texto, #E5E7EB);
   font-weight: 600; font-size: 11px;
 }
 
 /* ── antes de empezar ─────────────────────────────────────────────────── */
 
 /* Con la portada puesta no hay partida de la que informar: la barra se queda
-   en el logo y la salida. Los :not() suben la especificidad por encima de
-   reglas como .rbadge.show, que viven en la hoja de cada simulador. */
-.hdr.pre > *:not(.hdr-logo):not(.hdr-marca):not(.exit-btn):not(.hdr-fill) { display: none; }
-.hdr.pre > .hdr-fill { display: block; flex: 1; }
+   en el logo, el tema y la salida. Los :not() suben la especificidad por
+   encima de reglas como .rbadge.show, que viven en la hoja de cada simulador.
+   El tema se queda porque no es estado de la partida: se elige antes de
+   empezar igual que despues, y a pantalla completa no hay otro sitio. */
+.hdr.pre .hdr-inner > *:not(.hdr-marca):not(.hdr-sim):not(.theme-btn):not(.exit-btn):not(.hdr-fill) { display: none; }
+.hdr.pre .hdr-inner > .hdr-fill { display: block; flex: 1; }
 
 /* ── portada ──────────────────────────────────────────────────────────── */
 

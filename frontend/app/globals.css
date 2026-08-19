@@ -78,6 +78,17 @@
   --table-surface: #e3e7ed;
   --table-line: #d8dde4;
 
+  /* Las ilustraciones de las tarjetas no cambian con el tema: son trazo claro
+     sobre panel oscuro en los dos. Se probo a invertirlas en claro —tinta sobre
+     un panel gris— y el dibujo perdia el aire de rotulo de neon que es lo que
+     las hace. El panel oscuro tambien le da a la tarjeta su division en dos
+     mitades, que en claro es lo unico que la separa del fondo. */
+  --ilus-panel: #0d1117;
+
+  /* El cilindro del scroll. Va bastante mas oscuro que --border, que sobre el
+     fondo claro no se distinguia. */
+  --scrollbar-thumb: #c3cad3;
+
   /* Soft red halo: light-mode translation of the neon glow */
   --neon-glow: 0 1px 2px rgba(196, 30, 58, 0.16), 0 6px 16px -4px rgba(196, 30, 58, 0.26);
   --neon-glow-strong: 0 2px 4px rgba(196, 30, 58, 0.2), 0 12px 28px -6px rgba(196, 30, 58, 0.4);
@@ -133,6 +144,13 @@
   --table-surface: #191d24;
   --table-line: #2c333c;
 
+  /* Ilustraciones: el mismo panel oscuro que en claro (ver :root). Aqui coincide
+     ademas con el fondo de la pagina. */
+  --ilus-panel: #0d1117;
+
+  /* El cilindro del scroll (ver :root). */
+  --scrollbar-thumb: #39414b;
+
   /* Literal neon glow */
   --neon-glow: 0 0 10px rgba(196, 30, 58, 0.5), 0 0 20px rgba(196, 30, 58, 0.3);
   --neon-glow-strong: 0 0 10px rgba(196, 30, 58, 0.7), 0 0 30px rgba(196, 30, 58, 0.5), 0 0 50px rgba(196, 30, 58, 0.3);
@@ -174,6 +192,12 @@
   --color-table-line: var(--table-line);
   --color-section: var(--section);
   --color-terminal-surface: var(--terminal-surface);
+  /* Registrado aqui y no usado como `bg-[var(--ilus-panel)]`: Tailwind v4 no
+     emite una utilidad arbitraria con var() si no se le dice de que tipo es, y
+     esa clase se quedaba sin generar. El panel se quedaba entonces sin fondo y
+     heredaba el de la tarjeta: en oscuro no se notaba, porque la tarjeta ya es
+     oscura, y en claro salia blanco con el trazo claro encima. */
+  --color-ilus-panel: var(--ilus-panel);
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
@@ -348,21 +372,39 @@
 
 /* Scrollbar styling (theme-aware) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
+/* Sin riel: solo el cilindro. El riel pintado dibujaba una franja vertical al
+   lado de cada caja con scroll —la hoja de comandos, el panel de actividades,
+   la terminal— y esa franja se leia como un borde que no existe. */
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
+/* El borde transparente con `background-clip: content-box` es lo que despega el
+   cilindro del borde derecho: el ancho total son 12px, pero pintados solo van
+   los 6 de dentro. Y el color no es `--border`, que en claro es casi el fondo y
+   dejaba el cilindro invisible. */
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--scrollbar-thumb);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
+  background-clip: content-box;
+}
+
+/* Firefox no entiende ninguno de los pseudoelementos de arriba y solo atiende a
+   estas dos. `auto` en vez de `thin` porque thin lo dejaba en un hilo; el
+   separado del borde no tiene equivalente aqui. El segundo color es el riel. */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 /* Hidden scrollbar (content still scrolls) */

@@ -18,9 +18,9 @@ const MAX_RESULTS = 5
 
 const KIND = {
   modulo: { icon: BookOpen, className: "text-primary" },
-  subtema: { icon: FileText, className: "text-sky-500" },
-  simulador: { icon: MonitorPlay, className: "text-emerald-500" },
-  actividad: { icon: Target, className: "text-amber-500" },
+  subtema: { icon: FileText, className: "text-primary" },
+  simulador: { icon: MonitorPlay, className: "text-primary" },
+  actividad: { icon: Target, className: "text-primary" },
 } as const
 
 /** Soft neutral highlight for the active row, instead of the solid red accent
@@ -92,7 +92,7 @@ export function SearchDialog({
                   className={ITEM_HL}
                   onSelect={() => go("/simulators")}
                 >
-                  <MonitorPlay className="text-emerald-500" />
+                  <MonitorPlay className="text-primary" />
                   Simuladores
                 </CommandItem>
                 <CommandItem
@@ -100,7 +100,7 @@ export function SearchDialog({
                   className={ITEM_HL}
                   onSelect={() => go("/activities")}
                 >
-                  <Target className="text-amber-500" />
+                  <Target className="text-primary" />
                   Actividades
                 </CommandItem>
               </CommandGroup>

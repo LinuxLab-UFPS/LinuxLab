@@ -49,7 +49,7 @@ export default function RootLayout({
             transicion la declaran ellos con `transition-colors`. */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >

@@ -19,7 +19,7 @@ const ILLUSTRATION: Record<string, ComponentType> = {
   "despliegue-del-viernes": SimulatorSearchIllustration,
 }
 
-/** A simulator as a green ContentCard, used on the simulators page and embedded
+/** A simulator as a ContentCard, used on the simulators page and embedded
  *  in lessons. Its single tag is the topic (module) it belongs to. */
 export function SimulatorCard({ simulator }: { simulator: Simulator }) {
   return (
@@ -31,7 +31,6 @@ export function SimulatorCard({ simulator }: { simulator: Simulator }) {
       tags={[
         { icon: BookOpen, label: simulator.topicTitle },
       ]}
-      accent="green"
     />
   )
 }

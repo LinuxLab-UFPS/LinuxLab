@@ -1,9 +1,14 @@
 import type { ComponentType, ReactNode } from "react"
 
 /**
- * One line-art illustration per topic, drawn on the card's dark panel in the
+ * One line-art illustration per topic, drawn on the card's panel in the
  * AlgoMaster style: neutral strokes with a neon-red accent. Look them up with
  * `topicIllustration(number)`; topics without a match fall back to a generic one.
+ *
+ * Los colores son fijos y no salen del tema: estos dibujos van siempre sobre el
+ * panel oscuro (--ilus-panel), tambien con el sitio en claro. Se probo a
+ * invertirlos —tinta oscura sobre un panel gris— y perdian el aire de rotulo de
+ * neon, que es justo lo que les da caracter.
  */
 
 const LINE = "#c9d1d9" // near-white strokes
@@ -258,34 +263,44 @@ function Packages() {
   )
 }
 
-/** Simulador de compresion: tres hojas que entran en un paquete y se envian. */
+/**
+ * Simulador de compresion: las hojas sueltas entran en un paquete cerrado y el
+ * paquete se manda.
+ *
+ * El paquete era un rectangulo plano partido en franjas, y a ese tamaño se leia
+ * igual que la ventana con lineas del simulador de vi — dos dibujos distintos
+ * que parecian el mismo. Ahora es una caja en perspectiva con su cinta cruzada:
+ * un volumen, no un panel, que es ademas lo que un archivo comprimido es. Las
+ * hojas van en abanico para que se vea que son varias y el paquete uno solo,
+ * que es de lo que va comprimir.
+ */
 export function SimulatorCompressionIllustration() {
-  const GREEN = "#34d399"
   return (
     <Svg>
-      {/* las hojas sueltas, escalonadas */}
+      {/* las hojas sueltas, en abanico */}
       {[0, 1, 2].map((i) => (
         <path
           key={i}
-          d={`M${34 + i * 7} ${30 + i * 9} h26 l8 8 v28 h-34 Z`}
+          d={`M${16 + i * 6} ${26 + i * 8} h20 l7 7 v25 h-27 Z`}
           stroke={i === 2 ? LINE : BASE}
           strokeWidth="1.8"
-          opacity={i === 2 ? 1 : 0.55}
+          opacity={i === 2 ? 1 : 0.5}
         />
       ))}
 
-      {/* la flecha: lo de la izquierda cabe en lo de la derecha */}
-      <path d="M92 60 h22" stroke={GREEN} strokeWidth="2.4" />
-      <path d="M108 54 l7 6 l-7 6" stroke={GREEN} strokeWidth="2.4" />
+      {/* entran al paquete */}
+      <path d="M68 58 h16 M78 52 l7 6 l-7 6" stroke={RED} strokeWidth="2.4" />
 
-      {/* el paquete, con su cinta */}
-      <path d="M124 42 h44 v40 h-44 Z" stroke={LINE} strokeWidth="2" />
-      <path d="M124 54 h44" stroke={BASE} strokeWidth="1.6" />
-      <path d="M141 42 v40 M151 42 v40" stroke={BASE} strokeWidth="1.6" opacity="0.6" />
+      {/* la caja: en perspectiva, para que sea un bulto y no una ventana */}
+      <path d="M140 26 l26 13 v26 l-26 13 l-26 -13 v-26 Z" stroke={LINE} strokeWidth="2.2" />
+      <path d="M114 39 l26 13 l26 -13" stroke={BASE} strokeWidth="1.6" />
+      <path d="M140 52 v26" stroke={BASE} strokeWidth="1.6" />
+      {/* la cinta que la sella, cruzando la cara de arriba */}
+      <path d="M127 32.5 l26 13" stroke={RED} strokeWidth="2" />
 
-      {/* el sobre: el motivo por el que se comprime */}
-      <path d="M132 92 h28 v18 h-28 Z" stroke={RED} strokeWidth="2" />
-      <path d="M132 92 l14 10 l14 -10" stroke={RED} strokeWidth="2" />
+      {/* y se manda */}
+      <path d="M130 86 h30 v18 h-30 Z" stroke={RED} strokeWidth="2" />
+      <path d="M130 86 l15 11 l15 -11" stroke={RED} strokeWidth="2" />
     </Svg>
   )
 }
@@ -335,21 +350,46 @@ export function topicIllustration(topicNumber: number): ComponentType {
 }
 
 /**
- * The tree-navigation simulator: the directory tree with a green "go here"
- * arrow pointing at the target directory (the simulator's objective).
+ * La travesia del arbol: un arbol con un camino.
+ *
+ * Lo que distingue a este simulador es que hay un sitio donde estas, otro al
+ * que tienes que llegar y una ruta entre los dos. Eso es todo lo que se dibuja:
+ * la raiz, un desvio que no se toma, el directorio por el que se pasa y el
+ * objetivo con el recuadro de puntos que el propio simulador le pone.
+ *
+ * Llego a tener dos niveles mas, cuatro carpetas sueltas y un prompt dibujado
+ * abajo. A tamaño de tarjeta no se leia ninguno: era una maraña de recuadros, y
+ * el prompt encima sobraba, porque la terminal no es lo que esta tarjeta cuenta.
  */
 export function SimulatorTreeIllustration() {
-  const GREEN = "#34d399"
   return (
     <Svg>
+      {/* el desvio que no se toma */}
+      <path d="M99.5 32 v12 M99.5 44 H59.5 M59.5 44 v12" stroke={BASE} strokeWidth="1.8" />
+
+      {/* el camino, por encima */}
+      <path d="M99.5 32 v12 M99.5 44 H138.5 M138.5 44 v12 M138.5 72 v12" stroke={RED} strokeWidth="2.6" />
+
+      {/* la raiz */}
       <Folder x={88} y={16} color={LINE} />
-      {/* branches to the two side directories */}
-      <path d="M99 32 v8 M52 40 h94 M52 40 v10 M146 40 v10" stroke={BASE} strokeWidth="1.6" />
-      <Folder x={41} y={50} color={LINE} />
-      <Folder x={133} y={50} color={LINE} />
-      {/* green "ir aquí" arrow pointing at the target directory */}
-      <path d="M99 34 v22 M92 48 l7 8 l7 -8" stroke={GREEN} strokeWidth="3" />
-      <Folder x={87} y={62} color={GREEN} />
+
+      {/* el desvio, y el directorio de paso */}
+      <Folder x={48} y={56} color={BASE} />
+      <Folder x={127} y={56} color={LINE} />
+
+      {/* el objetivo */}
+      <rect
+        x={123}
+        y={80}
+        width={31}
+        height={24}
+        rx={4}
+        stroke={RED}
+        strokeWidth="1.6"
+        strokeDasharray="4 3"
+        opacity="0.75"
+      />
+      <Folder x={127} y={84} color={RED} />
     </Svg>
   )
 }
@@ -361,7 +401,6 @@ export function SimulatorTreeIllustration() {
  * modo normal y no escribiendo.
  */
 export function SimulatorViIllustration() {
-  const GREEN = "#34d399"
   return (
     <Svg>
       {/* marco de la ventana */}
@@ -380,7 +419,7 @@ export function SimulatorViIllustration() {
       />
 
       {/* el cursor de bloque, en la linea que se esta editando */}
-      <rect x={90} y={65} width={9} height={11} fill={GREEN} />
+      <rect x={90} y={65} width={9} height={11} fill={RED} />
 
       {/* las tildes del final del archivo */}
       <path d="M40 84 h5 M40 93 h5" stroke={BASE} strokeWidth="2" strokeLinecap="round" />
@@ -396,7 +435,6 @@ export function SimulatorViIllustration() {
  * que el estudiante tiene que corregir.
  */
 export function SimulatorPermissionsIllustration() {
-  const GREEN = "#34d399"
   // Rejilla de 3x3: cada fila es un bloque (dueño, grupo, otros).
   const filas = [
     [true, true, true],
@@ -427,8 +465,8 @@ export function SimulatorPermissionsIllustration() {
       )}
 
       {/* el sello, pisando el borde de la hoja */}
-      <circle cx={148} cy={86} r={19} stroke={GREEN} strokeWidth="2.5" />
-      <path d="M139 86 l6 7 l12 -14" stroke={GREEN} strokeWidth="3" />
+      <circle cx={148} cy={86} r={19} stroke={RED} strokeWidth="2.5" />
+      <path d="M139 86 l6 7 l12 -14" stroke={RED} strokeWidth="3" />
     </Svg>
   )
 }

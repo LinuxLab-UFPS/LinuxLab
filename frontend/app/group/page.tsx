@@ -55,16 +55,23 @@ export default async function GroupPage({
       <ReadingProgressProvider>
         <TerminalUIProvider>
          <LessonLoadingProvider>
-          {/* `min-h-screen` y no `h-screen`: el documento tiene que poder crecer
-              para que el scroll sea el de la ventana. Antes la altura estaba
-              clavada al viewport y las unicas zonas que respondian a la rueda
-              eran la lista de temas y la columna de la leccion; sobre la
-              cabecera, los huecos o la terminal no pasaba nada. */}
-          <div className="flex min-h-screen flex-col bg-background">
-            <div className="sticky top-0 z-40 bg-background">
+          {/* El scroll lo tiene el `<main>`, no la ventana. Con el scroll en la
+              ventana la barra del navegador es la del viewport entero y corria
+              por al lado de la cabecera, que ademas iba `sticky` para taparlo
+              sin conseguirlo: ninguna capa se pone por encima de una barra de
+              scroll. Asi arranca por debajo, igual que en el resto del sitio.
+
+              Ojo: no vale volver a `h-screen` con `overflow-hidden` a secas.
+              Eso ya se probo y dejaba la rueda muerta salvo encima de la lista
+              de temas y de la columna de la leccion. Lo que lo arregla es que
+              haya un contenedor con scroll que ocupe todo lo que no es la
+              cabecera, que es este `<main>`. */}
+          <div className="flex h-screen flex-col overflow-hidden bg-background">
+            <div className="z-40 shrink-0 bg-background">
               <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
               <ReadingProgressBar />
             </div>
+            <main className="flex-1 overflow-auto">
             <GroupBody>
               <GroupSidebar
                 activeTopicSlug={topic.slug}
@@ -82,6 +89,7 @@ export default async function GroupPage({
               />
               <GroupTerminal />
             </GroupBody>
+            </main>
           </div>
          </LessonLoadingProvider>
         </TerminalUIProvider>

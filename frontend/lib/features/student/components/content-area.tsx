@@ -115,20 +115,20 @@ function ResourceCard({ resource }: { resource: LessonResource }) {
       href={resource.url}
       target="_blank"
       rel="noreferrer"
-      className="group flex items-center gap-3 rounded-lg border border-black/15 p-3.5 transition-all hover:-translate-y-0.5 hover:border-violet-500 hover:shadow-[0_0_10px_rgba(139,92,246,0.4),0_0_28px_rgba(139,92,246,0.22)] dark:border-border"
+      className="group flex items-center gap-3 rounded-lg border border-black/15 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)] dark:border-border"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors group-hover:border-violet-500/40 group-hover:text-violet-400">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
         <Icon className="h-4 w-4" />
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-violet-400">
+        <h3 className="truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary">
           {resource.title}
         </h3>
         {resource.detail && (
           <p className="truncate text-xs text-muted-foreground">{resource.detail}</p>
         )}
       </div>
-      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-violet-400" />
+      <Link2 className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
     </a>
   )
 }

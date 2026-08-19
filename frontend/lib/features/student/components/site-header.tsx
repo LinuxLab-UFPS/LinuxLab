@@ -31,7 +31,11 @@ import { ThemeToggle } from "@shared/components/theme-toggle"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 import { SearchDialog } from "@/lib/features/student/components/search-dialog"
-import { NavDropdown } from "@/lib/features/student/components/nav-dropdown"
+import {
+  NavDropdown,
+  NAV_ACTIVE,
+  NAV_IDLE,
+} from "@/lib/features/student/components/nav-dropdown"
 import type { SearchItem } from "@shared/lib/content/lessons"
 import type { Simulator } from "@shared/lib/content/simulators"
 import { getActivities } from "@shared/lib/content/activities"
@@ -73,9 +77,7 @@ export function SiteHeader({
             href="/terminal"
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              pathname === "/terminal"
-                ? "bg-primary/15 text-primary"
-                : "text-white/60 hover:bg-primary/15 hover:text-primary",
+              pathname === "/terminal" ? NAV_ACTIVE : NAV_IDLE,
             )}
           >
             <SquareTerminal className="h-4 w-4" />
@@ -87,7 +89,6 @@ export function SiteHeader({
             label="Actividades"
             icon={Target}
             itemIcon={Target}
-            tone="amber"
             entries={getActivities().map((a) => ({
               key: a.slug,
               title: a.title,
@@ -101,7 +102,6 @@ export function SiteHeader({
             label="Simuladores"
             icon={MonitorPlay}
             itemIcon={FolderTree}
-            tone="emerald"
             entries={simulators.map((s) => ({
               key: s.id,
               title: s.title,

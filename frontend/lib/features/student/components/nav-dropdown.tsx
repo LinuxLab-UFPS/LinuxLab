@@ -5,18 +5,23 @@ import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 
-const TONE = {
-  emerald: {
-    active: "bg-emerald-500/15 text-emerald-400",
-    hover: "text-white/60 hover:bg-emerald-500/15 hover:text-emerald-400",
-    item: "hover:bg-emerald-500/15 hover:text-emerald-400",
-  },
-  amber: {
-    active: "bg-amber-500/15 text-amber-400",
-    hover: "text-white/60 hover:bg-amber-500/15 hover:text-amber-400",
-    item: "hover:bg-amber-500/15 hover:text-amber-400",
-  },
-} as const
+/* Las tres pestanas van del mismo rojo, el de la marca: antes cada seccion
+ * tenia el suyo (ambar en Actividades, esmeralda en Simuladores) y la barra
+ * parecia de tres sitios distintos.
+ *
+ * El rojo no es `--primary` sino el extremo claro del degradado de la marca.
+ * `--primary` (#C41E3A) esta pensado para fondos claros y sobre el negro de la
+ * barra se apaga: la pestana activa apenas se despegaba del fondo. El gris
+ * inactivo sube de /60 a /80 por lo mismo, que a /60 se leian apagadas.
+ *
+ * Los iconos no llevan color propio: van dentro del enlace y heredan estos
+ * mismos, asi que icono y texto encienden juntos.
+ *
+ * Se exportan porque el enlace de Terminal no pasa por este componente —no
+ * despliega ninguna lista— y tiene que verse igual que los otros dos. */
+export const NAV_ACTIVE = "bg-primary/20 text-[#ff5470]"
+export const NAV_IDLE = "text-white/80 hover:bg-primary/20 hover:text-[#ff5470]"
+export const NAV_ITEM = "hover:bg-primary/20 hover:text-[#ff5470]"
 
 export interface NavEntry {
   key: string
@@ -36,7 +41,6 @@ export function NavDropdown({
   label,
   icon: Icon,
   itemIcon: ItemIcon,
-  tone,
   entries,
   max = 4,
   pathname,
@@ -45,7 +49,6 @@ export function NavDropdown({
   label: string
   icon: React.ComponentType<{ className?: string }>
   itemIcon: React.ComponentType<{ className?: string }>
-  tone: keyof typeof TONE
   entries: NavEntry[]
   max?: number
   pathname: string
@@ -53,7 +56,6 @@ export function NavDropdown({
   const [open, setOpen] = useState(false)
   const active = pathname === href || pathname.startsWith(href + "/")
   const shown = entries.slice(0, max)
-  const t = TONE[tone]
 
   return (
     <div
@@ -65,7 +67,7 @@ export function NavDropdown({
         href={href}
         className={cn(
           "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-          active ? t.active : t.hover,
+          active ? NAV_ACTIVE : NAV_IDLE,
         )}
       >
         <Icon className="h-4 w-4" />
@@ -86,7 +88,7 @@ export function NavDropdown({
                   href={entry.href}
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/90 transition-colors",
-                    t.item,
+                    NAV_ITEM,
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />

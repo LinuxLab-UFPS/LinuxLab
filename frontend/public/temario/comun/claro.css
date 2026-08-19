@@ -1,0 +1,98 @@
+/*
+ * Modo claro de los simuladores.
+ *
+ * Solo lo cargan los simuladores que tienen version clara. Los que se ven
+ * igual en los dos temas (compresion, busqueda) no enlazan esta hoja y la
+ * clase `claro` no les hace nada.
+ *
+ * La clase la pone barra.js leyendo el tema del sitio. Lo que cambia son las
+ * superficies y los grises; los colores del juego (rojo, verde, amarillo,
+ * azul, naranja, morado) son los mismos en los dos temas, porque son parte de
+ * las reglas y no de la decoracion.
+ *
+ * Los valores salen de la paleta clara del sitio (app/globals.css): mismo
+ * fondo, misma tarjeta, mismo borde, mismo gris de texto. El simulador tiene
+ * que verse de la misma familia que la leccion de la que se abre.
+ */
+
+/* ── tintas ───────────────────────────────────────────────────────────────
+ * Un color de neon sobre negro se lee bien; el mismo sobre blanco se pierde
+ * (el amarillo #FFC400 sobre blanco no llega ni a 1.6:1). Cada color tiene
+ * entonces dos formas: el color tal cual para bordes, rellenos y resplandores,
+ * donde manda el tono y no el contraste, y su "tinta" para cuando va como
+ * texto. En oscuro las dos son el mismo color y no cambia nada.
+ */
+:root {
+  --red-tinta:    var(--red);
+  --green-tinta:  var(--green);
+  --gold-tinta:   var(--gold);
+  --blue-tinta:   var(--blue);
+  --orange-tinta: var(--orange);
+  --purple-tinta: var(--purple);
+}
+
+html.claro {
+  --bg:     #F6F7F9;   /* --background del sitio */
+  --surf:   #FFFFFF;   /* --card */
+  --surf2:  #ECEEF1;   /* --secondary */
+  --border: #E2E5EA;   /* --border */
+  --text:   #40474F;
+  --bright: #1C2128;   /* --foreground */
+  --muted:  #5B626B;   /* --muted-foreground */
+  --dim:    #D0D7DE;
+
+  /* El mismo tono, bajado hasta que se lee sobre blanco. El rojo cae en el
+     #C41E3A de la UFPS, que es el que el sitio ya usa en claro. */
+  --red-tinta:    #C41E3A;
+  --green-tinta:  #157F3C;
+  --gold-tinta:   #8A6100;
+  --blue-tinta:   #0B65C2;
+  --orange-tinta: #9A4E12;
+  --purple-tinta: #6639BA;
+
+  /* Las teclas de los paneles de ayuda, que estan en la zona clara. La portada
+     y la pantalla final no llevan variable porque no cambian: son islas
+     oscuras, y el valor de reserva de barra.css ya es el que les toca. */
+  --tecla-borde: #D8DDE4;
+  --tecla-canto: #C2C9D2;
+  --tecla-fondo: #F1F3F6;
+  --tecla-texto: #1C2128;
+}
+
+/* ── las islas oscuras ────────────────────────────────────────────────────
+ * Lo que ya era oscuro y se queda oscuro. Aqui recuperan los grises que el
+ * bloque de arriba acaba de aclarar, y sus colores vuelven a ser el color y no
+ * la tinta: sobre negro el neon se lee, que es para lo que se eligio.
+ *
+ *   .hdr           la barra, que es la misma en los cinco simuladores: si
+ *                  cambiara con el tema, los dos que no tienen modo claro se
+ *                  quedarian con una cabecera distinta a la de los otros tres.
+ *   .sim-portada   la pantalla de empezar y la de resultado, que tapan el
+ *   .sim-fin       simulador entero y son las mismas en los cinco.
+ *   .zona-oscura   lo que cada simulador marque: la terminal y la ventana que
+ *                  la enmarca. Es la razon que ya esta escrita en
+ *                  app/globals.css — la consola es oscura en los dos temas, y
+ *                  los bloques de codigo del temario usan ese mismo color para
+ *                  que material y terminal se lean como la misma superficie.
+ *                  Un simulador que enseña a escribir comandos no iba a ser la
+ *                  excepcion.
+ */
+html.claro .hdr,
+html.claro .sim-portada,
+html.claro .sim-fin,
+html.claro .zona-oscura {
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+
+  --red-tinta:    var(--red);
+  --green-tinta:  var(--green);
+  --gold-tinta:   var(--gold);
+  --blue-tinta:   var(--blue);
+  --orange-tinta: var(--orange);
+  --purple-tinta: var(--purple);
+}

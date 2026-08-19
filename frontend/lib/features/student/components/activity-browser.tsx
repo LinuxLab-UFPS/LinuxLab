@@ -16,9 +16,9 @@ import type { ActivityListing, Difficulty } from "@/lib/models/activities"
 
 const TODOS = "all"
 
-/** El foco del desplegable sigue el ámbar de la página, como el violeta sigue
- *  al panel de administración. */
-const SELECT_ITEM = "focus:bg-amber-500/10 focus:text-amber-400"
+/** El foco del desplegable sigue el rojo de la página, como el violeta sigue al
+ *  panel de administración. */
+const SELECT_ITEM = "focus:bg-primary/10 focus:text-primary"
 
 const normaliza = (texto: string) =>
   texto

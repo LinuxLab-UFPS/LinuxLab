@@ -12,7 +12,7 @@ interface TopicGridProps {
   previews: Record<number, TopicPreview>
 }
 
-/** The topic catalogue on the home, using the shared ContentCard (red accent). */
+/** The topic catalogue on the home, using the shared ContentCard. */
 export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
   const { doneCount, lessonTotal } = useCourseProgress(topicLessons)
 
@@ -32,7 +32,6 @@ export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
             illustration={topicIllustration(topic.number)}
             tags={preview ? previewTags(preview) : []}
             progress={pct}
-            accent="red"
           />
         )
       })}
@@ -40,8 +39,14 @@ export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
   )
 }
 
-/** Colored "sneak peek" chips. Reading time always shows; the rest only when
- *  the topic actually has that kind of content inside. */
+/** Lo que el tema trae dentro, en una sola fila. El orden lo fija lo que el
+ *  estudiante decide con ello: primero cuanto cuesta leerlo, y detras lo que hay
+ *  para hacer —actividades, simuladores— y por ultimo lo que hay para ver.
+ *
+ *  Los tres del mismo rojo. Antes cada uno tenia su color —azul los videos,
+ *  verde los simuladores, ambar las actividades— y no significaban nada: son
+ *  cuentas del mismo tema, y el icono ya dice de que es cada una. El tiempo se
+ *  queda gris porque no es contenido, es una medida. */
 function previewTags(preview: TopicPreview): CardTag[] {
   const tags: CardTag[] = []
   if (preview.minutes > 0) {
@@ -51,25 +56,25 @@ function previewTags(preview: TopicPreview): CardTag[] {
       tone: "muted" as const,
     })
   }
-  if (preview.videos > 0) {
+  if (preview.activities > 0) {
     tags.push({
-      icon: Video,
-      label: `${preview.videos} ${preview.videos === 1 ? "video" : "videos"}`,
-      tone: "sky" as const,
+      icon: ListChecks,
+      label: `${preview.activities} ${preview.activities === 1 ? "actividad" : "actividades"}`,
+      tone: "primary" as const,
     })
   }
   if (preview.simulators > 0) {
     tags.push({
       icon: Terminal,
       label: `${preview.simulators} ${preview.simulators === 1 ? "simulador" : "simuladores"}`,
-      tone: "emerald" as const,
+      tone: "primary" as const,
     })
   }
-  if (preview.activities > 0) {
+  if (preview.videos > 0) {
     tags.push({
-      icon: ListChecks,
-      label: `${preview.activities} ${preview.activities === 1 ? "actividad" : "actividades"}`,
-      tone: "amber" as const,
+      icon: Video,
+      label: `${preview.videos} ${preview.videos === 1 ? "video" : "videos"}`,
+      tone: "primary" as const,
     })
   }
   return tags
