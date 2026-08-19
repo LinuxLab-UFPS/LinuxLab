@@ -4,7 +4,7 @@ En Linux, todo se representa como un archivo: los programas, los dispositivos de
 
 ## La jerarquía del sistema de archivos
 
-El sistema de archivos de Linux tiene un único punto de partida llamado directorio raíz, representado por el carácter `/`. A partir de ahí, todos los directorios se ramifican hacia abajo formando una jerarquía. A diferencia de Windows, en Linux no existen letras de unidad como `C:\` o `D:\`. Cada dispositivo físico, incluyendo discos, memorias USB y particiones, se integra dentro de esta misma jerarquía bajo un directorio.
+El sistema de archivos de Linux tiene un único punto de partida llamado directorio raíz, representado por el carácter `/`. A partir de ahí, todos los directorios se ramifican hacia abajo formando una jerarquía. A diferencia de Windows, en Linux no existen letras de unidad como `C:\` o `D:\`. Cada dispositivo físico, incluyendo discos, memorias USB y particiones, se integra dentro de esta misma jerarquía bajo un directorio (NDG, 2024).
 
 <!-- FS-TREE -->
 
@@ -18,7 +18,7 @@ ls /
 bin   boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
 ```
 
-Cada directorio tiene una función definida por el estándar FHS (Filesystem Hierarchy Standard). Algunos de los más relevantes:
+Cada directorio tiene una función definida por el estándar FHS (The Linux Foundation, 2015). Algunos de los más relevantes:
 
 - `/bin` Comandos esenciales disponibles para todos los usuarios
 - `/boot` Archivos necesarios para arrancar el sistema
@@ -81,10 +81,10 @@ cd ./Documentos
 cd ../otro-usuario
 ```
 
-La diferencia clave: las rutas absolutas siempre funcionan desde cualquier lugar, las relativas dependen de dónde estés parado.
+La diferencia clave: las rutas absolutas siempre funcionan desde cualquier lugar, las relativas dependen de dónde estés parado (Shotts, 2026).
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 3: "Exploring the System". linuxcommand.org
-- Filesystem Hierarchy Standard (FHS) 3.0. The Linux Foundation, 2015. refspecs.linuxfoundation.org
+- The Linux Foundation. (2015). *Filesystem hierarchy standard* (versión 3.0). https://refspecs.linuxfoundation.org/FHS_3.0/fhs-3.0.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

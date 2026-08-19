@@ -12,9 +12,9 @@ El comando para crear directorios es `mkdir`, de *make directory*. Recibe el nom
 mkdir practicas
 ```
 
-Eso crea `practicas` dentro del directorio actual. `pwd` confirma cuál es ese directorio y `ls` muestra lo que contiene.
+Eso crea `practicas` dentro del directorio actual. `pwd` confirma cuál es ese directorio y `ls` muestra lo que contiene (NDG, 2024).
 
-Para crear un directorio dentro de otro que aún no existe, la opción `-p` crea toda la cadena de una vez:
+Para crear un directorio dentro de otro que aún no existe, la opción `-p` crea toda la cadena de una vez (Shotts, 2026):
 
 ```bash
 mkdir -p practicas/tema-03
@@ -34,5 +34,5 @@ Si algo falla, el detalle indica exactamente qué falta. Se puede intentar tanta
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
