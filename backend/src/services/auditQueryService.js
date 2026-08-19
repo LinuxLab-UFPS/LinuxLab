@@ -1,7 +1,7 @@
 const prisma = require("../../prisma/client")
 const accessService = require("./accessService")
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 const MAX_PAGE_SIZE = 100
 
 /** Descripcion corta de cada tipo de evento, para la UI. */
