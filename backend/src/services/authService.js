@@ -6,6 +6,7 @@ const enrollmentService = require("./enrollmentService")
 const logger = require("../lib/logger")
 const { AppError } = require("../lib/errors")
 const config = require("../config/env")
+const auditService = require("./auditService")
 
 const USER_INCLUDE = {
   linuxAccount: {
@@ -21,7 +22,7 @@ const USER_INCLUDE = {
  * Verifica el token de Firebase, ubica al usuario en la base y valida que
  * pueda entrar (activo, y con matricula activa si es estudiante).
  */
-async function loginWithIdToken({ idToken }) {
+async function loginWithIdToken({ idToken, req }) {
   if (!firebaseApp) {
     throw new AppError("Firebase no está configurado en el servidor", 500, "INTERNAL_ERROR")
   }
@@ -72,6 +73,21 @@ async function loginWithIdToken({ idToken }) {
     where: { id: user.id },
     data: updates,
     include: USER_INCLUDE,
+  })
+
+  // Bitácora: inicio de sesión. Para los estudiantes se liga el grupo activo
+  // (el docente audita las sesiones de su curso); para docentes y admin no.
+  const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+  const groupId = user.role === "student" ? await enrollmentService.getActiveGroupId(user.id) : null
+  auditService.audit({
+    userId: user.id,
+    groupId,
+    eventType: "auth_login",
+    target: user.email,
+    metadata: { email: user.email },
+    actorRole: actorRole ?? user.role,
+    ip,
+    userAgent,
   })
 
   return user
