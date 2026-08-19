@@ -1,6 +1,6 @@
 ## Comprimir y descomprimir
 
-Comprimir es reescribir un archivo ocupando menos espacio, de forma que después pueda recuperarse. Un texto donde una palabra se repite mil veces no necesita guardarla mil veces: basta con anotarla una vez y apuntar dónde va. Ese es el trabajo de los algoritmos de compresión, y de ahí sale la regla que gobierna todo el tema: **cuanta más repetición tiene un archivo, más se encoge**.
+Comprimir es reescribir un archivo ocupando menos espacio, de forma que después pueda recuperarse. Un texto donde una palabra se repite mil veces no necesita guardarla mil veces: basta con anotarla una vez y apuntar dónde va. Ese es el trabajo de los algoritmos de compresión, que consiste en eliminar la redundancia de los datos (Shotts, 2026), y de ahí sale la regla que gobierna todo el tema: **cuanta más repetición tiene un archivo, más se encoge**.
 
 Un archivo comprimido no se usa directamente. Se descomprime antes, y entonces vuelve a ser lo que era.
 
@@ -36,7 +36,7 @@ ls -l bitacora.txt.gz
 
 Conviene fijarse en lo que pasó, porque sorprende la primera vez: **el original ya no está**. `gzip` no deja una copia comprimida al lado, sustituye el archivo por su versión comprimida y le añade la extensión `.gz`.
 
-La opción `-l` (list) resume el resultado sin descomprimir nada:
+La opción `-l` (list) resume el resultado sin descomprimir nada (Free Software Foundation, 2025):
 
 ```bash
 gzip -l bitacora.txt.gz
@@ -106,6 +106,8 @@ ls -l a.txt.gz b.txt.bz2
 
 Menos de la mitad que `gzip`, a cambio de más tiempo de procesador. Su extensión es `.bz2` y se deshace con `bunzip2`.
 
+La diferencia está en el algoritmo. `gzip` usa Lempel-Ziv, `bzip2` usa la ordenación por bloques de Burrows-Wheeler, que comprime más a cambio de más tiempo de procesador, y `xz` usa LZMA, que alcanza ratios parecidos a los de `bzip2` descomprimiendo casi tan rápido como `gzip` (NDG, 2024).
+
 La elección entre uno y otro es un intercambio: `gzip` cuando importa la rapidez, `bzip2` cuando importa el tamaño final. Existen otros compresores con el mismo esquema de uso, como `xz`, que no está instalado en este laboratorio.
 
 ## Cuando no hay nada que ganar
@@ -152,6 +154,6 @@ gzip: practica.tar.gz already has .gz suffix -- unchanged
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 18: "Archiving and Backup". linuxcommand.org
-- GNU Gzip Manual. gnu.org/software/gzip/manual
+- Free Software Foundation. (2025). *GNU gzip manual* (versión 1.14). https://www.gnu.org/software/gzip/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

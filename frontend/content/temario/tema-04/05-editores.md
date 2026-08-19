@@ -2,13 +2,15 @@
 
 Los comandos vistos hasta ahora crean archivos y muestran su contenido, pero no permiten modificarlo. Para eso existen los editores de texto, programas que funcionan dentro de la propia terminal.
 
-Linux incluye varios. `nano` es el más sencillo y muestra sus atajos en pantalla. `vi` (*visual editor*) es el que está presente en prácticamente cualquier sistema Unix, incluidos servidores mínimos donde no hay nada más instalado, y es el que se usa en esta asignatura.
+Linux incluye varios. `nano` es el más sencillo y muestra sus atajos en pantalla, mientras que `vi` (*visual editor*) es mucho más potente a cambio de una curva de aprendizaje empinada (NDG, 2024).
 
-En este laboratorio `vi` ejecuta **Vim** (*Vi improved*), la versión moderna del editor original.
+`vi` está en prácticamente cualquier sistema Unix porque la norma POSIX lo especifica entre sus utilidades y obliga a incluirlo en los sistemas que declaran soporte de utilidades de portabilidad de usuario (The Open Group, 2024). Por eso aparece en servidores mínimos y sistemas de rescate donde no hay ningún otro editor, y es el que se usa en esta asignatura.
+
+En la mayoría de distribuciones `vi` ya no es el editor original, sino un enlace a **Vim** (*Vi improved*), su reemplazo moderno (Shotts, 2026). En este laboratorio ocurre lo mismo.
 
 ## Los modos
 
-`vi` no funciona como un editor de escritorio. Las teclas no escriben siempre: su efecto depende del modo activo. Entender esto antes de tocar el teclado evita la mayor parte de la frustración inicial.
+`vi` no funciona como un editor de escritorio. Las teclas no escriben siempre: su efecto depende del modo activo (Vim Project, 2026). Entender esto antes de tocar el teclado evita la mayor parte de la frustración inicial.
 
 | Modo | Para qué sirve | Cómo se entra |
 |---|---|---|
@@ -133,6 +135,23 @@ El registro recuerda además si lo que guarda es una línea o un fragmento suelt
 
 Duplicar una línea son dos pulsaciones: `yy` para copiarla y `p` para pegarla debajo. Intercambiar dos caracteres seguidos son otras dos: `x` corta el primero y `p` lo devuelve detrás del segundo.
 
+## Unir dos líneas
+
+`vi` es estricto con lo que considera una línea y no deja borrar el salto para pegar una con la siguiente. Para eso tiene un comando propio, la `J` mayúscula, que no hay que confundir con la `j` minúscula de bajar el cursor.
+
+```
+Linea 1
+Linea 2
+Linea 3
+```
+
+Con el cursor en la segunda línea, `J` deja:
+
+```
+Linea 1
+Linea 2 Linea 3
+```
+
 ## Deshacer
 
 | Comando | Efecto |
@@ -152,9 +171,29 @@ Desde el modo normal, `/` seguido de un texto busca hacia adelante:
 
 <kbd>Enter</kbd> lleva a la primera coincidencia. `n` salta a la siguiente y `N` a la anterior. Con `?` en lugar de `/`, la búsqueda va hacia atrás.
 
+## Sustituir
+
+Reemplazar texto se hace desde el modo de comandos:
+
+```
+:%s/viejo/nuevo/g
+```
+
+Cada parte cumple una función:
+
+| Parte | Qué hace |
+|---|---|
+| `:` | Entra en modo de comandos |
+| `%` | El rango, desde la primera línea hasta la última |
+| `s` | La operación, sustituir |
+| `/viejo/nuevo/` | El texto que se busca y el que lo reemplaza |
+| `g` | Cambia todas las apariciones de cada línea, no solo la primera |
+
+Sin el `%` la sustitución afecta únicamente a la línea actual. Con una `c` al final, `vi` se detiene a pedir confirmación antes de cada cambio.
+
 ## nano como alternativa
 
-`nano` no tiene modos: al abrirlo se escribe directamente y los atajos aparecen listados al pie de la pantalla, donde `^X` significa <kbd>Ctrl</kbd> + <kbd>X</kbd>.
+`nano` no tiene modos: al abrirlo se escribe directamente y los atajos aparecen listados al pie de la pantalla, donde `^X` significa <kbd>Ctrl</kbd> + <kbd>X</kbd> (Free Software Foundation, 2026).
 
 | Atajo | Efecto |
 |---|---|
@@ -194,9 +233,9 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 
 | Tecla o comando | Efecto en vi |
 |---|---|
-| `vi archivo` | Abre el archivo en modo comando |
+| `vi archivo` | Abre el archivo en modo normal |
 | <kbd>i</kbd> | Pasa a modo inserción |
-| <kbd>Esc</kbd> | Vuelve a modo comando |
+| <kbd>Esc</kbd> | Vuelve a modo normal |
 | `:w` | Guarda |
 | `:q` | Sale |
 | `:wq` | Guarda y sale |
@@ -207,11 +246,15 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 | `yl` y `p` | Copia un carácter y lo pega al lado |
 | `u` | Deshace el último cambio |
 | `/texto` | Busca hacia adelante |
+| `:%s/a/b/g` | Sustituye en todo el archivo |
+| `J` | Une la línea siguiente con la actual |
 
 ---
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
-- Vim documentation. vimdoc.sourceforge.net
+- Free Software Foundation. (2026). *GNU nano manual* (versión 9.2). https://www.nano-editor.org/dist/latest/nano.html
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
+- The Open Group. (2024). *POSIX.1-2024: The Open Group base specifications issue 8*. https://pubs.opengroup.org/onlinepubs/9799919799/
+- Vim Project. (2026). *Vim user manual* (versión 9.2). https://vimhelp.org/usr_toc.txt.html

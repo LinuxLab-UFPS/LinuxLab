@@ -1,20 +1,20 @@
 ## ¿Qué es una distribución?
 
-Linux no viene en una sola versión. El kernel es el núcleo, pero un sistema operativo completo y usable necesita mucho más: un gestor de paquetes para instalar software, herramientas del sistema, un entorno gráfico, configuraciones por defecto. Quien empaqueta todo eso junto y lo distribuye es lo que se llama una **distribución** (o simplemente "distro").
+Linux no viene en una sola versión. El kernel es el núcleo, pero un sistema operativo completo y usable necesita mucho más: un gestor de paquetes para instalar software, herramientas del sistema, un entorno gráfico, configuraciones por defecto. Quien empaqueta todo eso junto y lo distribuye es lo que se llama una **distribución** (o simplemente "distro"). Además del kernel y las herramientas, incluye lo necesario para preparar el disco, instalar el sistema y, después, añadir o quitar software con un gestor de paquetes (NDG, 2024).
 
-Por eso existen tantas. Cada distribución toma el mismo kernel y lo combina con diferentes herramientas, filosofías y públicos objetivo. Ubuntu apunta a la facilidad de uso. Fedora va hacia desarrolladores que quieren lo más reciente. Arch es para quien quiere construir y entender cada parte del sistema. Hay distros para servidores, para equipos viejos, para privacidad, para diseño gráfico, para gaming.
+Por eso existen tantas. Cada distribución toma el mismo kernel y lo combina con diferentes herramientas, filosofías y públicos objetivo. Casi todas las que se usan hoy descienden de tres troncos: Red Hat, Debian y Slackware. La diferencia más visible entre ellos es el gestor de paquetes. Ubuntu apunta a la facilidad de uso. Fedora va hacia desarrolladores que quieren lo más reciente. Arch es para quien quiere construir y entender cada parte del sistema. Hay distros para servidores, para equipos viejos, para privacidad, para diseño gráfico, para gaming.
 
-Lo importante: los comandos de este curso funcionan igual en todas ellas. La terminal es la misma.
+Los comandos de este laboratorio funcionan igual en todas ellas. La terminal es la misma, y esa es la razón por la que aprenderla rinde en cualquier distribución (Shotts, 2026).
 
 ## El proceso de instalación
 
-Instalar Linux en un computador sigue siempre la misma lógica, sin importar la distribución que elijas.
+Instalar Linux en un computador sigue siempre la misma lógica, sin importar la distribución que elijas (Tuxnauta, 2025).
 
 <!-- IMAGE: instalacion-linux-portada.png | Proceso de instalación de Linux -->
 
 ### 1. Elegir la distribución
 
-El primer paso es decidir qué distribución instalar. Para quien empieza, la recomendación más común es **Ubuntu** o **Linux Mint**: tienen buena documentación, comunidad activa y un instalador amigable. Con algo de experiencia previa, **Fedora** es una opción sólida y más moderna.
+El primer paso es decidir qué distribución instalar. Para quien empieza, la recomendación más común es **Ubuntu** o **Linux Mint**, que tienen buena documentación, comunidad activa y un instalador amigable. Con algo de experiencia previa, **Fedora** es una opción sólida y más moderna.
 
 ### 2. Descarga la imagen ISO
 
@@ -67,4 +67,6 @@ No hay una respuesta universal, pero sí opciones que encajan mejor según el us
 
 **Fuentes**
 
-- Instituto Linux. *Instalación de Linux*. institutolinux.com/instalacion-de-linux
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
+- Tuxnauta. (2025, 8 de marzo). *Instalación de Linux*. Instituto Linux. https://www.institutolinux.com/instalacion-de-linux/

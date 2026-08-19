@@ -24,7 +24,7 @@ const CHECKS = [
 ]
 
 const DATOS = {
-  title: "Un archivo de sólo lectura",
+  title: "Un archivo de solo lectura",
   kind: "check",
   difficulty: "basic",
   instructions:

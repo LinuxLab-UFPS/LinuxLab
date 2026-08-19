@@ -1,8 +1,8 @@
 ## ¿Qué es un comando?
 
-Un comando es un programa que, al ejecutarse en la terminal, realiza una acción sobre el sistema. Algunos son simples y se usan solos. Otros aceptan información adicional para funcionar de maneras distintas.
+Un comando es un programa que, al ejecutarse en la terminal, realiza una acción sobre el sistema (NDG, 2024). Algunos son simples y se usan solos. Otros aceptan información adicional para funcionar de maneras distintas.
 
-La estructura general de un comando es siempre la misma:
+La estructura general de un comando es siempre la misma (The Open Group, 2024):
 
 <div class="cmd-anatomy">
   <div class="cmd-anatomy-schema"><span class="cmd-name">comando</span> <span class="cmd-opt">[opciones]</span> <span class="cmd-arg">[argumentos]</span></div>
@@ -148,5 +148,5 @@ El orden convencional es: primero las opciones, luego los argumentos. La mayorí
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- The Open Group. (2024). *POSIX.1-2024: The Open Group base specifications issue 8*. https://pubs.opengroup.org/onlinepubs/9799919799/

@@ -1,6 +1,6 @@
 ## Buscar archivos con find
 
-`find` busca archivos y directorios. No lee lo que hay dentro: los localiza por su nombre, su tipo, su tamaño o su fecha, y escribe la ruta de cada uno.
+`find` busca archivos y directorios. No lee lo que hay dentro: los localiza por su nombre, su tipo, su tamaño o su fecha, y escribe la ruta de cada uno (Free Software Foundation, 2026).
 
 Recibe siempre una ruta por donde empezar y busca ahí y en todo lo que cuelga de esa ruta. Sin más condiciones, devuelve todo lo que encuentra.
 
@@ -41,8 +41,8 @@ find ~/actividades -name '*.txt'
 
 ## Por tipo
 
-- `-type f`: sólo archivos
-- `-type d`: sólo directorios
+- `-type f`: solo archivos
+- `-type d`: solo directorios
 
 ```bash
 find ~/actividades -type d
@@ -69,7 +69,7 @@ Es la forma habitual de averiguar qué está ocupando el espacio de una cuenta.
 
 ## Por fecha
 
-`-mtime` cuenta en días desde la última modificación, con los mismos signos. Lo modificado en las últimas veinticuatro horas:
+`-mtime` cuenta en días desde la última modificación, con los mismos signos (DevOps Daily, 2025). Lo modificado en las últimas veinticuatro horas:
 
 ```bash
 find ~/actividades -type f -mtime -1
@@ -146,7 +146,7 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 /home/prof_ruiz/grupos/g1/andres_torres/actividades/backup/sesion.log
 ```
 
-`find` selecciona los archivos por su nombre y `grep -l` deja sólo los que además contienen el texto.
+`find` selecciona los archivos por su nombre y `grep -l` deja solo los que además contienen el texto.
 
 ## Resumen
 
@@ -155,7 +155,7 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 | `find ruta` | Lista todo lo que hay bajo esa ruta |
 | `find ruta -name '*.txt'` | Filtra por nombre |
 | `find ruta -iname '*.txt'` | Igual, sin distinguir mayúsculas |
-| `find ruta -type f` | Sólo archivos; `-type d` sólo directorios |
+| `find ruta -type f` | Solo archivos; `-type d` solo directorios |
 | `find ruta -size +1M` | Archivos de más de un megabyte |
 | `find ruta -mtime -1` | Modificados en el último día |
 | `find ruta -mtime +30` | Sin tocar desde hace más de un mes |
@@ -168,5 +168,5 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 
 **Fuentes**
 
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 17: "Searching for Files". linuxcommand.org
-- GNU Findutils Manual. gnu.org/software/findutils/manual
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- Free Software Foundation. (2026). *GNU findutils manual* (versión 4.11). https://www.gnu.org/software/findutils/manual/

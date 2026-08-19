@@ -2,7 +2,7 @@
 
 ## Moverse por el sistema
 
-El sistema de archivos de Linux es una jerarquía de directorios. Moverse por ella desde la terminal requiere unos pocos comandos. Son pocos, pero aparecen en todo lo que sigue.
+El sistema de archivos de Linux es una jerarquía de directorios. Moverse por ella desde la terminal requiere unos pocos comandos (NDG, 2024). Son pocos, pero aparecen en todo lo que sigue.
 
 ## pwd: ¿dónde estoy?
 
@@ -30,7 +30,7 @@ ls
 Documentos  Descargas  proyectos  notas.txt
 ```
 
-Con `-a` ves también los archivos ocultos, los que empiezan con un punto:
+Con `-a` ves también los archivos ocultos, los que empiezan con un punto (Shotts, 2026):
 
 ```bash
 ls -a
@@ -79,7 +79,7 @@ cd ..
 cd
 ```
 
-`cd` sin argumentos vuelve siempre al directorio de inicio.
+`cd` sin argumentos vuelve siempre al directorio de inicio, y `cd -` vuelve al anterior, el de antes del último salto. Repetido, alterna entre los dos, que ahorra bastante cuando hay que ir y venir entre dos carpetas alejadas.
 
 ## mkdir: crear un directorio
 
@@ -136,6 +136,7 @@ proyectos
 | `cd ruta` | Entra en un directorio |
 | `cd ..` | Sube un nivel |
 | `cd` | Vuelve al directorio de inicio |
+| `cd -` | Vuelve al directorio anterior |
 | `mkdir nombre` | Crea un directorio |
 | `touch nombre` | Crea un archivo vacío |
 | `tree` | Dibuja la jerarquía completa |
@@ -144,5 +145,5 @@ proyectos
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

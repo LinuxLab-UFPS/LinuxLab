@@ -10,19 +10,24 @@
       "file": "01-dueno-y-permisos.md"
     },
     {
+      "id": "octal",
+      "title": "Notación octal",
+      "file": "02-octal.md"
+    },
+    {
       "id": "chmod",
       "title": "Cambiar permisos con chmod",
-      "file": "02-chmod.md"
+      "file": "03-chmod.md"
     },
     {
       "id": "directorios",
       "title": "Permisos sobre directorios",
-      "file": "03-directorios.md"
+      "file": "04-directorios.md"
     },
     {
       "id": "umask",
       "title": "Permisos por defecto",
-      "file": "04-umask.md"
+      "file": "05-umask.md"
     }
   ],
   "resources": [

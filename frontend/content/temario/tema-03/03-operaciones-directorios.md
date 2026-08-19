@@ -1,6 +1,6 @@
 ## Operaciones con directorios
 
-Un directorio no es un archivo cualquiera: es un contenedor, y las operaciones que lo afectan actúan sobre todo lo que tiene dentro. Por eso los comandos que crean, copian y eliminan directorios tienen opciones propias que no aparecen al trabajar con archivos sueltos.
+Un directorio no es un archivo cualquiera: es un contenedor, y las operaciones que lo afectan actúan sobre todo lo que tiene dentro. Por eso los comandos que crean, copian y eliminan directorios tienen opciones propias que no aparecen al trabajar con archivos sueltos (Free Software Foundation, 2026).
 
 ## Opciones de mkdir
 
@@ -64,7 +64,7 @@ cp proyectos respaldo
 cp: -r not specified; omitting directory 'proyectos'
 ```
 
-Copiar un directorio implica copiar su contenido completo, y eso hay que pedirlo de forma explícita con `-r` (*recursive*):
+Copiar un directorio implica copiar su contenido completo, y eso hay que pedirlo de forma explícita con `-r` (*recursive*) (NDG, 2024):
 
 ```bash
 cp -r proyectos respaldo
@@ -98,7 +98,7 @@ Para eliminar un directorio con todo lo que hay dentro se usa `rm` con `-r`:
 rm -r proyectos
 ```
 
-`rm -r` no distingue entre un directorio vacío y uno con años de trabajo dentro, y en Linux no existe papelera de reciclaje: lo eliminado no se recupera. Antes de ejecutarlo conviene listar la ruta con `ls` para confirmar que es la correcta.
+`rm -r` no distingue entre un directorio vacío y uno con años de trabajo dentro, y en Linux no existe papelera de reciclaje: lo eliminado no se recupera (Shotts, 2026). Antes de ejecutarlo conviene listar la ruta con `ls` para confirmar que es la correcta.
 
 La combinación `-rf` añade `-f` (*force*), que suprime toda confirmación y no informa de errores. Es habitual en scripts, donde nadie está mirando la pantalla para responder, y es también la orden que más destrozos ha causado en la historia de Unix.
 
@@ -116,6 +116,6 @@ La combinación `-rf` añade `-f` (*force*), que suprime toda confirmación y no
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. linuxcommand.org
-- GNU Coreutils Manual. gnu.org/software/coreutils/manual
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php

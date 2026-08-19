@@ -1,12 +1,12 @@
 ## Permisos sobre directorios
 
-Las letras son las mismas, `r`, `w` y `x`, pero sobre un directorio significan otra cosa. Un directorio no es un texto que se pueda leer ni un programa que se pueda ejecutar: es una lista de nombres. Los permisos regulan qué se puede hacer con esa lista.
+Las letras son las mismas, `r`, `w` y `x`, pero sobre un directorio significan otra cosa (NDG, 2024). Un directorio no es un texto que se pueda leer ni un programa que se pueda ejecutar: es una lista de nombres. Los permisos regulan qué se puede hacer con esa lista.
 
 | Letra | Sobre un directorio |
 |---|---|
 | `r` | Se pueden ver los nombres que contiene |
 | `x` | Se puede entrar y usarlo dentro de una ruta |
-| `w` | Se pueden crear y borrar archivos, y sólo funciona junto con `x` |
+| `w` | Se pueden crear y borrar archivos, y solo funciona junto con `x` |
 
 Las tres se entienden mejor separándolas, que es algo que en un sistema real nunca se hace pero aquí revela cómo funciona cada una.
 
@@ -86,7 +86,7 @@ Crear un archivo exige modificar la lista de nombres del directorio, y para eso 
 
 ## La ruta entera tiene que dejar pasar
 
-El permiso `x` sobre un directorio se comprueba en **cada** directorio de la ruta, no sólo en el último. Basta con que uno intermedio lo niegue para que todo lo que cuelga de él quede inalcanzable:
+El permiso `x` sobre un directorio se comprueba en **cada** directorio de la ruta, no solo en el último. Basta con que uno intermedio lo niegue para que todo lo que cuelga de él quede inalcanzable:
 
 ```bash
 chmod 600 d/uno/dos
@@ -149,9 +149,9 @@ Separar `r`, `w` y `x` sirve para entenderlos, pero en la práctica los director
 
 | Permiso | Significa |
 |---|---|
-| `700` | Privado. Sólo el dueño entra, lista y modifica |
+| `700` | Privado. Solo el dueño entra, lista y modifica |
 | `750` | El grupo puede entrar y mirar, pero no modificar |
-| `755` | Todo el mundo puede entrar y mirar, sólo el dueño modifica |
+| `755` | Todo el mundo puede entrar y mirar, solo el dueño modifica |
 | `711` | Nadie lista el contenido, pero se puede atravesar hacia dentro |
 
 Ese es también el motivo por el que un `chmod -R` con un solo número estropea las cosas. Un archivo de texto correcto es `644`, y ese mismo valor sobre un directorio le quita `x` y lo vuelve inaccesible. Un directorio correcto es `755`, y ese valor sobre un archivo de texto lo marca como ejecutable sin serlo.
@@ -169,7 +169,7 @@ ls -ld recien
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:21 recien
 ```
 
-En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea. Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
+En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea (DevOps Daily, 2025). Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
 
 <!-- ACTIVIDAD: cerrar-el-proyecto -->
 
@@ -177,7 +177,5 @@ En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especi
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, File permissions. gnu.org/software/coreutils/manual
-- AlgoMaster. *Users, Groups and Permissions*. algomaster.io/learn/operating-systems
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

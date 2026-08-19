@@ -1,6 +1,6 @@
 ## Dueño, grupo y permisos
 
-Linux es un sistema multiusuario: varias personas trabajan sobre la misma máquina al mismo tiempo. Por eso cada archivo lleva anotado quién es su dueño y qué puede hacer con él cada quien. Esa información aparece en `ls -l`, en la parte que hasta ahora se ha ignorado.
+Linux es un sistema multiusuario: varias personas trabajan sobre la misma máquina al mismo tiempo. Por eso cada archivo lleva anotado quién es su dueño y qué puede hacer con él cada quien (NDG, 2024). Esa información aparece en `ls -l`, en la parte que hasta ahora se ha ignorado.
 
 ```bash
 ls -l
@@ -66,9 +66,9 @@ Cada bloque usa siempre las mismas tres posiciones, en el mismo orden: lectura, 
 | `w` | Se puede modificar |
 | `x` | Se puede ejecutar como programa |
 
-Con eso, `-rw-rw-r--` se lee de corrido: archivo corriente, el dueño lee y escribe, el grupo lee y escribe, los demás sólo leen.
+Con eso, `-rw-rw-r--` se lee de corrido: archivo corriente, el dueño lee y escribe, el grupo lee y escribe, los demás solo leen.
 
-## Sólo se aplica un bloque
+## Solo se aplica un bloque
 
 Los tres bloques no se suman. El sistema mira quién intenta el acceso y aplica **un solo** bloque, en este orden:
 
@@ -96,7 +96,7 @@ id
 uid=1004(andres_torres) gid=1006(andres_torres) groups=1006(andres_torres)
 ```
 
-Detrás de cada nombre hay un número. El sistema trabaja con esos números, el UID del usuario y el GID del grupo, y traduce a nombres sólo para mostrarlos. La opción `-n` de `ls` muestra lo que el sistema guarda en realidad:
+Detrás de cada nombre hay un número. El sistema trabaja con esos números, el UID del usuario y el GID del grupo, y traduce a nombres solo para mostrarlos. La opción `-n` de `ls` muestra lo que el sistema guarda en realidad:
 
 ```bash
 ls -ln notas.txt
@@ -110,11 +110,11 @@ ls -l notas.txt
 
 Los nombres son una comodidad para leer. Si se borra la cuenta de un usuario, sus archivos no quedan sin dueño: siguen apuntando al mismo UID, y como ya no hay nombre que le corresponda, `ls -l` pasa a mostrar el número.
 
-Cambiar de dueño un archivo requiere privilegios de administrador, así que en la práctica el dueño es quien lo creó.
+Cambiar de dueño un archivo requiere privilegios de administrador, así que en la práctica el dueño es quien lo creó (DevOps Daily, 2025).
 
 ## La misma información, en números
 
-`stat` muestra lo mismo que `ls -l` pero añade la forma numérica de los permisos, que es la que se usa para cambiarlos:
+`stat` muestra lo mismo que `ls -l` pero añade la forma numérica de los permisos, que es la que se usa para cambiarlos (Free Software Foundation, 2026):
 
 ```bash
 stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
@@ -126,7 +126,7 @@ stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
 -rwxr-xr-x  755  andres_torres  grp_cec1648c  saludo.sh
 ```
 
-Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido del siguiente subtema.
+Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido de los dos subtemas siguientes.
 
 ## Práctica
 
@@ -146,7 +146,7 @@ Con el contenido dentro, se retira la escritura a los tres bloques:
 chmod a-w solo-lectura.txt
 ```
 
-Conviene que sea a los tres. Un archivo recién creado tiene permisos `664`, así que quitársela sólo al dueño con `u-w` deja `464` y el grupo conserva la escritura.
+Conviene que sea a los tres. Un archivo recién creado tiene permisos `664`, así que quitársela solo al dueño con `u-w` deja `464` y el grupo conserva la escritura.
 
 A partir de ahí, añadir texto desde la terminal deja de ser posible:
 
@@ -188,7 +188,6 @@ rm: remove write-protected regular file 'solo-lectura.txt'?
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 9: "Permissions". linuxcommand.org
-- GNU Coreutils Manual, File permissions. gnu.org/software/coreutils/manual
-- AlgoMaster. *Users, Groups and Permissions*. algomaster.io/learn/operating-systems
+- DevOps Daily. (2025). *Linux file system hierarchy*. https://devops-daily.com/guides/introduction-to-linux/04-file-system-hierarchy
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

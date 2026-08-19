@@ -1,6 +1,6 @@
 ## Ordenar los resultados
 
-Una búsqueda devuelve las líneas en el orden en que estaban en el archivo. `sort` las reordena antes de mostrarlas.
+Una búsqueda devuelve las líneas en el orden en que estaban en el archivo. `sort` las reordena antes de mostrarlas (NDG, 2024).
 
 El archivo de ejemplo contiene las cinco primeras cuentas del sistema:
 
@@ -32,7 +32,7 @@ sys:x:3:3:sys:/dev:/usr/sbin/nologin
 
 ## Ordenar números
 
-El orden alfabético compara carácter a carácter, de modo que `10` queda antes que `2`. La opción `-n` trata el contenido como números.
+El orden alfabético compara carácter a carácter, de modo que `10` queda antes que `2`. La opción `-n` trata el contenido como números (Free Software Foundation, 2026).
 
 ```bash
 sort -n tamanos.txt
@@ -105,11 +105,11 @@ sort -t, -k2 -k1n -k3 sistemas.csv
 1970,Unix,Thompson
 ```
 
-Ordena por sistema. Cuando dos líneas tienen el mismo sistema, decide el año como número, y si aún coinciden, el autor. La letra `n` pegada al número del campo aplica el orden numérico sólo a ese campo.
+Ordena por sistema. Cuando dos líneas tienen el mismo sistema, decide el año como número, y si aún coinciden, el autor. La letra `n` pegada al número del campo aplica el orden numérico solo a ese campo.
 
 ## Contar repeticiones
 
-`uniq -c` cuenta las líneas repetidas, pero sólo detecta las que están seguidas. Por eso se usa después de `sort`, que es lo que junta las iguales.
+`uniq -c` cuenta las líneas repetidas, pero solo detecta las que están seguidas. Por eso se usa después de `sort`, que es lo que junta las iguales.
 
 ```bash
 sort respuestas.txt | uniq -c
@@ -151,6 +151,5 @@ La opción `-o` de `grep` imprime cada coincidencia en su propia línea, en luga
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 20: "Text Processing". linuxcommand.org
-- GNU Coreutils Manual, secciones "sort" y "uniq". gnu.org/software/coreutils/manual
+- Free Software Foundation. (2026). *GNU coreutils manual* (versión 9.11). https://www.gnu.org/software/coreutils/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials

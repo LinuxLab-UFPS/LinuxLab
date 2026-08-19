@@ -1,12 +1,12 @@
 ## Expresiones regulares
 
-Hasta ahora `grep` ha buscado texto exacto. Una expresión regular describe una forma en lugar de un texto fijo: líneas que empiezan por cierta palabra, que terminan de cierta manera o que contienen un número.
+Hasta ahora `grep` ha buscado texto exacto. Una expresión regular describe una forma en lugar de un texto fijo (NDG, 2024): líneas que empiezan por cierta palabra, que terminan de cierta manera o que contienen un número.
 
 Una expresión regular se escribe siempre entre comillas simples. Sin ellas, el shell interpreta algunos símbolos antes de que `grep` los reciba y la búsqueda deja de ser la que se escribió.
 
 ## Un carácter cualquiera
 
-El punto representa un carácter, el que sea.
+El punto representa un carácter, el que sea (Free Software Foundation, 2025).
 
 ```bash
 grep 'acta.txt' listado.txt
@@ -48,6 +48,43 @@ Formas habituales:
 - `[0-9a-f]`: un dígito o una letra de la `a` a la `f`, que es como se escribe un carácter hexadecimal
 - `[^0-9]`: un carácter que no sea un dígito
 
+## Clases de caracteres
+
+Los rangos como `[a-z]` describen el alfabeto inglés, y en español se quedan cortos. Un apellido con `ñ` o con tilde queda fuera:
+
+```bash
+grep '^[a-z]*$' apellidos.txt
+```
+
+```
+ruiz
+ana
+```
+
+Para eso están las clases de caracteres, que nombran el conjunto en lugar de enumerarlo y sí incluyen las letras propias del idioma (Shotts, 2026):
+
+```bash
+grep '^[[:alpha:]]*$' apellidos.txt
+```
+
+```
+ruiz
+muñoz
+josé
+ana
+```
+
+| Clase | Qué acepta |
+|---|---|
+| `[[:digit:]]` | Un dígito |
+| `[[:alpha:]]` | Una letra, con tildes y `ñ` incluidas |
+| `[[:alnum:]]` | Una letra o un dígito |
+| `[[:upper:]]` | Una mayúscula |
+| `[[:lower:]]` | Una minúscula |
+| `[[:space:]]` | Un espacio, un tabulador o un salto de línea |
+
+Los dos corchetes no son una errata. El par de fuera es el de la lista y el de dentro forma parte del nombre de la clase, de modo que `[[:digit:]]` es una lista cuyo único elemento es la clase de los dígitos.
+
 ## El principio y el final de la línea
 
 El acento circunflejo ancla el patrón al principio de la línea y el signo de dólar al final.
@@ -71,7 +108,7 @@ root:x:0:0:root:/root:/bin/bash
 andres_torres:x:1043:1043::/home/prof_ruiz/grupos/g1/andres_torres:/bin/bash
 ```
 
-Sólo pasan las líneas que terminan en `bash`, que en este archivo son las cuentas que abren sesión con ese shell.
+Solo pasan las líneas que terminan en `bash`, que en este archivo son las cuentas que abren sesión con ese shell.
 
 ## Repetir el carácter anterior
 
@@ -143,16 +180,18 @@ grep -E '[0-9]{4}' matriculas.txt
 | `[0-9]` | Un dígito |
 | `[0-9a-f]` | Un dígito o una letra de la `a` a la `f` |
 | `[^0-9]` | Un carácter que no sea un dígito |
+| `[[:alpha:]]` | Una letra, con tildes y `ñ` |
+| `[[:digit:]]` | Un dígito |
 | `*` | El anterior, repetido cero o más veces |
 | `.*` | Cualquier texto, incluso ninguno |
 | `^` | El principio de la línea |
 | `$` | El final de la línea |
-| `+` `?` `\|` `( )` `{n}` | Sólo con `grep -E` |
+| `+` `?` `\|` `( )` `{n}` | Solo con `grep -E` |
 
 ---
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 19: "Regular Expressions". linuxcommand.org
-- GNU Grep Manual, sección "Regular Expressions". gnu.org/software/grep/manual
+- Free Software Foundation. (2025). *GNU grep manual* (versión 3.12). https://www.gnu.org/software/grep/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
