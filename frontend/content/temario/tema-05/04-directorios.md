@@ -6,7 +6,7 @@ Las letras son las mismas, `r`, `w` y `x`, pero sobre un directorio significan o
 |---|---|
 | `r` | Se pueden ver los nombres que contiene |
 | `x` | Se puede entrar y usarlo dentro de una ruta |
-| `w` | Se pueden crear y borrar archivos, y sólo funciona junto con `x` |
+| `w` | Se pueden crear y borrar archivos, y solo funciona junto con `x` |
 
 Las tres se entienden mejor separándolas, que es algo que en un sistema real nunca se hace pero aquí revela cómo funciona cada una.
 
@@ -86,7 +86,7 @@ Crear un archivo exige modificar la lista de nombres del directorio, y para eso 
 
 ## La ruta entera tiene que dejar pasar
 
-El permiso `x` sobre un directorio se comprueba en **cada** directorio de la ruta, no sólo en el último. Basta con que uno intermedio lo niegue para que todo lo que cuelga de él quede inalcanzable:
+El permiso `x` sobre un directorio se comprueba en **cada** directorio de la ruta, no solo en el último. Basta con que uno intermedio lo niegue para que todo lo que cuelga de él quede inalcanzable:
 
 ```bash
 chmod 600 d/uno/dos
@@ -149,9 +149,9 @@ Separar `r`, `w` y `x` sirve para entenderlos, pero en la práctica los director
 
 | Permiso | Significa |
 |---|---|
-| `700` | Privado. Sólo el dueño entra, lista y modifica |
+| `700` | Privado. Solo el dueño entra, lista y modifica |
 | `750` | El grupo puede entrar y mirar, pero no modificar |
-| `755` | Todo el mundo puede entrar y mirar, sólo el dueño modifica |
+| `755` | Todo el mundo puede entrar y mirar, solo el dueño modifica |
 | `711` | Nadie lista el contenido, pero se puede atravesar hacia dentro |
 
 Ese es también el motivo por el que un `chmod -R` con un solo número estropea las cosas. Un archivo de texto correcto es `644`, y ese mismo valor sobre un directorio le quita `x` y lo vuelve inaccesible. Un directorio correcto es `755`, y ese valor sobre un archivo de texto lo marca como ejecutable sin serlo.

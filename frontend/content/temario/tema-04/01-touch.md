@@ -46,7 +46,7 @@ practica-1.txt  practica-2.txt  practica-3.txt
 
 ### El otro trabajo de touch
 
-El nombre viene de "tocar", y ese es su comportamiento cuando el archivo **ya existe**: no lo borra ni lo modifica, sólo actualiza su fecha de modificación a ahora mismo (Free Software Foundation, 2026).
+El nombre viene de "tocar", y ese es su comportamiento cuando el archivo **ya existe**: no lo borra ni lo modifica, solo actualiza su fecha de modificación a ahora mismo (Free Software Foundation, 2026).
 
 ```bash
 touch notas.txt
@@ -72,7 +72,7 @@ cat enero.txt febrero.txt
 
 Eso muestra primero el contenido de uno y después el del otro, seguidos. Leer un solo archivo es el caso más común, pero es en realidad un efecto secundario de lo que el comando sabe hacer.
 
-`cat` vuelca el archivo completo de una vez, así que sirve para cosas cortas. Con un archivo de miles de líneas la salida desborda la pantalla y sólo queda visible el final.
+`cat` vuelca el archivo completo de una vez, así que sirve para cosas cortas. Con un archivo de miles de líneas la salida desborda la pantalla y solo queda visible el final.
 
 ## Crear un archivo con contenido
 
@@ -121,7 +121,7 @@ touch "mi archivo.txt"
 
 Por eso la costumbre en Linux es usar guiones o guiones bajos: `mi-archivo.txt`, `mi_archivo.txt`.
 
-Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que se use `ls -a` (DevOps Daily, 2025). No es un mecanismo de seguridad, es sólo una convención para que la configuración no estorbe al listar una carpeta.
+Un nombre que empieza con punto es un archivo oculto: no aparece en `ls` a menos que se use `ls -a` (DevOps Daily, 2025). No es un mecanismo de seguridad, es solo una convención para que la configuración no estorbe al listar una carpeta.
 
 ```bash
 touch .configuracion

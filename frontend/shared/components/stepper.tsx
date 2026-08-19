@@ -73,7 +73,7 @@ export function Stepper({
   steps: Step[]
   /** Índice del paso activo, desde 0. */
   current: number
-  /** Sin esto el riel sólo informa y no navega. */
+  /** Sin esto el riel solo informa y no navega. */
   onSelect?: (index: number) => void
   orientation?: "vertical" | "horizontal"
   className?: string

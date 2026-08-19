@@ -546,7 +546,7 @@ const PISTAS_FIND = [
     id: "volcado",
     etiqueta: "Volcado de la base",
     pista: "Antes de revertir alguien sacó un volcado de la base. Es el único archivo .sql que hay por aquí.",
-    terminal: "Sólo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
+    terminal: "Solo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
     arma() {
       const nombre = "respaldo-" + entero(10, 99) + ".sql";
       return {

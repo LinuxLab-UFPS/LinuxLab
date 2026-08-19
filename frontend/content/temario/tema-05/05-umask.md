@@ -77,7 +77,7 @@ mkdir u4
 drwxrwsrwx 1 andres_torres grp_cec1648c 0 Aug 10 22:22 u4
 ```
 
-## Sólo dura la sesión
+## Solo dura la sesión
 
 El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar la terminal. Los archivos ya existentes no se ven alterados: `umask` decide con qué permisos se crean las cosas, `chmod` cambia las que ya están. Para que un valor distinto persista hay que escribirlo en el archivo `.bashrc` de la carpeta personal, que es el que se lee al abrir cada sesión.
 

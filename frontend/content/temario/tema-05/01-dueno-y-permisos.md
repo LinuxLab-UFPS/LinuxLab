@@ -66,9 +66,9 @@ Cada bloque usa siempre las mismas tres posiciones, en el mismo orden: lectura, 
 | `w` | Se puede modificar |
 | `x` | Se puede ejecutar como programa |
 
-Con eso, `-rw-rw-r--` se lee de corrido: archivo corriente, el dueño lee y escribe, el grupo lee y escribe, los demás sólo leen.
+Con eso, `-rw-rw-r--` se lee de corrido: archivo corriente, el dueño lee y escribe, el grupo lee y escribe, los demás solo leen.
 
-## Sólo se aplica un bloque
+## Solo se aplica un bloque
 
 Los tres bloques no se suman. El sistema mira quién intenta el acceso y aplica **un solo** bloque, en este orden:
 
@@ -96,7 +96,7 @@ id
 uid=1004(andres_torres) gid=1006(andres_torres) groups=1006(andres_torres)
 ```
 
-Detrás de cada nombre hay un número. El sistema trabaja con esos números, el UID del usuario y el GID del grupo, y traduce a nombres sólo para mostrarlos. La opción `-n` de `ls` muestra lo que el sistema guarda en realidad:
+Detrás de cada nombre hay un número. El sistema trabaja con esos números, el UID del usuario y el GID del grupo, y traduce a nombres solo para mostrarlos. La opción `-n` de `ls` muestra lo que el sistema guarda en realidad:
 
 ```bash
 ls -ln notas.txt
@@ -146,7 +146,7 @@ Con el contenido dentro, se retira la escritura a los tres bloques:
 chmod a-w solo-lectura.txt
 ```
 
-Conviene que sea a los tres. Un archivo recién creado tiene permisos `664`, así que quitársela sólo al dueño con `u-w` deja `464` y el grupo conserva la escritura.
+Conviene que sea a los tres. Un archivo recién creado tiene permisos `664`, así que quitársela solo al dueño con `u-w` deja `464` y el grupo conserva la escritura.
 
 A partir de ahí, añadir texto desde la terminal deja de ser posible:
 

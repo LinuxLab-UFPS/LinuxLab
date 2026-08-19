@@ -41,8 +41,8 @@ find ~/actividades -name '*.txt'
 
 ## Por tipo
 
-- `-type f`: sólo archivos
-- `-type d`: sólo directorios
+- `-type f`: solo archivos
+- `-type d`: solo directorios
 
 ```bash
 find ~/actividades -type d
@@ -146,7 +146,7 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 /home/prof_ruiz/grupos/g1/andres_torres/actividades/backup/sesion.log
 ```
 
-`find` selecciona los archivos por su nombre y `grep -l` deja sólo los que además contienen el texto.
+`find` selecciona los archivos por su nombre y `grep -l` deja solo los que además contienen el texto.
 
 ## Resumen
 
@@ -155,7 +155,7 @@ find ~/actividades -name '*.log' -exec grep -l 'disco lleno' {} \;
 | `find ruta` | Lista todo lo que hay bajo esa ruta |
 | `find ruta -name '*.txt'` | Filtra por nombre |
 | `find ruta -iname '*.txt'` | Igual, sin distinguir mayúsculas |
-| `find ruta -type f` | Sólo archivos; `-type d` sólo directorios |
+| `find ruta -type f` | Solo archivos; `-type d` solo directorios |
 | `find ruta -size +1M` | Archivos de más de un megabyte |
 | `find ruta -mtime -1` | Modificados en el último día |
 | `find ruta -mtime +30` | Sin tocar desde hace más de un mes |

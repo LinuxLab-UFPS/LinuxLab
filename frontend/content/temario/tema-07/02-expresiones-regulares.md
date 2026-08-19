@@ -71,7 +71,7 @@ root:x:0:0:root:/root:/bin/bash
 andres_torres:x:1043:1043::/home/prof_ruiz/grupos/g1/andres_torres:/bin/bash
 ```
 
-Sólo pasan las líneas que terminan en `bash`, que en este archivo son las cuentas que abren sesión con ese shell.
+Solo pasan las líneas que terminan en `bash`, que en este archivo son las cuentas que abren sesión con ese shell.
 
 ## Repetir el carácter anterior
 
@@ -147,7 +147,7 @@ grep -E '[0-9]{4}' matriculas.txt
 | `.*` | Cualquier texto, incluso ninguno |
 | `^` | El principio de la línea |
 | `$` | El final de la línea |
-| `+` `?` `\|` `( )` `{n}` | Sólo con `grep -E` |
+| `+` `?` `\|` `( )` `{n}` | Solo con `grep -E` |
 
 ---
 

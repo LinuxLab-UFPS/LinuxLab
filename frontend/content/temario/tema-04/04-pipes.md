@@ -1,6 +1,6 @@
 ## head y tail
 
-El comando `cat` imprime el contenido completo de un archivo. En archivos cortos resulta práctico, pero en uno de varios miles de líneas la salida desborda la pantalla y sólo queda visible el final.
+El comando `cat` imprime el contenido completo de un archivo. En archivos cortos resulta práctico, pero en uno de varios miles de líneas la salida desborda la pantalla y solo queda visible el final.
 
 Para esos casos existen comandos que muestran una porción del archivo.
 
@@ -147,7 +147,7 @@ Ambos operadores cambian el destino de la salida y suelen confundirse:
 | `>>` | un archivo, después de lo que ya hay | `ls /etc/ssh >> listado.txt` |
 | `|` | otro comando | `ls /etc \| head` |
 
-La diferencia entre `>` y `>>` importa cuando el archivo se arma por partes. Con `>` cada comando borra el resultado del anterior y sólo sobrevive el último; con `>>` se van acumulando en el orden en que se ejecutan.
+La diferencia entre `>` y `>>` importa cuando el archivo se arma por partes. Con `>` cada comando borra el resultado del anterior y solo sobrevive el último; con `>>` se van acumulando en el orden en que se ejecutan.
 
 Los tres se combinan en un mismo comando. El pipe encadena y la redirección cierra:
 

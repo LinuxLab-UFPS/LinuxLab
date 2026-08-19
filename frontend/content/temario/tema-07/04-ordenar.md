@@ -105,11 +105,11 @@ sort -t, -k2 -k1n -k3 sistemas.csv
 1970,Unix,Thompson
 ```
 
-Ordena por sistema. Cuando dos líneas tienen el mismo sistema, decide el año como número, y si aún coinciden, el autor. La letra `n` pegada al número del campo aplica el orden numérico sólo a ese campo.
+Ordena por sistema. Cuando dos líneas tienen el mismo sistema, decide el año como número, y si aún coinciden, el autor. La letra `n` pegada al número del campo aplica el orden numérico solo a ese campo.
 
 ## Contar repeticiones
 
-`uniq -c` cuenta las líneas repetidas, pero sólo detecta las que están seguidas. Por eso se usa después de `sort`, que es lo que junta las iguales.
+`uniq -c` cuenta las líneas repetidas, pero solo detecta las que están seguidas. Por eso se usa después de `sort`, que es lo que junta las iguales.
 
 ```bash
 sort respuestas.txt | uniq -c
