@@ -433,154 +433,9 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
   )
 }
 
-/** Traduce un dígito octal (0-7) a la descripción en lenguaje natural de los permisos. */
-function octalToPermDesc(digit: string): string {
-  switch (digit) {
-    case "7":
-      return "lectura, escritura y ejecución"
-    case "6":
-      return "lectura y escritura"
-    case "5":
-      return "lectura y ejecución"
-    case "4":
-      return "solo lectura"
-    case "3":
-      return "escritura y ejecución"
-    case "2":
-      return "solo escritura"
-    case "1":
-      return "solo ejecución"
-    default:
-      return "sin permisos"
-  }
-}
-
-const OWNER_LABELS = ["el propietario", "el grupo", "otros"]
-
-/** Describe un modo octal (ej: "755") como frase: "lectura y escritura
- * para el propietario, solo lectura para el grupo y solo lectura para otros". */
-function permsToSentence(modo: string): string {
-  const digits = String(modo).slice(-3).split("")
-  return digits
-    .map((d, i) => `${octalToPermDesc(d)} para ${OWNER_LABELS[i]}`)
-    .join(", ")
-}
-
-/** Último segmento de una ruta; si queda vacío, un sustantivo genérico. */
-function fileBasename(ruta: string): string {
-  const name = String(ruta ?? "").split("/").filter(Boolean).pop()
-  return name ?? "el archivo"
-}
-
-/** Extrae el modo octal actual del detail del checker ("Los permisos son 644, ..."). */
-function parseActualPerms(detail: string): string | null {
-  const m = /Los permisos son (\d{3,4})/.exec(detail)
-  return m ? m[1] : null
-}
-
-/** Extrae el propietario actual del detail del checker ("El propietario es root, ..."). */
-function parseActualOwner(detail: string): string | null {
-  const m = /El propietario es (\S+)/.exec(detail)
-  return m ? m[1] : null
-}
-
-/** Extrae el número de líneas del detail del checker ("Tiene 3 lineas y ..."). */
-function parseActualLines(detail: string): string | null {
-  const m = /Tiene (\d+) lineas/.exec(detail)
-  return m ? m[1] : null
-}
-
-/** Extrae la última línea del detail del checker ('La ultima linea es "x"'). */
-function parseActualLastLine(detail: string): string | null {
-  const m = /La ultima linea es "(.*)"/.exec(detail)
-  return m ? m[1] : null
-}
-
-/** Genera la retroalimentación descriptiva de un check: qué se esperaba (params)
- * y qué se obtuvo (detail), en lenguaje natural. Los params conservan los tokens
- * ($usuario, $codigo, $correo) y el detail ya trae el valor real del entorno. */
-function describeCheckResult(
-  type: string,
-  params: Record<string, unknown>,
-  detail: string,
-  passed: boolean,
-): string {
-  const base = (raw: unknown) => String(raw ?? "")
-  const name = fileBasename(base(params.ruta))
-  const d = detail || ""
-
-  switch (type) {
-    case "directorio_existe":
-      return passed
-        ? `El directorio '${name}' existe.`
-        : `Se esperaba que existiera el directorio '${name}'. ${d}.`
-    case "archivo_existe":
-      return passed
-        ? `El archivo '${name}' existe.`
-        : `Se esperaba que existiera el archivo '${name}'. ${d}.`
-    case "archivo_no_existe":
-      return passed
-        ? `El archivo '${name}' ya no existe, como se esperaba.`
-        : `Se esperaba que '${name}' ya no existiera. ${d}.`
-
-    case "permisos_son": {
-      const expected = permsToSentence(base(params.modo))
-      const actual = parseActualPerms(d)
-      if (passed)
-        return `Los permisos de '${name}' son correctos: ${expected}.`
-      if (actual)
-        return `Se esperaban permisos de ${expected} en '${name}'. Tienes ${permsToSentence(actual)}.`
-      return `Se esperaban permisos de ${expected} en '${name}'. ${d}.`
-    }
-
-    case "propietario_es": {
-      const rawExpected = base(params.usuario)
-      const expected =
-        rawExpected === "$usuario" ? "tu usuario" : `'${rawExpected}'`
-      const actual = parseActualOwner(d)
-      if (passed) return `El propietario de '${name}' es correcto: ${expected}.`
-      if (actual)
-        return `Se esperaba que el propietario de '${name}' fuera ${expected}. El propietario actual es '${actual}'.`
-      return `Se esperaba que el propietario de '${name}' fuera ${expected}. ${d}.`
-    }
-
-    case "archivo_contiene": {
-      const patron = base(params.patron)
-      return passed
-        ? `El archivo '${name}' contiene el texto '${patron}', como se esperaba.`
-        : `Se esperaba que '${name}' contuviera el texto '${patron}'. ${d}.`
-    }
-
-    case "minimo_lineas": {
-      const minimo = base(params.cantidad)
-      const actual = parseActualLines(d)
-      if (passed)
-        return `El archivo '${name}' tiene suficientes líneas (${actual ?? minimo} líneas, mínimo ${minimo}).`
-      if (actual)
-        return `Se esperaban al menos ${minimo} líneas con contenido en '${name}'. El archivo tiene ${actual} líneas.`
-      return `Se esperaban al menos ${minimo} líneas con contenido en '${name}'. ${d}.`
-    }
-
-    case "archivo_es":
-      return passed
-        ? `El contenido de '${name}' es exactamente el esperado.`
-        : `Se esperaba que el contenido de '${name}' fuera exactamente el indicado. ${d}.`
-
-    case "ultima_linea_es": {
-      const valor = base(params.valor)
-      const actual = parseActualLastLine(d)
-      if (passed) return `La última línea de '${name}' es '${valor}', como se esperaba.`
-      if (actual)
-        return `Se esperaba que la última línea de '${name}' fuera '${valor}'. La última línea es '${actual}'.`
-      return `Se esperaba que la última línea de '${name}' fuera '${valor}'. ${d}.`
-    }
-
-    default:
-      return d
-  }
-}
-
-/** Checks de la mejor entrega de una actividad automática, según su política. */
+/** Checks de la mejor entrega de una actividad automática, según su política.
+ * La retroalimentación descriptiva de cada check la construye el checker
+ * (backend), así que aquí solo se muestra `detail` tal cual viene. */
 function AutomaticFeedback({
   detail,
 }: {
@@ -607,9 +462,7 @@ function AutomaticFeedback({
           ) : (
             <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           )}
-          <span className="flex-1 text-foreground">
-            {describeCheckResult(r.type, r.params, r.detail, r.passed)}
-          </span>
+          <span className="flex-1 text-foreground">{r.detail}</span>
           <span className="shrink-0 font-mono text-xs text-muted-foreground">
             {r.passed ? r.points : 0}/{r.points}
           </span>

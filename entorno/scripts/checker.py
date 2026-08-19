@@ -74,58 +74,101 @@ def owned_by_me(path):
     return os.stat(path).st_uid == os.getuid()
 
 
+def display_name(path):
+    """Nombre legible de la ruta resuelta: el ultimo segmento, para insertarlo
+    en los mensajes de retroalimentacion. Si no hay nombre, un sustantivo
+    generico."""
+    name = os.path.basename(path)
+    return name or "el elemento"
+
+
+def perms_to_sentence(modo):
+    """Traduce un modo octal (ej: '755') a permisos en lenguaje natural, p.ej.
+    'lectura, escritura y ejecución para el propietario, lectura y ejecución
+    para el grupo y lectura y ejecución para otros'. Solo usa los ultimos tres
+    digitos (el cuarto es el bit especial)."""
+    DIGITS = {
+        "7": "lectura, escritura y ejecución",
+        "6": "lectura y escritura",
+        "5": "lectura y ejecución",
+        "4": "solo lectura",
+        "3": "escritura y ejecución",
+        "2": "solo escritura",
+        "1": "solo ejecución",
+        "0": "sin permisos",
+    }
+    LABELS = ["el propietario", "el grupo", "otros"]
+    digits = list(modo[-3:])
+    if len(digits) != 3:
+        return "los permisos esperados"
+    return ", ".join(
+        f"{DIGITS.get(d, 'sin permisos')} para {LABELS[i]}" for i, d in enumerate(digits)
+    )
+
+
 def check_directorio_existe(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.exists(path):
-        raise CheckError("No existe")
+        raise CheckError(f"Se esperaba que existiera el directorio '{name}'. No existe")
     if not os.path.isdir(path):
-        raise CheckError("Existe, pero es un archivo y no un directorio")
+        raise CheckError(f"Se esperaba un directorio en '{name}'. Existe, pero es un archivo")
     if not owned_by_me(path):
-        raise CheckError("Existe, pero no es tuyo")
-    return "El directorio existe y es tuyo"
+        raise CheckError(f"El directorio '{name}' existe, pero no es tuyo")
+    return f"El directorio '{name}' existe y es tuyo"
 
 
 def check_archivo_existe(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.exists(path):
-        raise CheckError("No existe")
+        raise CheckError(f"Se esperaba que existiera el archivo '{name}'. No existe")
     if os.path.isdir(path):
-        raise CheckError("Existe, pero es un directorio y no un archivo")
+        raise CheckError(f"Se esperaba un archivo en '{name}'. Existe, pero es un directorio")
     if not owned_by_me(path):
-        raise CheckError("Existe, pero no es tuyo")
-    return "El archivo existe y es tuyo"
+        raise CheckError(f"El archivo '{name}' existe, pero no es tuyo")
+    return f"El archivo '{name}' existe y es tuyo"
 
 
 def check_archivo_no_existe(params, home):
     """Para las actividades de borrar: lo que se comprueba es la ausencia."""
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if os.path.exists(path):
-        raise CheckError("Todavia existe")
-    return "Ya no existe"
+        raise CheckError(f"Se esperaba que '{name}' ya no existiera. Todavía existe")
+    return f"El archivo '{name}' ya no existe, como se esperaba"
 
 
 def check_permisos_son(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.exists(path):
-        raise CheckError("No existe")
+        raise CheckError(f"Se esperaban permisos en '{name}'. El archivo no existe")
     expected = (params.get("modo") or "").strip()
     if not expected.isdigit() or not 3 <= len(expected) <= 4:
         raise CheckError("El modo esperado no es un octal válido")
     actual = oct(stat.S_IMODE(os.stat(path).st_mode))[2:].zfill(len(expected))
     if actual != expected.zfill(len(expected)):
-        raise CheckError(f"Los permisos son {actual}, se esperaban {expected}")
-    return f"Los permisos son {actual}"
+        raise CheckError(
+            f"Se esperaban permisos de {perms_to_sentence(expected)} en '{name}'. "
+            f"Tienes {perms_to_sentence(actual)}"
+        )
+    return f"Los permisos de '{name}' son correctos: {perms_to_sentence(actual)}."
 
 
 def check_propietario_es(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.exists(path):
-        raise CheckError("No existe")
+        raise CheckError(f"Se esperaba revisar el propietario de '{name}'. El archivo no existe")
     expected = (params.get("usuario") or "").strip().replace(USER_TOKEN, me().pw_name)
     owner = pwd.getpwuid(os.stat(path).st_uid).pw_name
     if owner != expected:
-        raise CheckError(f"El propietario es {owner}, se esperaba {expected}")
-    return f"El propietario es {owner}"
+        raise CheckError(
+            f"Se esperaba que el propietario de '{name}' fuera '{expected}'. "
+            f"El propietario actual es '{owner}'"
+        )
+    return f"El propietario de '{name}' es correcto: '{owner}'."
 
 
 def lineas_utiles(path):
@@ -146,8 +189,9 @@ def check_archivo_es(params, home):
     tumbe un trabajo correcto.
     """
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.isfile(path):
-        raise CheckError("No existe o no es un archivo")
+        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
 
     esperadas = [l.rstrip() for l in (params.get("valor") or "").splitlines() if l.strip()]
     if not esperadas:
@@ -155,46 +199,61 @@ def check_archivo_es(params, home):
 
     obtenidas = lineas_utiles(path)
     if len(obtenidas) != len(esperadas):
-        raise CheckError(f"Tiene {len(obtenidas)} lineas y se esperaban {len(esperadas)}")
+        raise CheckError(
+            f"Se esperaba que '{name}' tuviera exactamente {len(esperadas)} líneas con "
+            f"contenido. Tiene {len(obtenidas)}"
+        )
     for i, (tuya, esperada) in enumerate(zip(obtenidas, esperadas), start=1):
         if tuya != esperada:
-            raise CheckError(f"La linea {i} no es la que va ahi")
-    return "El contenido es exacto"
+            raise CheckError(
+                f"Se esperaba que la línea {i} de '{name}' fuera '{esperada}'. "
+                f"La línea {i} es '{tuya}'"
+            )
+    return f"El contenido de '{name}' es exactamente el esperado."
 
 
 def check_minimo_lineas(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.isfile(path):
-        raise CheckError("No existe o no es un archivo")
+        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
     try:
         minimo = int(params.get("cantidad", 0))
     except (TypeError, ValueError):
         raise CheckError("La cantidad de lineas esperada no es un numero")
     lineas = lineas_utiles(path)
     if len(lineas) < minimo:
-        raise CheckError(f"Tiene {len(lineas)} lineas y se esperaban al menos {minimo}")
-    return f"Tiene {len(lineas)} lineas"
+        raise CheckError(
+            f"Se esperaban al menos {minimo} líneas con contenido en '{name}'. "
+            f"El archivo tiene {len(lineas)}"
+        )
+    return f"El archivo '{name}' tiene suficientes líneas ({len(lineas)} líneas, mínimo {minimo})."
 
 
 def check_ultima_linea_es(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.isfile(path):
-        raise CheckError("No existe o no es un archivo")
+        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
     esperado = (params.get("valor") or "").strip()
     if not esperado:
         raise CheckError("No se indico que debia ir en la ultima linea")
     lineas = lineas_utiles(path)
     if not lineas:
-        raise CheckError("El archivo esta vacio")
+        raise CheckError(f"Se esperaba que la última línea de '{name}' fuera '{esperado}'. El archivo está vacío")
     if lineas[-1] != esperado:
-        raise CheckError(f"La ultima linea es \"{lineas[-1]}\"")
-    return "La ultima linea es la esperada"
+        raise CheckError(
+            f"Se esperaba que la última línea de '{name}' fuera '{esperado}'. "
+            f"La última línea es '{lineas[-1]}'"
+        )
+    return f"La última línea de '{name}' es '{esperado}', como se esperaba."
 
 
 def check_archivo_contiene(params, home):
     path = resolve(params.get("ruta", ""), home)
+    name = display_name(path)
     if not os.path.isfile(path):
-        raise CheckError("No existe o no es un archivo")
+        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
     needle = params.get("patron") or ""
     if not needle:
         raise CheckError("No se indicó qué buscar")
@@ -205,8 +264,10 @@ def check_archivo_contiene(params, home):
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if needle in line:
-                return "El archivo contiene lo esperado"
-    raise CheckError("El archivo no contiene lo esperado")
+                return f"El archivo '{name}' contiene el texto '{needle}', como se esperaba."
+    raise CheckError(
+        f"Se esperaba que '{name}' contuviera el texto '{needle}'. El archivo no contiene lo esperado"
+    )
 
 
 CHECKS = {
