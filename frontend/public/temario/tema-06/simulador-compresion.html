@@ -1,4 +1,5 @@
 <!doctype html>
+<meta charset="utf-8">
 <title>Escritorio comprimido · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
 <script src="/temario/comun/barra.js"></script>
@@ -257,7 +258,7 @@ button.win-dot::after{
     </div>
     <div class="console" id="consola">
       <div class="prompt">
-        <span class="ps1" id="ps1">$</span>
+        <span class="ps1" id="ps1">estudiante@linuxlab:~$</span>
         <span><span class="typed" id="typed"></span><span class="caret"></span></span>
       </div>
     </div>
@@ -403,7 +404,7 @@ const $ = (id) => document.getElementById(id);
 // Sin puntos: aqui no se puntua, se completa la entrega. Reiniciar vuelve a
 // la portada, que es de donde arranca la partida.
 const barra = Barra.montar({
-  puntos: false,
+  titulo: 'Escritorio comprimido',
   ayuda: [
     { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
     { clave: 'Correo', tono: 'azul',   texto: 'No admite carpetas. Lo que se envíe tiene que ser un archivo, y eso es lo que hay que preparar con <code>tar</code>.' },
@@ -550,7 +551,7 @@ function resolver(ruta) {
 /** El prompt dice donde estas, como en cualquier terminal. */
 function pintarPrompt() {
   const ps1 = $("ps1");
-  if (ps1) ps1.textContent = "~/escritorio" + (cwd ? "/" + cwd : "") + " $";
+  if (ps1) ps1.textContent = "estudiante@linuxlab:~" + (cwd ? "/" + cwd : "") + "$";
 }
 
 /** Ruta que enseña el launcher, tal cual se puede pegar en la terminal. */
@@ -1080,7 +1081,6 @@ function pintar() {
   const lista = desafios();
   barra.objetivo(paso < lista.length ? lista[paso].objetivo : "Completado",
                  Math.min(paso, lista.length - 1), lista.length);
-  barra.marcas(lista.map((_, i) => (i < paso ? "done" : i === paso ? "cur" : "")));
 
   const cont = $("pasos");
   cont.innerHTML = "";

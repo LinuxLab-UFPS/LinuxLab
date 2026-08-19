@@ -1,4 +1,5 @@
 <!doctype html>
+<meta charset="utf-8">
 <title>Filtro de permisos · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
 <link rel="stylesheet" href="/temario/comun/claro.css">
@@ -345,24 +346,17 @@ function leerChmod(argumento, modo) {
 
 const $ = (id) => document.getElementById(id);
 
-// La velocidad del contrarreloj se cambia en marcha: la barra le deja su hueco
-// antes de los puntos. Reiniciar devuelve a la portada.
+// Reiniciar devuelve a la portada.
 const barra = Barra.montar({
-  acciones: '<button class="speed-btn" id="ritmo" data-activo="false">x1</button>',
+  titulo: 'Filtro de permisos',
   ayuda: [
     { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver las formas de cambiar permisos.' },
     { clave: 'Tiempo', tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde esa ronda y empieza la siguiente.' },
-    { clave: 'x0.5',   tono: 'oro',   texto: 'Baja el reloj a la mitad de velocidad. Se puede cambiar a mitad de ronda.' },
   ],
   tema: true,
   onReiniciar: () => volverAlInicio(),
 });
 
-/* El modo con calma alarga el reloj sin tocar los retos: los mismos ejercicios
-   con mas margen para pensar la cuenta, que es de lo que va el tema. */
-// x0.5 es el doble de tiempo para el mismo reto.
-const RITMOS = { normal: 1, calma: 2 };
-let ritmo = "normal";
 // El mismo hueco que en vi: entre una ronda y la siguiente el teclado no
 // cuenta, o lo pulsado ahi cae sobre el archivo recien puesto en la mesa.
 let transicion = false;
@@ -389,8 +383,6 @@ function pintarCabecera() {
     r.tipo === "chmod" ? "Deja el archivo como lo pide su ficha"
                        : "Ajusta la umask para lo que va a llegar",
     Math.min(ronda, orden.length - 1), orden.length);
-  barra.puntos(puntos);
-  barra.marcas(orden.map((_, i) => (i < ronda ? "done" : i === ronda ? "cur" : "")));
 }
 
 function pintarExpediente() {
@@ -464,21 +456,8 @@ function pintarBarra() {
   barra.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
 }
 
-function cambiarRitmo() {
-  const factor = ritmo === "normal" ? RITMOS.calma / RITMOS.normal : RITMOS.normal / RITMOS.calma;
-  ritmo = ritmo === "normal" ? "calma" : "normal";
-  // Se escalan los dos a la vez para que la barra conserve su porcentaje y no
-  // pegue un salto al cambiar de modo a mitad de ronda.
-  limite *= factor;
-  restante *= factor;
-  pintarBarra();
-  const b = $("ritmo");
-  b.textContent = ritmo === "calma" ? "x0.5" : "x1";
-  b.dataset.activo = String(ritmo === "calma");
-}
-
 function arrancarTiempo() {
-  limite = orden[ronda].segundos * RITMOS[ritmo];
+  limite = orden[ronda].segundos;
   restante = limite;
   $("timer").className = "timer-fill";
   $("timer").style.width = "100%";
@@ -655,7 +634,6 @@ document.addEventListener("keydown", (e) => {
 $("play").addEventListener("click", empezar);
 $("res-again").addEventListener("click", empezar);
 $("res-exit").addEventListener("click", Barra.salir);
-$("ritmo").addEventListener("click", cambiarRitmo);
 
 armarPartida();
 pintarCabecera();
