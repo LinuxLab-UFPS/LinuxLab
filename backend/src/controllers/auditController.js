@@ -2,12 +2,12 @@ const auditQueryService = require("../services/auditQueryService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const listAuditEvents = asyncHandler(async (req, res) => {
-  const { eventType, groupId, from, to, search, page, limit } = req.query
+  const { eventType, category, groupId, from, to, search, page, limit } = req.query
   res.json(
     await auditQueryService.listAuditEvents({
       role: req.user.role,
       userId: req.user.id,
-      filters: { eventType, groupId, from, to, search, page, limit },
+      filters: { eventType, category, groupId, from, to, search, page, limit },
     }),
   )
 })

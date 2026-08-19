@@ -25,6 +25,33 @@ const ACTION_LABELS = {
   csv_imported: "Importación vía CSV",
 }
 
+/** Etiqueta de cada tipo de evento para los filtros agrupados de la UI. */
+const EVENT_CATEGORY_LABEL = {
+  sesiones: "Sesiones",
+  actividades: "Actividades",
+  administracion: "Administración",
+  cursos: "Cursos",
+  matriculas: "Matrículas",
+}
+
+/** Agrupacion de event_types por categoria (Select agrupado de la UI). */
+const EVENT_CATEGORIES = {
+  sesiones: ["auth_login", "auth_logout"],
+  actividades: [
+    "activity_submitted",
+    "activity_checked",
+    "activity_graded",
+    "activity_created",
+    "activity_updated",
+    "activity_enabled",
+    "activity_disabled",
+    "activity_due_extended",
+  ],
+  administracion: ["teacher_registered", "teacher_toggled"],
+  cursos: ["group_created", "group_archived", "group_deleted"],
+  matriculas: ["student_registered", "csv_imported"],
+}
+
 /** Nombres de los grupos pedidos, en un solo lote (evita N+1). */
 async function groupNamesByIds(groupIds) {
   const ids = [...new Set(groupIds.filter(Boolean))]
@@ -71,15 +98,25 @@ async function listAuditEvents({ role, userId, filters = {} }) {
       select: { id: true },
     })
     const myGroupIds = myGroups.map((g) => g.id)
-    where.OR = [
-      { group_id: { in: myGroupIds } },
-      { AND: [{ user_id: userId }, { event_type: { startsWith: "auth_" } }] },
-    ]
+    // Si el docente pide un curso concreto suyo, se filtra a ese curso (sin
+    // mezclar sus propias sesiones). Si no, ve sus cursos y sus sesiones.
+    if (groupId && myGroupIds.includes(groupId)) {
+      where.group_id = groupId
+    } else {
+      where.OR = [
+        { group_id: { in: myGroupIds } },
+        { AND: [{ user_id: userId }, { event_type: { startsWith: "auth_" } }] },
+      ]
+    }
   } else if (groupId) {
     where.group_id = groupId
   }
 
-  if (filters.eventType) {
+  // Filtro por categoria (grupo de event_types) o por tipo individual.
+  const categoryEvents = filters.category ? EVENT_CATEGORIES[filters.category] : null
+  if (categoryEvents && categoryEvents.length > 0) {
+    where.event_type = { in: categoryEvents }
+  } else if (filters.eventType) {
     where.event_type = filters.eventType
   }
   if (filters.from || filters.to) {
@@ -144,4 +181,4 @@ async function listGroupAuditEvents({ groupId, role, userId, limit = 10 }) {
   return rows.map((r) => serializeEntry(r, groupNames))
 }
 
-module.exports = { listAuditEvents, listGroupAuditEvents, serializeEntry }
+module.exports = { listAuditEvents, listGroupAuditEvents, serializeEntry, EVENT_CATEGORIES, EVENT_CATEGORY_LABEL }
