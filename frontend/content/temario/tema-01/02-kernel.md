@@ -2,7 +2,7 @@
 
 ## ¿Qué es el kernel?
 
-El kernel es el núcleo del sistema operativo. Es el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador, desde el procesador y la memoria RAM hasta los discos, las interfaces de red y los periféricos (Silberschatz et al., 2021). Al ejecutar un comando, abrir un archivo o establecer una conexión a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos, siempre pasan por él.
+El kernel es el núcleo del sistema operativo. Es el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador, desde el procesador y la memoria RAM hasta los discos, las interfaces de red y los periféricos (Silberschatz et al., 2021). Al ejecutar un comando, abrir un archivo o establecer una conexión a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos, siempre pasan por él (NDG, 2024).
 
 ## Funciones principales del kernel
 
@@ -32,7 +32,7 @@ El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cua
 
 ### 3. Sistema de archivos
 
-Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo, porque el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
+Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo, porque el kernel se encarga de las diferencias por debajo (NDG, 2024), y por eso el mismo programa funciona igual sin importar dónde estén los datos.
 
 <!-- ILLUSTRATION: kernel-archivos -->
 
