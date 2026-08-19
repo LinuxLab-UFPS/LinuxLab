@@ -48,7 +48,7 @@ Si la variable no existe, `echo $variable` simplemente no imprime nada. Si ya ex
 
 ## Variables de entorno
 
-Las variables de entorno, también llamadas globales, están disponibles en todos los shells abiertos por Bash. El sistema las recrea automáticamente en cada terminal nueva. Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`.
+Una variable de entorno es la que el shell entrega a los programas que lanza (Shotts, 2026). Todo lo que se ejecute desde esa terminal la recibe, mientras que una variable local no sale del shell donde se creó. Ejemplos comunes son `HOME`, `PATH` e `HISTSIZE`, que están en cualquier terminal porque los archivos de arranque las definen cada vez que se abre una.
 
 El valor de cualquiera se consulta con `echo`:
 
@@ -75,6 +75,18 @@ env | grep nombre
 ```
 nombre=Juan
 ```
+
+El efecto se comprueba lanzando otro shell desde este:
+
+```bash
+bash -c 'echo $nombre'
+```
+
+```
+Juan
+```
+
+Conviene no confundir eso con estar disponible en todo el sistema. `export` alcanza a lo que se lance desde esta terminal, no a las demás. Una terminal abierta aparte no ve esa variable, porque no desciende de esta.
 
 También se puede crear y exportar una variable en una sola línea:
 
@@ -145,3 +157,4 @@ El nuevo directorio queda al inicio, por lo que el shell lo revisará primero.
 
 - Free Software Foundation. (2025). *Bash reference manual* (edición 5.3). https://www.gnu.org/software/bash/manual/bash.html
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
