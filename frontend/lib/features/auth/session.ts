@@ -53,21 +53,7 @@ export async function requireServerRole(allowedRoles: Role[]): Promise<Session> 
  */
 export async function getServerSession(): Promise<Session | null> {
   const { cookies } = await import("next/headers")
-  const store = await cookies()
-  const token = store.get("token")?.value
-  const raw = store.get("dev-role")?.value
-
-  // ######################################################################
-  // ## DEV: sin backend no hay token, así que devolvemos una sesión      ##
-  // ## falsa con el rol de la cookie `dev-role` (selector de rol) para   ##
-  // ## poder abrir las vistas sin login. Se apaga solo en producción.    ##
-  // ## Ver: middleware.ts y lib/features/auth/context.tsx.               ##
-  // ######################################################################
-  if (raw && process.env.NODE_ENV !== "production") {
-    const role: Role = raw === "teacher" || raw === "admin" ? raw : "student"
-    return { user: { id: "dev", email: "dev@ufps.edu.co", name: "Modo Dev", role } }
-  }
-
+  const token = (await cookies()).get("token")?.value
   if (!token) return null
 
   try {
