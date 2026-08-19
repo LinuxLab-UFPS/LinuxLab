@@ -6,7 +6,7 @@
 
 ## Las tres operaciones
 
-`tar` se usa siempre igual: primero se dice qué operación se quiere, después con qué comprimir, y al final sobre qué archivo.
+`tar` se usa siempre igual: primero se dice qué operación se quiere, después con qué comprimir, y al final sobre qué archivo (Free Software Foundation, 2023).
 
 | Opción | Operación |
 |---|---|
@@ -76,7 +76,7 @@ practica/leeme.txt
 
 ## La f va siempre al final
 
-Es el tropiezo más frecuente con `tar`, y no da un error que oriente. La opción `-f` toma como nombre del paquete **lo que venga justo detrás**, así que si se cuela otra letra después de la `f`, ésa pasa a ser el nombre:
+Es el tropiezo más frecuente con `tar`, y no da un error que oriente (NDG, 2024). La opción `-f` toma como nombre del paquete **lo que venga justo detrás**, así que si se cuela otra letra después de la `f`, ésa pasa a ser el nombre:
 
 ```bash
 tar -xzfv practica.tar.gz
@@ -119,6 +119,22 @@ practica
 ```
 
 La carpeta tiene que existir antes: `tar` no la crea, y si no está, falla. Es lo que se hace al instalar algo que llega comprimido. El paquete se descarga a un lado y se extrae donde toca, sin moverse de sitio.
+
+## Las rutas se guardan relativas
+
+`tar` nunca guarda rutas absolutas. Si se le pasa una, le quita la barra inicial y lo avisa:
+
+```bash
+tar -czf copia.tar.gz /home/estudiante/practica
+```
+
+```
+tar: Removing leading `/' from member names
+```
+
+Dentro del paquete la ruta queda como `home/estudiante/practica`, sin la barra de delante. Al extraerlo, esa ruta se recrea **a partir del directorio actual** y no desde la raíz, de modo que aparece una carpeta `home` justo donde estés parado. Es deliberado, porque permite abrir un paquete en cualquier sitio en lugar de obligarlo a volver a su ubicación original (Shotts, 2026).
+
+Hay una consecuencia más al extraer. Salvo que se haga como administrador, los archivos que salen quedan a nombre de quien los extrae, no del dueño que tenían cuando se empaquetaron.
 
 ## Empaquetar sin comprimir
 
@@ -178,6 +194,6 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 
 **Fuentes**
 
-- NDG Linux Essentials. Cisco Networking Academy, 2024.
-- Shotts, W. *The Linux Command Line*, 2nd Ed. No Starch Press, 2019. Cap. 18: "Archiving and Backup". linuxcommand.org
-- GNU Tar Manual. gnu.org/software/tar/manual
+- Free Software Foundation. (2023). *GNU tar manual* (versión 1.35). https://www.gnu.org/software/tar/manual/
+- NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
