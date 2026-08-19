@@ -134,7 +134,8 @@ async function evaluate({ slug, studentUserId }) {
   })
 
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
-  const passed = results.every((r) => r.passed)
+  // La comprobacion del temario se aprueba con una nota de 60 o mas.
+  const passed = score >= 60
 
   // Los intentos por slug (comprobaciones del temario) no tienen publicacion:
   // group_activity_id queda NULL y el numero de intento es el siguiente del

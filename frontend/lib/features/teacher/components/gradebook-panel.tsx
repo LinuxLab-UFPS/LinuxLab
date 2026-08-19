@@ -3,12 +3,13 @@
 import { useState } from "react"
 import { BarChart3, Users } from "lucide-react"
 import { TablePagination } from "@shared/components/data-table"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { Empty } from "@shared/components/empty"
 import { useGradebook } from "@/lib/api/queries"
 import { GradebookTable } from "@/lib/features/teacher/components/gradebook-table"
 import { StudentPerformanceDrawer } from "@/lib/features/teacher/components/student-performance-drawer"
 
-const PER_PAGE = 15
+const PER_PAGE = 10
 
 const PANEL = "rounded-xl border border-table-line bg-background shadow-md dark:shadow-none"
 
@@ -39,9 +40,16 @@ export function GradebookPanel({ groupId, query }: { groupId: string; query: str
 
   if (isLoading) {
     return (
-      <div className="py-16 text-center text-sm text-muted-foreground">
-        Cargando calificaciones…
-      </div>
+      <SkeletonScreen className="py-8">
+        <div className={PANEL}>
+          <div className="space-y-2 p-4">
+            <Skeleton className="h-4 w-1/3" />
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        </div>
+      </SkeletonScreen>
     )
   }
 
@@ -83,19 +91,15 @@ export function GradebookPanel({ groupId, query }: { groupId: string; query: str
               />
 
               {students.length > 0 && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    Mostrando {pageStudents.length} de {students.length} estudiantes
-                  </span>
-                  {totalPages > 1 && (
-                    <TablePagination
-                      page={safePage}
-                      totalPages={totalPages}
-                      onChange={setPage}
-                      tone="primary"
-                    />
-                  )}
-                </div>
+                <TablePagination
+                  page={safePage}
+                  totalPages={totalPages}
+                  onChange={setPage}
+                  tone="primary"
+                  total={students.length}
+                  pageSize={PER_PAGE}
+                  label="estudiantes"
+                />
               )}
             </>
           )}

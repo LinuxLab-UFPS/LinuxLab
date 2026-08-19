@@ -7,6 +7,7 @@ import type { GroupProgressSummary } from "@/lib/models/groups"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import type { TeacherProvisioningJobSummary } from "@/lib/features/admin/types"
 import type { ProvisioningStatusSummary } from "@/lib/features/teacher/api"
+import type { AuditFilters } from "@/lib/features/teacher/types"
 import { EMPTY_PROGRESS } from "@/lib/models/groups"
 
 export const queryKeys = {
@@ -21,6 +22,8 @@ export const queryKeys = {
   teacherJobs: ["admin", "teacher-jobs"] as const,
   teachers: (filters?: { search?: string; status?: string }) => ["admin", "teachers", filters] as const,
   provisioningStatus: ["provisioning", "status"] as const,
+  auditLog: (filters?: AuditFilters) => ["audit", filters] as const,
+  groupAuditLog: (id: string) => ["audit", "groups", id] as const,
 }
 
 /** Cursos del docente. */
@@ -136,5 +139,22 @@ export function useProvisioningStatus(enabled = true) {
       const pending = (status?.pending ?? 0) > 0
       return pending ? 5000 : false
     },
+  })
+}
+
+/** Bitácora global (admin) o de mis cursos y mis sesiones (docente). */
+export function useAuditLog(filters?: AuditFilters) {
+  return useQuery({
+    queryKey: queryKeys.auditLog(filters),
+    queryFn: () => teacherData.listAuditLog(filters),
+  })
+}
+
+/** Últimos eventos de un curso (panel "Actividad reciente" del resumen). */
+export function useGroupAuditLog(id: string, limit = 10) {
+  return useQuery({
+    queryKey: queryKeys.groupAuditLog(id),
+    queryFn: () => teacherData.listGroupAuditLog(id, limit),
+    enabled: Boolean(id),
   })
 }

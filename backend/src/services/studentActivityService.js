@@ -265,7 +265,8 @@ async function checkForStudent(studentUserId, groupActivityId) {
   })
 
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
-  const passed = results.every((r) => r.passed)
+  // La actividad se aprueba con una nota de 60 o mas (sobre max_score=100).
+  const passed = score >= 60
 
   await attemptService.recordAttempt({
     activityDefinitionId: ga.activity_definition_id,

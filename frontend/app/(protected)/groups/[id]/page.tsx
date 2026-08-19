@@ -14,6 +14,7 @@ import {
   Search,
   BarChart3,
   FileSpreadsheet,
+  ScrollText,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
@@ -33,14 +34,16 @@ import {
 } from "@shared/components/ui/select"
 import { GroupActivities } from "@/lib/features/teacher/components/group-activities"
 import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-panel"
+import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
 import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 
-type Tab = "estudiantes" | "actividades" | "calificaciones"
+type Tab = "estudiantes" | "actividades" | "calificaciones" | "bitacora"
 
 function GroupDetailContent() {
   const params = useParams<{ id: string }>()
@@ -108,9 +111,18 @@ function GroupDetailContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <SkeletonScreen className="mx-auto max-w-6xl px-6 py-10">
+        <div className="mb-8 space-y-3">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <div className="mb-6 flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-24" />
+          ))}
+        </div>
+        <Skeleton className="h-64 w-full" />
+      </SkeletonScreen>
     )
   }
 
@@ -183,6 +195,12 @@ function GroupDetailContent() {
               icon: BarChart3,
               tone: "primary",
             },
+            {
+              value: "bitacora",
+              label: "Bitácora",
+              icon: ScrollText,
+              tone: "primary",
+            },
           ]}
         />
       </div>
@@ -194,25 +212,29 @@ function GroupDetailContent() {
             ? `Estudiantes del curso (${group.studentCount})`
             : tab === "actividades"
               ? `Actividades del curso (${group.activityCount})`
-              : "Calificaciones del curso"}
+              : tab === "bitacora"
+                ? "Bitácora del curso"
+                : "Calificaciones del curso"}
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="relative w-full max-w-xs flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={
-                tab === "estudiantes"
-                  ? "Buscar estudiante por nombre o código..."
-                  : tab === "actividades"
-                    ? "Buscar actividad por nombre..."
-                    : "Buscar por nombre o código..."
-              }
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="border-table-line pl-9"
-            />
-          </div>
+          {tab !== "bitacora" && (
+            <div className="relative w-full max-w-xs flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={
+                  tab === "estudiantes"
+                    ? "Buscar estudiante por nombre o código..."
+                    : tab === "actividades"
+                      ? "Buscar actividad por nombre..."
+                      : "Buscar por nombre o código..."
+                }
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="border-table-line pl-9"
+              />
+            </div>
+          )}
 
           {tab === "actividades" && (
             <>
@@ -247,6 +269,7 @@ function GroupDetailContent() {
           )}
 
           {!group.archived &&
+            tab !== "bitacora" &&
             (tab === "estudiantes" ? (
               <ActionButton tone="primary" onClick={() => setAdding(true)}>
                 <Plus className="h-4 w-4" />
@@ -277,16 +300,41 @@ function GroupDetailContent() {
 
       {/* Tabla */}
       {tab === "estudiantes" ? (
-        <GroupStudents students={studentsQuery.data ?? []} query={query} />
+        studentsQuery.isLoading ? (
+          <SkeletonScreen className="rounded-xl border border-table-line p-5">
+            <div className="space-y-3">
+              <Skeleton className="h-4 w-1/3" />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full" />
+              ))}
+            </div>
+          </SkeletonScreen>
+        ) : (
+          <GroupStudents students={studentsQuery.data ?? []} query={query} />
+        )
       ) : tab === "actividades" ? (
         <div data-section="actividades">
-          <GroupActivities
-            activities={activitiesQuery.data ?? []}
-            query={query}
-            groupId={id}
-            activityTypeFilter={activityTypeFilter}
-            evalFilter={evalFilter}
-          />
+          {activitiesQuery.isLoading ? (
+            <SkeletonScreen>
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </SkeletonScreen>
+          ) : (
+            <GroupActivities
+              activities={activitiesQuery.data ?? []}
+              query={query}
+              groupId={id}
+              activityTypeFilter={activityTypeFilter}
+              evalFilter={evalFilter}
+            />
+          )}
+        </div>
+      ) : tab === "bitacora" ? (
+        <div data-section="bitacora">
+          <AuditPanel groupId={id} courseScoped />
         </div>
       ) : (
         <div data-section="calificaciones">

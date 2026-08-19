@@ -79,46 +79,106 @@ const PAGE_TONE = {
   emerald: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
 }
 
-/** Minimal prev / current-page / next pager, for tables with many rows. */
+/**
+ * Calcula que numeros de pagina mostrar. Con 9 o menos, todos; con mas, un
+ * ventana alrededor de la actual con elipsis en los extremos (1 2 3 ... N).
+ */
+function pageNumbers(page: number, totalPages: number): (number | "…")[] {
+  if (totalPages <= 9) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+  const set = new Set<number>([1, totalPages, page - 1, page, page + 1])
+  const sorted = [...set].filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b)
+  const out: (number | "…")[] = []
+  let prev = 0
+  for (const n of sorted) {
+    if (n - prev > 1) out.push("…")
+    out.push(n)
+    prev = n
+  }
+  return out
+}
+
+/** Pager de tablas: rango visible ("Mostrando X–Y de Z"), numeros de pagina y
+ *  flechas. El rango y la etiqueta son opcionales: si no se pasan, solo se
+ *  muestran los controles de pagina. */
 export function TablePagination({
   page,
   totalPages,
   onChange,
   tone = "primary",
+  total,
+  pageSize,
+  label = "registros",
 }: {
   page: number
   totalPages: number
   onChange: (page: number) => void
   tone?: keyof typeof PAGE_TONE
+  total?: number
+  pageSize?: number
+  label?: string
 }) {
+  const from = total != null && pageSize != null ? (page - 1) * pageSize + 1 : null
+  const to = total != null && pageSize != null ? Math.min(page * pageSize, total) : null
+  const nums = pageNumbers(page, totalPages)
+
   return (
-    <div className="flex items-center justify-center gap-2 pt-6">
-      <button
-        type="button"
-        disabled={page <= 1}
-        onClick={() => onChange(page - 1)}
-        aria-label="Página anterior"
-        className="flex h-8 w-8 items-center justify-center rounded-md border border-table-line text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-      <span
-        className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-md border text-sm font-medium",
-          PAGE_TONE[tone],
+    <div className="flex flex-col items-center gap-3 pt-6 sm:flex-row sm:justify-between">
+      {total != null && from != null && to != null ? (
+        <span className="text-sm text-muted-foreground">
+          Mostrando {from}–{to} de {total} {label}
+        </span>
+      ) : (
+        <span />
+      )}
+
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+          aria-label="Página anterior"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-table-line text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        {nums.map((num, i) =>
+          num === "…" ? (
+            <span key={`e${i}`} className="flex h-8 items-center px-1 text-sm text-muted-foreground">
+              …
+            </span>
+          ) : (
+            <button
+              key={num}
+              type="button"
+              onClick={() => onChange(num)}
+              disabled={num === page}
+              aria-current={num === page ? "page" : undefined}
+              aria-label={`Página ${num}`}
+              className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-md border text-sm font-medium transition-colors",
+                num === page
+                  ? PAGE_TONE[tone]
+                  : "border-table-line text-muted-foreground hover:bg-secondary",
+              )}
+            >
+              {num}
+            </button>
+          ),
         )}
-      >
-        {page}
-      </span>
-      <button
-        type="button"
-        disabled={page >= totalPages}
-        onClick={() => onChange(page + 1)}
-        aria-label="Página siguiente"
-        className="flex h-8 w-8 items-center justify-center rounded-md border border-table-line text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
+
+        <button
+          type="button"
+          disabled={page >= totalPages}
+          onClick={() => onChange(page + 1)}
+          aria-label="Página siguiente"
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-table-line text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40 disabled:hover:bg-transparent"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }

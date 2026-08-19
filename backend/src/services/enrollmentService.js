@@ -8,6 +8,7 @@ const { registerStudentSchema } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { groupNameOf } = require("../utils/groupName")
 const accessService = require("./accessService")
+const auditService = require("./auditService")
 const { EMAIL_REGEX, PRIORITIES } = require("../lib/constants")
 
 function validateEmail(email) {
@@ -100,7 +101,22 @@ async function registerStudent(args) {
   const groupDir = group.group_dir || undefined
   const groupName = groupDir ? groupNameOf(groupId) : undefined
   const teacherAccount = await tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
-  return enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
+  const outcome = await enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
+
+  if (outcome.enrolled) {
+    auditService.audit({
+      userId: teacherUserId,
+      groupId,
+      eventType: "student_registered",
+      target: outcome.student.email,
+      metadata: {
+        studentId: outcome.student.id,
+        studentName: outcome.student.name,
+      },
+    })
+  }
+
+  return outcome
 }
 
 async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername, tx = prisma }) {
@@ -411,6 +427,20 @@ async function hasActiveEnrollment(userId) {
   return count > 0
 }
 
+/** Grupo activo del estudiante, o null si no tiene matricula activa vigente. */
+async function getActiveGroupId(userId) {
+  const enrollment = await prisma.enrollment.findFirst({
+    where: {
+      student_id: userId,
+      status: "active",
+      group: { archived: false },
+    },
+    select: { group_id: true },
+    orderBy: { enrolled_at: "asc" },
+  })
+  return enrollment?.group_id ?? null
+}
+
 function parseCsvRows(csvText) {
   if (!csvText?.trim()) {
     throw new AppError("El contenido CSV está vacío", 400)
@@ -466,6 +496,25 @@ async function importCsv({ groupId, csvText, teacherUserId, role }) {
     }
   }
 
+  if (result.registered > 0) {
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { name: true },
+    })
+    auditService.audit({
+      userId: teacherUserId,
+      groupId,
+      eventType: "csv_imported",
+      target: group?.name ?? null,
+      metadata: {
+        total: result.total,
+        registered: result.registered,
+        skipped: result.skipped,
+        errors: result.errors.length,
+      },
+    })
+  }
+
   return result
 }
 
@@ -477,5 +526,6 @@ module.exports = {
   importCsv,
   listByGroup,
   hasActiveEnrollment,
+  getActiveGroupId,
   serializeStudent,
 }

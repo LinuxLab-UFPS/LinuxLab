@@ -11,6 +11,7 @@ const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 const { finalScore } = require("../utils/finalScore")
+const auditService = require("./auditService")
 
 function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
@@ -93,6 +94,19 @@ async function createGroup(args) {
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
+
+  auditService.audit({
+    userId: teacherUserId,
+    groupId: group.id,
+    eventType: "group_created",
+    target: parsed.name,
+    metadata: {
+      groupId: group.id,
+      enrolled: enrollment.registered,
+      skipped: enrollment.skipped,
+    },
+  })
+
   return {
     group: serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities),
     enrollment,
@@ -290,6 +304,14 @@ async function archiveGroup(args) {
     logger.warn({ groupId }, "Teacher not provisioned, teardown job skipped")
   }
 
+  auditService.audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "group_archived",
+    target: group.name,
+    metadata: { groupId },
+  })
+
   return serializeGroup(updated, 0)
 }
 
@@ -369,6 +391,14 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
       data: { group_id: null },
     })
     await tx.group.delete({ where: { id: groupId } })
+  })
+
+  auditService.audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "group_deleted",
+    target: group.name,
+    metadata: { groupId, teacherName: group.teacher?.name },
   })
 
   logger.info({ groupId, teacherUserId }, "Group deleted")

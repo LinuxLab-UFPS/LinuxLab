@@ -6,6 +6,8 @@ import type {
   ActivitySubmissionStudent,
   CreateActivityInput,
   AuditEntry,
+  AuditFilters,
+  AuditListResult,
   GroupProgressSummary,
   Gradebook,
   StudentGroupDetail,
@@ -149,18 +151,13 @@ export async function getProvisioningStatus() {
   return teacherApi.getProvisioningStatus()
 }
 
-export async function listAuditLog(): Promise<AuditEntry[]> {
-  return []
+export async function listAuditLog(filters?: AuditFilters): Promise<AuditListResult> {
+  return teacherApi.listAuditLog(filters)
 }
 
 /** Bitácora acotada a un curso, para "Actividad reciente" en su resumen. */
-export async function listGroupAuditLog(_groupId: string): Promise<AuditEntry[]> {
-  // El backend todavía no expone la bitácora por curso.
-  return []
-}
-
-export async function clearAuditLog(): Promise<void> {
-  throw new Error("Audit log: no implementado todavía")
+export async function listGroupAuditLog(groupId: string, limit = 10): Promise<AuditEntry[]> {
+  return teacherApi.listGroupAuditLog(groupId, limit)
 }
 
 const EMPTY_SUMMARY: GroupProgressSummary = {

@@ -30,7 +30,7 @@ model User {
   activityAttempts     ActivityAttempt[]     @relation("StudentAttempts")
   activitySubmissions  ActivitySubmission[]  @relation("StudentSubmissions")
   gradedSubmissions    ActivitySubmission[]  @relation("SubmissionGraders")
-  auditEvents          ActivityAuditEvent[]  @relation("AuditEvents")
+  auditEvents          AuditEvent[]          @relation("AuditEvents")
   createdDefinitions   ActivityDefinition[]  @relation("ActivityCreators")
   userProvisioningJobs UserProvisioningJob[]
   preferences          UserPreference?
@@ -212,23 +212,37 @@ model ActivitySubmission {
   @@map("activity_submissions")
 }
 
-/// Bitacora de eventos relevantes del modulo de actividades.
+/// Bitacora de eventos relevantes de la plataforma: sesiones (login/logout),
+/// entregas y validaciones de actividades, y acciones administrativas.
 ///
-/// `group_id` es nullable a proposito: si el grupo se borra (borrado con
-/// confirmacion), el evento conserva su rastro en `metadata` y `target`.
-model ActivityAuditEvent {
+/// Cada registro guarda `message`, la frase legible prefabricada en el instante
+/// del evento, ademas de los campos estructurados (`event_type`, `target`,
+/// `metadata`) que permiten filtrar y hacer drill-down.
+///
+/// `group_id` es nullable a proposito: los eventos de sesion de docentes y
+/// administradores no pertenecen a ningun curso. Si el grupo se borra (borrado
+/// con confirmacion), el evento conserva su rastro en `metadata` y `target`.
+model AuditEvent {
   id         String   @id @default(uuid()) @db.Uuid
   user_id    String   @map("user_id") @db.Uuid
   user       User     @relation("AuditEvents", fields: [user_id], references: [id])
+  /// Rol del actor al momento del evento (admite que el rol cambie luego).
+  actor_role String   @map("actor_role") @db.VarChar(16)
   group_id   String?  @map("group_id") @db.Uuid
   event_type String   @map("event_type") @db.VarChar(48)
+  /// Objeto sobre el que se actuo (actividad, curso, usuario), para resaltar.
   target     String?  @db.VarChar(255)
+  /// Frase legible del evento, redactada al momento (immutable).
+  message    String   @db.VarChar(280)
   metadata   Json?
+  ip         String?  @db.VarChar(45)
+  user_agent String?  @map("user_agent") @db.VarChar(255)
   created_at DateTime @default(now()) @map("created_at")
 
-  @@index([group_id])
-  @@index([user_id])
-  @@map("activity_audit_events")
+  @@index([group_id, created_at])
+  @@index([event_type, created_at])
+  @@index([user_id, created_at])
+  @@map("audit_events")
 }
 
 model Enrollment {

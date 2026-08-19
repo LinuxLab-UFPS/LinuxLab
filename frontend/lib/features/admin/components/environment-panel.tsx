@@ -1,12 +1,13 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw, TerminalSquare } from "lucide-react"
+import { AlertCircle, CheckCircle2, RefreshCw, TerminalSquare } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { apiFetch } from "@/lib/api/client"
 import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
 import { TablePanel, TableEmptyState } from "@shared/components/data-table"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import {
   Table,
   TableBody,
@@ -110,9 +111,18 @@ export function EnvironmentPanel() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
+      <SkeletonScreen>
+        <TablePanel>
+          <div className="space-y-4 p-5">
+            <div className="flex flex-wrap gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-20 w-40" />
+              ))}
+            </div>
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </TablePanel>
+      </SkeletonScreen>
     )
   }
 

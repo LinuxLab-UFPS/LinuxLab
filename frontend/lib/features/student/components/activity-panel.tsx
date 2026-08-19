@@ -13,6 +13,7 @@ import {
   type Activity,
 } from "@shared/lib/content/activities"
 import { Tag } from "@shared/components/tag"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
@@ -82,9 +83,11 @@ export function ActivityPanel({
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-6">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          </div>
+          <SkeletonScreen className="mt-6 space-y-3">
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-10 w-40" />
+          </SkeletonScreen>
         ) : data ? (
           <div className="mt-6 space-y-4">
             <StudentInfoTable

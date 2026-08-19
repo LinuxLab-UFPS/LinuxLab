@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { GroupsTable } from "@/lib/features/teacher/components/groups-table"
 import { useAuth } from "@/lib/features/auth/context"
 import { useGroups } from "@/lib/api/queries"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { notify } from "@shared/lib/toast"
 
 export function TeacherDashboard() {
@@ -33,9 +34,18 @@ export function TeacherDashboard() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-table-line py-20">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-section border-t-transparent" />
-        </div>
+        <SkeletonScreen className="rounded-xl border border-table-line p-5">
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-40" />
+              ))}
+            </div>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        </SkeletonScreen>
       ) : (
         <GroupsTable />
       )}

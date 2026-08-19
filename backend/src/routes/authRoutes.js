@@ -7,6 +7,8 @@ const { parseOrThrow } = require("../dtos/common")
 const { serializeUser } = require("../dtos/userDtos")
 const asyncHandler = require("../utils/asyncHandler")
 const { AppError } = require("../lib/errors")
+const auditService = require("../services/auditService")
+const enrollmentService = require("../services/enrollmentService")
 
 const router = express.Router()
 
@@ -14,7 +16,7 @@ router.post(
   "/firebase",
   asyncHandler(async (req, res) => {
     const { idToken } = parseOrThrow(idTokenSchema, req.body ?? {})
-    const user = await authService.loginWithIdToken({ idToken })
+    const user = await authService.loginWithIdToken({ idToken, req })
     res.cookie(config.jwt.cookieName, authService.signSession(user), config.jwt.cookie)
     res.json({ user: serializeUser(user) })
   }),
@@ -38,9 +40,24 @@ router.get(
   }),
 )
 
-router.post("/logout", authMiddleware, (_req, res) => {
+router.post("/logout", authMiddleware, asyncHandler(async (req, res) => {
+  const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+  // Para el estudiante se liga el grupo activo (igual que en el login), de modo
+  // que el docente vea el cierre de sesion en la bitacora de su curso.
+  const groupId =
+    req.user.role === "student" ? await enrollmentService.getActiveGroupId(req.user.id) : null
+  await auditService.audit({
+    userId: req.user.id,
+    groupId,
+    eventType: "auth_logout",
+    target: req.user.email,
+    metadata: { email: req.user.email },
+    actorRole: actorRole ?? req.user.role,
+    ip,
+    userAgent,
+  })
   res.clearCookie(config.jwt.cookieName, { path: "/" })
   res.json({ message: "Sesión cerrada" })
-})
+}))
 
 module.exports = router

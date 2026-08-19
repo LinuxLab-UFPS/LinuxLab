@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Trash2, ShieldCheck, Loader2 } from "lucide-react"
+import { Plus, Trash2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { describeCheck } from "@shared/lib/describe-check"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
 import { Checkbox } from "@shared/components/ui/checkbox"
 import { IconAction } from "@shared/components/icon-action"
+import { Skeleton } from "@shared/components/skeleton"
 import { notify } from "@shared/lib/toast"
 import type { ActivityCheck, CatalogEntry } from "@/lib/features/teacher/types"
 
@@ -103,9 +104,10 @@ export function CheckBuilder({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Cargando catálogo de aserciones…
+      <div className="space-y-3 py-2">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
       </div>
     )
   }

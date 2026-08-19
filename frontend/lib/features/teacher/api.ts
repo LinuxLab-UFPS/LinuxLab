@@ -7,6 +7,8 @@ import type {
   ActivitySubmissionStudent,
   CreateActivityInput,
   AuditEntry,
+  AuditFilters,
+  AuditListResult,
   GroupProgressSummary,
   Gradebook,
   StudentGroupDetail,
@@ -138,8 +140,24 @@ export const teacherApi = {
   getProvisioningStatus: () =>
     apiFetch<ProvisioningStatusSummary>("/api/groups/provisioning/status"),
 
-  listAuditLog: () => apiFetch<AuditEntry[]>("/api/audit-log"),
-  clearAuditLog: () => apiFetch<void>("/api/audit-log", { method: "DELETE" }),
+  listAuditLog: (filters?: AuditFilters) => {
+    const params = new URLSearchParams()
+    if (filters?.eventType) params.set("eventType", filters.eventType)
+    if (filters?.category) params.set("category", filters.category)
+    if (filters?.groupId) params.set("groupId", filters.groupId)
+    if (filters?.from) params.set("from", filters.from)
+    if (filters?.to) params.set("to", filters.to)
+    if (filters?.search) params.set("search", filters.search)
+    if (filters?.page) params.set("page", String(filters.page))
+    if (filters?.limit) params.set("limit", String(filters.limit))
+    const qs = params.toString()
+    return apiFetch<AuditListResult>(
+      qs ? `/api/audit?${qs}` : `/api/audit`,
+    )
+  },
+
+  listGroupAuditLog: (groupId: string, limit = 10) =>
+    apiFetch<AuditEntry[]>(`/api/audit/groups/${groupId}/recent?limit=${limit}`),
 
   getGroupProgress: (groupId: string) =>
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),

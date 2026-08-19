@@ -48,10 +48,10 @@ async function recordAttempt({ activityDefinitionId, groupActivityId, studentUse
   })
 }
 
-/** Los slugs que el estudiante ya aprobo, para marcar sus tarjetas. */
+/** Los slugs que el estudiante ya aprobo (nota >= 60), para marcar sus tarjetas. */
 async function passedSlugs(studentUserId) {
   const attempts = await prisma.activityAttempt.findMany({
-    where: { student_id: studentUserId, passed: true },
+    where: { student_id: studentUserId, score: { gte: 60 } },
     select: { definition: { select: { slug: true } } },
     distinct: ["activity_definition_id"],
   })

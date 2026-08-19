@@ -2,6 +2,7 @@ const userService = require("../services/userService")
 const reconcileService = require("../services/reconcileService")
 const environmentService = require("../services/environmentService")
 const jobService = require("../services/jobService")
+const auditService = require("../services/auditService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const listTeachers = asyncHandler(async (req, res) => {
@@ -11,11 +12,33 @@ const listTeachers = asyncHandler(async (req, res) => {
 
 const registerTeacher = asyncHandler(async (req, res) => {
   const { name, email } = req.body
-  res.status(201).json(await userService.register({ name, email }))
+  const teacher = await userService.register({ name, email })
+  const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+  auditService.audit({
+    userId: req.user.id,
+    eventType: "teacher_registered",
+    target: teacher.email,
+    metadata: { teacherId: teacher.id, name: teacher.name },
+    actorRole: actorRole ?? req.user.role,
+    ip,
+    userAgent,
+  })
+  res.status(201).json(teacher)
 })
 
 const toggleTeacherStatus = asyncHandler(async (req, res) => {
-  res.json(await userService.toggleActive(req.params.id))
+  const teacher = await userService.toggleActive(req.params.id)
+  const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+  auditService.audit({
+    userId: req.user.id,
+    eventType: "teacher_toggled",
+    target: teacher.email,
+    metadata: { teacherId: teacher.id, active: teacher.active },
+    actorRole: actorRole ?? req.user.role,
+    ip,
+    userAgent,
+  })
+  res.json(teacher)
 })
 
 const reconcileAll = asyncHandler(async (req, res) => {

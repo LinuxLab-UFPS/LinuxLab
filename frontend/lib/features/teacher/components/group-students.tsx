@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   Table,
   TableBody,
@@ -8,9 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@shared/components/ui/table"
-import { TablePanel, TableEmptyState } from "@shared/components/data-table"
+import { TablePanel, TableEmptyState, TablePagination } from "@shared/components/data-table"
 import { timeAgo } from "@/lib/utils/dates"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
+
+const PAGE_SIZE = 10
 
 /**
  * Los estudiantes del curso: nombre, email, usuario Linux, actividades
@@ -23,6 +26,7 @@ export function GroupStudents({
   students: EnrollmentStudent[]
   query: string
 }) {
+  const [page, setPage] = useState(1)
   const q = query.trim().toLowerCase()
   const visible = students.filter(
     (student) =>
@@ -30,6 +34,9 @@ export function GroupStudents({
       student.name.toLowerCase().includes(q) ||
       student.email.toLowerCase().includes(q),
   )
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const page_ = Math.min(page, totalPages)
+  const pageRows = visible.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   return (
     <section>
@@ -47,7 +54,7 @@ export function GroupStudents({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {visible.map((student) => (
+              {pageRows.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell>
                     <span className="font-mono text-sm text-muted-foreground">
@@ -91,6 +98,17 @@ export function GroupStudents({
           </TableEmptyState>
         )}
       </TablePanel>
+
+      {visible.length > 0 && (
+        <TablePagination
+          page={page_}
+          totalPages={totalPages}
+          onChange={setPage}
+          total={visible.length}
+          pageSize={PAGE_SIZE}
+          label="estudiantes"
+        />
+      )}
     </section>
   )
 }

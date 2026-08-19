@@ -22,7 +22,7 @@ import { notify } from "@shared/lib/toast"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import type { Activity } from "@/lib/features/teacher/types"
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 10
 
 /** Las actividades del curso: fila cliqueable con switch de habilitado. */
 export function GroupActivities({
@@ -151,7 +151,15 @@ export function GroupActivities({
       </TablePanel>
 
       {filtered.length > 0 && (
-        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="primary" />
+        <TablePagination
+          page={page_}
+          totalPages={totalPages}
+          onChange={setPage}
+          tone="primary"
+          total={filtered.length}
+          pageSize={PAGE_SIZE}
+          label="actividades"
+        />
       )}
     </section>
   )
