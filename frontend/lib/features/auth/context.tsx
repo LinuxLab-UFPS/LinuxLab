@@ -5,7 +5,7 @@ import { signInWithPopup, signOut as firebaseSignOut } from "firebase/auth"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
 import { apiFetch } from "@/lib/api/client"
 import { terminarSesion } from "@shared/lib/terminal-session"
-import type { User } from "@/lib/features/auth/types"
+import type { Role, User } from "@/lib/features/auth/types"
 
 interface AuthContextValue {
   user: User | null
@@ -16,14 +16,36 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** DEV only: usuario falso con el rol elegido en el selector (cookie `dev-role`). */
+function devUser(): User {
+  const raw = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("dev-role="))
+    ?.split("=")[1]
+  const role: Role = raw === "teacher" || raw === "admin" ? raw : "student"
+  return { id: "dev", email: "dev@ufps.edu.co", name: "Modo Dev", role }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // El selector de rol manda sobre la sesión real mientras esté puesto.
+    if (process.env.NODE_ENV !== "production" && document.cookie.includes("dev-role=")) {
+      setUser(devUser())
+      setLoading(false)
+      return
+    }
     apiFetch<{ user: User }>("/api/auth/me")
       .then((data) => setUser(data.user))
-      .catch(() => setUser(null))
+      // ######################################################################
+      // ## DEV: si el backend no responde (correr solo el frontend), caemos ##
+      // ## a un usuario falso para que RoleGuard y las vistas no queden en  ##
+      // ## blanco. El rol sale de la cookie `dev-role` (selector de rol).   ##
+      // ## Se apaga solo en producción. Ver: middleware.ts y session.ts.    ##
+      // ######################################################################
+      .catch(() => setUser(process.env.NODE_ENV === "production" ? null : devUser()))
       .finally(() => setLoading(false))
   }, [])
 
