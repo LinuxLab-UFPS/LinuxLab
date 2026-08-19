@@ -41,7 +41,7 @@ router.get(
 
 router.post("/logout", authMiddleware, asyncHandler(async (req, res) => {
   const { ip, userAgent, actorRole } = auditService.requestMeta(req)
-  auditService.audit({
+  await auditService.audit({
     userId: req.user.id,
     eventType: "auth_logout",
     target: req.user.email,

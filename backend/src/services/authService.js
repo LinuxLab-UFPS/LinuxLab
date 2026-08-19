@@ -79,7 +79,7 @@ async function loginWithIdToken({ idToken, req }) {
   // (el docente audita las sesiones de su curso); para docentes y admin no.
   const { ip, userAgent, actorRole } = auditService.requestMeta(req)
   const groupId = user.role === "student" ? await enrollmentService.getActiveGroupId(user.id) : null
-  auditService.audit({
+  await auditService.audit({
     userId: user.id,
     groupId,
     eventType: "auth_login",
