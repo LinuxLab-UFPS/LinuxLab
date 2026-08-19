@@ -33,7 +33,7 @@ import { notifyPromise } from "@shared/lib/toast"
 
 type Tab = "activos" | "desactivados"
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 10
 
 export function GroupsTable() {
   const router = useRouter()
@@ -221,7 +221,14 @@ export function GroupsTable() {
       </TablePanel>
 
       {visible.length > 0 && (
-        <TablePagination page={page_} totalPages={totalPages} onChange={setPage} />
+        <TablePagination
+          page={page_}
+          totalPages={totalPages}
+          onChange={setPage}
+          total={visible.length}
+          pageSize={PAGE_SIZE}
+          label="cursos"
+        />
       )}
 
       <ConfirmCourseDialog

@@ -1,12 +1,9 @@
 "use client"
 
-import { useAuditLog } from "@/lib/api/queries"
-import { AuditTable } from "@/lib/features/teacher/components/audit-table"
+import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { RoleGuard } from "@shared/components/role-guard"
 
 export default function AuditLogPage() {
-  const { data, isLoading } = useAuditLog({ limit: 200 })
-
   return (
     <RoleGuard roles={["admin"]}>
       <div data-section="bitacora" className="mx-auto max-w-7xl px-6 py-10">
@@ -22,11 +19,7 @@ export default function AuditLogPage() {
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="text-sm text-muted-foreground">Cargando…</div>
-        ) : (
-          <AuditTable entries={data?.entries ?? []} />
-        )}
+        <AuditPanel />
       </div>
     </RoleGuard>
   )

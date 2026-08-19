@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@shared/components/ui/select"
+import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { downloadExcel, tableToSheet } from "@shared/lib/excel"
 import { notify } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
@@ -32,9 +33,18 @@ import { teacherApi } from "@/lib/features/teacher/api"
 import type { AuditEntry, AuditFilters } from "@/lib/features/teacher/types"
 import type { Role } from "@/lib/features/auth/types"
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
-const CATEGORIES = [
+const ALL_CATEGORIES = [
+  { value: "all", label: "Todas las categorías" },
+  { value: "sesiones", label: "Sesiones" },
+  { value: "actividades", label: "Actividades" },
+  { value: "administracion", label: "Administración" },
+  { value: "cursos", label: "Cursos" },
+  { value: "matriculas", label: "Matrículas" },
+] as const
+
+const COURSE_CATEGORIES = [
   { value: "all", label: "Todas las categorías" },
   { value: "sesiones", label: "Sesiones" },
   { value: "actividades", label: "Actividades" },
@@ -55,8 +65,8 @@ function roleBadge(role: AuditEntry["role"]) {
   return { label: "—", className: "bg-muted/10 text-muted-foreground border-border/30" }
 }
 
-/** Exporta TODOS los registros filtrados del curso, paginando por lotes. */
-async function exportAll(base: AuditFilters, groupId: string, setBusy: (b: boolean) => void) {
+/** Exporta TODOS los registros filtrados (paginando el endpoint por lotes). */
+async function exportAll(base: AuditFilters, groupId: string | undefined, setBusy: (b: boolean) => void) {
   setBusy(true)
   try {
     let page = 1
@@ -75,24 +85,64 @@ async function exportAll(base: AuditFilters, groupId: string, setBusy: (b: boole
       e.email ?? "—",
       roleBadge(e.role).label,
       e.message,
+      e.groupName ?? "—",
     ])
     await downloadExcel({
       fileName: `bitacora-${new Date().toISOString().slice(0, 10)}.xlsx`,
       sheets: [
         tableToSheet({
           name: "Bitácora",
-          headers: ["Fecha", "Usuario", "Email", "Rol", "Acción"],
+          headers: ["Fecha", "Usuario", "Email", "Rol", "Acción", "Curso"],
           rows,
         }),
       ],
     })
-    notify.success("Excel generado", { description: "Se descargó la bitácora del curso." })
+    notify.success("Excel generado", { description: "Se descargó la bitácora." })
   } finally {
     setBusy(false)
   }
 }
 
-export function GroupAuditPanel({ groupId }: { groupId: string }) {
+function AuditRowsSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
+  return (
+    <SkeletonScreen>
+      <TablePanel>
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              {Array.from({ length: cols }).map((_, i) => (
+                <TableHead key={i}>
+                  <Skeleton className="h-3 w-16" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: rows }).map((_, r) => (
+              <TableRow key={r}>
+                {Array.from({ length: cols }).map((_, c) => (
+                  <TableCell key={c}>
+                    <Skeleton className="mx-auto h-3.5 w-20" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TablePanel>
+    </SkeletonScreen>
+  )
+}
+
+export function AuditPanel({
+  groupId,
+  courseScoped = false,
+}: {
+  groupId?: string
+  courseScoped?: boolean
+}) {
+  const categories = courseScoped ? COURSE_CATEGORIES : ALL_CATEGORIES
+
   const [category, setCategory] = useState("all")
   const [search, setSearch] = useState("")
   const [desde, setDesde] = useState("")
@@ -131,15 +181,18 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
           />
         </div>
 
-        <Select value={category} onValueChange={(v) => {
-          setCategory(v)
-          setPage(1)
-        }}>
+        <Select
+          value={category}
+          onValueChange={(v) => {
+            setCategory(v)
+            setPage(1)
+          }}
+        >
           <SelectTrigger className="w-auto min-w-[180px] border-table-line">
             <SelectValue placeholder="Categoría" />
           </SelectTrigger>
           <SelectContent>
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <SelectItem key={c.value} value={c.value}>
                 {c.label}
               </SelectItem>
@@ -183,57 +236,70 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
         </ActionButton>
       </div>
 
-      <TablePanel>
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-36">Entrada</TableHead>
-              <TableHead>Usuario</TableHead>
-              <TableHead className="w-36">Rol</TableHead>
-              <TableHead>Acción</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.map((entry) => {
-              const date = new Date(entry.timestamp)
-              const badge = roleBadge(entry.role)
-              return (
-                <TableRow key={entry.id}>
-                  <TableCell>
-                    <span className="block text-sm text-foreground">{date.toLocaleDateString("es-CO")}</span>
-                    <span className="block font-mono text-xs text-muted-foreground">{date.toLocaleTimeString("es-CO")}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="block text-sm font-medium text-foreground">{entry.userName ?? "—"}</span>
-                    <span className="block text-xs text-muted-foreground">{entry.email ?? "—"}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", badge.className)}>
-                      {badge.label}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="block text-sm text-foreground">{entry.message}</span>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+      {isLoading ? (
+        <AuditRowsSkeleton cols={courseScoped ? 4 : 5} />
+      ) : (
+        <TablePanel>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="w-36">Entrada</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead className="w-36">Rol</TableHead>
+                <TableHead>Acción</TableHead>
+                {!courseScoped && <TableHead>Curso</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entries.map((entry) => {
+                const date = new Date(entry.timestamp)
+                const badge = roleBadge(entry.role)
+                return (
+                  <TableRow key={entry.id}>
+                    <TableCell>
+                      <span className="block text-sm text-foreground">{date.toLocaleDateString("es-CO")}</span>
+                      <span className="block font-mono text-xs text-muted-foreground">{date.toLocaleTimeString("es-CO")}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="block text-sm font-medium text-foreground">{entry.userName ?? "—"}</span>
+                      <span className="block text-xs text-muted-foreground">{entry.email ?? "—"}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium", badge.className)}>
+                        {badge.label}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="block text-sm text-foreground">{entry.message}</span>
+                    </TableCell>
+                    {!courseScoped && (
+                      <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
+                        {entry.groupName ?? "—"}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
 
-        {isLoading ? (
-          <TableEmptyState>Cargando…</TableEmptyState>
-        ) : entries.length === 0 ? (
-          <TableEmptyState>Aún no hay registros en la bitácora de este curso.</TableEmptyState>
-        ) : null}
-      </TablePanel>
-
-      {totalPages > 1 && (
-        <TablePagination page={page} totalPages={totalPages} onChange={setPage} tone="primary" />
+          {entries.length === 0 && (
+            <TableEmptyState>Aún no hay registros en la bitácora.</TableEmptyState>
+          )}
+        </TablePanel>
       )}
-      <div className="mt-2 text-right text-xs text-muted-foreground">
-        {total} registro(s)
-      </div>
+
+      {total > 0 && (
+        <TablePagination
+          page={page}
+          totalPages={totalPages}
+          onChange={setPage}
+          tone="primary"
+          total={total}
+          pageSize={PAGE_SIZE}
+          label="registros"
+        />
+      )}
     </div>
   )
 }
