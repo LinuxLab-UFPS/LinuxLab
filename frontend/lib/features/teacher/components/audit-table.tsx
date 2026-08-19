@@ -173,12 +173,6 @@ export function AuditTable({ entries }: { entries: AuditEntry[] }) {
                   </TableCell>
                   <TableCell>
                     <span className="block text-sm text-foreground">{entry.message}</span>
-                    {entry.target && (
-                      <span className="block text-xs font-medium text-amber-500">
-                        {entry.action}
-                        {entry.target !== entry.action ? ` · ${entry.target}` : ""}
-                      </span>
-                    )}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate text-sm text-muted-foreground">
                     {entry.groupName ?? "—"}

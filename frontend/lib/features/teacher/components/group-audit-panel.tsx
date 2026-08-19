@@ -26,6 +26,7 @@ import {
 } from "@shared/components/ui/select"
 import { downloadExcel, tableToSheet } from "@shared/lib/excel"
 import { notify } from "@shared/lib/toast"
+import { ActionButton } from "@shared/components/action-button"
 import { useAuditLog } from "@/lib/api/queries"
 import { teacherApi } from "@/lib/features/teacher/api"
 import type { AuditEntry, AuditFilters } from "@/lib/features/teacher/types"
@@ -37,8 +38,6 @@ const CATEGORIES = [
   { value: "all", label: "Todas las categorías" },
   { value: "sesiones", label: "Sesiones" },
   { value: "actividades", label: "Actividades" },
-  { value: "administracion", label: "Administración" },
-  { value: "cursos", label: "Cursos" },
   { value: "matriculas", label: "Matrículas" },
 ] as const
 
@@ -173,15 +172,15 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
           />
         </div>
 
-        <button
-          type="button"
+        <ActionButton
+          tone="primary"
+          className="ml-auto"
           onClick={() => exportAll(filters, groupId, setExporting)}
           disabled={exporting || total === 0}
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md border border-input bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
         >
           <Download className="h-3.5 w-3.5" />
           {exporting ? "Generando…" : "Exportar Excel"}
-        </button>
+        </ActionButton>
       </div>
 
       <TablePanel>
@@ -215,9 +214,6 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
                   </TableCell>
                   <TableCell>
                     <span className="block text-sm text-foreground">{entry.message}</span>
-                    {entry.target && (
-                      <span className="block text-xs font-medium text-amber-500">{entry.action}</span>
-                    )}
                   </TableCell>
                 </TableRow>
               )
@@ -233,7 +229,7 @@ export function GroupAuditPanel({ groupId }: { groupId: string }) {
       </TablePanel>
 
       {totalPages > 1 && (
-        <TablePagination page={page} totalPages={totalPages} onChange={setPage} tone="sky" />
+        <TablePagination page={page} totalPages={totalPages} onChange={setPage} tone="primary" />
       )}
       <div className="mt-2 text-right text-xs text-muted-foreground">
         {total} registro(s)

@@ -189,7 +189,7 @@ function GroupDetailContent() {
               value: "bitacora",
               label: "Bitácora",
               icon: ScrollText,
-              tone: "sky",
+              tone: "primary",
             },
           ]}
         />
