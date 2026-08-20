@@ -2,7 +2,7 @@
   "id": "tema-09",
   "number": 9,
   "title": "Gestión de procesos",
-  "description": "Ver qué está corriendo con ps y top, mover programas entre el primer y el segundo plano, y terminarlos con las señales adecuadas",
+  "description": "Ver qué los procesos que se están ejecutando, cómo ponerlos en primer o segundo plano y cómo administrarlos.",
   "subtopics": [
     {
       "id": "ver-procesos",
@@ -18,6 +18,11 @@
       "id": "senales-y-kill",
       "title": "Señales y kill",
       "file": "03-senales-y-kill.md"
+    },
+    {
+      "id": "daemons",
+      "title": "Daemons y servicios",
+      "file": "04-daemons.md"
     }
   ],
   "resources": [
@@ -38,6 +43,12 @@
       "title": "Bash Reference Manual: Job Control",
       "url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control.html",
       "detail": "gnu.org · Cómo el shell numera y controla los trabajos"
+    },
+    {
+      "type": "link",
+      "title": "Linux network services: cómo arrancarlos, pararlos y ver su estado",
+      "url": "https://www.redhat.com/en/blog/manage-linux-network-services",
+      "detail": "Amoany · Red Hat · Qué es un servicio y cómo se consulta con systemctl"
     }
   ]
 }

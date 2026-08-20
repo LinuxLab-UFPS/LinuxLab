@@ -39,7 +39,7 @@ La opción `x` amplía la lista a todos los procesos propios, estén atados a un
 ps x
 ```
 
-Ahí aparecen muchos con un `?` en la columna `TTY`. Ese interrogante significa que el proceso no tiene terminal asociada, que es el caso de los servicios del sistema, los que trabajan en segundo plano sin que nadie los mire.
+Ahí aparecen muchos con un `?` en la columna `TTY`. Ese interrogante significa que el proceso no tiene terminal asociada. Son los servicios del sistema, que trabajan en segundo plano sin que nadie los mire, y tienen su propio subtema al final del módulo.
 
 La lista es larga, así que se combina con lo del módulo de pipes:
 
