@@ -2,7 +2,7 @@
   "id": "tema-09",
   "number": 9,
   "title": "Gestión de procesos",
-  "description": "Ver qué los procesos que se están ejecutando, cómo ponerlos en primer o segundo plano y cómo administrarlos.",
+  "description": "Ver qué procesos se están ejecutando, cómo ponerlos en primer o segundo plano, cómo terminarlos y qué son los daemons",
   "subtopics": [
     {
       "id": "ver-procesos",
