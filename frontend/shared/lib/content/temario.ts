@@ -105,22 +105,25 @@ export const syllabus: Topic[] = [
     number: 8,
     slug: "usuarios-y-grupos",
     title: "Usuarios y grupos",
-    description: "passwd, shadow y creación de cuentas con useradd y groupadd.",
+    description:
+      "Quién es uno para el sistema, dónde guarda esa información y cómo se comparten archivos con un grupo.",
     subTopics: [
-      { number: 1, title: "passwd" },
-      { number: 2, title: "shadow" },
-      { number: 3, title: "useradd, groupadd" },
+      { number: 1, title: "Quién es uno para el sistema" },
+      { number: 2, title: "Dónde se guarda esa información" },
+      { number: 3, title: "Administrar cuentas y grupos" },
+      { number: 4, title: "Compartir archivos con un grupo" },
     ],
   },
   {
     number: 9,
     slug: "gestion-de-procesos",
     title: "Gestión de procesos",
-    description: "ps, top, kill, jobs y manejo de primer y segundo plano (fg, bg, &).",
+    description: "ps y top, primer y segundo plano, señales con kill y los daemons del sistema.",
     subTopics: [
-      { number: 1, title: "ps, top" },
-      { number: 2, title: "kill, jobs" },
-      { number: 3, title: "Primer plano y segundo plano (fg, bg, &)" },
+      { number: 1, title: "Ver los procesos" },
+      { number: 2, title: "Primer plano y segundo plano" },
+      { number: 3, title: "Señales y kill" },
+      { number: 4, title: "Daemons y servicios" },
     ],
   },
   {
