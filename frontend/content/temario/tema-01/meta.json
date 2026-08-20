@@ -2,12 +2,33 @@
   "id": "tema-01",
   "number": 1,
   "title": "Introducción a Linux",
-  "description": "Historia, arquitectura y fundamentos del sistema operativo Linux",
+  "description": "Historia, las partes del sistema, el Kernel, entorno de ventanas e instalación",
   "subtopics": [
-    { "id": "historia", "title": "Linux: Dónde todo empezó", "file": "01-historia.md" },
-    { "id": "kernel", "title": "El Kernel", "file": "02-kernel.md" },
-    { "id": "entorno-ventanas", "title": "Entorno de ventanas", "file": "03-entorno-ventanas.md" },
-    { "id": "instalacion", "title": "Instalación", "file": "04-instalacion.md" }
+    {
+      "id": "historia",
+      "title": "Linux: Dónde todo empezó",
+      "file": "01-historia.md"
+    },
+    {
+      "id": "kernel",
+      "title": "Las partes del sistema",
+      "file": "02-kernel.md"
+    },
+    {
+      "id": "que-hace-kernel",
+      "title": "El Kernel",
+      "file": "03-que-hace-el-kernel.md"
+    },
+    {
+      "id": "entorno-ventanas",
+      "title": "Entorno de ventanas",
+      "file": "04-entorno-ventanas.md"
+    },
+    {
+      "id": "instalacion",
+      "title": "Instalación",
+      "file": "05-instalacion.md"
+    }
   ],
   "resources": [
     {

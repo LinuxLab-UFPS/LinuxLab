@@ -64,7 +64,7 @@ Un programa puede ignorar `TERM`. Si está colgado o bloqueado, la petición de 
 kill -9 38731
 ```
 
-`KILL` es distinta de todas las demás. **No se le entrega al programa**, el kernel termina el proceso directamente. Por eso funciona siempre y por eso es el último recurso: el programa no tiene ocasión de guardar nada ni de cerrar los archivos que tuviera abiertos, y puede dejar datos a medio escribir.
+`KILL` es distinta de todas las demás. **No se le entrega al programa**, el Kernel termina el proceso directamente. Por eso funciona siempre y por eso es el último recurso: el programa no tiene ocasión de guardar nada ni de cerrar los archivos que tuviera abiertos, y puede dejar datos a medio escribir.
 
 El orden sensato es probar primero lo suave y subir solo si hace falta:
 

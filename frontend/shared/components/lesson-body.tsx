@@ -84,7 +84,10 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 src={block.src}
                 controls
                 preload="metadata"
-                className="w-full my-8 rounded-lg border border-border bg-black"
+                // El fondo va en el color de la tarjeta, no en negro: los videos
+                // se renderizan sobre el fondo claro del sitio, y un contenedor
+                // negro les pone banda alrededor y da un destello al cargar.
+                className="w-full my-8 rounded-lg border border-border bg-card"
               />
             ) : (
               <Pending

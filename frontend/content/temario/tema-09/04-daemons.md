@@ -30,7 +30,7 @@ Eso no lo convierte en un daemon, pero resuelve el caso práctico de dejar algo 
 
 ## De quién descienden
 
-Todos cuelgan del proceso `1`, que en la mayoría de distribuciones actuales es `systemd`. Es el primero que arranca el kernel y el encargado de poner en marcha el resto de servicios (Shotts, 2026).
+Todos cuelgan del proceso `1`, que en la mayoría de distribuciones actuales es `systemd`. Es el primero que arranca el Kernel y el encargado de poner en marcha el resto de servicios (Shotts, 2026).
 
 ```bash
 ps -eo pid,ppid,tty,comm | head -3
@@ -42,7 +42,7 @@ ps -eo pid,ppid,tty,comm | head -3
     838       1 ?        dockerd
 ```
 
-`systemd` tiene `PPID 0` porque no nació de ningún proceso, lo creó el kernel. Y `dockerd` tiene `PPID 1` porque lo arrancó él.
+`systemd` tiene `PPID 0` porque no nació de ningún proceso, lo creó el Kernel. Y `dockerd` tiene `PPID 1` porque lo arrancó él.
 
 Esa adopción se puede provocar a mano. Un proceso cuyo padre muere no se queda huérfano, lo recoge el proceso `1`:
 
