@@ -1,5 +1,3 @@
-## Dos formas de hablarle al sistema
-
 Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos (NDG, 2024).
 
 La **interfaz gráfica (GUI)** son ventanas, íconos y menús, y el sistema responde a los clics del ratón. Es lo que trae cualquier equipo con Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
@@ -12,7 +10,7 @@ La **interfaz de línea de comandos (CLI)** es texto puro. Se escribe la orden y
 
 Persiste el cliché de que Linux es una terminal negra con texto verde y que usarlo significa renunciar a cualquier cosa que se parezca a una interfaz normal. Linux tiene escritorios gráficos completos: barra de tareas, explorador de archivos, notificaciones y todo lo que esperarías de un sistema moderno. Cualquier persona puede instalarlo y usarlo desde el primer día sin tocar una terminal, y hay opciones que se parecen bastante a Windows, otras más minimalistas y otras pensadas para computadores con pocos recursos.
 
-Un **entorno de escritorio** es esa capa visual del sistema: las ventanas, el panel, los íconos del escritorio, el menú de aplicaciones. No es parte del kernel, sino software independiente que se instala encima, y en Linux eliges cuál usar o lo cambias después. Esa flexibilidad no existe en Windows ni en macOS, donde la interfaz la define la empresa y no se toca.
+Un **entorno de escritorio** es esa capa visual del sistema: las ventanas, el panel, los íconos del escritorio, el menú de aplicaciones. No es parte del Kernel, sino software independiente que se instala encima, y en Linux eliges cuál usar o lo cambias después. Esa flexibilidad no existe en Windows ni en macOS, donde la interfaz la define la empresa y no se toca.
 
 ### Qué hace un entorno de escritorio
 

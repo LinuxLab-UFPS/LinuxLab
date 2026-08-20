@@ -8,7 +8,7 @@ Linux es un sistema operativo, y es probable que hoy hayas usado varios sin dart
 
 - Más del 90% de los servidores web del mundo (W3Techs, 2024).
 - Las 500 supercomputadoras más potentes del planeta, sin excepción (TOP500, 2024).
-- Android, el sistema operativo móvil más usado, construido sobre el kernel de Linux.
+- Android, el sistema operativo móvil más usado, construido sobre el Kernel de Linux.
 - La infraestructura de nube detrás de AWS, Google Cloud y Azure.
 
 Linux empezó como el proyecto personal de un estudiante universitario y hoy sostiene buena parte de la infraestructura tecnológica global, construido de forma voluntaria por programadores repartidos por el mundo (NDG, 2024).
@@ -29,7 +29,7 @@ Con el tiempo, distintas organizaciones modificaron y ramificaron Unix hasta pro
 
 ## El salto a Linux: Linus Torvalds (1991)
 
-En 1991, **Linus Torvalds**, estudiante de ciencias de la computación en la Universidad de Helsinki, estaba frustrado con MINIX, un sistema tipo Unix diseñado para enseñar, con una licencia que limitaba lo que se podía hacer con él y cuyo autor no quería convertirlo en un sistema operativo completo. Decidió escribir su propio kernel y el 25 de agosto lo anunció en un grupo de noticias:
+En 1991, **Linus Torvalds**, estudiante de ciencias de la computación en la Universidad de Helsinki, estaba frustrado con MINIX, un sistema tipo Unix diseñado para enseñar, con una licencia que limitaba lo que se podía hacer con él y cuyo autor no quería convertirlo en un sistema operativo completo. Decidió escribir su propio Kernel y el 25 de agosto lo anunció en un grupo de noticias:
 
 ```
 Hello everybody out there using minix -
@@ -37,20 +37,20 @@ I'm doing a (free) operating system (just a hobby, won't be big
 and professional like gnu) for 386(486) AT clones.
 ```
 
-Ese "hobby" es hoy el kernel más usado del mundo, y lo que marcó la diferencia fue la licencia. Torvalds publicó el código fuente permitiendo que cualquiera lo estudiara, modificara y redistribuyera, así que programadores de todo el mundo empezaron a corregir errores y añadir funcionalidades sobre el trabajo de los demás.
+Ese "hobby" es hoy el Kernel más usado del mundo, y lo que marcó la diferencia fue la licencia. Torvalds publicó el código fuente permitiendo que cualquiera lo estudiara, modificara y redistribuyera, así que programadores de todo el mundo empezaron a corregir errores y añadir funcionalidades sobre el trabajo de los demás.
 
 Aun así, Linux no es UNIX, sino **UNIX-like**. Cumple los requisitos de la especificación y se comporta de manera similar, pero nunca ha pasado la certificación de The Open Group.
 
 ## El proyecto GNU: las herramientas que completaron Linux
 
-Un kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix:
+Un Kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio Kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix:
 
 - **GCC:** el compilador de C que convierte código fuente en programas ejecutables.
-- **Bash:** el intérprete de comandos que usarás en este curso.
+- **Bash:** el intérprete de comandos que usarás en este laboratorio.
 - **Emacs:** un editor de texto extensible que sigue en uso hoy.
 - **Coreutils:** las utilidades básicas del sistema (`ls`, `cp`, `mv`, `cat` y decenas más).
 
-Como el código de GNU era libre, los programadores de Linux pudieron incorporar esas herramientas y completar el sistema. A esa combinación se le llama técnicamente **GNU/Linux**, y es a lo que se refiere casi todo el mundo cuando dice simplemente "Linux", aunque el nombre a secas designa solo el kernel.
+Como el código de GNU era libre, los programadores de Linux pudieron incorporar esas herramientas y completar el sistema. A esa combinación se le llama técnicamente **GNU/Linux**, y es a lo que se refiere casi todo el mundo cuando dice simplemente "Linux", aunque el nombre a secas designa solo el Kernel.
 
 ---
 
