@@ -19,7 +19,7 @@ function serializeUser(user) {
     email: user.email,
     name: user.name,
     role: user.role,
-    code: user.code ?? null,
+    code: user.studentProfile?.code ?? null,
     googleId: user.google_id,
     active: user.active,
     linuxUsername: user.linuxAccount?.linux_username ?? null,

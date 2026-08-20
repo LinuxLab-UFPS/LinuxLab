@@ -52,11 +52,11 @@ async function reconcileAll() {
   //    si existe, el directorio debe ser del docente (se repara idempotente).
   const groups = await prisma.group.findMany({
     where: { archived: false, group_dir: { not: null } },
-    include: { teacher: { include: { linuxAccount: true } } },
+    include: { teacher: { include: { user: { include: { linuxAccount: true } } } } },
   })
   for (const group of groups) {
     const groupName = groupNameOf(group)
-    const teacherUsername = group.teacher.linuxAccount?.linux_username
+    const teacherUsername = group.teacher.user?.linuxAccount?.linux_username
     if (!groupName || !teacherUsername) continue
     try {
       if (!(await groupExists(groupName))) {
@@ -86,15 +86,15 @@ async function reconcileAll() {
   const enrollments = await prisma.enrollment.findMany({
     where: { status: "active", group: { archived: false } },
     include: {
-      student: { include: { linuxAccount: true } },
-      group: { include: { teacher: { include: { linuxAccount: true } } } },
+      student: { include: { user: { include: { linuxAccount: true } } } },
+      group: { include: { teacher: { include: { user: { include: { linuxAccount: true } } } } } },
     },
   })
   for (const { student, group } of enrollments) {
-    const account = student.linuxAccount
+    const account = student.user?.linuxAccount
     if (!account) continue
     const groupName = groupNameOf(group)
-    const teacherUsername = group.teacher.linuxAccount?.linux_username
+    const teacherUsername = group.teacher.user?.linuxAccount?.linux_username
     try {
       if (await userExists(account.linux_username)) {
         const ok = groupName && teacherUsername
@@ -129,7 +129,7 @@ async function reconcileAll() {
 async function reconcileGroup({ groupId }) {
   const group = await prisma.group.findUnique({
     where: { id: groupId },
-    include: { teacher: { include: { linuxAccount: true } } },
+    include: { teacher: { include: { user: { include: { linuxAccount: true } } } } },
   })
   if (!group) {
     throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
@@ -141,7 +141,7 @@ async function reconcileGroup({ groupId }) {
   }
 
   const groupName = groupNameOf(group)
-  const teacherUsername = group.teacher.linuxAccount?.linux_username ?? null
+  const teacherUsername = group.teacher.user?.linuxAccount?.linux_username ?? null
   const out = { checked: 0, orphaned: 0, requeued: 0 }
 
   // El grupo Unix y el directorio deben existir (el docente puede no estar
@@ -164,11 +164,11 @@ async function reconcileGroup({ groupId }) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    include: { student: { include: { linuxAccount: true } } },
+    include: { student: { include: { user: { include: { linuxAccount: true } } } } },
   })
 
   for (const { student } of enrollments) {
-    const account = student.linuxAccount
+    const account = student.user?.linuxAccount
     if (!account) continue
     out.checked += 1
     try {

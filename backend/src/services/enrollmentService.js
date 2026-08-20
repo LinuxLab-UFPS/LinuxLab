@@ -26,7 +26,7 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
   const normalizedEmail = validateEmail(email)
   let user = await tx.user.findUnique({
     where: { email: normalizedEmail },
-    include: { linuxAccount: true },
+    include: { linuxAccount: true, studentProfile: true },
   })
 
   if (user && user.role !== Role.student) {
@@ -42,9 +42,12 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
         name: name?.trim() || normalizedEmail.split("@")[0],
         email: normalizedEmail,
         role: Role.student,
-        code: code?.trim() || null,
         active: true,
+        studentProfile: {
+          create: { code: code?.trim() || null },
+        },
       },
+      include: { linuxAccount: true, studentProfile: true },
     })
     const linuxUsername = await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
     user.linuxAccount = {
@@ -55,19 +58,20 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
     return user
   }
 
-  if (code?.trim() && !user.code) {
-    await tx.user.update({
-      where: { id: user.id },
-      data: { code: code.trim() },
+  if (code?.trim() && !user.studentProfile?.code) {
+    await tx.studentProfile.upsert({
+      where: { user_id: user.id },
+      update: { code: code.trim() },
+      create: { user_id: user.id, code: code.trim() },
     })
-    user.code = code.trim()
+    user.studentProfile = { ...user.studentProfile, code: code.trim() }
   }
 
   if (!user.linuxAccount) {
     await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
     user = await tx.user.findUnique({
       where: { id: user.id },
-      include: { linuxAccount: true },
+      include: { linuxAccount: true, studentProfile: true },
     })
   }
 
@@ -79,7 +83,7 @@ function serializeStudent(user) {
     id: user.id,
     name: user.name,
     email: user.email,
-    code: user.code ?? null,
+    code: user.studentProfile?.code ?? null,
   }
 }
 
@@ -121,6 +125,15 @@ async function registerStudent(args) {
 
 async function enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername, tx = prisma }) {
   const user = await ensureStudentExists({ email, name, code, tx })
+
+  if (await hasActiveEnrollmentElsewhere(user.id, groupId, tx)) {
+    return {
+      enrolled: false,
+      reason: "already_in_other_group",
+      student: serializeStudent(user),
+      linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
+    }
+  }
 
   const existing = await tx.enrollment.findUnique({
     where: { student_id_group_id: { student_id: user.id, group_id: groupId } },
@@ -169,7 +182,7 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
 
   const finalUser = await tx.user.findUnique({
     where: { id: user.id },
-    include: { linuxAccount: true },
+    include: { linuxAccount: true, studentProfile: true },
   })
 
   return {
@@ -224,7 +237,7 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
   // error de fila; los demas se usan tal cual.
   const existingUsers = await db.user.findMany({
     where: { email: { in: emails } },
-    include: { linuxAccount: true },
+    include: { linuxAccount: true, studentProfile: true },
   })
   const byEmail = new Map(existingUsers.map((u) => [u.email, u]))
 
@@ -244,8 +257,12 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
     }
     if (existing) {
       // Un codigo que faltaba se rellena, como hacia el flujo fila por fila.
-      if (r.code && !existing.code) {
-        await db.user.update({ where: { id: existing.id }, data: { code: r.code } })
+      if (r.code && !existing.studentProfile?.code) {
+        await db.studentProfile.upsert({
+          where: { user_id: existing.id },
+          update: { code: r.code },
+          create: { user_id: existing.id, code: r.code },
+        })
       }
       usersById.set(existing.id, {
         email: existing.email,
@@ -267,7 +284,6 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
         name: s.name || s.email.split("@")[0],
         email: s.email,
         role: Role.student,
-        code: s.code,
         active: true,
       })),
       skipDuplicates: true,
@@ -279,6 +295,7 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
     })
     const createdByEmail = new Map(created.map((u) => [u.email, u]))
 
+    const profilesToCreate = []
     for (const s of toCreate) {
       let user = createdByEmail.get(s.email)
       if (!user) {
@@ -297,12 +314,23 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
         })
         continue
       }
+      profilesToCreate.push({ user_id: user.id, code: s.code?.trim() || null })
       usersById.set(user.id, {
         email: user.email,
         linuxUsername: user.linuxAccount?.linux_username ?? null,
         linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
       })
       toEnroll.push({ row: s.row, email: s.email, userId: user.id })
+    }
+
+    // Los perfiles de los usuarios nuevos, en lote. skipDuplicates absorbe la
+    // carrera de dos requests creando el mismo usuario entre el createMany y
+    // este createMany (el perfil ya existiria en ese caso).
+    if (profilesToCreate.length > 0) {
+      await db.studentProfile.createMany({
+        data: profilesToCreate,
+        skipDuplicates: true,
+      })
     }
   }
 
@@ -322,6 +350,38 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
         linuxProvisioned: false,
       })
     }
+  }
+
+  // Un estudiante solo puede estar activo en un grupo no archivado a la vez:
+  // los que ya estan matriculados en otro grupo activo se descartan por fila,
+  // sin matricularlos aqui (el grupo se crea igual con el resto).
+  const toEnrollIds = toEnroll.map((e) => e.userId)
+  const elsewhereActive = await db.enrollment.findMany({
+    where: {
+      student_id: { in: toEnrollIds },
+      status: "active",
+      group: { archived: false },
+      group_id: { not: groupId },
+    },
+    select: { student_id: true },
+  })
+  if (elsewhereActive.length > 0) {
+    const elsewhereIds = new Set(elsewhereActive.map((e) => e.student_id))
+    const keep = []
+    for (const e of toEnroll) {
+      if (elsewhereIds.has(e.userId)) {
+        usersById.delete(e.userId)
+        result.errors.push({
+          row: e.row,
+          email: e.email,
+          error: "El estudiante ya está matriculado en otro grupo activo",
+        })
+      } else {
+        keep.push(e)
+      }
+    }
+    toEnroll.length = 0
+    toEnroll.push(...keep)
   }
 
   // Matriculas ya existentes: no se duplican, cuentan como omitidas.
@@ -372,12 +432,17 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     include: {
       student: {
         select: {
-          id: true,
-          name: true,
-          email: true,
+          user_id: true,
           code: true,
-          last_login: true,
-          linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              last_login: true,
+              linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
+            },
+          },
         },
       },
     },
@@ -397,16 +462,16 @@ async function listByGroup({ groupId, teacherUserId, role }) {
 
   return enrollments.map((e) => ({
     enrollmentId: e.id,
-    id: e.student.id,
-    name: e.student.name,
-    email: e.student.email,
+    id: e.student.user_id,
+    name: e.student.user.name,
+    email: e.student.user.email,
     code: e.student.code,
     status: e.status,
-    linuxUsername: e.student.linuxAccount?.linux_username ?? null,
-    linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
+    linuxUsername: e.student.user.linuxAccount?.linux_username ?? null,
+    linuxProvisioned: e.student.user.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.enrolled_at,
-    lastLogin: e.student.last_login?.toISOString() ?? null,
-    completedActivities: completedMap.get(e.student.id) ?? 0,
+    lastLogin: e.student.user.last_login?.toISOString() ?? null,
+    completedActivities: completedMap.get(e.student.user_id) ?? 0,
     totalActivities,
   }))
 }
@@ -422,6 +487,22 @@ async function hasActiveEnrollment(userId) {
       student_id: userId,
       status: "active",
       group: { archived: false },
+    },
+  })
+  return count > 0
+}
+
+/**
+ * Devuelve true si el estudiante ya tiene una matricula activa vigente en un
+ * grupo distinto al indicado (regla: un estudiante en un solo grupo a la vez).
+ */
+async function hasActiveEnrollmentElsewhere(userId, excludeGroupId, db = prisma) {
+  const count = await db.enrollment.count({
+    where: {
+      student_id: userId,
+      status: "active",
+      group: { archived: false },
+      group_id: { not: excludeGroupId },
     },
   })
   return count > 0
@@ -526,6 +607,7 @@ module.exports = {
   importCsv,
   listByGroup,
   hasActiveEnrollment,
+  hasActiveEnrollmentElsewhere,
   getActiveGroupId,
   serializeStudent,
 }

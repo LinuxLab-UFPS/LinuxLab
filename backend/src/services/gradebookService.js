@@ -93,7 +93,11 @@ async function loadGroupData(groupId) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    select: { student: { select: { id: true, name: true, email: true, code: true } } },
+    select: {
+      student: {
+        select: { user_id: true, code: true, user: { select: { id: true, name: true, email: true } } },
+      },
+    },
     orderBy: { enrolled_at: "asc" },
   })
 
@@ -161,18 +165,18 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
     activitySums.set(gaId, aAvg)
 
     for (const student of students) {
-      const cell = buildCell(ga, attemptMap.get(key(student.id, gaId)) ?? [], submissionMap.get(key(student.id, gaId)) ?? [], now)
-      if (!cells[student.id]) cells[student.id] = {}
-      cells[student.id][gaId] = cell
+      const cell = buildCell(ga, attemptMap.get(key(student.user_id, gaId)) ?? [], submissionMap.get(key(student.user_id, gaId)) ?? [], now)
+      if (!cells[student.user_id]) cells[student.user_id] = {}
+      cells[student.user_id][gaId] = cell
 
       if (contributesToAverage(cell)) {
         const value = averageValueOf(cell)
         aAvg.sum += value
         aAvg.count += 1
-        const sAvg = studentSums.get(student.id) ?? { sum: 0, count: 0 }
+        const sAvg = studentSums.get(student.user_id) ?? { sum: 0, count: 0 }
         sAvg.sum += value
         sAvg.count += 1
-        studentSums.set(student.id, sAvg)
+        studentSums.set(student.user_id, sAvg)
       }
     }
   }
@@ -187,7 +191,7 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
   }
 
   return {
-    students: students.map((s) => ({ id: s.id, name: s.name, code: s.code })),
+    students: students.map((s) => ({ id: s.user_id, name: s.user.name, code: s.code })),
     activities: activities.map((ga) => ({
       id: ga.id,
       activityNumber: ga.activity_number,
@@ -304,7 +308,7 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
 
   const student = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { id: true, name: true, email: true, code: true },
+    select: { id: true, name: true, email: true, studentProfile: { select: { code: true } } },
   })
   if (!student) throw new NotFoundError("Estudiante no encontrado")
 
@@ -314,11 +318,11 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
   if (!enrollment) throw new NotFoundError("El estudiante no está inscrito en este grupo")
 
   const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
-  const groupStudentIds = enrollments.map((e) => e.student.id)
+  const groupStudentIds = enrollments.map((e) => e.student.user_id)
   const { series, topics } = buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMap, submissionMap)
 
   return {
-    student: { id: student.id, name: student.name, email: student.email, code: student.code },
+    student: { id: student.id, name: student.name, email: student.email, code: student.studentProfile?.code },
     series,
     topics,
     summary: summarizeSeries(series),
@@ -342,7 +346,7 @@ async function getMyGrades(studentUserId) {
   if (!enrollment) return empty
 
   const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(enrollment.group_id)
-  const groupStudentIds = enrollments.map((e) => e.student.id)
+  const groupStudentIds = enrollments.map((e) => e.student.user_id)
   const { series, topics } = buildSeriesForStudent(studentUserId, activities, groupStudentIds, attemptMap, submissionMap)
 
   return {

@@ -449,7 +449,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
   const studentIds = grouped.map((g) => g.student_id)
   const students = await prisma.user.findMany({
     where: { id: { in: studentIds } },
-    select: { id: true, name: true, email: true, code: true },
+    select: { id: true, name: true, email: true, studentProfile: { select: { code: true } } },
   })
   const studentMap = new Map(students.map((s) => [s.id, s]))
 
@@ -465,7 +465,7 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
         studentId: g.student_id,
         studentName: student?.name ?? "—",
         studentEmail: student?.email ?? "—",
-        studentCode: student?.code ?? null,
+        studentCode: student?.studentProfile?.code ?? null,
         attemptsCount: g._count.id,
         lastAttemptDate: g._max.created_at?.toISOString() ?? null,
         finalScore: finalScore(attempts),
@@ -493,15 +493,21 @@ async function getManualSubmissions({ groupId, activityId, teacherUserId, role }
     where: { group_activity_id: ga.id },
     orderBy: { submitted_at: "desc" },
     include: {
-      student: { select: { id: true, name: true, email: true, code: true } },
+      student: {
+        select: {
+          user_id: true,
+          code: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+      },
     },
   })
 
   return subs.map((s) => ({
     submissionId: s.id,
     studentId: s.student_id,
-    studentName: s.student.name,
-    studentEmail: s.student.email,
+    studentName: s.student.user?.name ?? "—",
+    studentEmail: s.student.user?.email ?? "—",
     studentCode: s.student.code,
     status: s.status,
     score: s.score,

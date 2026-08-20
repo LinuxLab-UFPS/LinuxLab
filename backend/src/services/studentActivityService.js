@@ -35,7 +35,7 @@ function resolveRuta(params, workdir) {
 async function listMine(studentUserId) {
   const enrollment = await prisma.enrollment.findFirst({
     where: { student_id: studentUserId, status: "active", group: { archived: false } },
-    include: { group: { include: { teacher: { select: { name: true } } } } },
+    include: { group: { include: { teacher: { include: { user: { select: { name: true } } } } } } },
     orderBy: { enrolled_at: "asc" },
   })
   if (!enrollment) return { group: null, activities: [] }
@@ -64,7 +64,7 @@ async function listMine(studentUserId) {
       id: enrollment.group.id,
       name: enrollment.group.name,
       description: enrollment.group.description ?? "",
-      teacherName: enrollment.group.teacher?.name ?? "",
+      teacherName: enrollment.group.teacher?.user?.name ?? "",
     },
     activities: rows.map((ga) => {
       const attempts = ga.attempts ?? []
@@ -227,7 +227,7 @@ async function checkForStudent(studentUserId, groupActivityId) {
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
-    select: { code: true, email: true },
+    select: { email: true, studentProfile: { select: { code: true } } },
   })
 
   const payload = JSON.stringify({
@@ -340,9 +340,17 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
 
   const student = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { id: true, name: true, email: true, code: true },
+    select: { id: true, name: true, email: true, studentProfile: { select: { code: true } } },
   })
   if (!student) throw new NotFoundError("Estudiante no encontrado")
+
+  // El contrato con el frontend mantiene `code` plano en la raiz del estudiante.
+  const studentView = {
+    id: student.id,
+    name: student.name,
+    email: student.email,
+    code: student.studentProfile?.code ?? null,
+  }
 
   const activity = {
     id: ga.id,
@@ -358,12 +366,12 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
     const submission = await prisma.activitySubmission.findFirst({
       where: { group_activity_id: ga.id, student_id: studentId },
       orderBy: { submitted_at: "desc" },
-      include: { grader: { select: { name: true } } },
+      include: { grader: { include: { user: { select: { name: true } } } } },
     })
 
     return {
       type: "manual",
-      student,
+      student: studentView,
       activity,
       submission: submission ? {
         id: submission.id,
@@ -371,7 +379,7 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
         evidence: submission.evidence,
         score: submission.score,
         feedback: submission.feedback,
-        gradedBy: submission.grader?.name ?? null,
+        gradedBy: submission.grader?.user?.name ?? null,
         gradedAt: submission.graded_at?.toISOString() ?? null,
         submittedAt: submission.submitted_at.toISOString(),
       } : null,
@@ -392,7 +400,7 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
 
   return {
     type: "automatic",
-    student,
+    student: studentView,
     activity,
     attempts: attempts.map((a) => ({
       attemptNumber: a.attempt_number,

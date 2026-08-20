@@ -20,7 +20,7 @@ const EVAL_TIMEOUT_MS = 20000
  * peticion, que es lo que importa.
  */
 function personalize(params, student) {
-  const replacements = { $codigo: student.code, $correo: student.email }
+  const replacements = { $codigo: student.studentProfile?.code ?? null, $correo: student.email }
   const output = {}
   for (const [key, value] of Object.entries(params ?? {})) {
     output[key] =
@@ -87,7 +87,7 @@ async function evaluate({ slug, studentUserId }) {
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
-    select: { code: true, email: true },
+    select: { email: true, studentProfile: { select: { code: true } } },
   })
 
   // Sin codigo no se puede evaluar una actividad que lo pide, y el mensaje tiene
@@ -95,7 +95,7 @@ async function evaluate({ slug, studentUserId }) {
   const usesCode = activity.checks.some((c) =>
     Object.values(c.params ?? {}).some((v) => typeof v === "string" && NEEDS_CODE.test(v)),
   )
-  if (usesCode && !student?.code) {
+  if (usesCode && !student?.studentProfile?.code) {
     throw new AppError("Tu perfil no tiene código estudiantil registrado", 409, "CONFLICT")
   }
 

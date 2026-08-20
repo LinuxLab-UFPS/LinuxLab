@@ -140,8 +140,14 @@ async function getSubmission(submissionId, userId, role) {
     where: { id: submissionId },
     include: {
       groupActivity: { select: { id: true, group_id: true, title: true, max_score: true } },
-      student: { select: { id: true, name: true, email: true, code: true } },
-      grader: { select: { name: true } },
+      student: {
+        select: {
+          user_id: true,
+          code: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+      },
+      grader: { include: { user: { select: { name: true } } } },
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
@@ -164,13 +170,13 @@ async function getSubmission(submissionId, userId, role) {
     evidence: submission.evidence,
     score: submission.score,
     feedback: submission.feedback,
-    gradedBy: submission.grader?.name ?? null,
+    gradedBy: submission.grader?.user?.name ?? null,
     gradedAt: submission.graded_at?.toISOString() ?? null,
     submittedAt: submission.submitted_at.toISOString(),
     student: {
-      id: submission.student.id,
-      name: submission.student.name,
-      email: submission.student.email,
+      id: submission.student.user_id,
+      name: submission.student.user.name,
+      email: submission.student.user.email,
       code: submission.student.code,
     },
     activity: {

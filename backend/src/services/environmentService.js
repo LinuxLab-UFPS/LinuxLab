@@ -45,7 +45,11 @@ async function snapshot() {
         id: true,
         name: true,
         group_dir: true,
-        teacher: { select: { linuxAccount: { select: { linux_username: true } } } },
+        teacher: {
+          include: {
+            user: { select: { linuxAccount: { select: { linux_username: true } } } },
+          },
+        },
       },
     }),
     containerUsers(),
@@ -70,7 +74,7 @@ async function snapshot() {
   const courses = []
   for (const group of groups) {
     const groupName = groupNameOf(group.id)
-    const teacher = group.teacher.linuxAccount?.linux_username ?? null
+    const teacher = group.teacher.user?.linuxAccount?.linux_username ?? null
     const path = teacher && group.group_dir
       ? `/home/${teacher}/grupos/${group.group_dir}`
       : null

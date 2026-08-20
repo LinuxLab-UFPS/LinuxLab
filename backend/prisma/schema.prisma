@@ -17,7 +17,6 @@ model User {
   email      String    @unique @db.VarChar(255)
   name       String    @db.VarChar(255)
   role       Role
-  code       String?   @db.VarChar(20)
   google_id  String?   @unique @db.VarChar(255)
   active     Boolean   @default(true)
   last_login DateTime? @map("last_login")
@@ -25,11 +24,8 @@ model User {
   updated_at DateTime  @updatedAt
 
   linuxAccount         LinuxAccount?
-  taughtGroups         Group[]               @relation("TeacherGroups")
-  enrollments          Enrollment[]          @relation("StudentEnrollments")
-  activityAttempts     ActivityAttempt[]     @relation("StudentAttempts")
-  activitySubmissions  ActivitySubmission[]  @relation("StudentSubmissions")
-  gradedSubmissions    ActivitySubmission[]  @relation("SubmissionGraders")
+  studentProfile       StudentProfile?
+  teacherProfile       TeacherProfile?
   auditEvents          AuditEvent[]          @relation("AuditEvents")
   createdDefinitions   ActivityDefinition[]  @relation("ActivityCreators")
   userProvisioningJobs UserProvisioningJob[]
@@ -45,13 +41,83 @@ model LinuxAccount {
   @@map("linux_accounts")
 }
 
+/// Perfil de estudiante: datos que solo aplican a los usuarios con rol
+/// `student`. Cada `StudentProfile` es 1:1 con su `User`; las relaciones que
+/// solo existen para estudiantes (matriculas, intentos, entregas) cuelgan de
+/// aqui, asi un usuario de otro rol no puede tenerlas por su construccion.
+model StudentProfile {
+  user_id String @id @map("user_id") @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  code    String? @unique @db.VarChar(20)
+
+  enrollments         Enrollment[]         @relation("StudentEnrollments")
+  activityAttempts    ActivityAttempt[]    @relation("StudentAttempts")
+  activitySubmissions ActivitySubmission[] @relation("StudentSubmissions")
+  lessonProgress      LessonProgress[]     @relation("StudentLessonProgress")
+
+  @@map("student_profiles")
+}
+
+/// Perfil de docente: datos que solo aplican a los usuarios con rol `teacher`.
+/// Relaciones que solo existen para docentes (grupos que ensena, calificaciones
+/// que asigna) cuelgan de aqui.
+model TeacherProfile {
+  user_id String @id @map("user_id") @db.Uuid
+  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  taughtGroups      Group[]               @relation("TeacherGroups")
+  gradedSubmissions ActivitySubmission[]  @relation("SubmissionGraders")
+
+  @@map("teacher_profiles")
+}
+
+/// Tema del temario (RF-01). El temario es fijo para todos los grupos: se
+/// siembra una sola vez desde el sylabus y no se edita por curso. Cada tema
+/// tiene uno o mas subtemas (`Subtopic`), que son los que el estudiante lee y
+/// sobre los que se calcula el progreso.
+model Topic {
+  id            String   @id @default(uuid()) @db.Uuid
+  number        Int      @unique
+  slug          String   @unique @db.VarChar(64)
+  title         String   @db.VarChar(255)
+  description   String?  @db.Text
+  complementary Boolean  @default(false)
+  order         Int      @default(0)
+
+  subTopics              Subtopic[]
+  activityDefinitions    ActivityDefinition[]
+
+  @@map("topics")
+}
+
+/// Subtema (leccion) de un tema del temario. `slug` es el id estable que
+/// conoce el frontend (el `id` de `meta.json`); `LessonProgress` lo usa via
+/// `subtopic_id` para marcar lo que el estudiante ya leyó.
+model Subtopic {
+  id        String  @id @default(uuid()) @db.Uuid
+  topic_id  String  @map("topic_id") @db.Uuid
+  topic     Topic   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
+  number    Int     @default(0)
+  title     String  @db.VarChar(255)
+  slug      String  @db.VarChar(64)
+  order     Int     @default(0)
+
+  activityDefinitions ActivityDefinition[]
+  lessonProgress      LessonProgress[]
+
+  @@unique([topic_id, number])
+  @@unique([topic_id, slug])
+  @@index([topic_id])
+  @@map("subtopics")
+}
+
 model Group {
   id           String       @id @default(uuid()) @db.Uuid
   group_number Int          @unique @default(autoincrement()) @map("group_number")
   name         String       @db.VarChar(255)
   description  String?      @map("description") @db.Text
   teacher_id   String       @map("teacher_id") @db.Uuid
-  teacher      User         @relation("TeacherGroups", fields: [teacher_id], references: [id])
+  teacher      TeacherProfile @relation("TeacherGroups", fields: [teacher_id], references: [user_id])
   archived     Boolean      @default(false)
   created_at   DateTime     @default(now()) @map("created_at")
   updated_at   DateTime     @updatedAt @map("updated_at")
@@ -62,6 +128,8 @@ model Group {
   userProvisioningJobs  UserProvisioningJob[]
   groupTeardownJobs     GroupTeardownJob[]
   groupActivities       GroupActivity[]
+  activityAttempts      ActivityAttempt[]
+  lessonProgress        LessonProgress[]
 
   @@map("groups")
 }
@@ -79,7 +147,10 @@ model ActivityDefinition {
   slug            String?  @unique @db.VarChar(64)
   title           String   @db.VarChar(255)
   instructions    String?  @db.Text
-  topic_number    Int?     @map("topic_number")
+  topic_id        String?  @map("topic_id") @db.Uuid
+  topic           Topic?   @relation(fields: [topic_id], references: [id])
+  subtopic_id     String?  @map("subtopic_id") @db.Uuid
+  subtopic        Subtopic? @relation(fields: [subtopic_id], references: [id])
   difficulty      String   @default("basic") @db.VarChar(16)
   kind            String   @default("activity") @db.VarChar(16)
   /// Arbol de archivos que la actividad prepara en `~/.actividades/<slug>/`.
@@ -175,8 +246,10 @@ model ActivityAttempt {
   definition             ActivityDefinition @relation(fields: [activity_definition_id], references: [id])
   group_activity_id      String?            @map("group_activity_id") @db.Uuid
   groupActivity          GroupActivity?     @relation(fields: [group_activity_id], references: [id])
+  group_id               String?            @map("group_id") @db.Uuid
+  group                  Group?             @relation(fields: [group_id], references: [id])
   student_id             String             @map("student_id") @db.Uuid
-  student                User               @relation("StudentAttempts", fields: [student_id], references: [id])
+  student                StudentProfile     @relation("StudentAttempts", fields: [student_id], references: [user_id])
   attempt_number         Int                @default(1) @map("attempt_number")
   passed                 Boolean            @default(false)
   score                  Int                @default(0)
@@ -185,6 +258,7 @@ model ActivityAttempt {
 
   @@index([activity_definition_id, student_id])
   @@index([group_activity_id])
+  @@index([group_id])
   @@map("activity_attempts")
 }
 
@@ -196,7 +270,7 @@ model ActivitySubmission {
   group_activity_id String        @map("group_activity_id") @db.Uuid
   groupActivity     GroupActivity @relation(fields: [group_activity_id], references: [id])
   student_id        String        @map("student_id") @db.Uuid
-  student           User          @relation("StudentSubmissions", fields: [student_id], references: [id])
+  student           StudentProfile @relation("StudentSubmissions", fields: [student_id], references: [user_id])
   attempt_number    Int           @default(1) @map("attempt_number")
   /// `submitted` | `under_review` | `graded` | `returned`
   status            String        @default("submitted")
@@ -204,7 +278,7 @@ model ActivitySubmission {
   score             Int?
   feedback          String?       @db.Text
   graded_by         String?       @map("graded_by") @db.Uuid
-  grader            User?         @relation("SubmissionGraders", fields: [graded_by], references: [id])
+  grader            TeacherProfile? @relation("SubmissionGraders", fields: [graded_by], references: [user_id])
   submitted_at      DateTime      @default(now()) @map("submitted_at")
   graded_at         DateTime?     @map("graded_at")
 
@@ -248,7 +322,7 @@ model AuditEvent {
 model Enrollment {
   id          String   @id @default(uuid()) @db.Uuid
   student_id  String   @map("student_id") @db.Uuid
-  student     User     @relation("StudentEnrollments", fields: [student_id], references: [id])
+  student     StudentProfile @relation("StudentEnrollments", fields: [student_id], references: [user_id])
   group_id    String   @map("group_id") @db.Uuid
   group       Group    @relation(fields: [group_id], references: [id])
   status      String   @default("active")
@@ -256,6 +330,27 @@ model Enrollment {
 
   @@unique([student_id, group_id])
   @@map("enrollments")
+}
+
+/// Progreso de lectura de un subtema por un estudiante en un grupo concreto.
+/// Se scopea por grupo (regla: un semestre, un grupo), asi al repetir el
+/// estudiante empieza con el temario de lecciones en cero para ese curso. El
+/// "aprobado" de un check de leccion NO vive aqui: se deriva de `ActivityAttempt`
+/// con `group_id`, no de esta fila.
+model LessonProgress {
+  id          String         @id @default(uuid()) @db.Uuid
+  student_id  String         @map("student_id") @db.Uuid
+  student     StudentProfile @relation("StudentLessonProgress", fields: [student_id], references: [user_id])
+  group_id    String         @map("group_id") @db.Uuid
+  group       Group          @relation(fields: [group_id], references: [id])
+  subtopic_id String         @map("subtopic_id") @db.Uuid
+  subtopic    Subtopic       @relation(fields: [subtopic_id], references: [id])
+  read_at     DateTime       @default(now()) @map("read_at")
+
+  @@unique([student_id, group_id, subtopic_id])
+  @@index([subtopic_id])
+  @@index([group_id])
+  @@map("lesson_progress")
 }
 
 model UserProvisioningJob {

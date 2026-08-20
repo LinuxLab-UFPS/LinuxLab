@@ -9,7 +9,7 @@ function serializeGroupUserJob(job) {
     student: {
       name: job.user.name,
       email: job.user.email,
-      code: job.user.code ?? null,
+      code: job.user.studentProfile?.code ?? null,
     },
     createdAt: job.created_at,
   }

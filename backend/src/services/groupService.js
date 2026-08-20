@@ -90,7 +90,7 @@ async function createGroup(args) {
   const withCount = await db.group.findUnique({
     where: { id: group.id },
     include: {
-      teacher: { select: { name: true } },
+      teacher: { include: { user: { select: { name: true } } } },
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
@@ -117,7 +117,7 @@ async function listGroups({ teacherUserId, role }) {
   if (role === "admin") {
     const groups = await prisma.group.findMany({
       include: {
-        teacher: { select: { name: true } },
+        teacher: { include: { user: { select: { name: true } } } },
         _count: { select: { enrollments: true, groupActivities: true } },
       },
       orderBy: { created_at: "desc" },
@@ -137,7 +137,7 @@ async function getGroup({ groupId, teacherUserId, role }) {
   const withCount = await prisma.group.findUnique({
     where: { id: groupId },
     include: {
-      teacher: { select: { name: true } },
+      teacher: { include: { user: { select: { name: true } } } },
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
@@ -192,14 +192,14 @@ async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    select: { student: { select: { id: true } } },
+    select: { student: { select: { user_id: true } } },
   })
-  const userIds = enrollments.map((enrollment) => enrollment.student.id)
+  const userIds = enrollments.map((enrollment) => enrollment.student.user_id)
   const jobs = await prisma.userProvisioningJob.findMany({
     where: { user_id: { in: userIds } },
     include: {
       user: {
-        select: { name: true, email: true, code: true },
+        select: { name: true, email: true, studentProfile: { select: { code: true } } },
       },
     },
     orderBy: { created_at: "desc" },
@@ -262,13 +262,13 @@ async function archiveGroup(args) {
   const [enrollments, teacherAccount] = await Promise.all([
     tx.enrollment.findMany({
       where: { group_id: groupId },
-      include: { student: { include: { linuxAccount: true } } },
+      include: { student: { include: { user: { include: { linuxAccount: true } } } } },
     }),
     tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } }),
   ])
   const studentIds = enrollments.map((e) => e.student_id)
   const usernames = enrollments
-    .map((e) => e.student.linuxAccount?.linux_username)
+    .map((e) => e.student.user?.linuxAccount?.linux_username)
     .filter(Boolean)
 
   const updated = await tx.group.update({
@@ -347,13 +347,15 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
     where: { group_id: groupId },
     select: {
       student: {
-        select: { id: true, linuxAccount: { select: { linux_username: true } } },
+        select: {
+          user: { select: { id: true, linuxAccount: { select: { linux_username: true } } } },
+        },
       },
     },
   })
-  const studentIds = enrolled.map((e) => e.student.id)
+  const studentIds = enrolled.map((e) => e.student.user.id)
   const usernames = enrolled
-    .map((e) => e.student.linuxAccount?.linux_username)
+    .map((e) => e.student.user?.linuxAccount?.linux_username)
     .filter(Boolean)
 
   if (teacherAccount?.linux_username && group.group_dir) {
@@ -398,7 +400,7 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
     groupId,
     eventType: "group_deleted",
     target: group.name,
-    metadata: { groupId, teacherName: group.teacher?.name },
+    metadata: { groupId, teacherName: group.teacher?.user?.name },
   })
 
   logger.info({ groupId, teacherUserId }, "Group deleted")

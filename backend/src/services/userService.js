@@ -74,6 +74,9 @@ async function register(args) {
           linux_provisioned: false,
         },
       },
+      teacherProfile: {
+        create: {},
+      },
     },
     select: TEACHER_SELECT,
   })

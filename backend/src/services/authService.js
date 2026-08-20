@@ -16,6 +16,11 @@ const USER_INCLUDE = {
     },
   },
   preferences: true,
+  studentProfile: {
+    select: {
+      code: true,
+    },
+  },
 }
 
 /**
@@ -116,7 +121,7 @@ async function getSessionUser(userId) {
 /** Firma la cookie de sesion del usuario. */
 function signSession(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role, name: user.name, code: user.code ?? null },
+    { id: user.id, email: user.email, role: user.role, name: user.name, code: user.studentProfile?.code ?? null },
     config.jwt.secret,
     { expiresIn: config.jwt.expiresIn },
   )

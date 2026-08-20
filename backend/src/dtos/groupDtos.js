@@ -49,7 +49,7 @@ function serializeGroup(group, studentCount, activityCount, extra = {}) {
     archived: group.archived,
     createdAt: group.created_at,
     teacherId: group.teacher_id,
-    teacherName: group.teacher?.name ?? null,
+    teacherName: group.teacher?.user?.name ?? null,
     studentCount: studentCount ?? 0,
     enabledTopics: [],
     activityCount: activityCount ?? 0,
