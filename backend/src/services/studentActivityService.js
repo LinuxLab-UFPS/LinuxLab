@@ -43,7 +43,7 @@ async function listMine(studentUserId) {
   const rows = await prisma.groupActivity.findMany({
     where: { group_id: enrollment.group_id, enabled: true },
     include: {
-      definition: { select: { topic_number: true } },
+      definition: { select: { topic: { select: { number: true } } } },
       attempts: {
         where: { student_id: studentUserId },
         orderBy: { created_at: "desc" },
@@ -75,7 +75,7 @@ async function listMine(studentUserId) {
         id: ga.id,
         title: ga.title,
         description: ga.instructions ?? "",
-        topicNumber: ga.definition?.topic_number ?? 0,
+        topicNumber: ga.definition?.topic?.number ?? 0,
         checksCount: (ga.checks ?? []).length,
         passed: attempts[0]?.passed ?? false,
         completed: attempts.length > 0 || hasSubmission,

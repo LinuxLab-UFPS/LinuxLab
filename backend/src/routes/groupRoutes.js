@@ -3,6 +3,7 @@ const requireRoles = require("../middleware/requireRoles")
 const teacherMiddleware = requireRoles("teacher", "admin")
 const groupController = require("../controllers/groupController")
 const activityController = require("../controllers/activityController")
+const progressController = require("../controllers/progressController")
 
 const router = express.Router()
 
@@ -21,6 +22,8 @@ router.post("/:id/students/csv", groupController.importCsv)
 router.get("/:id/students", groupController.listStudents)
 router.get("/:id/gradebook", groupController.getGradebook)
 router.get("/:id/gradebook/students/:studentId", groupController.getStudentPerformance)
+router.get("/:id/progress", progressController.getGroupProgress)
+router.get("/:id/students/:studentId", progressController.getStudentGroupDetail)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 

@@ -17,6 +17,15 @@ function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
 }
 
+/** Temario fijo valido para todos los grupos: los numeros de topic ordenados. */
+async function allTopicNumbers() {
+  const topics = await prisma.topic.findMany({
+    select: { number: true },
+    orderBy: { number: "asc" },
+  })
+  return topics.map((t) => t.number)
+}
+
 async function ensureTeacherRole(userId, tx = prisma) {
   const teacher = await tx.user.findUnique({
     where: { id: userId },
@@ -108,12 +117,15 @@ async function createGroup(args) {
   })
 
   return {
-    group: serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities),
+    group: serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities, {
+      enabledTopics: await allTopicNumbers(),
+    }),
     enrollment,
   }
 }
 
 async function listGroups({ teacherUserId, role }) {
+  const enabledTopics = await allTopicNumbers()
   if (role === "admin") {
     const groups = await prisma.group.findMany({
       include: {
@@ -122,14 +134,14 @@ async function listGroups({ teacherUserId, role }) {
       },
       orderBy: { created_at: "desc" },
     })
-    return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities))
+    return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities, { enabledTopics }))
   }
   const groups = await prisma.group.findMany({
     where: { teacher_id: teacherUserId },
     include: { _count: { select: { enrollments: true, groupActivities: true } } },
     orderBy: { created_at: "desc" },
   })
-  return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities))
+  return groups.map((g) => serializeGroup(g, g._count.enrollments, g._count.groupActivities, { enabledTopics }))
 }
 
 async function getGroup({ groupId, teacherUserId, role }) {
@@ -177,7 +189,7 @@ async function getGroup({ groupId, teacherUserId, role }) {
   }
   const averageScore = studentCount > 0 ? Math.round((totalScore / studentCount) * 10) / 10 : null
 
-  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities, { activeNow, averageScore })
+  return serializeGroup(withCount, withCount._count.enrollments, withCount._count.groupActivities, { enabledTopics: await allTopicNumbers(), activeNow, averageScore })
 }
 
 /**
@@ -312,7 +324,7 @@ async function archiveGroup(args) {
     metadata: { groupId },
   })
 
-  return serializeGroup(updated, 0)
+  return serializeGroup(updated, 0, 0, { enabledTopics: await allTopicNumbers() })
 }
 
 /**

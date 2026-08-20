@@ -153,11 +153,17 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   // La definicion y la publicacion nacen juntas: si una de las dos falla, la
   // transaccion deshace la otra (no pueden quedar huerfanas).
   const { activity, groupActivity } = await runInTransaction(async (tx) => {
+    // La definicion enlaza el tema por id: se resuelve desde el numero que manda
+    // el frontend contra el temario espejado.
+    const topicId = Number.isInteger(topicNumber)
+      ? (await tx.topic.findFirst({ where: { number: topicNumber }, select: { id: true } }))?.id ?? null
+      : null
+
     const activity = await tx.activityDefinition.create({
       data: {
         title,
         instructions,
-        topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+        topic_id: topicId,
         difficulty: "basic",
         kind: "activity",
         activity_type: activityType,
@@ -252,12 +258,15 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
   // dos updates son atomicos: si el segundo falla, el primero se deshace.
   const updated = await runInTransaction(async (tx) => {
     if (ga.definition) {
+      const topicId = Number.isInteger(topicNumber)
+        ? (await tx.topic.findFirst({ where: { number: topicNumber }, select: { id: true } }))?.id ?? null
+        : null
       await tx.activityDefinition.update({
         where: { id: ga.definition.id },
         data: {
           title,
           instructions,
-          topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
+          topic_id: topicId,
           activity_type: activityType,
           evaluation_type: evaluationType,
         },
@@ -275,7 +284,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
         attempt_limit: attemptLimit,
         due_at: dueAt,
       },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
     })
   })
 
@@ -296,7 +305,7 @@ async function listGroupActivities({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const rows = await prisma.groupActivity.findMany({
     where: { group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
     orderBy: { created_at: "desc" },
   })
   return rows.map((ga) => serializeGroupActivity(ga, ga.definition))
@@ -306,7 +315,7 @@ async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
   return serializeGroupActivity(ga, ga.definition)
@@ -328,7 +337,7 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
   if (ga.enabled === enabled) return serializeGroupActivity(ga, ga.definition)
@@ -352,7 +361,7 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { enabled },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
     })
   })
 
@@ -385,7 +394,7 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
@@ -408,7 +417,7 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { due_at: newDueAt },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic: { select: { number: true } }, difficulty: true } } },
     })
   })
 

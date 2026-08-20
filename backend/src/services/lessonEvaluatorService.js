@@ -4,6 +4,7 @@ const logger = require("../lib/logger")
 const { AppError, NotFoundError } = require("../lib/errors")
 const linuxAccountService = require("./linuxAccountService")
 const attemptService = require("./attemptService")
+const enrollmentService = require("./enrollmentService")
 
 /** El evaluador vive dentro de la imagen del entorno, en ruta fija. */
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
@@ -49,7 +50,7 @@ const serialize = (activity) => ({
   slug: activity.slug,
   title: activity.title,
   instructions: activity.instructions,
-  topicNumber: activity.topic_number,
+  topicNumber: activity.topic?.number,
   maxScore: activity.max_score,
   hasSetup: Boolean(activity.setup),
   checks: activity.checks.map(publicCheck),
@@ -58,7 +59,7 @@ const serialize = (activity) => ({
 async function getBySlug(slug) {
   const activity = await prisma.activityDefinition.findUnique({
     where: { slug },
-    include: { checks: { orderBy: { position: "asc" } } },
+    include: { checks: { orderBy: { position: "asc" } }, topic: { select: { number: true } } },
   })
   if (!activity) throw new NotFoundError("Actividad no encontrada")
   return serialize(activity)
@@ -76,7 +77,7 @@ async function getBySlug(slug) {
 async function evaluate({ slug, studentUserId }) {
   const activity = await prisma.activityDefinition.findUnique({
     where: { slug },
-    include: { checks: { orderBy: { position: "asc" } } },
+    include: { checks: { orderBy: { position: "asc" } }, topic: { select: { number: true } } },
   })
   if (!activity) throw new NotFoundError("Actividad no encontrada")
   if (activity.checks.length === 0) {
@@ -140,8 +141,10 @@ async function evaluate({ slug, studentUserId }) {
   // Los intentos por slug (comprobaciones del temario) no tienen publicacion:
   // group_activity_id queda NULL y el numero de intento es el siguiente del
   // estudiante en esta definicion.
+  const groupId = await enrollmentService.getActiveGroupId(studentUserId)
   await attemptService.recordAttempt({
     activityDefinitionId: activity.id,
+    groupId,
     studentUserId,
     passed,
     score,
