@@ -23,7 +23,7 @@ Esos dos números no son lo mismo:
 | Número | Qué es |
 |---|---|
 | `[1]` | El **número de trabajo**, que cuenta el shell dentro de esta terminal |
-| `38731` | El **PID**, que cuenta el kernel para todo el sistema |
+| `38731` | El **PID**, que cuenta el Kernel para todo el sistema |
 
 El número de trabajo es pequeño y empieza en uno en cada terminal. El PID es único en la máquina entera. Los dos sirven para referirse al proceso, pero el de trabajo solo lo entiende el shell que lo lanzó.
 

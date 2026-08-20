@@ -2,7 +2,7 @@
 
 Un **proceso** es un programa en ejecución. No es lo mismo que el programa, que es un archivo quieto en el disco: el proceso es esa copia cargada en memoria y trabajando. Abrir tres terminales crea tres procesos a partir del mismo `bash`.
 
-El kernel lleva la cuenta de todos, y para distinguirlos le asigna a cada uno un número, el **PID** (*process ID*). Los reparte en orden ascendente y el primero, el que arranca el sistema entero, siempre lleva el `1` (Shotts, 2026).
+El Kernel lleva la cuenta de todos, y para distinguirlos le asigna a cada uno un número, el **PID** (*process ID*). Los reparte en orden ascendente y el primero, el que arranca el sistema entero, siempre lleva el `1` (Shotts, 2026).
 
 Cada proceso guarda además el PID del que lo lanzó, su **PPID**. Escribir un comando en la terminal hace que `bash` cree un proceso hijo, así que todo lo que se ejecuta cuelga de algo. De ahí sale un árbol con un único origen.
 

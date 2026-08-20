@@ -18,7 +18,7 @@ En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona 
 
 Al escribir un comando y pulsar <kbd>Enter</kbd>, la terminal no lo ejecuta directamente. Lo pasa al **shell**, el programa encargado de interpretar esa línea y decirle al sistema operativo qué tiene que hacer (Free Software Foundation, 2025). Si el comando produce una salida, el shell la muestra en pantalla. Si algo sale mal, muestra un error.
 
-El shell es el puente entre tú y el kernel.
+El shell es el puente entre tú y el Kernel.
 
 ## Familias de shell
 
