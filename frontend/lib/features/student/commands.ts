@@ -49,6 +49,7 @@ export const CATEGORIAS = [
   "Permisos y cuenta",
   "Comprimir y empaquetar",
   "Variables del entorno",
+  "Procesos",
   "Escribir scripts",
 ] as const
 
@@ -101,6 +102,11 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "export", args: "<var>", description: "Publica una variable al entorno.", topicNumber: 2, subtopicId: "variables", categoria: "Variables del entorno" },
   { name: "env", description: "Lista las variables de entorno.", topicNumber: 2, subtopicId: "variables", categoria: "Variables del entorno" },
   { name: "unset", args: "<var>", description: "Elimina una variable.", topicNumber: 2, subtopicId: "variables", categoria: "Variables del entorno" },
+
+  // Procesos
+  { name: "jobs", description: "Lista los trabajos de esta terminal.", topicNumber: 9, subtopicId: "primer-y-segundo-plano", categoria: "Procesos" },
+  { name: "bg", args: "[%n]", description: "Continua un trabajo en segundo plano.", topicNumber: 9, subtopicId: "primer-y-segundo-plano", categoria: "Procesos" },
+  { name: "fg", args: "[%n]", description: "Trae un trabajo al primer plano.", topicNumber: 9, subtopicId: "primer-y-segundo-plano", categoria: "Procesos" },
 
   // Escribir scripts
   { name: "bash", args: "<script.sh>", description: "Ejecuta un script.", topicNumber: 10, subtopicId: "scripting", categoria: "Escribir scripts" },

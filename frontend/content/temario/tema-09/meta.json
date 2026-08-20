@@ -1,0 +1,54 @@
+{
+  "id": "tema-09",
+  "number": 9,
+  "title": "Gestión de procesos",
+  "description": "Ver qué procesos se están ejecutando, cómo ponerlos en primer o segundo plano, cómo terminarlos y qué son los daemons",
+  "subtopics": [
+    {
+      "id": "ver-procesos",
+      "title": "Ver los procesos",
+      "file": "01-ver-procesos.md"
+    },
+    {
+      "id": "primer-y-segundo-plano",
+      "title": "Primer plano y segundo plano",
+      "file": "02-primer-y-segundo-plano.md"
+    },
+    {
+      "id": "senales-y-kill",
+      "title": "Señales y kill",
+      "file": "03-senales-y-kill.md"
+    },
+    {
+      "id": "daemons",
+      "title": "Daemons y servicios",
+      "file": "04-daemons.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 10: procesos, control de trabajos y señales · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "Process Management",
+      "url": "https://devops-daily.com/guides/introduction-to-linux/07-process-management",
+      "detail": "devops-daily.com · Estados de proceso y tabla de señales"
+    },
+    {
+      "type": "link",
+      "title": "Bash Reference Manual: Job Control",
+      "url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control.html",
+      "detail": "gnu.org · Cómo el shell numera y controla los trabajos"
+    },
+    {
+      "type": "link",
+      "title": "Linux network services: cómo arrancarlos, pararlos y ver su estado",
+      "url": "https://www.redhat.com/en/blog/manage-linux-network-services",
+      "detail": "Amoany · Red Hat · Qué es un servicio y cómo se consulta con systemctl"
+    }
+  ]
+}
