@@ -33,6 +33,8 @@ export interface TopicContentMeta {
   number: number
   title: string
   description: string
+  /** Slug del tema, igual al de la BD (topics.slug) y al del syllabus. */
+  slug?: string
   subtopics: LessonSubtopic[]
   resources: LessonResource[]
 }

@@ -18,7 +18,6 @@ import type { AuditEntry } from "@/lib/models/audit"
 export { type AuditEntry }
 export type {
   CreateGroupInput,
-  Enrollment,
   Grade,
   Gradebook,
   GradebookActivity,

@@ -12,7 +12,6 @@ import type {
   Gradebook,
   StudentGroupDetail,
   StudentPerformance,
-  Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
   ManualSubmission,
@@ -110,18 +109,6 @@ export async function listManualSubmissions(
   return teacherApi.listManualSubmissions(groupId, activityId)
 }
 
-export async function submitActivity(_activityId: string): Promise<void> {
-  throw new Error("Actividades: no implementado todavía")
-}
-
-export async function validateActivity(_activityId: string): Promise<never> {
-  throw new Error("Actividades: no implementado todavía")
-}
-
-export async function listEnrollments(groupId: string): Promise<Enrollment[]> {
-  return teacherApi.listEnrollments(groupId)
-}
-
 export async function listStudents(groupId: string): Promise<EnrollmentStudent[]> {
   return teacherApi.listStudents(groupId)
 }
@@ -160,23 +147,21 @@ export async function listGroupAuditLog(groupId: string, limit = 10): Promise<Au
   return teacherApi.listGroupAuditLog(groupId, limit)
 }
 
-const EMPTY_SUMMARY: GroupProgressSummary = {
-  enrolledCount: 0,
-  averageProgress: 0,
-  completedToday: 0,
-  activeNow: 0,
-  rows: [],
+/** Resumen de seguimiento del curso (RF-GRP-11). */
+export async function getGroupProgress(groupId: string): Promise<GroupProgressSummary> {
+  return teacherApi.getGroupProgress(groupId)
 }
 
-export async function getGroupProgress(_groupId: string): Promise<GroupProgressSummary> {
-  return EMPTY_SUMMARY
-}
-
+/** Detalle de progreso de un estudiante; null si no responde. */
 export async function getStudentGroupDetail(
-  _groupId: string,
-  _studentId: string,
+  groupId: string,
+  studentId: string,
 ): Promise<StudentGroupDetail | null> {
-  return null
+  try {
+    return await teacherApi.getStudentGroupDetail(groupId, studentId)
+  } catch {
+    return null
+  }
 }
 
 export async function getGradebook(groupId: string): Promise<Gradebook> {

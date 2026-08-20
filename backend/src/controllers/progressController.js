@@ -40,9 +40,15 @@ const markLessonRead = asyncHandler(async (req, res) => {
   )
 })
 
+/** Lecciones leídas del estudiante en su grupo activo. */
+const getMyReadLessons = asyncHandler(async (req, res) => {
+  res.json(await progressService.getMyReadLessons({ userId: req.user.id }))
+})
+
 module.exports = {
   getGroupProgress,
   getStudentGroupDetail,
   getMyProgress,
+  getMyReadLessons,
   markLessonRead,
 }

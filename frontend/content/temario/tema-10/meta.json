@@ -1,0 +1,9 @@
+{
+  "id": "tema-10",
+  "slug": "shell-scripting",
+  "number": 10,
+  "title": "Shell scripting",
+  "description": "Variables, condicionales, ciclos y funciones en Bash.",
+  "subtopics": [],
+  "resources": []
+}

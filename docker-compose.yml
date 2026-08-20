@@ -8,8 +8,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["npx", "prisma", "migrate", "deploy"]
+    entrypoint:
+      [
+        "sh", "-c",
+        "npx prisma migrate deploy && node prisma/sync-syllabus.js",
+      ]
     env_file: ./backend/.env
+    environment:
+      SYLLABUS_CONTENT_DIR: /content/temario
+    volumes:
+      - ./frontend/content/temario:/content/temario:ro
 
   init:
     image: alpine:3

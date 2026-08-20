@@ -1,23 +1,19 @@
+/**
+ * GENERADO por scripts/gen-syllabus.mjs — NO editar a mano.
+ *
+ * El catalogo del temario del curso (RF-01): los docentes habilitan temas
+ * por curso pero nunca editan esta lista. La fuente unica de estructura es
+ * `content/temario/tema-NN/meta.json`; el contenido de lecciones vive en los
+ * .md de esa misma carpeta.
+ */
 import type { Topic } from "@/lib/features/student/types"
 
-/**
- * THE canonical syllabus for the Operating Systems course.
- *
- * This is fixed content (RF-01): teachers enable/disable topics per course but
- * never edit this list. It is the single source of truth: every screen that
- * shows topics imports from here. Titles and subtopics are authoritative;
- * descriptions are short navigational summaries, NOT lesson content. The actual
- * teaching material (text, video, links per topic) lives in `content/temario/`
- * and is authored by the thesis team.
- *
- * 12 topics.
- */
 export const syllabus: Topic[] = [
   {
     number: 1,
     slug: "introduccion-a-linux",
     title: "Introducción a Linux",
-    description: "Historia, kernel, entorno de ventanas e instalación.",
+    description: "Historia, arquitectura y fundamentos del sistema operativo Linux",
     subTopics: [
       { number: 1, title: "Linux: Dónde todo empezó" },
       { number: 2, title: "El Kernel" },
@@ -29,8 +25,7 @@ export const syllabus: Topic[] = [
     number: 2,
     slug: "la-terminal",
     title: "La Terminal",
-    description:
-      "La línea de comandos, una introducción al shell Bash y los comandos esenciales para moverte por el sistema.",
+    description: "La línea de comandos, el shell Bash y los comandos esenciales para moverte por el sistema",
     subTopics: [
       { number: 1, title: "La línea de comandos" },
       { number: 2, title: "Anatomía de un comando" },
@@ -41,8 +36,7 @@ export const syllabus: Topic[] = [
     number: 3,
     slug: "directorios",
     title: "Directorios",
-    description:
-      "Tipos de directorios, la jerarquía del sistema, navegación y operaciones con directorios.",
+    description: "El sistema de archivos de Linux, su estructura jerárquica, la navegación entre directorios y las operaciones que los crean, clonan y eliminan",
     subTopics: [
       { number: 1, title: "El sistema de archivos" },
       { number: 2, title: "Navegación esencial" },
@@ -54,8 +48,7 @@ export const syllabus: Topic[] = [
     number: 4,
     slug: "manejo-de-archivos",
     title: "Manejo de Archivos",
-    description:
-      "Crear, copiar, mover y borrar archivos, seleccionarlos con comodines, encadenar comandos con pipes y los editores de texto.",
+    description: "Crear archivos, copiarlos, moverlos y borrarlos, seleccionarlos con comodines, encadenar comandos con pipes y editarlos con vi",
     subTopics: [
       { number: 1, title: "Crear archivos" },
       { number: 2, title: "Copiar, mover y borrar" },
@@ -68,8 +61,7 @@ export const syllabus: Topic[] = [
     number: 5,
     slug: "permisos",
     title: "Permisos",
-    description:
-      "Dueño, grupo y permisos de archivos y directorios, notación octal, chmod y umask.",
+    description: "Leer los permisos de un archivo, cambiarlos con chmod y entender qué significan sobre un directorio",
     subTopics: [
       { number: 1, title: "Dueño, grupo y permisos" },
       { number: 2, title: "Notación octal" },
@@ -82,7 +74,7 @@ export const syllabus: Topic[] = [
     number: 6,
     slug: "compresion",
     title: "Compresión",
-    description: "Compresión de archivos con tar, gzip, bzip2 y zip.",
+    description: "Reducir el tamaño de un archivo con gzip y bzip2, y empaquetar carpetas enteras con tar",
     subTopics: [
       { number: 1, title: "Comprimir y descomprimir" },
       { number: 2, title: "Empaquetar con tar" },
@@ -92,8 +84,7 @@ export const syllabus: Topic[] = [
     number: 7,
     slug: "busqueda",
     title: "Búsqueda",
-    description:
-      "Buscar texto dentro de los archivos con grep, localizar archivos con find y ordenar los resultados.",
+    description: "Las dos búsquedas del día a día: grep dentro de los archivos y find entre ellos, con expresiones regulares para afinar el patrón",
     subTopics: [
       { number: 1, title: "Buscar dentro de los archivos" },
       { number: 2, title: "Expresiones regulares" },
@@ -105,8 +96,7 @@ export const syllabus: Topic[] = [
     number: 8,
     slug: "usuarios-y-grupos",
     title: "Usuarios y grupos",
-    description:
-      "Quién es uno para el sistema, dónde guarda esa información y cómo se comparten archivos con un grupo.",
+    description: "Quién es uno para el sistema, dónde guarda esa información y cómo se administran las cuentas y los grupos",
     subTopics: [
       { number: 1, title: "Quién es uno para el sistema" },
       { number: 2, title: "Dónde se guarda esa información" },
@@ -118,7 +108,7 @@ export const syllabus: Topic[] = [
     number: 9,
     slug: "gestion-de-procesos",
     title: "Gestión de procesos",
-    description: "ps y top, primer y segundo plano, señales con kill y los daemons del sistema.",
+    description: "Ver qué procesos se están ejecutando, cómo ponerlos en primer o segundo plano, cómo terminarlos y qué son los daemons",
     subTopics: [
       { number: 1, title: "Ver los procesos" },
       { number: 2, title: "Primer plano y segundo plano" },

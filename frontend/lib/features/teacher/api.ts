@@ -13,10 +13,9 @@ import type {
   Gradebook,
   StudentGroupDetail,
   StudentPerformance,
-  Enrollment,
   ProvisioningJobSummary,
   CatalogEntry,
-  StudentActivityDetail,
+StudentActivityDetail,
   SubmissionDetail,
   SubmissionGrade,
   ManualSubmission,
@@ -102,13 +101,6 @@ export const teacherApi = {
     apiFetch<StudentActivityDetail>(
       `/api/groups/${groupId}/activities/${activityId}/students/${studentId}`,
     ),
-  submitActivity: (activityId: string) =>
-    apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
-  validateActivity: (activityId: string) =>
-    apiFetch<void>(`/api/activities/${activityId}/validate`, { method: "POST" }),
-
-  listEnrollments: (groupId: string) =>
-    apiFetch<Enrollment[]>(`/api/groups/${groupId}/enrollments`),
   addStudent: (groupId: string, input: Omit<EnrollmentStudent, "id">) =>
     apiFetch<EnrollmentStudent>(`/api/groups/${groupId}/students`, {
       method: "POST",

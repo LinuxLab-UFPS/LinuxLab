@@ -1,5 +1,6 @@
 {
   "id": "tema-07",
+  "slug": "busqueda",
   "number": 7,
   "title": "Búsqueda",
   "description": "Las dos búsquedas del día a día: grep dentro de los archivos y find entre ellos, con expresiones regulares para afinar el patrón",

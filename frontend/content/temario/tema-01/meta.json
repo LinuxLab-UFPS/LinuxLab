@@ -1,13 +1,30 @@
 {
   "id": "tema-01",
+  "slug": "introduccion-a-linux",
   "number": 1,
   "title": "Introducción a Linux",
   "description": "Historia, arquitectura y fundamentos del sistema operativo Linux",
   "subtopics": [
-    { "id": "historia", "title": "Linux: Dónde todo empezó", "file": "01-historia.md" },
-    { "id": "kernel", "title": "El Kernel", "file": "02-kernel.md" },
-    { "id": "entorno-ventanas", "title": "Entorno de ventanas", "file": "03-entorno-ventanas.md" },
-    { "id": "instalacion", "title": "Instalación", "file": "04-instalacion.md" }
+    {
+      "id": "historia",
+      "title": "Linux: Dónde todo empezó",
+      "file": "01-historia.md"
+    },
+    {
+      "id": "kernel",
+      "title": "El Kernel",
+      "file": "02-kernel.md"
+    },
+    {
+      "id": "entorno-ventanas",
+      "title": "Entorno de ventanas",
+      "file": "03-entorno-ventanas.md"
+    },
+    {
+      "id": "instalacion",
+      "title": "Instalación",
+      "file": "04-instalacion.md"
+    }
   ],
   "resources": [
     {

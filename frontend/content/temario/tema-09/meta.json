@@ -1,5 +1,6 @@
 {
   "id": "tema-09",
+  "slug": "gestion-de-procesos",
   "number": 9,
   "title": "Gestión de procesos",
   "description": "Ver qué procesos se están ejecutando, cómo ponerlos en primer o segundo plano, cómo terminarlos y qué son los daemons",

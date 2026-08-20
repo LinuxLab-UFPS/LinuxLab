@@ -94,14 +94,15 @@ export function useStudentPerformance(id: string, studentId: string) {
 }
 
 /**
- * Progreso del curso. El endpoint aun no existe en el backend: los stubs de
- * teacher/data.ts devuelven el resumen vacio hasta que se implemente.
+ * Progreso del curso (RF-GRP-11). Refresca cada 30s mientras la pestaña de
+ * seguimiento esta abierta.
  */
 export function useGroupProgress(id: string): GroupProgressSummary {
   const query = useQuery({
     queryKey: queryKeys.groupProgress(id),
     queryFn: () => teacherData.getGroupProgress(id),
-    enabled: false,
+    enabled: Boolean(id),
+    refetchInterval: 30_000,
   })
   return query.data ?? EMPTY_PROGRESS
 }

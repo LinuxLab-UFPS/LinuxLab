@@ -39,12 +39,17 @@ services:
     depends_on:
       - postgres
     env_file: ../backend/.env
+    environment:
+      SYLLABUS_CONTENT_DIR: /content/temario
+    volumes:
+      - ../frontend/content/temario:/content/temario:ro
     # One-shot con reintento: postgres puede tardar en aceptar conexiones y
-    # podman-compose 1.0.6 no soporta condition: service_healthy.
+    # podman-compose 1.0.6 no soporta condition: service_healthy. Al terminar
+    # las migraciones se sincroniza el temario desde los meta.json del repo.
     entrypoint:
       [
         "sh", "-c",
-        "i=0; until npx prisma migrate deploy; do i=$$((i+1)); [ $$i -ge 20 ] && echo '[migrate] no se pudo aplicar tras 20 intentos' && exit 1; echo '[migrate] postgres no listo, reintentando...'; sleep 3; done",
+        "i=0; until npx prisma migrate deploy; do i=$$((i+1)); [ $$i -ge 20 ] && echo '[migrate] no se pudo aplicar tras 20 intentos' && exit 1; echo '[migrate] postgres no listo, reintentando...'; sleep 3; done; echo '[migrate] sync temario'; node prisma/sync-syllabus.js",
       ]
     logging: *logging
 

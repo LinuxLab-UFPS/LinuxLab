@@ -16,13 +16,6 @@ export interface Group {
   averageScore: number | null
 }
 
-export interface Enrollment {
-  id: string
-  groupId: string
-  student: EnrollmentStudent
-  enrolledAt: string
-}
-
 export type CreateGroupInput = {
   name: string
   description: string

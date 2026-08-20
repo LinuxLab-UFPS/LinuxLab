@@ -1,5 +1,6 @@
 {
   "id": "tema-04",
+  "slug": "manejo-de-archivos",
   "number": 4,
   "title": "Manejo de Archivos",
   "description": "Crear archivos, copiarlos, moverlos y borrarlos, seleccionarlos con comodines, encadenar comandos con pipes y editarlos con vi",

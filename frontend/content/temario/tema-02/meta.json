@@ -1,5 +1,6 @@
 {
   "id": "tema-02",
+  "slug": "la-terminal",
   "number": 2,
   "title": "La Terminal",
   "description": "La línea de comandos, el shell Bash y los comandos esenciales para moverte por el sistema",

@@ -1,5 +1,6 @@
 {
   "id": "tema-05",
+  "slug": "permisos",
   "number": 5,
   "title": "Permisos",
   "description": "Leer los permisos de un archivo, cambiarlos con chmod y entender qué significan sobre un directorio",

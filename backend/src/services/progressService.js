@@ -339,4 +339,24 @@ async function markLessonRead({ userId, topicNumber, subtopicSlug }) {
   return lessonProgressService.markRead({ studentId: userId, groupId, subtopicId })
 }
 
-module.exports = { getGroupProgress, getStudentGroupDetail, getMyProgress, markLessonRead }
+/** Lecciones leidas del estudiante en su grupo activo (para hidratar la UI). */
+async function getMyReadLessons({ userId }) {
+  const groupId = await enrollmentService.getActiveGroupId(userId)
+  if (!groupId) return { lessons: [] }
+  const read = await lessonProgressService.listRead({ studentId: userId, groupId })
+  const subs = await prisma.subtopic.findMany({
+    where: { id: { in: read.map((r) => r.subtopicId) } },
+    select: { id: true, slug: true, topic: { select: { number: true } } },
+  })
+  const byId = new Map(subs.map((s) => [s.id, s]))
+  const lessons = read
+    .map((r) => {
+      const sub = byId.get(r.subtopicId)
+      if (!sub) return null
+      return { topicNumber: sub.topic.number, subtopicSlug: sub.slug, readAt: r.readAt }
+    })
+    .filter(Boolean)
+  return { lessons }
+}
+
+module.exports = { getGroupProgress, getStudentGroupDetail, getMyProgress, getMyReadLessons, markLessonRead }

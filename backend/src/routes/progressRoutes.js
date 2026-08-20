@@ -7,6 +7,8 @@ const router = express.Router()
 router.use(requireRoles("student"))
 
 router.get("/mine", progressController.getMyProgress)
+// OJO: /mine/lessons debe declararse antes de nada que capture /mine/...
+router.get("/mine/lessons", progressController.getMyReadLessons)
 router.post("/lesson-read", progressController.markLessonRead)
 
 module.exports = router

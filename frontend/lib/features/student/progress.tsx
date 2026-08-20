@@ -1,9 +1,13 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { getMyReadLessons, markLessonRead } from "./progress-api"
 
 const STORAGE_KEY = "linuxlab:read-lessons"
 
+// Los subtemas se identifican por su slug en meta.json, que es el mismo slug
+// que guarda la BD (subtopics.slug); por eso la clave tema/subtema basta para
+// casar con el backend.
 function lessonKey(topicNumber: number, subtopicId: string): string {
   return `${topicNumber}/${subtopicId}`
 }
@@ -22,34 +26,62 @@ const LessonProgressContext = createContext<LessonProgressValue | null>(null)
 /**
  * Tracks which lessons the student has already read.
  *
- * INTERIM IMPLEMENTATION: progress lives in localStorage, so it is per-browser
- * and does not sync across devices or survive clearing site data. This stands in
- * for the progress seam (lib/data/submissions.ts) until the backend and auth
- * exist; when they do, swap the storage calls below for real API calls and no UI
- * component changes.
+ * The backend (lesson_progress, scoped por grupo) is the source of truth: on
+ * mount we hydrate from `GET /api/progress/mine/lessons` and every markRead
+ * pushes to `POST /api/progress/lesson-read`. localStorage is kept as an
+ * offline cache: if the API is unreachable the UI still works and the marks
+ * are re-synced on the next load.
  */
 export function LessonProgressProvider({ children }: { children: React.ReactNode }) {
   const [read, setRead] = useState<Set<string>>(new Set())
   // Storage is only available on the client, so the first render (and the server
   // render it hydrates against) always starts empty.
   const [loaded, setLoaded] = useState(false)
+  // Evita re-enviar al backend el set completo tras cada hidratación.
+  const hydratedRef = useRef(false)
 
   useEffect(() => {
-    // Lectura unica de localStorage al montar (patron aceptado).
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRead(new Set(JSON.parse(raw) as string[]))
+    let cancelled = false
+
+    async function hydrate() {
+      let server: Set<string> | null = null
+      try {
+        const lessons = await getMyReadLessons()
+        if (cancelled) return
+        server = new Set(lessons.map((l) => lessonKey(l.topicNumber, l.subtopicSlug)))
+      } catch {
+        // Sin sesión o sin red: se cae al caché local.
       }
-    } catch {
-      // Unavailable or corrupt storage: start from scratch rather than break.
+
+      if (server) {
+        setRead(server)
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([...server]))
+        } catch {
+          // Storage lleno o bloqueado: solo afecta al caché.
+        }
+      } else {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          if (raw) setRead(new Set(JSON.parse(raw) as string[]))
+        } catch {
+          // Unavailable or corrupt storage: start from scratch rather than break.
+        }
+      }
+      hydratedRef.current = true
+      setLoaded(true)
     }
-    setLoaded(true)
+
+    hydrate()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
     if (!loaded) return // don't overwrite storage with the pre-load empty set
+    // Tras la hidratación el estado ya refleja lo del server; este efecto solo
+    // refuerza el caché local (con el set completo) para el modo offline.
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...read]))
     } catch {
@@ -60,6 +92,9 @@ export function LessonProgressProvider({ children }: { children: React.ReactNode
   const markRead = useCallback((topicNumber: number, subtopicId: string) => {
     const key = lessonKey(topicNumber, subtopicId)
     setRead((prev) => (prev.has(key) ? prev : new Set(prev).add(key)))
+    // Best-effort: el backend es idempotente; si falla (offline) el caché local
+    // aguanta el estado y la próxima hidratación lo corrige.
+    markLessonRead(topicNumber, subtopicId).catch(() => {})
   }, [])
 
   const value = useMemo<LessonProgressValue>(
