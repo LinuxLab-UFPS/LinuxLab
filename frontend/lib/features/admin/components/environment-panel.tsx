@@ -181,7 +181,7 @@ export function EnvironmentPanel() {
               "requeue",
               "/api/admin/environment/requeue",
               (r: { users: number; groups: number; teardowns: number }) =>
-                `${r.users} trabajos de cuenta, ${r.groups} de curso y ${r.teardowns} de teardown reencolados`,
+                `${r.users} trabajos de cuenta, ${r.groups} de grupo y ${r.teardowns} de teardown reencolados`,
             )
           }
         >
@@ -206,12 +206,12 @@ export function EnvironmentPanel() {
       </div>
 
       <section>
-        <h2 className="mb-2.5 text-sm font-medium text-muted-foreground">Cursos activos</h2>
+        <h2 className="mb-2.5 text-sm font-medium text-muted-foreground">Grupos activos</h2>
         <TablePanel>
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead>Curso</TableHead>
+                <TableHead>Grupo</TableHead>
                 <TableHead className="w-44">Docente</TableHead>
                 <TableHead className="w-36">Grupo Unix</TableHead>
                 <TableHead className="w-36">Carpeta</TableHead>
@@ -241,11 +241,11 @@ export function EnvironmentPanel() {
               ))}
             </TableBody>
           </Table>
-          {courses.length === 0 && <TableEmptyState>No hay cursos activos.</TableEmptyState>}
+          {courses.length === 0 && <TableEmptyState>No hay grupos activos.</TableEmptyState>}
         </TablePanel>
         {brokenCourses.length > 0 && (
           <p className="mt-2 text-xs text-danger">
-            {brokenCourses.length} curso(s) sin su grupo o su carpeta: reintenta los trabajos
+            {brokenCourses.length} grupo(s) sin su grupo Unix o su carpeta: reintenta los trabajos
             fallidos.
           </p>
         )}

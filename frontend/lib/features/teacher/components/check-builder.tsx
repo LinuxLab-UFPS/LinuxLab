@@ -79,13 +79,17 @@ export function CheckBuilder({
   const addCheck = () => {
     const entry = catalog[0]
     if (!entry) return
+    const newCount = checks.length + 1
+    const next = distributeEvenly
+      ? checks.map((check, index) => ({ ...check, points: evenPointsFor(index, newCount) }))
+      : checks
     onChange([
-      ...checks,
+      ...next,
       {
         id: crypto.randomUUID(),
         type: entry.type,
         params: {},
-        points: evenPointsFor(checks.length, checks.length + 1) || activityValue,
+        points: evenPointsFor(checks.length, newCount),
       },
     ])
   }
@@ -100,7 +104,14 @@ export function CheckBuilder({
       )
     )
 
-  const removeCheck = (id: string) => onChange(checks.filter((c) => c.id !== id))
+  const removeCheck = (id: string) => {
+    const remaining = checks.filter((c) => c.id !== id)
+    onChange(
+      distributeEvenly
+        ? remaining.map((check, index) => ({ ...check, points: evenPointsFor(index, remaining.length) }))
+        : remaining
+    )
+  }
 
   if (loading) {
     return (
@@ -214,8 +225,6 @@ export function CheckBuilder({
               <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 pl-9 text-sm text-foreground">
                 {describeCheck(check.type, check.params)}
               </div>
-
-              <p className="pl-9 text-xs text-muted-foreground">{entry.hint}</p>
             </div>
           )
         })}

@@ -21,7 +21,7 @@ import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 const NAV = [
   {
-    label: "Cursos",
+    label: "Grupos",
     href: "/home",
     icon: BookOpen,
     hover: "hover:bg-primary/15 hover:text-primary",
