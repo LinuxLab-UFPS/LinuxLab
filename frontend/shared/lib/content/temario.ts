@@ -113,11 +113,12 @@ export const syllabus: Topic[] = [
     number: 9,
     slug: "gestion-de-procesos",
     title: "Gestión de procesos",
-    description: "ps, top, kill, jobs y manejo de primer y segundo plano (fg, bg, &).",
+    description:
+      "Ver qué está corriendo con ps y top, mover programas entre el primer y el segundo plano, y terminarlos con las señales adecuadas.",
     subTopics: [
-      { number: 1, title: "ps, top" },
-      { number: 2, title: "kill, jobs" },
-      { number: 3, title: "Primer plano y segundo plano (fg, bg, &)" },
+      { number: 1, title: "Ver los procesos" },
+      { number: 2, title: "Primer plano y segundo plano" },
+      { number: 3, title: "Señales y kill" },
     ],
   },
   {
