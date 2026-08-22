@@ -19,18 +19,19 @@ export function VerifyEmailPage({ email }: { email: string }) {
     if (cooldown > 0) return
     setSending(true)
     try {
-      try {
-        await resendVerification()
-      } catch {
-        const { auth } = getFirebaseAuth()
-        const u = auth.currentUser
-        if (u) {
-          const { sendEmailVerification } = await import("firebase/auth")
-          await sendEmailVerification(u)
-        } else {
-          throw new Error("Abre el enlace desde el mismo navegador donde te registraste.")
+        try {
+          await resendVerification()
+        } catch {
+          const { auth } = getFirebaseAuth()
+          const u = auth.currentUser
+          if (u) {
+            const { sendEmailVerification } = await import("firebase/auth")
+            const { env } = await import("@/lib/config/env")
+            await sendEmailVerification(u, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
+          } else {
+            throw new Error("Abre el enlace desde el mismo navegador donde te registraste.")
+          }
         }
-      }
       notify.success("Correo reenviado. Revisa tu bandeja.")
       setCooldown(60)
       const id = setInterval(() => {
@@ -60,7 +61,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
           const idToken = await u.getIdToken()
           const { apiFetch } = await import("@/lib/api/client")
           await apiFetch("/api/auth/firebase", { method: "POST", body: JSON.stringify({ idToken }) })
-          router.push("/home")
+          router.push("/inicio")
           return
         }
       }
@@ -68,7 +69,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
       try {
         await signOut(getFirebaseAuth().auth)
       } catch {}
-      router.push("/")
+      router.push("/login")
       notify.info("Aún no verificado. Revisa tu correo y vuelve a iniciar sesión.")
     } catch (e) {
       notify.error(e, "No se pudo verificar el estado.")
@@ -95,7 +96,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
           <Button variant="outline" onClick={handleChecked} disabled={checking} className="h-11 w-full">
             {checking ? "Verificando…" : "Ya verifiqué, continuar"}
           </Button>
-          <Button variant="ghost" onClick={() => router.push("/")} className="h-11 w-full">
+          <Button variant="ghost" onClick={() => router.push("/login")} className="h-11 w-full">
             Volver al inicio
           </Button>
         </div>

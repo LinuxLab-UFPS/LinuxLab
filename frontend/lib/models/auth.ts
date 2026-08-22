@@ -12,6 +12,7 @@ export interface User {
   active?: boolean
   linuxUsername?: string | null
   linuxProvisioned?: boolean
+  hasEnrollment: boolean
   preferences?: UserPreferences | null
 }
 

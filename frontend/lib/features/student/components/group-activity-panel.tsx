@@ -97,7 +97,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-3">
           <Link
-            href="/activities"
+            href="/actividades"
             className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" />

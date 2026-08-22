@@ -143,7 +143,7 @@ export function GroupsTable() {
           />
         </div>
 
-        <ActionButton tone="primary" href="/create-group" className="ml-auto">
+        <ActionButton tone="primary" href="/grupos/crear" className="ml-auto">
           <Plus className="h-4 w-4" />
           Crear nuevo curso
         </ActionButton>
@@ -168,12 +168,12 @@ export function GroupsTable() {
               // que un `onClick` en la fila no da.
               <TableRow
                 key={group.id}
-                onClick={() => router.push(`/groups/${group.id}`)}
+                onClick={() => router.push(`/grupos/${group.id}`)}
                 className="group cursor-pointer"
               >
                 <TableCell>
                   <Link
-                    href={`/groups/${group.id}`}
+                    href={`/grupos/${group.id}`}
                     className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
                   >
                     {group.name}

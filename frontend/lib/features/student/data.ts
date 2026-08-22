@@ -31,7 +31,7 @@ export function createTerminalSession(options: TerminalSessionOptions = {}): Ter
       if (cmd === "clear") return { output: "", clear: true }
       if (cmd.startsWith("echo ")) return { output: command.substring(5) }
       if (cmd === "whoami") return { output: user }
-      if (cmd === "pwd") return { output: `/home/${user}` }
+      if (cmd === "pwd") return { output: `/inicio/${user}` }
       return { output: `bash: ${command.split(" ")[0]}: command not found` }
     },
   }

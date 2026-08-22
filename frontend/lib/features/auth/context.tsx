@@ -24,6 +24,7 @@ interface AuthContextValue {
   signUpWithEmail: (email: string, password: string, name: string) => Promise<{ needsVerification: boolean }>
   sendPasswordReset: (email: string) => Promise<void>
   resendVerification: () => Promise<void>
+  hydrate: (user: User | null) => void
   signOut: () => Promise<void>
 }
 
@@ -46,7 +47,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       result = await signInWithPopup(auth, googleProvider)
     } catch (e) {
-      throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo iniciar sesión con Google."))
+      const code = errorCodeOf(e)
+      if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+        const err = new Error("__silent__")
+        ;(err as unknown as Record<string, unknown>).code = code
+        throw err
+      }
+      throw new Error(mapFirebaseError(code, "No se pudo iniciar sesión con Google."))
     }
     const idToken = await result.user.getIdToken()
     const data = await apiFetch<{ user: User }>("/api/auth/firebase", {
@@ -92,7 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() })
     } catch {}
     try {
-      await sendEmailVerification(cred.user)
+      const { env } = await import("@/lib/config/env")
+      await sendEmailVerification(cred.user, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
     } catch {}
     try {
       await firebaseSignOut(auth)
@@ -103,7 +111,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sendPasswordReset = useCallback(async (email: string) => {
     const { auth } = getFirebaseAuth()
     try {
-      await sendPasswordResetEmail(auth, email)
+      const { env } = await import("@/lib/config/env")
+      await sendPasswordResetEmail(auth, email, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
     } catch (e) {
       throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo enviar el correo de recuperación."))
     }
@@ -114,11 +123,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const u = auth.currentUser
     if (!u) throw new Error("No hay sesión activa para reenviar verificación.")
     try {
-      await sendEmailVerification(u)
+      const { env } = await import("@/lib/config/env")
+      await sendEmailVerification(u, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
     } catch (e) {
       throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo reenviar el correo."))
     }
   }, [])
+
+  const hydrate = useCallback((nextUser: User | null) => setUser(nextUser), [])
 
   const signOut = useCallback(async () => {
     try {
@@ -132,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset, resendVerification, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset, resendVerification, hydrate, signOut }}>
       {children}
     </AuthContext.Provider>
   )

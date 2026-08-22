@@ -24,6 +24,7 @@ function serializeUser(user) {
     active: user.active,
     linuxUsername: user.linuxAccount?.linux_username ?? null,
     linuxProvisioned: user.linuxAccount?.linux_provisioned ?? false,
+    hasEnrollment: user.hasEnrollment ?? true,
     preferences: user.preferences
       ? {
           terminalFontSize: user.preferences.terminal_font_size,

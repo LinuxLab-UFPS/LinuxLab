@@ -143,7 +143,7 @@ export function StudentProgressDialog({
         {/* Footer link */}
         <div className="flex justify-end pt-1">
           <Link
-            href={`/groups/${groupId}/student/${person.id}`}
+            href={`/grupos/${groupId}/estudiante/${person.id}`}
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             Ver dashboard completo

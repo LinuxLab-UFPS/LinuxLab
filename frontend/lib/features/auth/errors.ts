@@ -24,6 +24,8 @@ export function mapFirebaseError(code: string | undefined, fallback: string): st
       return "Ventana de inicio cerrada."
     case "auth/cancelled-popup-request":
       return "Solicitud cancelada."
+    case "auth/popup-blocked":
+      return "El navegador bloqueó la ventana. Permite popups e inténtalo de nuevo."
     default:
       return fallback
   }
