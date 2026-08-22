@@ -29,7 +29,7 @@ export function TeacherDashboard() {
         </h1>
         <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-[#ff5470] to-[#C41E3A]" />
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Gestiona tus cursos, revisa el progreso de tus estudiantes y sus actividades.
+          Gestiona tus grupos, revisa el progreso de tus estudiantes y sus actividades.
         </p>
       </div>
 

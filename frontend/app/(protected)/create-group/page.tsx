@@ -22,13 +22,13 @@ const PASOS: Step[] = [
 ]
 
 const TITULO = [
-  "Información del curso",
+  "Información del grupo",
   "Estudiantes",
   "Revisa antes de publicar",
 ]
 
 const ENTRADILLA = [
-  "El nombre con el que tus estudiantes verán el curso.",
+  "El nombre con el que tus estudiantes verán el grupo.",
   "Quiénes lo van a cursar. Puedes agregarlos uno a uno o cargar un CSV, y también hacerlo más tarde.",
   "Comprueba que todo esté como lo quieres. Al publicar se crean las cuentas de los estudiantes en el entorno.",
 ]
@@ -57,7 +57,7 @@ function CreateGroupContent() {
   // final obliga a rehacer el camino de vuelta.
   const avanzar = () => {
     if (paso === 0 && !groupName.trim()) {
-      notify.error(null, "El nombre del curso es requerido.")
+      notify.error(null, "El nombre del grupo es requerido.")
       return
     }
     setPaso((p) => Math.min(p + 1, PASOS.length - 1))
@@ -74,8 +74,8 @@ function CreateGroupContent() {
       description,
       students: students.map((s) => ({ name: s.name, email: s.email, code: s.code })),
     }), {
-      loading: "Publicando el curso…",
-      success: "Curso publicado",
+      loading: "Publicando el grupo…",
+      success: "Grupo publicado",
       description: (r) => {
         const parts: string[] = []
         if (r.enrollment.registered) parts.push(`${r.enrollment.registered} inscrito(s)`)
@@ -83,13 +83,13 @@ function CreateGroupContent() {
         if (r.enrollment.errors.length) parts.push(`${r.enrollment.errors.length} con error`)
         return parts.length ? parts.join(", ") : "sin estudiantes"
       },
-      error: "No se pudo publicar el curso.",
+      error: "No se pudo publicar el grupo.",
     })
     setPublishing(false)
     if (!response.ok) return
     const published = response.data
 
-    // El listado de cursos quedo viejo: al volver a /home el curso nuevo debe
+    // El listado de grupos quedo viejo: al volver a /home el grupo nuevo debe
     // estar ahi sin esperar a que la cache expire.
     queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 
@@ -123,7 +123,7 @@ function CreateGroupContent() {
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="groupName" className="text-muted-foreground">
-                    Nombre del curso
+                    Nombre del grupo
                   </Label>
                   <Input
                     id="groupName"
@@ -143,7 +143,7 @@ function CreateGroupContent() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={4}
-                    placeholder="Breve descripción del curso…"
+                    placeholder="Breve descripción del grupo…"
                     className="resize-none border-table-line"
                   />
                 </div>
@@ -202,7 +202,7 @@ function CreateGroupContent() {
             ) : (
               <ActionButton tone="primary" onClick={handlePublish} disabled={publishing}>
                 <Send className="h-4 w-4" />
-                {publishing ? "Publicando..." : "Publicar curso"}
+                {publishing ? "Publicando..." : "Publicar grupo"}
               </ActionButton>
             )}
           </div>

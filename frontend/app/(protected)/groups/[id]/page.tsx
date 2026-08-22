@@ -13,7 +13,7 @@ import {
   Plus,
   Search,
   BarChart3,
-  FileSpreadsheet,
+  Download,
   ScrollText,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
@@ -74,7 +74,7 @@ function GroupDetailContent() {
     setExporting(true)
     try {
       await downloadExcel({
-        fileName: `calificaciones-${slugify(group?.name ?? "curso")}.xlsx`,
+        fileName: `calificaciones-${slugify(group?.name ?? "grupo")}.xlsx`,
         sheets: [buildGradebookSheet(gradebookQuery.data)],
       })
       notify.success("Excel generado", {
@@ -132,12 +132,12 @@ function GroupDetailContent() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <BookOpen className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Grupo no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Este curso no existe o aun no tiene datos."}
+          {error instanceof Error ? error.message : "Este grupo no existe o aun no tiene datos."}
         </p>
         <Link href="/home">
-          <Button variant="outline">Volver a Cursos</Button>
+          <Button variant="outline">Volver a Grupos</Button>
         </Link>
       </div>
     )
@@ -209,12 +209,12 @@ function GroupDetailContent() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <h2 className="text-base font-semibold text-foreground">
           {tab === "estudiantes"
-            ? `Estudiantes del curso (${group.studentCount})`
+            ? `Estudiantes del grupo (${group.studentCount})`
             : tab === "actividades"
-              ? `Actividades del curso (${group.activityCount})`
+              ? `Actividades del grupo (${group.activityCount})`
               : tab === "bitacora"
-                ? "Bitácora del curso"
-                : "Calificaciones del curso"}
+                ? "Bitácora del grupo"
+                : "Calificaciones del grupo"}
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -290,7 +290,7 @@ function GroupDetailContent() {
                 {exporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <FileSpreadsheet className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                 )}
                 {exporting ? "Generando…" : "Exportar Excel"}
               </ActionButton>
