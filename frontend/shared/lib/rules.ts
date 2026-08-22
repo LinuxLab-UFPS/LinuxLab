@@ -7,6 +7,7 @@ import type { RouteRule } from "@/lib/models/content"
  */
 export const ROUTE_RULES: RouteRule[] = [
   { path: "/home", roles: ["student", "teacher", "admin"], exact: true },
+  { path: "/no-grupo", roles: ["student", "admin"], exact: true },
   { path: "/admin", roles: ["admin"] },
   { path: "/audit-log", roles: ["admin"], exact: true },
   { path: "/groups", roles: ["teacher", "admin"] },
