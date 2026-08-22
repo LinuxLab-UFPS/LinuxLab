@@ -1,3 +1,5 @@
+<!-- VIDEO: video-intro-terminal | El prompt y los primeros comandos -->
+
 ## ¿Qué es un comando?
 
 Un comando es un programa que, al ejecutarse en la terminal, realiza una acción sobre el sistema (NDG, 2024). Algunos son simples y se usan solos. Otros aceptan información adicional para funcionar de maneras distintas.
@@ -14,6 +16,29 @@ La estructura general de un comando es siempre la misma (The Open Group, 2024):
 </div>
 
 Las partes entre corchetes son opcionales: hay comandos que funcionan solo con su nombre. Esos tres colores se mantienen en todos los ejemplos del curso, de modo que las partes de cualquier comando se reconocen a simple vista.
+
+`whoami` es uno de esos que no necesitan nada más. Como ya viste en el video, dice el usuario con el que se trabaja:
+
+```bash
+whoami
+```
+
+```
+estudiante
+```
+
+El símbolo `$` al abrir una terminal significa que Bash está listo para recibir un comando.
+
+```bash
+usuario@linuxlab:~$
+```
+
+Ese texto antes del `$` es el **prompt**: indica el nombre de usuario, el nombre del equipo y el directorio actual. El `~` representa el directorio de inicio (home).
+
+Si ese último carácter es `#` en lugar de `$`, la sesión tiene privilegios de administrador (Shotts, 2026). Merece la pena mirarlo antes de ejecutar cualquier cosa que toque el sistema, porque con `#` no hay red de seguridad.
+
+Otra costumbre que hay que desaprender: <kbd>Ctrl</kbd> + <kbd>C</kbd> y <kbd>Ctrl</kbd> + <kbd>V</kbd> no copian ni pegan dentro de la terminal. Esas combinaciones ya significan otra cosa para el shell.
+
 
 ## Argumentos
 
@@ -43,55 +68,39 @@ estudiante
 
 El comando recibirá los dos y procesará ambos en orden.
 
+El video mostró otro comando que trabaja con un argumento. Como ya viste, `cd` cambia de directorio y su argumento es el destino:
+
+```bash
+cd Documentos
+```
+
+`cd` no imprime nada. Su efecto se ve en el prompt, que pasa de `~` a `~/Documentos`: la respuesta del comando es el lugar nuevo. `cd` y `ls`, el comando con el que este apartado empezó, se practican a fondo en el módulo siguiente de Directorios.
+
 ## Opciones
 
-Las **opciones** modifican el comportamiento del comando. Se escriben con un guion antes de la letra:
+Las **opciones** modifican el comportamiento del comando. Se escriben con un guion antes de la letra.
+
+El ejemplo es `help`, el mismo del video: sirve para pedir ayuda sobre los comandos que el shell trae integrados. Con la opción `-d` entrega la descripción corta del comando que se le pida:
 
 ```bash
-ls -l
+help -d cd
 ```
 
 ```
-total 16
-drwxr-xr-x 2 estudiante estudiante 4096 mar 10 09:14 Documentos
-drwxr-xr-x 2 estudiante estudiante 4096 mar 10 09:14 Descargas
-drwxr-xr-x 3 estudiante estudiante 4096 mar 12 11:02 proyectos
--rw-r--r-- 1 estudiante estudiante   84 mar 12 11:05 notas.txt
+cd - Change the shell working directory.
 ```
 
-La opción `-l` hace que `ls` muestre el listado en formato largo, con información detallada de cada archivo: permisos, propietario, tamaño y fecha. Sin `-l`, solo muestra los nombres.
-
-Las opciones se combinan juntas o separadas, y el resultado es el mismo:
+Con `-s` entrega otra cosa: la sinopsis, la plantilla de cómo se escribe el comando y qué opciones acepta:
 
 ```bash
-ls -l -r
-ls -lr
-ls -rl
+help -s cd
 ```
 
 ```
-total 16
--rw-r--r-- 1 estudiante estudiante   84 mar 12 11:05 notas.txt
-drwxr-xr-x 3 estudiante estudiante 4096 mar 12 11:02 proyectos
-drwxr-xr-x 2 estudiante estudiante 4096 mar 10 09:14 Descargas
-drwxr-xr-x 2 estudiante estudiante 4096 mar 10 09:14 Documentos
+cd: cd [-L|[-P [-e]] [-@]] [dir]
 ```
 
-En el ejemplo anterior, `-r` invierte el orden del listado. Combinado con `-l`, produces un listado largo en orden inverso.
-
-Otra opción útil es `-h` (human-readable), que muestra los tamaños de archivo en un formato legible en lugar de bytes:
-
-```bash
-ls -lh
-```
-
-```
-total 16K
-drwxr-xr-x 2 estudiante estudiante 4.0K mar 10 09:14 Documentos
-drwxr-xr-x 2 estudiante estudiante 4.0K mar 10 09:14 Descargas
-drwxr-xr-x 3 estudiante estudiante 4.0K mar 12 11:02 proyectos
--rw-r--r-- 1 estudiante estudiante   84 mar 12 11:05 notas.txt
-```
+Mismo comando, mismo tema, distinta opción: `-d` describe y `-s` muestra la sintaxis. Eso es exactamente lo que hace una opción: cambiar lo que el comando entrega.
 
 ## Opciones largas
 
@@ -116,20 +125,15 @@ Eso es equivalente a `ls -lh`. Las opciones cortas (`-h`) y largas (`--human-rea
 Opciones y argumentos se combinan en el mismo comando:
 
 ```bash
-ls -lh /usr/bin
+help -d cd pwd
 ```
 
 ```
-total 142M
--rwxr-xr-x 1 root root 1.2M mar  1 08:00 bash
--rwxr-xr-x 1 root root  35K mar  1 08:00 cat
--rwxr-xr-x 1 root root 147K mar  1 08:00 grep
--rwxr-xr-x 1 root root 143K mar  1 08:00 ls
--rwxr-xr-x 1 root root  47K mar  1 08:00 mkdir
-...
+cd - Change the shell working directory.
+pwd - Print the name of the current working directory.
 ```
 
-Aquí `-lh` son las opciones y `/usr/bin` es el argumento. El resultado es un listado largo con tamaños legibles del directorio `/usr/bin`.
+Aquí `-d` es la opción y los dos temas son los argumentos sobre los que actúa: help entrega la descripción de cada uno en orden. `pwd`, que apareció en la lista de ayuda del video, imprime el directorio donde se está trabajando.
 
 El orden convencional es: primero las opciones, luego los argumentos. La mayoría de comandos lo esperan así.
 
@@ -149,4 +153,5 @@ El orden convencional es: primero las opciones, luego los argumentos. La mayorí
 **Fuentes**
 
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
+- Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
 - The Open Group. (2024). *POSIX.1-2024: The Open Group base specifications issue 8*. https://pubs.opengroup.org/onlinepubs/9799919799/

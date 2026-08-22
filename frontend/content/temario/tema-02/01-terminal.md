@@ -41,18 +41,6 @@ Bash lleva décadas siendo el shell por defecto en Linux. Más allá de ejecutar
 - **Alias:** nombres cortos para comandos largos de uso frecuente.
 - **Variables:** guardan información reutilizable dentro de la sesión o en scripts.
 
-El símbolo `$` al abrir una terminal significa que Bash está listo para recibir un comando.
-
-```bash
-usuario@linuxlab:~$
-```
-
-Ese texto antes del `$` es el **prompt**: indica el nombre de usuario, el nombre del equipo y el directorio actual. El `~` representa el directorio de inicio (home).
-
-Si ese último carácter es `#` en lugar de `$`, la sesión tiene privilegios de administrador (Shotts, 2026). Merece la pena mirarlo antes de ejecutar cualquier cosa que toque el sistema, porque con `#` no hay red de seguridad.
-
-Otra costumbre que hay que desaprender: <kbd>Ctrl</kbd> + <kbd>C</kbd> y <kbd>Ctrl</kbd> + <kbd>V</kbd> no copian ni pegan dentro de la terminal. Esas combinaciones ya significan otra cosa para el shell.
-
 ---
 
 **Fuentes**
