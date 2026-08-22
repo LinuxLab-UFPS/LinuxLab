@@ -25,16 +25,15 @@ const CHECKS = [
 
 const DATOS = {
   title: "Un archivo de solo lectura",
-  kind: "check",
   difficulty: "basic",
   instructions:
     "Crea solo-lectura.txt en tu directorio personal con al menos dos líneas " +
     "escritas en vi, y retírale el permiso de escritura a los tres bloques.",
-  topic_number: 5,
   max_score: 100,
 }
 
 async function main() {
+  DATOS.topic_id = (await prisma.topic.findFirst({ where: { number: 5 }, select: { id: true } })).id
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },

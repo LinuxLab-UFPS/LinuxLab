@@ -27,30 +27,29 @@ function checks() {
 }
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 4 }, select: { id: true } })).id
   const data = checks()
 
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
       title: "Archivos y ficheros",
-      kind: "activity",
       difficulty: "basic",
       instructions:
         "Crea el directorio universidad en tu carpeta personal, con las facultades " +
         "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       checks: { deleteMany: {}, create: data },
     },
     create: {
       slug: SLUG,
       title: "Archivos y ficheros",
-      kind: "activity",
       difficulty: "basic",
       instructions:
         "Crea el directorio universidad en tu carpeta personal, con las facultades " +
         "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       source: "bank",
       active: true,

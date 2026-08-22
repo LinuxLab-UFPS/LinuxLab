@@ -52,16 +52,16 @@ const SETUP = {
 const LOGO = "███████████████████\n█                 █\n█ █ █ ███ ███ ███ █\n█ █ █ █   █ █ █   █\n█ █ █ ██  ███ ███ █\n█ █ █ █   █     █ █\n█ ███ █   █   ███ █\n█                 █\n███████████████████"
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 4 }, select: { id: true } })).id
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
       title: "Arma el logo",
-      kind: "activity",
       difficulty: "intermediate",
       instructions:
         "El logo está repartido en trozos entre cuatro archivos. Reúnelos en " +
         "logo.txt en el orden correcto y firma con tu código en la última línea.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       setup: SETUP,
       checks: {
@@ -77,12 +77,11 @@ async function main() {
     create: {
       slug: SLUG,
       title: "Arma el logo",
-      kind: "activity",
       difficulty: "intermediate",
       instructions:
         "El logo está repartido en trozos entre cuatro archivos. Reúnelos en " +
         "logo.txt en el orden correcto y firma con tu código en la última línea.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       setup: SETUP,
       source: "bank",

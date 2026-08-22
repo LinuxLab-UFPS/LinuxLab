@@ -39,30 +39,29 @@ const CHECKS = [
 ]
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 4 }, select: { id: true } })).id
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
       title: "Tu ficha en el laboratorio",
-      kind: "check",
       difficulty: "basic",
       instructions:
         "Crea un archivo con tu código estudiantil como nombre y edítalo con vi: " +
         "tu nombre en la primera línea, tres comandos aprendidos en las siguientes " +
         "y tu correo institucional al final.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       checks: { deleteMany: {}, create: CHECKS },
     },
     create: {
       slug: SLUG,
       title: "Tu ficha en el laboratorio",
-      kind: "check",
       difficulty: "basic",
       instructions:
         "Crea un archivo con tu código estudiantil como nombre y edítalo con vi: " +
         "tu nombre en la primera línea, tres comandos aprendidos en las siguientes " +
         "y tu correo institucional al final.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       source: "bank",
       active: true,

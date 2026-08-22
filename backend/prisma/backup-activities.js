@@ -47,7 +47,7 @@ async function guardar() {
   console.log(`  ${definiciones.length} definiciones · ${aserciones} aserciones`)
   console.log(`  ${publicaciones.length} publicaciones · ${intentos.length} intentos · ${entregas.length} entregas`)
   for (const d of definiciones) {
-    console.log(`    ${(d.slug ?? "(sin slug)").padEnd(28)} [${d.kind}] ${d.checks.length} aserciones`)
+    console.log(`    ${(d.slug ?? "(sin slug)").padEnd(28)} ${d.checks.length} aserciones`)
   }
 }
 

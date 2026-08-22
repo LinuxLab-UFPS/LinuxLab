@@ -10,7 +10,6 @@ export interface Topic {
   slug: string
   title: string
   description: string
-  complementary?: boolean
   subTopics: SubTopic[]
 }
 

@@ -15,6 +15,7 @@ const FILAS = [
 ]
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 4 }, select: { id: true } })).id
   const checks = [
     { type: "archivo_existe", params: { ruta: RUTA }, points: 25, position: 0 },
     ...FILAS.map((patron, i) => ({
@@ -29,24 +30,22 @@ async function main() {
     where: { slug: SLUG },
     update: {
       title: "Guarda el logo",
-      kind: "check",
       difficulty: "basic",
       instructions:
         "Copia el logo con el botón de la lección y guárdalo en un archivo " +
         "llamado logo.txt en tu carpeta personal.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       checks: { deleteMany: {}, create: checks },
     },
     create: {
       slug: SLUG,
       title: "Guarda el logo",
-      kind: "check",
       difficulty: "basic",
       instructions:
         "Copia el logo con el botón de la lección y guárdalo en un archivo " +
         "llamado logo.txt en tu carpeta personal.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       source: "bank",
       active: true,

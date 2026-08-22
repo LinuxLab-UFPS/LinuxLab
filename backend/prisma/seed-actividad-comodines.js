@@ -39,16 +39,16 @@ const CHECKS = [
 ]
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 4 }, select: { id: true } })).id
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
       title: "Limpieza con comodines",
-      kind: "activity",
       difficulty: "basic",
       instructions:
         "Borra los .tmp de la carpeta de la actividad, mueve los .txt a " +
         "documentos y los .png a imagenes.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       setup: SETUP,
       checks: { deleteMany: {}, create: CHECKS },
@@ -56,12 +56,11 @@ async function main() {
     create: {
       slug: SLUG,
       title: "Limpieza con comodines",
-      kind: "activity",
       difficulty: "basic",
       instructions:
         "Borra los .tmp de la carpeta de la actividad, mueve los .txt a " +
         "documentos y los .png a imagenes.",
-      topic_number: 4,
+      topic_id: topicId,
       max_score: 100,
       setup: SETUP,
       source: "bank",

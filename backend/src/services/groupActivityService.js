@@ -165,7 +165,6 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         instructions,
         topic_id: topicId,
         difficulty: "basic",
-        kind: "activity",
         activity_type: activityType,
         evaluation_type: evaluationType,
         max_score: maxScore,

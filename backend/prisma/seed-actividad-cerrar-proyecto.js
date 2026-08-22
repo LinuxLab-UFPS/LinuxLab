@@ -33,17 +33,16 @@ const CHECKS = [
 
 const DATOS = {
   title: "Cerrar el proyecto",
-  kind: "activity",
   difficulty: "intermediate",
   instructions:
     "Deja la carpeta del proyecto lista para entregar: cada archivo y cada " +
     "carpeta con los permisos que le corresponden, y sin sobras.",
-  topic_number: 5,
   max_score: 100,
   setup: SETUP,
 }
 
 async function main() {
+  DATOS.topic_id = (await prisma.topic.findFirst({ where: { number: 5 }, select: { id: true } })).id
   const a = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },

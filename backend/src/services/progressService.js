@@ -31,9 +31,14 @@ function toStudent(enrollment) {
   }
 }
 
-/** Topics (con sus lecciones) y actividades habilitadas del grupo, en pocas consultas. */
+/**
+ * Temas (con sus lecciones), actividades publicadas del grupo (calificaciones de
+ * laboratorio) y actividades del banco (contenido de la plataforma). Tres
+ * conjuntos distintos: el progreso del estudiante solo mira lecciones + banco;
+ * las del grupo se reportan aparte en el cuaderno de calificaciones.
+ */
 async function loadCourseUnits(groupId) {
-  const [topics, activities] = await Promise.all([
+  const [topics, activities, bankActivities] = await Promise.all([
     prisma.topic.findMany({
       orderBy: { number: "asc" },
       include: { subTopics: { select: { id: true }, orderBy: { order: "asc" } } },
@@ -47,30 +52,54 @@ async function loadCourseUnits(groupId) {
       },
       orderBy: { created_at: "asc" },
     }),
+    // Banco de actividades del contenido: globales, ligadas al tema por topic_id.
+    prisma.activityDefinition.findMany({
+      where: { source: "bank", topic_id: { not: null } },
+      select: { id: true, topic_id: true, title: true, max_score: true },
+    }),
   ])
-  return { topics, activities }
+  return { topics, activities, bankActivities }
 }
 
-/** Intentos y entregas del estudiante en las actividades habilitadas del grupo. */
-async function loadStudentWork(studentId, activityIds) {
-  const query =
+/**
+ * Intentos del estudiante: los de las actividades del grupo (por group_activity_id)
+ * y los del banco (por activity_definition_id, group_activity_id NULL). Las
+ * entregas solo aplican a las del grupo (manuales); el banco es automatico.
+ */
+async function loadStudentWork(studentId, activityIds, bankIds) {
+  const groupQuery =
     activityIds.length > 0
-      ? {
-          student_id: studentId,
-          group_activity_id: { in: activityIds },
-        }
+      ? { student_id: studentId, group_activity_id: { in: activityIds } }
       : { student_id: studentId, group_activity_id: { in: [] } }
+  const bankQuery =
+    bankIds.length > 0
+      ? { student_id: studentId, activity_definition_id: { in: bankIds } }
+      : { student_id: studentId, activity_definition_id: { in: [] } }
   const [attempts, submissions] = await Promise.all([
-    prisma.activityAttempt.findMany({ where: query, select: { group_activity_id: true, score: true, passed: true, created_at: true } }),
+    prisma.activityAttempt.findMany({
+      where: { OR: [groupQuery, bankQuery] },
+      select: {
+        group_activity_id: true,
+        activity_definition_id: true,
+        score: true,
+        passed: true,
+        created_at: true,
+      },
+    }),
     prisma.activitySubmission.findMany({
-      where: query,
+      where: groupQuery,
       select: { group_activity_id: true, status: true, score: true, submitted_at: true, graded_at: true },
     }),
   ])
   const attemptMap = new Map()
   for (const a of attempts) {
-    if (!attemptMap.has(a.group_activity_id)) attemptMap.set(a.group_activity_id, [])
-    attemptMap.get(a.group_activity_id).push(a)
+    if (a.group_activity_id) {
+      if (!attemptMap.has(a.group_activity_id)) attemptMap.set(a.group_activity_id, [])
+      attemptMap.get(a.group_activity_id).push(a)
+    } else {
+      if (!attemptMap.has(a.activity_definition_id)) attemptMap.set(a.activity_definition_id, [])
+      attemptMap.get(a.activity_definition_id).push(a)
+    }
   }
   const submissionMap = new Map()
   for (const s of submissions) {
@@ -103,38 +132,45 @@ function activityGrade(ga, attempts, submission) {
   return { status: score > 0 ? "completed" : "pending", score, date: latest ? new Date(latest) : null }
 }
 
-/** Una casilla "tema" de un estudiante: actividades + lecciones. */
-function buildTopicSummary(topic, groupActivities, attemptMap, submissionMap, readSubtopics) {
-  const gaLis = groupActivities.filter((ga) => ga.definition?.topic_id === topic.id)
+/**
+ * Casilla "tema" del progreso de contenido: lecciones leidas + actividades del
+ * banco completadas (score >= 60, igual que el resto de la plataforma). Las
+ * actividades del grupo NO entran aqui: se reportan aparte en el cuaderno.
+ */
+function buildTopicSummary(topic, bankActivities, attemptMap, readSubtopics) {
   const lessonIds = topic.subTopics.map((s) => s.id)
-  let activitiesDone = 0
-  let activitiesTotal = gaLis.length
-  let overdue = false
+  const bankLis = bankActivities.filter((def) => def.topic_id === topic.id)
+  let bankDone = 0
+  let bankTotal = bankLis.length
   let lastDate = null
   const scores = []
-  for (const ga of gaLis) {
-    const sub = (submissionMap.get(ga.id) ?? [])[0] ?? null
-    const grade = activityGrade(ga, attemptMap.get(ga.id) ?? [], sub)
-    if (grade.status === "completed") {
-      activitiesDone += 1
-      if (grade.score !== null) scores.push(grade.score)
+  for (const def of bankLis) {
+    const attempts = attemptMap.get(def.id) ?? []
+    const score = attempts.length ? finalScore(attempts) : 0
+    const completed = score >= 60
+    if (completed) {
+      bankDone += 1
+      scores.push(score)
     }
-    if (grade.status === "overdue") overdue = true
-    if (grade.date && (lastDate === null || new Date(grade.date) > new Date(lastDate))) {
-      lastDate = grade.date
+    const latest = attempts.reduce((acc, a) => {
+      const t = new Date(a.created_at).getTime()
+      return acc === null || t > acc ? t : acc
+    }, null)
+    if (latest && (lastDate === null || latest > new Date(lastDate).getTime())) {
+      lastDate = new Date(latest).toISOString()
     }
   }
   const lessonsDone = lessonIds.filter((id) => readSubtopics.has(id)).length
-  const done = activitiesDone + lessonsDone
-  const total = activitiesTotal + lessonIds.length
+  const done = bankDone + lessonsDone
+  const total = bankTotal + lessonIds.length
 
   let status
-  if (done === 0) {
-    status = overdue ? "overdue" : "not-started"
-  } else if (total > 0 && done >= total) {
+  if (total > 0 && done >= total) {
     status = "completed"
+  } else if (done === 0) {
+    status = "not-started"
   } else {
-    status = overdue ? "overdue" : "in-progress"
+    status = "in-progress"
   }
 
   const avgScore = scores.length > 0 ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0
@@ -142,8 +178,8 @@ function buildTopicSummary(topic, groupActivities, attemptMap, submissionMap, re
     topic,
     topicNumber: topic.number,
     title: topic.title,
-    completed: activitiesDone,
-    total: activitiesTotal,
+    completed: bankDone,
+    total: bankTotal,
     status,
     avgScore,
     lastDate,
@@ -169,13 +205,15 @@ async function getStudentGroupDetail({ groupId, studentId, teacherUserId, role, 
   const enrollment = await ensureEnrollment(group, studentId)
   if (!enrollment) return null
 
-  const { topics, activities } = await loadCourseUnits(groupId)
-  const { attemptMap, submissionMap } = await loadStudentWork(studentId, activities.map((a) => a.id))
+  const { topics, activities, bankActivities } = await loadCourseUnits(groupId)
+  const bankIds = bankActivities.map((a) => a.id)
+  const { attemptMap, submissionMap } = await loadStudentWork(studentId, activities.map((a) => a.id), bankIds)
   const reads = await lessonProgressService.listRead({ studentId, groupId })
   const readSubtopics = new Set(reads.map((r) => r.subtopicId))
 
+  // Progreso de contenido: lecciones leidas + actividades del banco.
   const topicProgress = topics.map((topic) => {
-    const summary = buildTopicSummary(topic, activities, attemptMap, submissionMap, readSubtopics)
+    const summary = buildTopicSummary(topic, bankActivities, attemptMap, readSubtopics)
     return {
       topicNumber: summary.topicNumber,
       title: summary.title,
@@ -236,13 +274,14 @@ async function getStudentGroupDetail({ groupId, studentId, teacherUserId, role, 
 async function getGroupProgress({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
-  const { topics, activities } = await loadCourseUnits(groupId)
+  const { topics, activities, bankActivities } = await loadCourseUnits(groupId)
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
     include: { student: { select: { user_id: true, code: true, user: { select: { id: true, name: true, email: true } } } } },
     orderBy: { enrolled_at: "asc" },
   })
   const activityIds = activities.map((a) => a.id)
+  const bankIds = bankActivities.map((a) => a.id)
   const now = Date.now()
 
   const rows = []
@@ -252,10 +291,11 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
 
   for (const enrollment of enrollments) {
     const studentId = enrollment.student.user_id
-    const { attemptMap, submissionMap } = await loadStudentWork(studentId, activityIds)
+    const { attemptMap, submissionMap } = await loadStudentWork(studentId, activityIds, bankIds)
     const reads = await lessonProgressService.listRead({ studentId, groupId })
     const readSubtopics = new Set(reads.map((r) => r.subtopicId))
 
+    // Progreso de contenido: lecciones + banco.
     const topicStatus = {}
     let done = 0
     let total = 0
@@ -263,7 +303,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     let hadActivityToday = false
 
     for (const topic of topics) {
-      const summary = buildTopicSummary(topic, activities, attemptMap, submissionMap, readSubtopics)
+      const summary = buildTopicSummary(topic, bankActivities, attemptMap, readSubtopics)
       topicStatus[summary.topicNumber] = summary.status
       done += summary.total > 0 ? summary.completed : 0
       total += summary.total

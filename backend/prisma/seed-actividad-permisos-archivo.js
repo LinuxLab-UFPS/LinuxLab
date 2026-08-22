@@ -30,17 +30,16 @@ const CHECKS = [
 
 const DATOS = {
   title: "Cada archivo en su sitio",
-  kind: "activity",
   difficulty: "basic",
   instructions:
     "Cuatro archivos llegaron con los permisos que da el sistema. Deja cada uno " +
     "con los que pide su descripción.",
-  topic_number: 5,
   max_score: 100,
   setup: SETUP,
 }
 
 async function main() {
+  DATOS.topic_id = (await prisma.topic.findFirst({ where: { number: 5 }, select: { id: true } })).id
   const a = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },

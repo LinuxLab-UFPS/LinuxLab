@@ -31,7 +31,6 @@ function loadTopic(metaPath) {
     slug: raw.slug,
     title: raw.title,
     description: raw.description,
-    complementary: raw.complementary ?? false,
     subtopics: (raw.subtopics ?? []).map((s, i) => ({
       number: s.number ?? i + 1,
       title: s.title,
@@ -60,7 +59,6 @@ function render(topics) {
     lines.push(`    slug: "${t.slug}",`)
     lines.push(`    title: ${JSON.stringify(t.title)},`)
     lines.push(`    description: ${JSON.stringify(t.description)},`)
-    if (t.complementary) lines.push("    complementary: true,")
     if (t.subtopics.length === 0) {
       lines.push("    subTopics: [],")
     } else {

@@ -81,7 +81,6 @@ model Topic {
   slug          String   @unique @db.VarChar(64)
   title         String   @db.VarChar(255)
   description   String?  @db.Text
-  complementary Boolean  @default(false)
   order         Int      @default(0)
 
   subTopics              Subtopic[]
@@ -102,7 +101,6 @@ model Subtopic {
   slug      String  @db.VarChar(64)
   order     Int     @default(0)
 
-  activityDefinitions ActivityDefinition[]
   lessonProgress      LessonProgress[]
 
   @@unique([topic_id, number])
@@ -138,10 +136,10 @@ model Group {
 /// de un docente que la crea para publicarla en su grupo. Lo que el estudiante
 /// resuelve es una publicacion (`GroupActivity`) hecha sobre esta definicion.
 ///
-/// `kind` separa las dos cosas que comparten esta maquinaria: una "check" es la
-/// comprobacion fija de una leccion, que mide avance y vive dentro del temario;
-/// una "activity" es trabajo aparte, se resuelve junto a la terminal y es lo
-/// unico que aparece en el banco del docente.
+/// Las actividades del banco (`source: "bank"`) forman parte del contenido de la
+/// plataforma y se ligan a un tema por `topic_id`: completarlas (score >= 60)
+/// avanza el progreso del temario. Las publicadas por el docente
+/// (`source: "teacher"`) se califican aparte en el cuaderno del grupo.
 model ActivityDefinition {
   id              String   @id @default(uuid()) @db.Uuid
   slug            String?  @unique @db.VarChar(64)
@@ -149,10 +147,7 @@ model ActivityDefinition {
   instructions    String?  @db.Text
   topic_id        String?  @map("topic_id") @db.Uuid
   topic           Topic?   @relation(fields: [topic_id], references: [id])
-  subtopic_id     String?  @map("subtopic_id") @db.Uuid
-  subtopic        Subtopic? @relation(fields: [subtopic_id], references: [id])
   difficulty      String   @default("basic") @db.VarChar(16)
-  kind            String   @default("activity") @db.VarChar(16)
   /// Arbol de archivos que la actividad prepara en `~/.actividades/<slug>/`.
   /// Se declara como datos (rutas y contenidos), nunca como comandos.
   setup           Json?

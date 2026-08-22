@@ -26,25 +26,24 @@ const CHECKS = [
 ]
 
 async function main() {
+  const topicId = (await prisma.topic.findFirst({ where: { number: 3 }, select: { id: true } })).id
   const activity = await prisma.activityDefinition.upsert({
     where: { slug: SLUG },
     update: {
       title: "Crea tu primer directorio",
-      kind: "check",
       instructions:
         "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
-      topic_number: 3,
+      topic_id: topicId,
       max_score: 100,
       checks: { deleteMany: {}, create: CHECKS },
     },
     create: {
       slug: SLUG,
       title: "Crea tu primer directorio",
-      kind: "check",
       difficulty: "basic",
       instructions:
         "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
-      topic_number: 3,
+      topic_id: topicId,
       max_score: 100,
       source: "bank",
       active: true,

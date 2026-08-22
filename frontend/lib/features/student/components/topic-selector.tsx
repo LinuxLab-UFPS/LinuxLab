@@ -63,11 +63,6 @@ export function TopicSelector({
               >
                 {topic.title}
               </span>
-              {topic.complementary && (
-                <span className="text-[10px] uppercase tracking-wide font-medium text-muted-foreground bg-secondary/60 px-1.5 py-0.5 rounded">
-                  Complementario
-                </span>
-              )}
             </label>
           )
         })}
