@@ -42,6 +42,19 @@ const config = Object.freeze({
     keyPath: process.env.SSH_KEY_PATH || "/ssh/ssh_key",
   }),
   frontendUrl: (process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001").replace(/\/$/, ""),
+  email: Object.freeze({
+    provider: (process.env.EMAIL_PROVIDER || "log").toLowerCase(),
+    fromAddress: process.env.EMAIL_FROM_ADDRESS || "hello@demomailtrap.co",
+    fromName: process.env.EMAIL_FROM_NAME || "LinuxLab",
+    mailtrapToken: process.env.MAILTRAP_TOKEN || "",
+    smtp: Object.freeze({
+      host: process.env.SMTP_HOST || "",
+      port: Number.parseInt(process.env.SMTP_PORT || "587", 10),
+      secure: process.env.SMTP_SECURE === "true",
+      user: process.env.SMTP_USER || "",
+      pass: process.env.SMTP_PASS || "",
+    }),
+  }),
   logLevel: process.env.LOG_LEVEL || (isProd ? "info" : "debug"),
 })
 

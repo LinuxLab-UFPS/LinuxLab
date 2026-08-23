@@ -12,6 +12,7 @@ const { AppError } = require("../lib/errors")
 const auditService = require("../services/auditService")
 const enrollmentService = require("../services/enrollmentService")
 const logger = require("../lib/logger")
+const emailService = require("../services/emailService")
 
 const router = express.Router()
 
@@ -36,17 +37,21 @@ router.post(
       const firebaseLink = await auth.generatePasswordResetLink(email)
       const oobCode = extractOobCode(firebaseLink)
       const customLink = `${config.frontendUrl}/auth/reset-password?oobCode=${encodeURIComponent(oobCode ?? "")}`
-      logger.info({ email, customLink, oobCode: oobCode ? `${oobCode.slice(0, 8)}...` : null }, "[PoC] password reset link generado")
-      console.log(`\n[PoC] reset-password → ${email}\n  customLink: ${customLink}\n  firebaseLink: ${firebaseLink}\n`)
-      res.json({
-        message: "Si el correo existe, se ha generado el enlace de recuperación.",
-        ...(config.isProd ? {} : { debugLink: customLink, oobCode }),
-      })
+      const { subject, html, text } = emailService.renderResetPasswordEmail(customLink)
+      try {
+        await emailService.sendMail({ to: email, subject, html, text, category: "password_reset" })
+        logger.info({ email }, "password reset email enviado")
+      } catch (mailErr) {
+        logger.error({ err: mailErr, email }, "Fallo envío email reset")
+        if (config.email.provider === "log") throw mailErr
+      }
+      res.json({ message: "Si el correo existe, se ha enviado el enlace de recuperación." })
     } catch (err) {
       if (err.code === "auth/user-not-found") {
-        logger.info({ email }, "[PoC] password reset solicitado para usuario inexistente (respuesta genérica)")
-        return res.json({ message: "Si el correo existe, se ha generado el enlace de recuperación." })
+        logger.info({ email }, "password reset solicitado para usuario inexistente (respuesta genérica)")
+        return res.json({ message: "Si el correo existe, se ha enviado el enlace de recuperación." })
       }
+      if (err instanceof AppError) throw err
       logger.error({ err, email }, "Error generando password reset link")
       throw new AppError(err.message || "No se pudo generar el enlace", 500, "INTERNAL_ERROR")
     }
@@ -65,17 +70,21 @@ router.post(
       const firebaseLink = await auth.generateEmailVerificationLink(email)
       const oobCode = extractOobCode(firebaseLink)
       const customLink = `${config.frontendUrl}/auth/accion?mode=verifyEmail&oobCode=${encodeURIComponent(oobCode ?? "")}`
-      logger.info({ email, customLink, oobCode: oobCode ? `${oobCode.slice(0, 8)}...` : null }, "[PoC] verification link generado")
-      console.log(`\n[PoC] verify-email → ${email}\n  customLink: ${customLink}\n  firebaseLink: ${firebaseLink}\n`)
-      res.json({
-        message: "Si el correo existe, se ha generado el enlace de verificación.",
-        ...(config.isProd ? {} : { debugLink: customLink, oobCode }),
-      })
+      const { subject, html, text } = emailService.renderVerificationEmail(customLink)
+      try {
+        await emailService.sendMail({ to: email, subject, html, text, category: "verification" })
+        logger.info({ email }, "verification email enviado")
+      } catch (mailErr) {
+        logger.error({ err: mailErr, email }, "Fallo envío email verificación")
+        if (config.email.provider === "log") throw mailErr
+      }
+      res.json({ message: "Si el correo existe, se ha enviado el enlace de verificación." })
     } catch (err) {
       if (err.code === "auth/user-not-found") {
-        logger.info({ email }, "[PoC] verification solicitado para usuario inexistente (respuesta genérica)")
-        return res.json({ message: "Si el correo existe, se ha generado el enlace de verificación." })
+        logger.info({ email }, "verification solicitado para usuario inexistente (respuesta genérica)")
+        return res.json({ message: "Si el correo existe, se ha enviado el enlace de verificación." })
       }
+      if (err instanceof AppError) throw err
       logger.error({ err, email }, "Error generando verification link")
       throw new AppError(err.message || "No se pudo generar el enlace", 500, "INTERNAL_ERROR")
     }
