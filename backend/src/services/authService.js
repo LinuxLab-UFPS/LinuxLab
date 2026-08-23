@@ -43,9 +43,12 @@ async function loginWithIdToken({ idToken, req }) {
     throw new AppError("Error al iniciar sesión", 500, "INTERNAL_ERROR")
   }
 
-  const { email, uid } = decoded
+  const { email, uid, email_verified } = decoded
   if (!email) {
     throw new AppError("Se requiere un correo electrónico", 400, "VALIDATION_ERROR")
+  }
+  if (email_verified === false) {
+    throw new AppError("Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.", 403, "FORBIDDEN")
   }
 
   let user = await prisma.user.findUnique({
