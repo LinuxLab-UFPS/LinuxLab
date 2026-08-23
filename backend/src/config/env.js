@@ -41,6 +41,7 @@ const config = Object.freeze({
     username: process.env.SSH_USER || "labadmin",
     keyPath: process.env.SSH_KEY_PATH || "/ssh/ssh_key",
   }),
+  frontendUrl: (process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001").replace(/\/$/, ""),
   logLevel: process.env.LOG_LEVEL || (isProd ? "info" : "debug"),
 })
 

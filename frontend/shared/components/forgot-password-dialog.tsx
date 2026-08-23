@@ -14,6 +14,7 @@ export function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; on
   const { sendPasswordReset } = useAuth()
   const [email, setEmail] = useState("")
   const [sending, setSending] = useState(false)
+  const [debugLink, setDebugLink] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -24,10 +25,9 @@ export function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; on
     }
     setSending(true)
     try {
-      await sendPasswordReset(trimmed)
+      const { debugLink: link } = await sendPasswordReset(trimmed)
+      if (link) setDebugLink(link)
       notify.success("Correo enviado. Revisa tu bandeja para restablecer tu contraseña.")
-      onOpenChange(false)
-      setEmail("")
     } catch (err) {
       notify.error(err, "No se pudo enviar el correo.")
     } finally {
@@ -55,13 +55,24 @@ export function ForgotPasswordDialog({ open, onOpenChange }: { open: boolean; on
               className="h-11"
             />
           </div>
+          {debugLink ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-left">
+              <p className="text-xs font-medium text-amber-800">[PoC] Enlace de prueba (solo dev):</p>
+              <a href={debugLink} className="mt-1 block break-all text-xs text-primary underline">
+                {debugLink}
+              </a>
+              <p className="mt-1 text-[11px] text-muted-foreground">Abre el enlace para probar el restablecimiento. En producción se enviará por email.</p>
+            </div>
+          ) : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={sending}>
-              Cancelar
+            <Button type="button" variant="outline" onClick={() => { setDebugLink(null); onOpenChange(false) }} disabled={sending}>
+              {debugLink ? "Cerrar" : "Cancelar"}
             </Button>
-            <Button type="submit" disabled={sending} className="min-w-24">
-              {sending ? "Enviando…" : "Enviar enlace"}
-            </Button>
+            {!debugLink ? (
+              <Button type="submit" disabled={sending} className="min-w-24">
+                {sending ? "Enviando…" : "Enviar enlace"}
+              </Button>
+            ) : null}
           </div>
         </form>
       </DialogContent>

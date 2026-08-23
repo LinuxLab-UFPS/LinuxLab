@@ -100,7 +100,7 @@ services:
       SSH_KEY_PATH: /ssh/ssh_key
       JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET:-linux-lab-31fc0.firebasestorage.app}
-      FRONTEND_URL: http://frontend:3000
+      FRONTEND_URL: ${FRONTEND_URL:-${NEXT_PUBLIC_FRONTEND_URL:-http://localhost:3001}}
     volumes:
       - ssh_keys:/ssh:ro
     networks:

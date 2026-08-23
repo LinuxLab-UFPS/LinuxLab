@@ -14,25 +14,15 @@ export function VerifyEmailPage({ email }: { email: string }) {
   const [sending, setSending] = useState(false)
   const [checking, setChecking] = useState(false)
   const [cooldown, setCooldown] = useState(0)
+  const [debugLink, setDebugLink] = useState<string | null>(null)
 
   const handleResend = async () => {
     if (cooldown > 0) return
     setSending(true)
     try {
-        try {
-          await resendVerification()
-        } catch {
-          const { auth } = getFirebaseAuth()
-          const u = auth.currentUser
-          if (u) {
-            const { sendEmailVerification } = await import("firebase/auth")
-            const { env } = await import("@/lib/config/env")
-            await sendEmailVerification(u, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
-          } else {
-            throw new Error("Abre el enlace desde el mismo navegador donde te registraste.")
-          }
-        }
-      notify.success("Correo reenviado. Revisa tu bandeja.")
+      const { debugLink: link } = await resendVerification()
+      if (link) setDebugLink(link)
+      notify.success("Correo reenviado. Revisa logs del backend para el enlace [PoC].")
       setCooldown(60)
       const id = setInterval(() => {
         setCooldown((c) => {
@@ -89,6 +79,14 @@ export function VerifyEmailPage({ email }: { email: string }) {
           Enviamos un enlace de verificación a <span className="font-medium text-foreground">{email}</span>. Debes verificar tu correo para poder iniciar sesión.
         </p>
         <p className="mt-2 text-xs text-muted-foreground">Revisa spam si no lo ves. El enlace expira en 1 hora.</p>
+        {debugLink ? (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-left">
+            <p className="text-xs font-medium text-amber-800">[PoC] Enlace de prueba:</p>
+            <a href={debugLink} className="mt-1 block break-all text-xs text-primary underline">
+              {debugLink}
+            </a>
+          </div>
+        ) : null}
         <div className="mt-8 flex flex-col gap-3">
           <Button onClick={handleResend} disabled={sending || cooldown > 0} className="h-11 w-full">
             {cooldown > 0 ? `Reenviar en ${cooldown}s` : sending ? "Enviando…" : "Reenviar correo"}

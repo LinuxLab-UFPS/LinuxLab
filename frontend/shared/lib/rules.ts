@@ -4,6 +4,7 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: "/login", roles: [], exact: true },
   { path: "/auth/verificacion", roles: [], exact: true },
   { path: "/auth/accion", roles: [], exact: true },
+  { path: "/auth/reset-password", roles: [], exact: true },
   { path: "/unauthorized", roles: [], exact: true },
   { path: "/inscripcion/pendiente", roles: ["student", "admin"], exact: true, requiresEnrollment: false },
   { path: "/inicio", roles: ["student", "teacher", "admin"], exact: true, requiresEnrollment: true },
@@ -20,4 +21,4 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: "/actividades", roles: ["student", "admin"], requiresEnrollment: true },
 ]
 
-export const PUBLIC_ROUTES = new Set(["/login", "/auth/verificacion", "/auth/accion", "/unauthorized"])
+export const PUBLIC_ROUTES = new Set(["/login", "/auth/verificacion", "/auth/accion", "/auth/reset-password", "/unauthorized"])

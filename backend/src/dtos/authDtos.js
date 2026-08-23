@@ -1,4 +1,5 @@
 const { z } = require("zod")
+const { emailField } = require("./common")
 
 const idTokenSchema = z.object({
   idToken: z
@@ -9,4 +10,8 @@ const idTokenSchema = z.object({
     .min(1, "Se requiere el token de acceso"),
 })
 
-module.exports = { idTokenSchema }
+const requestEmailSchema = z.object({
+  email: emailField,
+})
+
+module.exports = { idTokenSchema, requestEmailSchema }

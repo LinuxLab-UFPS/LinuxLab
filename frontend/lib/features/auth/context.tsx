@@ -6,8 +6,6 @@ import {
   signOut as firebaseSignOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
-  sendEmailVerification,
   updateProfile,
 } from "firebase/auth"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
@@ -22,8 +20,8 @@ interface AuthContextValue {
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, name: string) => Promise<{ needsVerification: boolean }>
-  sendPasswordReset: (email: string) => Promise<void>
-  resendVerification: () => Promise<void>
+  sendPasswordReset: (email: string) => Promise<{ debugLink?: string }>
+  resendVerification: () => Promise<{ debugLink?: string }>
   hydrate: (user: User | null) => void
   signOut: () => Promise<void>
 }
@@ -99,8 +97,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() })
     } catch {}
     try {
-      const { env } = await import("@/lib/config/env")
-      await sendEmailVerification(cred.user, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
+      await apiFetch("/api/auth/request-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      })
     } catch {}
     try {
       await firebaseSignOut(auth)
@@ -109,22 +109,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const sendPasswordReset = useCallback(async (email: string) => {
-    const { auth } = getFirebaseAuth()
     try {
-      const { env } = await import("@/lib/config/env")
-      await sendPasswordResetEmail(auth, email, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
+      const data = await apiFetch<{ message: string; debugLink?: string }>("/api/auth/request-password-reset", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      })
+      if (data.debugLink) console.log("[PoC] custom reset link:", data.debugLink)
+      return { debugLink: data.debugLink }
     } catch (e) {
       throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo enviar el correo de recuperación."))
     }
   }, [])
 
   const resendVerification = useCallback(async () => {
-    const { auth } = getFirebaseAuth()
-    const u = auth.currentUser
-    if (!u) throw new Error("No hay sesión activa para reenviar verificación.")
+    let email: string | null = null
     try {
-      const { env } = await import("@/lib/config/env")
-      await sendEmailVerification(u, { url: `${env.frontendUrl}/auth/accion`, handleCodeInApp: true })
+      const { auth } = getFirebaseAuth()
+      email = auth.currentUser?.email ?? null
+    } catch {}
+    if (!email) {
+      try {
+        email = sessionStorage.getItem("pendingVerifyEmail")
+      } catch {}
+    }
+    if (!email) throw new Error("No hay correo para reenviar verificación. Vuelve a registrarte.")
+    try {
+      const data = await apiFetch<{ message: string; debugLink?: string }>("/api/auth/request-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      })
+      if (data.debugLink) console.log("[PoC] custom verify link:", data.debugLink)
+      return { debugLink: data.debugLink }
     } catch (e) {
       throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo reenviar el correo."))
     }
