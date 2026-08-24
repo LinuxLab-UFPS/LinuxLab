@@ -48,7 +48,6 @@ export const syllabus: Topic[] = [
       { number: 1, title: "El sistema de archivos" },
       { number: 2, title: "Navegación esencial" },
       { number: 3, title: "Operaciones con directorios" },
-      { number: 4, title: "Práctica: crea tu estructura" },
     ],
   },
   {

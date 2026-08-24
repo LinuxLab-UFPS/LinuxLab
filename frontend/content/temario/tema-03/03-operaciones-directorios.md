@@ -1,6 +1,6 @@
 ## Operaciones con directorios
 
-Un directorio no es un archivo cualquiera: es un contenedor, y las operaciones que lo afectan actúan sobre todo lo que tiene dentro. Por eso los comandos que crean, copian y eliminan directorios tienen opciones propias que no aparecen al trabajar con archivos sueltos (Free Software Foundation, 2026).
+Ya quedó dicho que para el sistema un directorio es un archivo más. Lo que lo separa del resto es que ese archivo contiene a otros, y eso cambia las reglas: copiarlo o borrarlo no afecta a una cosa, sino a todo lo que cuelga de él. De ahí que estos comandos tengan opciones propias que no hacen falta al trabajar con archivos sueltos (Free Software Foundation, 2026).
 
 ## Opciones de mkdir
 
@@ -101,6 +101,12 @@ rm -r proyectos
 `rm -r` no distingue entre un directorio vacío y uno con años de trabajo dentro, y en Linux no existe papelera de reciclaje: lo eliminado no se recupera (Shotts, 2026). Antes de ejecutarlo conviene listar la ruta con `ls` para confirmar que es la correcta.
 
 La combinación `-rf` añade `-f` (*force*), que suprime toda confirmación y no informa de errores. Es habitual en scripts, donde nadie está mirando la pantalla para responder, y es también la orden que más destrozos ha causado en la historia de Unix.
+
+## Práctica
+
+Crea en tu carpeta personal un directorio `practicas` y, dentro de él, otro llamado `tema-03`. Con `-p` salen los dos de una sola vez.
+
+<!-- EJERCICIO: crear-directorio-practicas -->
 
 ## Resumen
 
