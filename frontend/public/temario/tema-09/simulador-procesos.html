@@ -230,7 +230,7 @@ button.win-dot::after{
     </div>
 
     <div class="arranque" id="vista-arr" hidden>
-      <p class="arr-intro">Programas que arrancan solos al iniciar sesión. Cerrarlos con <code>pkill</code> los calla ahora; para que no vuelvan hay que apagarlos aquí.</p>
+      <p class="arr-intro">Programas que arrancan solos al iniciar sesión.</p>
       <div id="arr-lista"></div>
     </div>
   </div>
@@ -299,7 +299,7 @@ const barra = Barra.montar({
     { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
     { clave: 'pgrep', tono: 'azul',    texto: 'Enseña a quién alcanzaría un patrón <b>sin matar nada</b>. Mirar antes de disparar evita llevarse por delante lo que no era.' },
     { clave: 'Azul',  tono: 'azul',    texto: 'Los procesos en azul son del sistema. Si caen, algo se rompe.' },
-    { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Su actualizador se abre solo con la sesión, y eso se quita en la pestaña «Al inicio».' },
+    { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Su actualizador se abre solo con la sesión.' },
   ],
   onReiniciar: () => reiniciar(),
 });
