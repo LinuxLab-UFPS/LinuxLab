@@ -195,6 +195,8 @@ drwx------ 2 andres_torres grp_cec1648c 4096 Aug 11 18:48 backup
 
 Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la parte que interesa de una salida demasiado larga.
 
+<!-- ACTIVIDAD: rastro-en-los-registros -->
+
 ## Resumen
 
 | Comando | Efecto |

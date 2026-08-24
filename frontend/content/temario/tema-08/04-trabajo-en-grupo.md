@@ -164,6 +164,8 @@ Para terminar, conviene no dejar rastro:
 rm -r compartido suelto.txt
 ```
 
+<!-- ACTIVIDAD: la-carpeta-del-equipo -->
+
 ---
 
 **Fuentes**

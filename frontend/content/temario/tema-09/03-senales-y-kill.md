@@ -127,6 +127,10 @@ bash: kill: (1) - Operation not permitted
 
 Ese `1` es el proceso que arranca el sistema, y no pertenece a la cuenta del laboratorio. Es el mismo criterio de dueño y permisos del tema cinco, aplicado a procesos en lugar de a archivos.
 
+<!-- ACTIVIDAD: foto-del-sistema -->
+
+<!-- ACTIVIDAD: el-turno-de-noche -->
+
 ## Resumen
 
 | Comando | Efecto |

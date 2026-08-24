@@ -147,6 +147,8 @@ ls -l /etc/shadow /etc/passwd
 
 Del contenido basta con saber dos cosas. La línea tiene nueve campos, y además de la contraseña cifrada guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Y si el campo de la contraseña empieza por un signo de admiración `!`, está bloqueada: la cuenta existe y conserva sus archivos, pero no puede entrar.
 
+<!-- ACTIVIDAD: tu-ficha-de-identidad -->
+
 ---
 
 **Fuentes**
