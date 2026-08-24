@@ -115,18 +115,6 @@ Lo que sí atraviesa el segundo plano es la salida. Un programa que escriba en p
 comando-largo > salida.txt 2>&1 &
 ```
 
-## El ciclo completo
-
-Puestos en orden, los cuatro pasos cubren cualquier situación:
-
-```bash
-sleep 300        # arranca ocupando la terminal
-                 # Ctrl+Z lo detiene y devuelve el prompt
-bg               # continúa, ahora en segundo plano
-jobs             # confirma que sigue vivo
-fg               # lo trae de vuelta cuando interese
-```
-
 ## Resumen
 
 | Comando | Efecto |
