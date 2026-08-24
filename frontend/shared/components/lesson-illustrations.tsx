@@ -14,7 +14,6 @@
 
 import {
   PromptDollarIllustration,
-  TuxIllustration,
   UnixTreeIllustration,
 } from "@shared/components/intro-illustrations"
 import {
@@ -504,7 +503,6 @@ function PlasmaScreen() {
 
 /** Lo que puede pedir un `<!-- ILLUSTRATION: id -->` desde una leccion. */
 export const LESSON_ILLUSTRATIONS: Record<string, () => React.JSX.Element> = {
-  tux: TuxIllustration,
   "unix-arbol": UnixTreeIllustration,
   "prompt-dollar": PromptDollarIllustration,
   "gui-cli": GuiCliIllustration,

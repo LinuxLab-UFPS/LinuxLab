@@ -1,11 +1,11 @@
 /**
- * Las ilustraciones de los dos primeros temas: la mascota, el arbol de Unix y
- * el simbolo del sistema.
+ * Las ilustraciones de los dos primeros temas: el arbol de Unix y el simbolo
+ * del sistema.
  *
- * Tux es el unico dibujo del curso con colores fijos, y a proposito: el negro,
- * el amarillo del pico y las patas y la panza clara son su identidad, no una
- * eleccion de paleta. Los otros dos van por tokens del tema, como los diagramas
- * del kernel, para que se lean igual en claro y en oscuro.
+ * Las dos van por tokens del tema, como los diagramas del kernel, para que se
+ * lean igual en claro y en oscuro. Tux no esta aqui: es una imagen real
+ * (`tux-evolution.png`), porque la mascota tiene un dibujo oficial y volver a
+ * trazarla a mano solo daba una version peor.
  *
  * Se insertan con `<!-- ILLUSTRATION: id -->` (ver lesson-blocks.ts).
  */
@@ -14,93 +14,6 @@ const TRAZO = "stroke-muted-foreground/50"
 const TEXTO = "fill-foreground"
 const APUNTE = "fill-muted-foreground"
 const MONO = "var(--font-geist-mono), ui-monospace, monospace"
-
-/* Los colores de Tux, que no dependen del tema. */
-const TUX_NEGRO = "#1b1b1b"
-const TUX_PANZA = "#f7f7f2"
-const TUX_AMARILLO = "#f5b53f"
-const TUX_AMARILLO_OSCURO = "#d8952a"
-
-/**
- * Tux, la mascota del Kernel.
- *
- * Se dibuja por piezas apiladas —cuerpo, panza, aletas, ojos, pico, patas— en
- * vez de con un solo trazado: cada parte queda legible por separado y se puede
- * corregir sin rehacer el resto.
- */
-export function TuxIllustration() {
-  return (
-    <svg
-      viewBox="0 0 240 310"
-      role="img"
-      aria-labelledby="ilu-tux"
-      className="mx-auto my-8 block w-full max-w-[220px]"
-    >
-      <title id="ilu-tux">
-        Tux, el pingüino que sirve de mascota al Kernel de Linux, con el pico y
-        las patas amarillos y la panza clara
-      </title>
-
-      {/* Patas, debajo del cuerpo para que el borde inferior las tape */}
-      <g fill={TUX_AMARILLO} stroke={TUX_AMARILLO_OSCURO} strokeWidth="2.5">
-        <path d="M104 250 C 84 254, 56 268, 46 282 C 40 291, 48 297, 64 297 L 106 297 C 116 297, 120 288, 116 276 Z" />
-        <path d="M136 250 C 156 254, 184 268, 194 282 C 200 291, 192 297, 176 297 L 134 297 C 124 297, 120 288, 124 276 Z" />
-      </g>
-
-      {/* Aletas, tambien por detras */}
-      <g fill={TUX_NEGRO}>
-        <path d="M60 146 C 24 166, 10 214, 22 248 C 30 268, 58 264, 58 246 C 44 212, 44 176, 64 152 Z" />
-        <path d="M180 146 C 216 166, 230 214, 218 248 C 210 268, 182 264, 182 246 C 196 212, 196 176, 176 152 Z" />
-      </g>
-
-      {/* Cuerpo */}
-      <path
-        d="M120 24
-           C 88 24, 66 50, 64 86
-           C 44 110, 34 150, 34 190
-           C 34 244, 72 276, 120 276
-           C 168 276, 206 244, 206 190
-           C 206 150, 196 110, 176 86
-           C 174 50, 152 24, 120 24 Z"
-        fill={TUX_NEGRO}
-      />
-
-      {/* Panza */}
-      <path
-        d="M120 100
-           C 92 100, 72 134, 72 182
-           C 72 230, 94 258, 120 258
-           C 146 258, 168 230, 168 182
-           C 168 134, 148 100, 120 100 Z"
-        fill={TUX_PANZA}
-      />
-
-      {/* Ojos */}
-      <ellipse cx="102" cy="76" rx="13" ry="17" fill={TUX_PANZA} />
-      <ellipse cx="138" cy="76" rx="13" ry="17" fill={TUX_PANZA} />
-      <circle cx="106" cy="79" r="6" fill={TUX_NEGRO} />
-      <circle cx="134" cy="79" r="6" fill={TUX_NEGRO} />
-
-      {/* Pico */}
-      <path
-        d="M120 90
-           C 106 90, 96 98, 96 107
-           C 96 116, 106 123, 120 123
-           C 134 123, 144 116, 144 107
-           C 144 98, 134 90, 120 90 Z"
-        fill={TUX_AMARILLO}
-        stroke={TUX_AMARILLO_OSCURO}
-        strokeWidth="2"
-      />
-      <path
-        d="M97 107 H143"
-        stroke={TUX_AMARILLO_OSCURO}
-        strokeWidth="2"
-        fill="none"
-      />
-    </svg>
-  )
-}
 
 /* ---------- el arbol de Unix ---------- */
 

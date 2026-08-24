@@ -13,9 +13,9 @@ Linux es un sistema operativo, y es probable que hoy hayas usado varios sin dart
 
 Linux empezó como el proyecto personal de un estudiante universitario y hoy sostiene buena parte de la infraestructura tecnológica global, construido de forma voluntaria por programadores repartidos por el mundo (NDG, 2024).
 
-<!-- ILLUSTRATION: tux -->
+<!-- IMAGE: tux-evolution.png | Las tres versiones de Tux, la mascota de Linux -->
 
-Ese pingüino es Tux, la mascota del proyecto desde 1996. Aparece en el arranque de muchos sistemas y en la documentación oficial, y es la cara visible de todo lo que viene a continuación.
+Ese pingüino es **Tux**, la mascota del proyecto desde 1996, cuando Larry Ewing lo dibujó a partir de una idea del propio Torvalds. Ahí está en sus tres versiones: el dibujo original y los dos redibujados que vinieron después. Aparece en el arranque de muchos sistemas y en la documentación oficial.
 
 ## Los orígenes: Unix
 
