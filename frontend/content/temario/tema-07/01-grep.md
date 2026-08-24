@@ -1,3 +1,5 @@
+<!-- VIDEO: video-busqueda | grep sobre un historial de commits -->
+
 ## Buscar dentro de los archivos
 
 Linux tiene dos comandos de búsqueda y cada uno responde una pregunta distinta (Free Software Foundation, 2025).
@@ -48,7 +50,7 @@ Escrito sin comillas, `grep sin memoria bitacora.txt` buscaría la palabra `sin`
 
 ## Contar las coincidencias
 
-La opción `-c` devuelve cuántas líneas coinciden, en lugar de mostrarlas (NDG, 2024).
+La opción `-c` devuelve cuántas líneas coinciden, en lugar de mostrarlas (NDG, 2024). Es la del video, aplicada aquí sobre un archivo en vez de sobre un historial:
 
 ```bash
 grep -c bash /etc/passwd
@@ -57,6 +59,8 @@ grep -c bash /etc/passwd
 ```
 2
 ```
+
+Conviene no confundirla con el número de apariciones: `-c` cuenta **líneas**, así que una línea que mencione el texto tres veces sigue sumando uno.
 
 ## Ver el número de línea
 
@@ -114,7 +118,7 @@ La segunda línea desaparece porque en `Beware` el texto `are` forma parte de ot
 
 ## Invertir la búsqueda
 
-La opción `-v` muestra las líneas que **no** contienen el texto. En `/etc/passwd`, la mayoría de las cuentas son de servicio y llevan `nologin`. Quitarlas deja a la vista las cuentas de personas.
+La opción `-v` da la vuelta al filtro y muestra las líneas que **no** contienen el texto, como en la última vuelta del video. En `/etc/passwd`, la mayoría de las cuentas son de servicio y llevan `nologin`. Quitarlas deja a la vista las cuentas de personas.
 
 ```bash
 grep -v nologin /etc/passwd
