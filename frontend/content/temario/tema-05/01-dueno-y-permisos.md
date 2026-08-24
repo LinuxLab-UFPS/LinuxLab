@@ -130,15 +130,13 @@ Cada bloque de tres letras equivale a un dígito. De dónde salen esos números 
 
 ## Práctica
 
-El ejercicio consiste en crear un archivo, quitarle el permiso de escritura y comprobar qué deja de funcionar. Los permisos se entienden mejor estorbando.
+Crea en tu carpeta personal un archivo `solo-lectura.txt` con al menos dos líneas y déjalo sin permiso de escritura para nadie. Los permisos se entienden mejor estorbando.
 
-El archivo se llama `solo-lectura.txt`, va en el directorio personal y necesita al menos dos líneas. Se escribe con `vi`, como en el módulo anterior:
+Se escribe con `vi`, igual que en el tema anterior:
 
 ```bash
 vi solo-lectura.txt
 ```
-
-El recorrido dentro del editor es el de siempre: `i` para entrar en modo inserción, <kbd>Esc</kbd> para volver al modo normal y `:wq` para guardar y salir.
 
 Con el contenido dentro, se retira la escritura a los tres bloques:
 

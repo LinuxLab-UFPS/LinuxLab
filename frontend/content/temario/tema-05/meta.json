@@ -16,7 +16,7 @@
     },
     {
       "id": "chmod",
-      "title": "Cambiar permisos con chmod",
+      "title": "Chmod",
       "file": "03-chmod.md"
     },
     {

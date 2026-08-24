@@ -94,6 +94,15 @@ const RAW = [
     topicNumber: 4,
     checks: 2,
   },
+  {
+    slug: "paquete-de-entrega",
+    title: "El paquete de entrega",
+    description:
+      "Empaqueta el informe en un .tar.gz, deja por escrito qué trae dentro y comprueba que abre.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 6,
+    checks: 5,
+  },
 ]
 
 export const activities: ActivityListing[] = RAW.map((a) => {

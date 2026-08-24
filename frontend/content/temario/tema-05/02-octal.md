@@ -1,5 +1,3 @@
-<!-- VIDEO: video-permisos-linux | Notación octal y chmod -->
-
 El subtema anterior terminó con `stat` imprimiendo dos formas del mismo permiso:
 
 ```

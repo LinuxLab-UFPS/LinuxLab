@@ -1,10 +1,10 @@
 <!-- VIDEO: video-permisos-linux | Permisos con chmod -->
 
-## chmod
-
 `chmod` (change mode) modifica los permisos de un archivo o un directorio (Free Software Foundation, 2026). Solo puede usarlo el dueño del archivo, o el administrador.
 
-Admite dos formas de escribir el permiso nuevo. La numérica reescribe los nueve permisos de una vez:
+## Las dos formas de escribirlo
+
+Admite dos maneras de expresar el permiso nuevo. La numérica reescribe los nueve permisos de una vez:
 
 ```bash
 chmod 640 notas.txt

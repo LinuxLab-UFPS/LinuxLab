@@ -73,7 +73,7 @@ export const syllabus: Topic[] = [
     subTopics: [
       { number: 1, title: "Dueño, grupo y permisos" },
       { number: 2, title: "Notación octal" },
-      { number: 3, title: "Cambiar permisos con chmod" },
+      { number: 3, title: "Chmod" },
       { number: 4, title: "Permisos sobre directorios" },
       { number: 5, title: "Permisos por defecto" },
     ],
