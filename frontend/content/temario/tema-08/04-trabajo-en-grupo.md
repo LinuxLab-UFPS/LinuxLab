@@ -1,3 +1,5 @@
+<!-- VIDEO: video-grupos | Compartir archivos con un grupo -->
+
 ## Compartir archivos con un grupo
 
 Un grupo permite que varias personas trabajen sobre los mismos archivos sin tener que abrirlos a **otros**, que significa todo el mundo. La receta es siempre la misma: hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG, 2024).
