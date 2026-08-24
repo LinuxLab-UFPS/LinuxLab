@@ -1,12 +1,18 @@
+Como ya mencionamos, el Kernel es la pieza que se sienta entre las aplicaciones y el hardware: la shell le pide, las bibliotecas le traducen la petición y él es quien de verdad toca el disco, la memoria y el procesador.
+
+El Kernel que corre hoy en cualquier máquina no es el que Torvalds publicó en 1991. Aquel eran unas diez mil líneas escritas para un solo modelo de procesador; el de ahora pasa de treinta millones y arranca desde un reloj de pulsera hasta una supercomputadora. Lo que no ha cambiado en todo ese camino son sus cinco responsabilidades, que estaban desde el primer día y siguen siendo las mismas.
+
 ## 1. Gestión de procesos
 
-Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El Kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos. Eso es la **multitarea** (Silberschatz et al., 2021), y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el Kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
+Como ya mencionamos, un proceso vendría siendo cada programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El Kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos. Eso es la **multitarea** (Silberschatz et al., 2021), y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el Kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
 
 <!-- ILLUSTRATION: kernel-procesos -->
 
-Cada aplicación abierta consume CPU a ratos, sube cuando trabaja y baja cuando espera. El Kernel es quien reparte esos turnos. El módulo de gestión de procesos vuelve sobre esta misma lista, ya consultada desde la terminal con el consumo real del equipo.
+Cada aplicación abierta consume CPU a ratos, sube cuando trabaja y baja cuando espera. El Kernel es quien reparte esos turnos.
 
 ## 2. Gestión de memoria
+
+La memoria RAM es donde vive todo lo que está abierto en este momento. Las pestañas del navegador, la partida de un juego, el documento a medio escribir: nada de eso está en el disco mientras se usa, está en la RAM, porque es el único sitio lo bastante rápido para que el procesador trabaje. Al cerrar el programa esa memoria se libera y queda para el siguiente.
 
 El Kernel asigna bloques de RAM a los procesos que la solicitan y los libera cuando dejan de usarse. Desde dentro, cada proceso cree tener un bloque grande y continuo solo para él; esa ilusión la sostiene el Kernel (Tanenbaum y Bos, 2023), que reparte bloques físicos más pequeños, comparte memoria entre procesos cuando puede y manda al espacio de intercambio o **swap** lo que lleva tiempo sin usarse. El proceso no se entera de nada de eso, solo ve memoria disponible.
 
@@ -29,6 +35,12 @@ El Kernel se comunica con el hardware a través de **controladores** (drivers). 
 El Kernel implementa los protocolos de red (TCP/IP, UDP, ICMP) que permiten al sistema comunicarse con otros computadores, y administra las interfaces, las tablas de enrutamiento, los sockets y las conexiones activas.
 
 <!-- ILLUSTRATION: kernel-red -->
+
+## Con cuáles trabajarás
+
+Las cinco están siempre funcionando, pero desde la terminal no se tocan por igual. El curso se apoya sobre todo en dos: el **sistema de archivos**, que es donde ocurre casi todo lo que vas a escribir, desde crear un directorio hasta cambiarle los permisos a un archivo; y la **gestión de procesos**, que aparece al final, cuando toque mirar qué está corriendo y cerrar lo que sobra.
+
+Las otras tres se quedan debajo. Se notan cuando fallan, no cuando funcionan, y esa es justamente la señal de que el Kernel está haciendo bien su trabajo.
 
 ---
 

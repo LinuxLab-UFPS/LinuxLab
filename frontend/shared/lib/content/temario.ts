@@ -17,10 +17,10 @@ export const syllabus: Topic[] = [
     number: 1,
     slug: "introduccion-a-linux",
     title: "Introducción a Linux",
-    description: "Historia, las partes del sistema, el Kernel, entorno de ventanas e instalación.",
+    description: "Historia, las partes esenciales, el Kernel, entorno de ventanas e instalación.",
     subTopics: [
       { number: 1, title: "Linux: Dónde todo empezó" },
-      { number: 2, title: "Las partes del sistema" },
+      { number: 2, title: "Las partes esenciales" },
       { number: 3, title: "El Kernel" },
       { number: 4, title: "Entorno de ventanas" },
       { number: 5, title: "Instalación" },

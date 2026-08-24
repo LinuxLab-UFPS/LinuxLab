@@ -4,7 +4,9 @@ Linux no viene en una sola versión. El Kernel es el núcleo, pero un sistema op
 
 Por eso existen tantas. Cada distribución toma el mismo Kernel y lo combina con diferentes herramientas, filosofías y públicos objetivo. Casi todas las que se usan hoy descienden de tres troncos: Red Hat, Debian y Slackware. La diferencia más visible entre ellos es el gestor de paquetes. Ubuntu apunta a la facilidad de uso. Fedora va hacia desarrolladores que quieren lo más reciente. Arch es para quien quiere construir y entender cada parte del sistema. Hay distros para servidores, para equipos viejos, para privacidad, para diseño gráfico, para gaming.
 
-Los comandos de este laboratorio funcionan igual en todas ellas. La terminal es la misma, y esa es la razón por la que aprenderla rinde en cualquier distribución (Shotts, 2026).
+Conviene subrayar el "mismo Kernel", porque es literal. No hay un Kernel de Ubuntu y otro de Fedora: hay un solo proyecto, con un solo repositorio, y todas beben de ahí. Lo que cambia es **qué versión congela cada una** y qué parches le añade encima. Una distribución pensada para servidores se queda en una versión antigua durante años porque le importa que nada se mueva; una pensada para escritorio salta a la última cada pocos meses. Por eso `uname -r` devuelve números distintos en dos máquinas, y aun así el comportamiento que aprendes es el mismo en las dos.
+
+Del Kernel que Torvalds anunció en 1991 no queda casi nada en líneas de código. De aquellas diez mil se ha pasado a más de treinta millones, y prácticamente todas se han reescrito por el camino. Lo que sí sobrevivió es la forma: cómo se organiza por dentro y, sobre todo, las llamadas al sistema con las que los programas le piden cosas. Esa interfaz se ha mantenido tan estable que un programa compilado hace treinta años sigue ejecutándose hoy sin tocarle una coma, y es la razón de fondo por la que aprender la terminal rinde en cualquier distribución (Shotts, 2026).
 
 ## El proceso de instalación
 

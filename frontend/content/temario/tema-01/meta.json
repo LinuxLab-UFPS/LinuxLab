@@ -2,7 +2,7 @@
   "id": "tema-01",
   "number": 1,
   "title": "Introducción a Linux",
-  "description": "Historia, las partes del sistema, el Kernel, entorno de ventanas e instalación",
+  "description": "Historia, las partes esenciales, el Kernel, entorno de ventanas e instalación",
   "subtopics": [
     {
       "id": "historia",
@@ -11,7 +11,7 @@
     },
     {
       "id": "kernel",
-      "title": "Las partes del sistema",
+      "title": "Las partes esenciales",
       "file": "02-kernel.md"
     },
     {

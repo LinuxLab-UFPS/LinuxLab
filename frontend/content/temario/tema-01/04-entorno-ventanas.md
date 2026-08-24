@@ -1,4 +1,6 @@
-Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos (NDG, 2024).
+Cuando Torvalds publicó su Kernel y GNU puso las herramientas, nada de esto tenía ventanas. Se arrancaba a una pantalla de texto, se escribía y el sistema respondía escribiendo: no había escritorio, ni iconos, ni ratón que sirviera de algo. Los escritorios gráficos que hoy se dan por hechos llegaron después, y llegaron como software aparte que se instala encima.
+
+Hoy la cosa es distinta. Hay dos maneras de interactuar con un sistema operativo, y Linux ofrece las dos (NDG, 2024).
 
 La **interfaz gráfica (GUI)** son ventanas, íconos y menús, y el sistema responde a los clics del ratón. Es lo que trae cualquier equipo con Windows o macOS: el explorador de archivos, el navegador, el reproductor de música. Todo visual, todo clickeable.
 
@@ -31,7 +33,7 @@ Los dos entornos más usados en Linux resuelven el mismo problema con filosofía
 
 <!-- ILLUSTRATION: gnome-kde -->
 
-**GNOME** apuesta por decidir por ti. Una barra superior, el escritorio limpio sin íconos, y todo (aplicaciones abiertas, buscador, escritorios virtuales) detrás de la vista de Actividades que se abre con la tecla Super. Hay pocas opciones a la vista porque la idea es que no tengas que configurar nada para trabajar. Viene por defecto en Ubuntu, Fedora Workstation y Debian (The GNOME Project, 2025).
+**GNOME** apuesta por la simplicidad. Una barra superior, el escritorio limpio sin íconos, y todo (aplicaciones abiertas, buscador, escritorios virtuales) detrás de la vista de Actividades que se abre con la tecla Super. Hay pocas opciones a la vista porque la idea es que no tengas que configurar nada para trabajar. Viene por defecto en Ubuntu, Fedora Workstation y Debian (The GNOME Project, 2025).
 
 **KDE Plasma** apuesta por lo contrario, que decidas tú. Barra de tareas abajo con su menú de aplicaciones, íconos y widgets sobre el escritorio, y un panel de preferencias donde se puede cambiar prácticamente cualquier cosa, desde el comportamiento de las ventanas hasta el tamaño de cada elemento. A quien viene de Windows le resulta familiar de entrada. Viene por defecto en Kubuntu, Fedora KDE y CachyOS (KDE, 2026).
 
