@@ -4,7 +4,7 @@ Al listar procesos con `ps x` aparecían muchos con un `?` en la columna `TTY`, 
 
 Un daemon es un proceso que corre en segundo plano y presta un servicio, ya sea vigilando el sistema o atendiendo a otros programas (systemd, 2026). No tiene ventana, no tiene menú y no espera a que nadie teclee nada. En la documentación de administración se les llama indistintamente daemons o **servicios** (Amoany, 2022).
 
-De eso vive un sistema operativo. El programa que atiende las conexiones remotas, el que reparte los trabajos de impresión, el que anota los registros del sistema y el que sincroniza la hora son daemons. Ninguno tiene interfaz y los cuatro hacen falta.
+De eso vive un sistema operativo: el programa que atiende las conexiones remotas, el que anota los registros y el que sincroniza la hora son daemons, y los tres hacen falta sin que nadie los vea nunca.
 
 ## Por qué no tienen terminal
 
@@ -30,11 +30,7 @@ Eso no lo convierte en un daemon, pero resuelve el caso práctico de dejar algo 
 
 ## De quién descienden
 
-Todos cuelgan del proceso `1`, que en la mayoría de distribuciones actuales es `systemd`. Es el primero que arranca el Kernel y el encargado de poner en marcha el resto de servicios (Shotts, 2026).
-
-```bash
-ps -eo pid,ppid,tty,comm | head -3
-```
+Todos cuelgan del proceso `1`, que en la mayoría de distribuciones actuales es `systemd`. Es el primero que arranca el Kernel y el encargado de poner en marcha el resto de servicios (Shotts, 2026). En un servidor completo, `ps` lo enseña con `PPID 0`, porque no nació de ningún proceso sino del Kernel, y con los daemons colgando de él:
 
 ```
     PID    PPID TT       COMMAND
@@ -42,9 +38,7 @@ ps -eo pid,ppid,tty,comm | head -3
     838       1 ?        dockerd
 ```
 
-`systemd` tiene `PPID 0` porque no nació de ningún proceso, lo creó el Kernel. Y `dockerd` tiene `PPID 1` porque lo arrancó él.
-
-Esa adopción se puede provocar a mano. Un proceso cuyo padre muere no se queda huérfano, lo recoge el proceso `1`:
+Ese listado no se puede reproducir desde la cuenta del laboratorio, que solo ve sus propios procesos. Lo que sí se puede comprobar aquí es la adopción, porque ocurre igual: un proceso cuyo padre muere no se queda huérfano, lo recoge el proceso `1`:
 
 ```bash
 bash -c 'sleep 60 & echo $!'
@@ -97,29 +91,11 @@ systemctl status docker
 
 Ahí está lo que `ps` no dice: si el servicio está activo, desde cuándo, si arranca solo al encender la máquina y qué PID le corresponde. El `enabled` de la segunda línea es lo que responde si el servicio volverá solo tras un reinicio.
 
-La lista completa se pide así:
-
-```bash
-systemctl list-units --type=service --state=running
-```
-
-```
-  UNIT                     LOAD   ACTIVE SUB     DESCRIPTION
-  bluetooth.service        loaded active running Bluetooth service
-  containerd.service       loaded active running containerd container runtime
-  docker.service           loaded active running Docker Application Container Engine
-  NetworkManager.service   loaded active running Network Manager
-```
-
-Consultar el estado no requiere privilegios. Arrancar, parar o habilitar un servicio sí, y por eso desde la cuenta del laboratorio se pueden mirar pero no tocar.
+Consultar el estado no requiere privilegios. Arrancar, parar o habilitar un servicio sí, y por eso desde la cuenta del laboratorio se pueden mirar pero no tocar. El `systemctl` de este entorno además está reducido: responde a `status` y poco más, así que la salida completa de arriba es la de un servidor de verdad.
 
 ## Mandarles señales
 
-Un daemon se termina como cualquier otro proceso, pero rara vez es lo que se quiere. Lo habitual es pedirle que relea su configuración sin cortar el servicio, y para eso está la señal `HUP` del subtema anterior:
-
-```bash
-sudo kill -HUP 838
-```
+Un daemon se termina como cualquier otro proceso, pero rara vez es lo que se quiere. Lo habitual es pedirle que relea su configuración sin cortar el servicio, y para eso está la señal `HUP` del subtema anterior: quien administra la máquina manda `kill -HUP` al PID del daemon y este vuelve a leer sus archivos sin dejar de atender.
 
 Muchos daemons están escritos para responder a `HUP` recargándose en lugar de terminar, precisamente porque cortar un servicio para cambiarle una línea de configuración sería desproporcionado.
 
@@ -133,7 +109,6 @@ Muchos daemons están escritos para responder a `HUP` recargándose en lugar de 
 | Nombre acabado en `d` | Convención habitual para nombrarlos |
 | `nohup comando &` | Desata un proceso propio de la terminal |
 | `systemctl status servicio` | Estado, arranque automático y PID del servicio |
-| `systemctl list-units --type=service` | Lista los servicios cargados |
 | `kill -HUP PID` | Le pide que relea su configuración sin parar |
 
 ---
