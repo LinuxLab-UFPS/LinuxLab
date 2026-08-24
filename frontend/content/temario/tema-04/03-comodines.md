@@ -1,8 +1,14 @@
 <!-- VIDEO: video-comodines | Comodines: cuatro naipes para nombrar archivos -->
 
+Aquí verás qué son los comodines y para qué sirven. Lo que viene abajo es la explicación a detalle, con los casos que el video no alcanza a cubrir.
+
 ## Nombrar varios archivos a la vez
 
-Los **comodines** permiten nombrar varios archivos a la vez por su forma, sin escribir ninguno completo (NDG, 2024). El video reparte los cuatro sobre un directorio de prueba que sigue siendo la mesa de todos los ejemplos de esta lección:
+Un **comodín** es un carácter que no significa lo que dice, sino "cualquier cosa que encaje aquí". Escribes un patrón con uno de ellos dentro, como `*.txt`, y el shell hace lo siguiente antes de ejecutar nada: mira los nombres del directorio, se queda con los que casan con el patrón y **sustituye el patrón por esa lista**. El comando nunca llega a ver el `*`; recibe ya los nombres, uno por uno, como si los hubieras escrito todos a mano (NDG, 2024).
+
+Eso tiene una consecuencia que conviene entender de una vez: los comodines **no son una característica de `ls` ni de `cp`, sino del shell que los invoca**, así que funcionan igual en todos los comandos por igual.
+
+El video reparte los cuatro sobre un directorio de prueba que sigue siendo la mesa de todos los ejemplos de esta lección:
 
 ```bash
 ls
@@ -83,7 +89,7 @@ echo datos[3-1].csv
 datos[3-1].csv
 ```
 
-Y de ahí sale también que los comodines funcionen igual en cualquier comando. No son una característica de `ls` ni de `cp`, sino del shell que los invoca, así que sirven en todos por igual.
+Es la misma regla del principio vista desde el otro lado: si no hay nada que sustituir, el patrón viaja intacto hasta el comando.
 
 ## Los ocultos no entran
 

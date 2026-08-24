@@ -1,3 +1,7 @@
+**Encadenar** es enganchar comandos uno detrás de otro para que lo que sale del primero entre directamente en el segundo, sin pasar por un archivo intermedio ni por la pantalla. Cada eslabón hace una cosa pequeña y la cadena entera hace algo que ninguno haría solo.
+
+Para que valga la pena encadenar hacen falta piezas que encajen, y este tema trae las básicas. Unas sirven para asomarse a un archivo sin volcarlo entero, que es lo que ya hacía `cat`: `head` enseña el principio y `tail` el final. Otras trabajan sobre los datos en vez de mostrarlos, como `wc`, que cuenta. Y al final está la tubería, el `|`, que es el gancho con el que se unen.
+
 ## head y tail
 
 El comando `cat` imprime el contenido completo de un archivo. En archivos cortos resulta práctico, pero en uno de varios miles de líneas la salida desborda la pantalla y solo queda visible el final.
@@ -186,27 +190,17 @@ El orden importa. `2>&1` significa "manda el canal 2 adonde ya va el 1", así qu
 
 ## Práctica
 
-El siguiente botón copia un bloque de texto al portapapeles. (Su contenido es una sorpresa)
+Guarda en `logo.txt`, dentro de tu carpeta personal, el texto que copia este botón.
 
 <!-- COPIAR: logo-ufps -->
 
-El objetivo es guardarlo en un archivo llamado `logo.txt` dentro del directorio personal, usando `cat` y el operador de redirección.
+Con `cat` y una redirección son dos pasos:
 
 ```bash
 cat > logo.txt
 ```
 
-Sin archivo como argumento, `cat` lee de la entrada estándar y `>` envía esa entrada a `logo.txt`. La terminal queda a la espera de texto.
-
-El siguiente paso es pegar el contenido con <kbd>Ctrl</kbd> + <kbd>V</kbd>, pulsar *Enter* para cerrar la última línea y terminar la entrada con <kbd>Ctrl</kbd> + <kbd>D</kbd>.
-
-En las terminales el atajo de pegado también es <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>, porque <kbd>Ctrl</kbd> + <kbd>V</kbd> tenía otra función antes de que existiera el portapapeles.
-
-El resultado se comprueba con:
-
-```bash
-cat logo.txt
-```
+Sin archivo como argumento, `cat` lee lo que le escriban y `>` manda eso a `logo.txt`, así que la terminal se queda esperando. Pega con <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>, pulsa <kbd>Enter</kbd> para cerrar la última línea y termina con <kbd>Ctrl</kbd> + <kbd>D</kbd>.
 
 <!-- EJERCICIO: logo-ufps -->
 
