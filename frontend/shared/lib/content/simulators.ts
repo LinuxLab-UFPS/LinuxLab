@@ -39,7 +39,7 @@ const RAW = [
     id: "filtro-de-permisos",
     title: "Filtro de permisos",
     description:
-      "Llegan archivos con los permisos que traen y los que necesitan. Arréglalos con chmod y ajusta la umask para los que están por crear.",
+      "Llegan archivos con los permisos mal puestos. Arréglalos con chmod y ajusta la umask a contrarreloj.",
     topicNumber: 5,
     file: "simulador-permisos.html",
   },
@@ -47,7 +47,7 @@ const RAW = [
     id: "escritorio-comprimido",
     title: "Escritorio comprimido",
     description:
-      "Un escritorio con una terminal y un correo que no admite carpetas. Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la entrega.",
+      "Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y manda la entrega por correo.",
     topicNumber: 6,
     file: "simulador-compresion.html",
   },
@@ -55,9 +55,17 @@ const RAW = [
     id: "despliegue-del-viernes",
     title: "El despliegue del viernes",
     description:
-      "Un despliegue tumbó producción y hay que reconstruir qué pasó. Rastrea la copia local del proyecto con grep, find y sort, y responde por el chat lo que vayas encontrando.",
+      "Un despliegue tumbó producción. Rastrea el proyecto con grep, find y sort y responde por el chat.",
     topicNumber: 7,
     file: "simulador-busqueda.html",
+  },
+  {
+    id: "monitor-del-sistema",
+    title: "Monitor del sistema",
+    description:
+      "Un portátil que va a rastras. Cierra con pkill lo que sobra y quita del arranque lo que vuelve.",
+    topicNumber: 9,
+    file: "simulador-procesos.html",
   },
 ]
 

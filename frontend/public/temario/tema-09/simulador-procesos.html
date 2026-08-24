@@ -1,0 +1,833 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Monitor del sistema · LinuxLab</title>
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<script src="/temario/comun/barra.js"></script>
+<style>
+:root {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --blue:   #58A6FF;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --gold:   #FFC400;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg);overflow:hidden}
+/* Mismo escalado que los demas simuladores: el cuerpo se maqueta a 1/1.3 del
+   viewport y se amplia despues. */
+body{
+  display:flex;flex-direction:column;
+  color:var(--text);font-family:var(--mono);overflow:hidden;
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+  background:var(--bg);position:relative;
+}
+
+/* La cabecera vive en /temario/comun/barra.css */
+
+.desk{
+  position:relative;flex:1;min-height:0;overflow:hidden;
+  background:
+    linear-gradient(158deg,transparent 54%,rgba(163,113,247,.24) 54.2%),
+    linear-gradient(202deg,transparent 70%,rgba(120,80,200,.18) 70.2%),
+    linear-gradient(130deg,#1B1030 0%,#2E1550 47%,#45208A 100%);
+}
+
+.marca{
+  position:absolute;left:50%;top:64%;width:44%;height:26%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(26px,5.2vmin,54px);font-weight:700;letter-spacing:.04em;
+  color:var(--red);filter:drop-shadow(0 0 24px rgba(255,0,48,.5));
+  user-select:none;pointer-events:none;
+}
+.marca span{color:var(--bright);filter:none}
+
+/* ---------- ventanas ---------- */
+.win{
+  position:absolute;background:var(--surf);border:1px solid var(--border);
+  border-radius:9px;overflow:hidden;display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 18px 40px rgba(0,0,0,.5);
+}
+.win[hidden]{display:none}
+.win-bar{display:flex;align-items:center;gap:7px;padding:0.9vmin 1.3vmin;background:var(--surf2);border-bottom:1px solid var(--border);flex-shrink:0}
+.win-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+button.win-dot{border:none;padding:0;font:inherit;cursor:pointer;position:relative}
+button.win-dot::after{
+  content:"";position:absolute;left:2.5px;right:2.5px;top:5px;height:1.5px;
+  background:rgba(0,0,0,.55);border-radius:1px;opacity:0;transition:opacity .15s;
+}
+.win-bar:hover button.win-dot::after{opacity:1}
+.win-tit{margin-left:6px;font-size:11px;color:var(--muted);letter-spacing:.02em}
+
+#w-mon{left:3%;top:5%;width:52%;height:66%}
+#w-term{left:58%;top:5%;width:39%;height:56%}
+
+/* ---------- monitor ---------- */
+.mon-top{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{
+  border:none;background:none;font:inherit;font-size:11.5px;color:var(--muted);
+  padding:5px 11px;border-radius:6px;cursor:pointer;transition:background .15s,color .15s;
+}
+.tab:hover{color:var(--text)}
+.tab[data-activa="true"]{background:#3A2D6B;color:var(--bright)}
+
+/* Medidores de CPU y memoria. */
+.medidores{display:flex;gap:14px;margin-left:auto;align-items:center}
+.med{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--muted)}
+/* La barra necesita cuerpo: a 74x7 el relleno se leia como un carril vacio
+   aunque estuviera al 85%. */
+/* Los dos son <span>, asi que necesitan `display:block`: en linea, el ancho
+   y el alto no se aplican y el relleno quedaba en 0x0 aunque su `width`
+   calculado dijera 91%. */
+.med-barra{display:block;width:96px;height:11px;border-radius:6px;background:#0B0E14;border:1px solid var(--border);overflow:hidden}
+.med-fill{display:block;height:100%;width:0;border-radius:5px;background:var(--green);transition:width .5s ease,background .5s ease}
+.med-fill.alta{background:var(--red)}
+.med-fill.media{background:var(--gold)}
+.med-num{min-width:34px;text-align:right;color:var(--text);font-variant-numeric:tabular-nums}
+
+/* ---------- tabla de procesos ---------- */
+.tabla{flex:1;min-height:0;overflow-y:auto;position:relative}
+.fila-cab{
+  display:grid;grid-template-columns:1fr 62px 84px;gap:8px;
+  padding:7px 12px;font-size:10.5px;color:var(--muted);
+  background:var(--surf);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:2;
+}
+.fila-cab span:nth-child(2),.fila-cab span:nth-child(3){text-align:right}
+
+/* Las filas se posicionan en absoluto para poder animar el cambio de sitio
+   cuando la tabla se reordena por consumo. Con filas en flujo normal, el
+   reordenamiento saltaba de golpe. */
+.cuerpo{position:relative}
+.fila{
+  position:absolute;left:0;right:0;height:26px;
+  display:grid;grid-template-columns:1fr 62px 84px;gap:8px;align-items:center;
+  padding:0 12px;font-size:11.5px;
+  transition:transform .55s cubic-bezier(.4,0,.2,1),opacity .3s;
+}
+.fila:nth-child(odd){background:rgba(255,255,255,.02)}
+.fila .nom{color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.fila .cpu,.fila .mem{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.fila[data-gordo="true"] .cpu{color:var(--red);font-weight:700}
+.fila[data-esencial="true"] .nom{color:var(--blue)}
+.fila.muriendo{opacity:0;transform:translateX(-18px)}
+.punto{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--muted)}
+.fila[data-gordo="true"] .punto{background:var(--red)}
+.fila[data-esencial="true"] .punto{background:var(--blue)}
+
+/* ---------- pestaña de arranque ---------- */
+.arranque{flex:1;min-height:0;overflow-y:auto;padding:10px 12px}
+.arr-intro{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.arr-fila{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:7px;
+  background:var(--surf2);border:1px solid var(--border);border-radius:7px;
+}
+.arr-nom{flex:1;font-size:11.5px;color:var(--text)}
+.arr-desc{font-size:10px;color:var(--muted);margin-top:2px}
+.sw{
+  width:38px;height:20px;border-radius:10px;border:none;padding:0;cursor:pointer;
+  background:var(--green);position:relative;transition:background .2s;flex-shrink:0;
+}
+.sw[data-on="false"]{background:var(--dim)}
+/* Encendido = perilla a la DERECHA, que es como se lee un interruptor.
+   Estaba al reves: en verde la perilla salia a la izquierda. */
+.sw::after{
+  content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:var(--bright);transition:transform .2s;transform:translateX(18px);
+}
+.sw[data-on="false"]::after{transform:translateX(0);background:var(--muted)}
+
+/* ---------- consola ---------- */
+.console{background:#0B0E14;padding:1.4vmin 1.6vmin;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;font-size:12.5px}
+.log{white-space:pre-wrap;line-height:1.5}
+.log.ok{color:var(--green)}
+.log.bad{color:var(--red)}
+.log.note{color:var(--muted)}
+.log.echo{color:var(--text)}
+.prompt{display:flex;align-items:center;gap:7px;font-size:clamp(10px,1.3vmin + 3px,13.5px);flex-shrink:0}
+.ps1{color:var(--green);font-weight:700;flex-shrink:0}
+.typed{color:var(--bright);white-space:pre}
+.caret{display:inline-block;width:8px;height:15px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- objetivos ---------- */
+#w-pasos{left:58%;top:64%;width:39%;height:29%}
+.pasos{flex:1;min-height:0;overflow-y:auto;padding:9px 0}
+.gutter{display:flex;gap:9px;padding:3px 12px;font-size:11px;line-height:1.45}
+.txt-titulo{color:var(--muted);font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:5px}
+.linea{transition:background .3s}
+.linea .ln{color:var(--muted);flex-shrink:0;width:12px}
+.linea.cur{border-left:2px solid var(--green);background:rgba(46,204,113,.06)}
+.linea.cur .paso-t{color:var(--bright)}
+.linea.done .paso-t{color:var(--muted);text-decoration:line-through}
+.linea.done .ln{color:var(--green)}
+
+.pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none}
+
+/* ---------- dock ---------- */
+.dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
+.dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
+.dock-btn:hover{transform:translateY(-4px)}
+.dock-btn[data-abierta="true"]::after{content:"";position:absolute;bottom:-7px;left:22%;width:56%;height:3px;border-radius:2px;background:#E8912F}
+.dock-btn svg{width:100%;height:100%;display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.5))}
+
+/* En pantallas pequeñas las ventanas dejan de flotar y se apilan. Va al final
+   por especificidad: las reglas de arriba usan id. */
+@media (max-width:860px), (max-height:520px){
+  .desk{display:block;overflow-y:auto;padding:14px 14px 96px}
+  .marca{display:none}
+  #w-mon,#w-term,#w-pasos{position:static;left:auto;top:auto;width:auto;margin-bottom:13px}
+  #w-mon{height:min(340px,56vh)}
+  #w-term{height:min(240px,40vh)}
+  #w-pasos{height:auto;min-height:120px}
+  .dock{position:fixed;bottom:12px}
+}
+</style>
+
+<div class="hdr"></div>
+
+<div class="desk" id="desk">
+  <div class="marca" aria-hidden="true">Linux<span>Lab</span></div>
+
+  <!-- Monitor del sistema -->
+  <div class="win" id="w-mon">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-mon" data-dock="d-mon" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+      <span class="win-tit">Monitor del sistema</span>
+    </div>
+    <div class="mon-top">
+      <button class="tab" id="tab-proc" data-activa="true">Procesos</button>
+      <button class="tab" id="tab-arr" data-activa="false">Al inicio</button>
+      <div class="medidores">
+        <div class="med">
+          <span>CPU</span>
+          <span class="med-barra"><span class="med-fill" id="med-cpu"></span></span>
+          <span class="med-num" id="num-cpu">0%</span>
+        </div>
+        <div class="med">
+          <span>RAM</span>
+          <span class="med-barra"><span class="med-fill" id="med-ram"></span></span>
+          <span class="med-num" id="num-ram">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabla" id="vista-proc">
+      <div class="fila-cab">
+        <span>Nombre</span><span>CPU</span><span>Memoria</span>
+      </div>
+      <div class="cuerpo" id="cuerpo"></div>
+    </div>
+
+    <div class="arranque" id="vista-arr" hidden>
+      <p class="arr-intro">Programas que arrancan solos al iniciar sesión. Cerrarlos con <code>pkill</code> los calla ahora; para que no vuelvan hay que apagarlos aquí.</p>
+      <div id="arr-lista"></div>
+    </div>
+  </div>
+
+  <!-- Terminal -->
+  <div class="win" id="w-term">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-term" data-dock="d-term" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+    </div>
+    <div class="console" id="consola">
+      <div class="prompt">
+        <span class="ps1" id="ps1">estudiante@linuxlab:~$</span>
+        <span><span class="typed" id="typed"></span><span class="caret"></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Objetivos -->
+  <div class="win" id="w-pasos">
+    <div class="win-bar">
+      <span class="win-dot" style="background:#FF5F56"></span>
+      <button class="win-dot min" style="background:#FFBD2E" data-win="w-pasos" data-dock="d-pasos" title="Minimizar" aria-label="Minimizar"></button>
+      <span class="win-dot" style="background:#27C93F"></span>
+    </div>
+    <div class="pasos" id="pasos"></div>
+  </div>
+
+  <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
+
+  <div class="dock">
+    <button class="dock-btn" id="d-mon" data-abierta="true" title="Monitor"></button>
+    <button class="dock-btn" id="d-term" data-abierta="true" title="Terminal"></button>
+    <button class="dock-btn" id="d-pasos" data-abierta="true" title="Objetivos"></button>
+  </div>
+</div>
+
+<div class="sim-fin" id="fin" hidden>
+  <div class="fin-box">
+    <div class="fin-titulo">Portátil rescatado</div>
+    <p class="fin-texto" id="fin-p"></p>
+    <div class="fin-btns">
+      <button class="fin-btn primario" id="fin-again">Otra vez</button>
+      <button class="fin-btn" id="fin-exit">Salir</button>
+    </div>
+  </div>
+</div>
+
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
+  <h2>Monitor del sistema</h2>
+  <p>
+    El portátil de un compañero va a rastras. Cierra con pkill lo que sobra y
+    quita del arranque lo que vuelve solo.
+  </p>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+const barra = Barra.montar({
+  titulo: 'Monitor del sistema',
+  ayuda: [
+    { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
+    { clave: 'pgrep', tono: 'azul',    texto: 'Enseña a quién alcanzaría un patrón <b>sin matar nada</b>. Mirar antes de disparar evita llevarse por delante lo que no era.' },
+    { clave: 'Azul',  tono: 'azul',    texto: 'Los procesos en azul son del sistema. Si caen, algo se rompe.' },
+    { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Su actualizador se abre solo con la sesión, y eso se quita en la pestaña «Al inicio».' },
+  ],
+  onReiniciar: () => reiniciar(),
+});
+
+// ═══════════════════════════════════════════════════════════
+// ICONOS
+// ═══════════════════════════════════════════════════════════
+// En linea y como SVG: los emoji cambian de forma segun la fuente del sistema.
+
+const SVG = {
+  monitor:
+    '<svg viewBox="0 0 64 64">' +
+    '<rect x="6" y="10" width="52" height="36" rx="4" fill="#2E3B52"/>' +
+    '<rect x="10" y="14" width="44" height="28" rx="2" fill="#12161d"/>' +
+    '<path d="M15 34l7-9 6 7 5-12 6 14 5-5" stroke="#2ECC71" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<rect x="24" y="49" width="16" height="4" rx="2" fill="#2E3B52"/>' +
+    '</svg>',
+  terminal:
+    '<svg viewBox="0 0 64 64">' +
+    '<rect x="5" y="9" width="54" height="46" rx="6" fill="#1E222B"/>' +
+    '<path d="M16 24l8 7-8 7" stroke="#F0F6FC" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<rect x="30" y="36" width="16" height="3.2" rx="1.6" fill="#F0F6FC"/>' +
+    '</svg>',
+  lista:
+    '<svg viewBox="0 0 64 64">' +
+    '<rect x="10" y="6" width="44" height="52" rx="5" fill="#EAF1FE"/>' +
+    '<path d="M19 20h26M19 30h26M19 40h16" stroke="#4C8DF6" stroke-width="3" stroke-linecap="round"/>' +
+    '</svg>',
+};
+
+$("d-mon").innerHTML = SVG.monitor;
+$("d-term").innerHTML = SVG.terminal;
+$("d-pasos").innerHTML = SVG.lista;
+
+// ═══════════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * La maquina.
+ *
+ * `tipo` decide como se trata cada proceso:
+ *   basura    lo que sobra y hay que cerrar
+ *   arranque  basura que ademas vuelve sola si no se desactiva
+ *   normal    del compañero, se puede dejar
+ *   esencial  del sistema, matarlo rompe algo
+ *
+ * `cpu` y `mem` son el consumo de partida; el temporizador los mueve un poco
+ * alrededor de ese valor para que la tabla respire como una de verdad.
+ */
+const PLANTILLA = [
+  { pid: 2481, nombre: "minero-x",      tipo: "basura",   cpu: 31.2, mem: 88 },
+  { pid: 1907, nombre: "tubo-updater",  tipo: "arranque", cpu: 18.4, mem: 412, arr: "tubo" },
+  { pid: 3310, nombre: "barra-ofertas", tipo: "basura",   cpu: 12.7, mem: 196 },
+  { pid: 2044, nombre: "nube-sync",     tipo: "arranque", cpu:  9.3, mem: 268, arr: "nube" },
+  { pid: 2765, nombre: "actualizador",  tipo: "arranque", cpu:  7.8, mem: 154, arr: "act" },
+  { pid: 1422, nombre: "firefox",       tipo: "normal",   cpu:  4.1, mem: 526 },
+  { pid: 1588, nombre: "code",          tipo: "normal",   cpu:  2.6, mem: 266 },
+  { pid:  980, nombre: "plasmashell",   tipo: "esencial", cpu:  1.4, mem: 237 },
+  { pid: 1001, nombre: "systemd",       tipo: "esencial", cpu:  0.3, mem:  42 },
+  { pid: 1290, nombre: "pipewire",      tipo: "esencial", cpu:  0.7, mem:  61 },
+];
+
+const ARRANQUE = [
+  { id: "tubo", nombre: "TUBO Updater",       desc: "Busca actualizaciones de la tienda al iniciar sesión", proceso: "tubo-updater" },
+  { id: "nube", nombre: "Asistente de nube",  desc: "Sincroniza carpetas en segundo plano",                 proceso: "nube-sync" },
+  { id: "act",  nombre: "Actualizador",       desc: "Comprueba versiones de programas instalados",          proceso: "actualizador" },
+];
+
+/** Memoria total de la maquina, para calcular el porcentaje. */
+const RAM_TOTAL = 4096;
+/** Por debajo de esto se considera rescatado. */
+const UMBRAL = 40;
+
+let procs, arranque, paso, roto, pestana, tecleado, reloj, cerradosDelCompanero;
+
+function nuevaPartida() {
+  procs = PLANTILLA.map((p) => Object.assign({}, p, { vivo: true }));
+  arranque = {};
+  ARRANQUE.forEach((a) => { arranque[a.id] = true; });
+  paso = 0;
+  roto = null;
+  cerradosDelCompanero = 0;
+  pestana = "proc";
+  tecleado = "";
+}
+
+const vivos = () => procs.filter((p) => p.vivo);
+const porNombre = (n) => vivos().filter((p) => p.nombre.includes(n));
+
+function cpuTotal() {
+  return vivos().reduce((s, p) => s + p.cpu, 0);
+}
+function ramPct() {
+  return (vivos().reduce((s, p) => s + p.mem, 0) / RAM_TOTAL) * 100;
+}
+
+// ═══════════════════════════════════════════════════════════
+// OBJETIVOS
+// ═══════════════════════════════════════════════════════════
+// Cada uno sabe cuando esta hecho mirando el estado, no vigilando comandos:
+// asi cuenta cualquier camino valido, tambien el que no se nos ocurrio.
+
+function desafios() {
+  return [
+    {
+      objetivo: "Cierra lo que se está comiendo la CPU",
+      texto: "Mira qué hay corriendo y cierra los procesos que sobran. Los del sistema, en azul, no se tocan.",
+      hecho: () => cpuTotal() < UMBRAL,
+    },
+    {
+      objetivo: "Quita del arranque lo que vuelve solo",
+      texto: "Alguno vuelve a los pocos segundos de cerrarlo. Desactívalo en la pestaña «Al inicio».",
+      hecho: () => ARRANQUE.every((a) => !arranque[a.id]),
+    },
+    {
+      objetivo: "Deja la memoria por debajo del 40%",
+      texto: "Con el arranque limpio, cierra lo que quede de más hasta bajar la RAM.",
+      hecho: () => ramPct() < UMBRAL && cpuTotal() < UMBRAL,
+    },
+  ];
+}
+
+function revisar() {
+  const lista = desafios();
+  while (paso < lista.length && lista[paso].hecho()) {
+    log("✓ " + lista[paso].objetivo, "ok");
+    paso++;
+  }
+  pintarPasos();
+  if (paso >= lista.length) terminar();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PINTAR
+// ═══════════════════════════════════════════════════════════
+
+function pintarPasos() {
+  const lista = desafios();
+  barra.objetivo(paso < lista.length ? lista[paso].objetivo : "Completado",
+                 Math.min(paso, lista.length - 1));
+
+  const cont = $("pasos");
+  cont.innerHTML = "";
+  const titulo = document.createElement("div");
+  titulo.className = "gutter txt-titulo";
+  const t = document.createElement("span");
+  t.textContent = "Objetivos";
+  titulo.appendChild(t);
+  cont.appendChild(titulo);
+
+  lista.slice(0, paso + 1).forEach((d, i) => {
+    const fila = document.createElement("div");
+    fila.className = "gutter linea " + (i < paso ? "done" : "cur");
+    fila.innerHTML = '<span class="ln"></span><span class="paso-t"></span>';
+    fila.querySelector(".ln").textContent = String(i + 1);
+    fila.querySelector(".paso-t").textContent = d.texto;
+    cont.appendChild(fila);
+  });
+}
+
+function pintarMedidores() {
+  const cpu = Math.min(100, cpuTotal());
+  const ram = Math.min(100, ramPct());
+  [["med-cpu", "num-cpu", cpu], ["med-ram", "num-ram", ram]].forEach(([bid, nid, v]) => {
+    const fill = $(bid);
+    fill.style.width = v + "%";
+    fill.classList.toggle("alta", v >= 70);
+    fill.classList.toggle("media", v >= UMBRAL && v < 70);
+    $(nid).textContent = Math.round(v) + "%";
+  });
+}
+
+/**
+ * La tabla.
+ *
+ * Las filas se crean una vez y despues solo se mueven: cada una lleva su
+ * `data-pid` y se coloca con `transform`, de modo que al reordenar por
+ * consumo la fila se desliza a su sitio nuevo en lugar de saltar. Repintar
+ * el HTML entero cada segundo habria hecho imposible leer la tabla.
+ */
+function pintarTabla() {
+  const cuerpo = $("cuerpo");
+  const orden = vivos().slice().sort((a, b) => b.cpu - a.cpu);
+  cuerpo.style.height = orden.length * 26 + "px";
+
+  // Quitar las filas de los que ya no estan.
+  Array.from(cuerpo.children).forEach((el) => {
+    if (!orden.some((p) => String(p.pid) === el.dataset.pid)) {
+      el.classList.add("muriendo");
+      setTimeout(() => { if (el.isConnected) el.remove(); }, 320);
+    }
+  });
+
+  orden.forEach((p, i) => {
+    let fila = cuerpo.querySelector('[data-pid="' + p.pid + '"]');
+    if (!fila) {
+      fila = document.createElement("div");
+      fila.className = "fila";
+      fila.dataset.pid = String(p.pid);
+      fila.innerHTML =
+        '<span class="nom"><span class="punto"></span><span class="txt"></span></span>' +
+        '<span class="cpu"></span><span class="mem"></span>';
+      fila.querySelector(".txt").textContent = p.nombre;
+      cuerpo.appendChild(fila);
+    }
+    fila.dataset.gordo = String(p.cpu >= 8);
+    fila.dataset.esencial = String(p.tipo === "esencial");
+    fila.style.transform = "translateY(" + i * 26 + "px)";
+    fila.querySelector(".cpu").textContent = p.cpu.toFixed(1) + "%";
+    fila.querySelector(".mem").textContent = p.mem.toFixed(0) + " MiB";
+  });
+}
+
+function pintarArranque() {
+  const cont = $("arr-lista");
+  cont.innerHTML = "";
+  ARRANQUE.forEach((a) => {
+    const fila = document.createElement("div");
+    fila.className = "arr-fila";
+    fila.innerHTML =
+      '<span><span class="arr-nom"></span><div class="arr-desc"></div></span>' +
+      '<button class="sw" data-arr="' + a.id + '"></button>';
+    fila.querySelector(".arr-nom").textContent = a.nombre;
+    fila.querySelector(".arr-desc").textContent = a.desc;
+    fila.querySelector(".sw").dataset.on = String(Boolean(arranque[a.id]));
+    cont.appendChild(fila);
+  });
+}
+
+function pintar() {
+  pintarMedidores();
+  pintarTabla();
+  pintarArranque();
+  pintarPasos();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CONSOLA
+// ═══════════════════════════════════════════════════════════
+
+function log(texto, clase) {
+  const d = document.createElement("div");
+  d.className = "log" + (clase ? " " + clase : "");
+  d.textContent = texto;
+  const c = $("consola");
+  const prompt = c.querySelector(".prompt");
+  if (prompt) c.insertBefore(d, prompt); else c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+const AYUDA = [
+  "Comandos disponibles en esta práctica:",
+  "  ps                      lista los procesos",
+  "  top                     lo mismo, ordenado por consumo",
+  "  pgrep -a <patron>       enseña a quién alcanzaría, sin matar",
+  "  pkill <patron>          cierra los que coincidan con el nombre",
+  "  kill <pid>              cierra uno por su número",
+  "  kill -9 <pid>           lo mismo, sin negociación",
+  "  clear                   limpia la consola",
+];
+
+/**
+ * Cerrar un proceso.
+ *
+ * Devuelve el texto del aviso cuando el proceso es del sistema: matarlo
+ * rompe algo, y eso es lo que enseña a mirar con pgrep antes de disparar.
+ */
+function matar(p) {
+  if (p.tipo === "esencial") {
+    p.vivo = false;
+    roto = p.nombre;
+    return p.nombre;
+  }
+  if (p.tipo === "normal") cerradosDelCompanero++;
+  p.vivo = false;
+  return null;
+}
+
+function avisarRoto(nombre) {
+  log("⚠ " + nombre + " era del sistema y el escritorio se ha caído.", "bad");
+  log("  Mira con `pgrep -a <patron>` a quién vas a alcanzar antes de disparar.", "note");
+  // Se recupera solo: el simulador enseña la consecuencia, no castiga con
+  // una partida perdida.
+  setTimeout(() => {
+    const p = procs.find((x) => x.nombre === nombre);
+    if (p) { p.vivo = true; roto = null; pintar(); log("  " + nombre + " se ha reiniciado.", "note"); }
+  }, 2600);
+}
+
+/**
+ * Cerrar el trabajo del compañero.
+ *
+ * No rompe nada ni impide ganar, pero se dice: el encargo era quitar lo que
+ * sobra, y el navegador y el editor son justamente lo que estaba usando.
+ */
+function avisarDelCompanero(p) {
+  log("· " + p.nombre + " lo estaba usando tu compañero. Baja el consumo, pero no era lo que sobraba.", "note");
+}
+
+function cmdPs() {
+  log("  PID  ESTADO  %CPU   COMANDO", "note");
+  vivos().slice().sort((a, b) => b.cpu - a.cpu).forEach((p) => {
+    log(
+      String(p.pid).padStart(5) + "  " +
+      (p.cpu >= 5 ? "R" : "S").padEnd(6) + "  " +
+      p.cpu.toFixed(1).padStart(4) + "  " + p.nombre,
+    );
+  });
+}
+
+function cmdPgrep(args) {
+  const conA = args.includes("-a");
+  const patron = args.find((a) => !a.startsWith("-"));
+  if (!patron) return log("pgrep: falta el patrón", "bad");
+  const hits = porNombre(patron);
+  if (hits.length === 0) return log("(ningún proceso coincide con " + patron + ")", "note");
+  hits.forEach((p) => log(conA ? p.pid + " " + p.nombre : String(p.pid)));
+}
+
+function cmdPkill(args) {
+  const patron = args.find((a) => !a.startsWith("-"));
+  if (!patron) return log("pkill: falta el patrón", "bad");
+  const hits = porNombre(patron);
+  if (hits.length === 0) return log("(ningún proceso coincide con " + patron + ")", "note");
+  const rotos = [];
+  hits.forEach((p) => { const r = matar(p); if (r) rotos.push(r); });
+  log("Cerrados: " + hits.map((p) => p.nombre).join(", "), hits.length ? "ok" : "note");
+  hits.filter((p) => p.tipo === "normal").forEach(avisarDelCompanero);
+  rotos.forEach(avisarRoto);
+}
+
+function cmdKill(args) {
+  const pid = Number(args.find((a) => !a.startsWith("-")));
+  if (!pid) return log("kill: falta el PID", "bad");
+  const p = vivos().find((x) => x.pid === pid);
+  if (!p) return log("kill: (" + pid + ") - No such process", "bad");
+  const r = matar(p);
+  log("Cerrado: " + p.nombre, "ok");
+  if (p.tipo === "normal") avisarDelCompanero(p);
+  if (r) avisarRoto(r);
+}
+
+function ejecutar(linea) {
+  const partes = linea.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return;
+  const [cmd, ...args] = partes;
+  log("$ " + linea, "echo");
+
+  switch (cmd) {
+    case "ps": cmdPs(); break;
+    case "top": cmdPs(); break;
+    case "pgrep": cmdPgrep(args); break;
+    case "pkill": cmdPkill(args); break;
+    case "killall": cmdPkill(args); break;
+    case "kill": cmdKill(args); break;
+    case "help": AYUDA.forEach((l) => log(l, "note")); break;
+    case "clear": $("consola").querySelectorAll(".log").forEach((l) => l.remove()); break;
+    default:
+      log(cmd + ": no disponible aquí. Escribe \"help\" para ver los comandos.", "bad");
+  }
+  pintar();
+  revisar();
+}
+
+// ═══════════════════════════════════════════════════════════
+// EL RELOJ
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Lo unico que este simulador tiene y los demas no.
+ *
+ * Hace dos cosas: mueve el consumo de cada proceso un poco arriba y abajo,
+ * que es lo que reordena la tabla como en un monitor de verdad, y devuelve
+ * a la vida los programas de arranque que se cerraron sin desactivar. Esa
+ * segunda parte ES la leccion del simulador.
+ */
+function tic() {
+  if (ocupado()) return;
+
+  vivos().forEach((p) => {
+    const base = PLANTILLA.find((x) => x.pid === p.pid).cpu;
+    const salto = (Math.random() - 0.5) * Math.max(1.2, base * 0.35);
+    p.cpu = Math.max(0.1, Math.min(60, p.cpu + salto));
+  });
+
+  // Los de arranque que sigan activados vuelven.
+  procs.filter((p) => !p.vivo && p.tipo === "arranque" && arranque[p.arr]).forEach((p) => {
+    p.vivo = true;
+    p.cpu = PLANTILLA.find((x) => x.pid === p.pid).cpu;
+    log("↻ " + p.nombre + " ha vuelto a arrancar solo.", "note");
+  });
+
+  pintarMedidores();
+  pintarTabla();
+  revisar();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ENTRADA
+// ═══════════════════════════════════════════════════════════
+
+const ocupado = () =>
+  !$("fin").hidden || !$("portada").classList.contains("hide");
+
+function enfocarEntrada() {
+  const t = $("pegar");
+  if (t && t.focus) t.focus({ preventScroll: true });
+}
+
+document.addEventListener("keydown", (ev) => {
+  if (ocupado()) return;
+  if (ev.key === "Enter") {
+    const linea = tecleado;
+    tecleado = "";
+    $("typed").textContent = "";
+    ejecutar(linea);
+    return;
+  }
+  if (ev.key === "Backspace") {
+    tecleado = tecleado.slice(0, -1);
+  } else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) {
+    tecleado += ev.key;
+  } else {
+    return;
+  }
+  ev.preventDefault();
+  $("typed").textContent = tecleado;
+});
+
+document.addEventListener("paste", (ev) => {
+  if (ocupado()) return;
+  const datos = ev.clipboardData || window.clipboardData;
+  if (!datos) return;
+  ev.preventDefault();
+  tecleado += datos.getData("text").split(/\r?\n/)[0];
+  $("typed").textContent = tecleado;
+  const t = $("pegar");
+  if (t) t.value = "";
+});
+
+// ═══════════════════════════════════════════════════════════
+// INTERFAZ
+// ═══════════════════════════════════════════════════════════
+
+function verPestana(cual) {
+  pestana = cual;
+  $("tab-proc").dataset.activa = String(cual === "proc");
+  $("tab-arr").dataset.activa = String(cual === "arr");
+  $("vista-proc").hidden = cual !== "proc";
+  $("vista-arr").hidden = cual !== "arr";
+}
+$("tab-proc").addEventListener("click", () => verPestana("proc"));
+$("tab-arr").addEventListener("click", () => verPestana("arr"));
+
+$("arr-lista").addEventListener("click", (ev) => {
+  const b = ev.target.closest(".sw");
+  if (!b) return;
+  const id = b.dataset.arr;
+  arranque[id] = !arranque[id];
+  b.dataset.on = String(arranque[id]);
+  const a = ARRANQUE.find((x) => x.id === id);
+  log(arranque[id]
+    ? a.nombre + " volverá a arrancar con la sesión."
+    : a.nombre + " ya no arrancará con la sesión.", arranque[id] ? "note" : "ok");
+  revisar();
+});
+
+function alternar(idVentana, idBoton) {
+  const v = $(idVentana);
+  v.hidden = !v.hidden;
+  $(idBoton).dataset.abierta = String(!v.hidden);
+}
+$("d-mon").addEventListener("click", () => alternar("w-mon", "d-mon"));
+$("d-term").addEventListener("click", () => alternar("w-term", "d-term"));
+$("d-pasos").addEventListener("click", () => alternar("w-pasos", "d-pasos"));
+
+document.querySelectorAll("button.win-dot.min").forEach((b) =>
+  b.addEventListener("click", () => {
+    $(b.dataset.win).hidden = true;
+    $(b.dataset.dock).dataset.abierta = "false";
+  }));
+
+function terminar() {
+  const quedan = vivos().length;
+  $("fin-p").textContent =
+    "Dejaste la máquina con " + quedan + " procesos y el consumo por debajo del " +
+    UMBRAL + "%. Y como quitaste del arranque los que volvían solos, seguirá " +
+    "así la próxima vez que encienda." +
+    (cerradosDelCompanero
+      ? " Eso sí, por el camino cerraste " + cerradosDelCompanero +
+        " programa" + (cerradosDelCompanero > 1 ? "s" : "") +
+        " que tu compañero estaba usando."
+      : "");
+  $("fin").hidden = false;
+}
+
+function reiniciar() {
+  nuevaPartida();
+  $("typed").textContent = "";
+  $("consola").querySelectorAll(".log").forEach((l) => l.remove());
+  $("cuerpo").innerHTML = "";
+  $("fin").hidden = true;
+  barra.jugando(false);
+  $("portada").classList.remove("hide");
+  verPestana("proc");
+  ["w-mon", "w-term", "w-pasos"].forEach((id) => { $(id).hidden = false; });
+  ["d-mon", "d-term", "d-pasos"].forEach((id) => { $(id).dataset.abierta = "true"; });
+  pintar();
+}
+
+$("play").addEventListener("click", () => {
+  $("portada").classList.add("hide");
+  barra.jugando(true);
+  enfocarEntrada();
+});
+$("desk").addEventListener("click", enfocarEntrada);
+$("fin-again").addEventListener("click", reiniciar);
+$("fin-exit").addEventListener("click", Barra.salir);
+
+reiniciar();
+reloj = setInterval(tic, 2200);
+
+if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
+  globalThis.__api = {
+    ejecutar, reiniciar, desafios, tic, verPestana,
+    procs: () => procs, arranque: () => arranque, paso: () => paso,
+    cpuTotal, ramPct,
+  };
+}
+</script>
