@@ -310,7 +310,6 @@ function toma(xs, n) {
 
 const SERVICIOS = ["pagos", "sesiones", "catalogo", "notificaciones", "informes"];
 const COMPANEROS = ["lramirez", "jmedina", "carriaga", "dpineda", "mfajardo"];
-const RAMAS = ["hotfix/pagos", "release/2-4", "feature/carrito", "fix/sesiones"];
 const CAUSAS = ["Disco lleno", "Memoria agotada", "Puerto ocupado", "Certificado vencido"];
 const ENDPOINTS = ["/api/pagos", "/api/sesion", "/api/catalogo", "/api/informe", "/api/salud"];
 
@@ -327,7 +326,7 @@ const PISTAS_GREP = [
   {
     id: "causa",
     etiqueta: "Causa raíz",
-    pista: "Ya se reportó la <b>causa raíz</b> del incidente. Necesito saber cuál fue, búscala en el historial de incidencias.",
+    pista: "Ya se debería haber reportado la <b>causa raíz</b> del incidente. Necesito saber cuál fue, búscala en el historial de incidencias.",
     terreno: "Los informes están en incidencias/. La línea que busco empieza por «Causa raiz».",
     terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
@@ -377,34 +376,9 @@ const PISTAS_GREP = [
     },
   },
   {
-    id: "rama",
-    etiqueta: "Rama revertida",
-    pista: "Alguien deshizo cambios a mano y lo dejó anotado en las notas. Necesito la rama exacta: busca algo como <b>revertida</b> o <b>restaurado</b>.",
-    terreno: "Mira en notas/. Quien lo escribió pudo decirlo de varias formas: «revertida», «cambios a mano», «restaurado».",
-    terminal: "Busca la palabra revertida con grep -ri sobre notas/.",
-    arma() {
-      const rama = alAzar(RAMAS);
-      return {
-        respuesta: rama,
-        solucion: "grep -ri revertida notas",
-        archivos: [
-          F("notas/traspaso.txt", [
-            "Turno de noche, resumen para el siguiente.",
-            `Rama revertida a mano: ${rama}.`,
-            "Queda pendiente rehacer el merge el lunes.",
-          ]),
-          F("notas/pendientes.txt", [
-            "Revisar alertas del catalogo.",
-            "Nadie ha revisado los avisos de ayer.",
-          ]),
-        ],
-      };
-    },
-  },
-  {
     id: "afectado",
     etiqueta: "Servicio afectado",
-    pista: "Monitorización mandó un aviso cuando se cayó. Dime qué servicio era: el aviso habla del <b>servicio afectado</b>.",
+    pista: "El equipo de monitoreo me mandó un aviso cuando se cayó. Dime qué <b>servicio</b> fue <b>afectado</b>.",
     terreno: "Los avisos están en avisos/. El que sirve es el crítico, y nombra el servicio afectado.",
     terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
@@ -434,7 +408,7 @@ const PISTAS_REGEX = [
   {
     id: "commit",
     etiqueta: "Commit desplegado",
-    pista: "Necesito el <b>commit</b> que se subió el viernes. Son siete caracteres, y por ahí hay varios que lo parecen sin serlo.",
+    pista: "Necesito el <b>commit</b> que se subió el viernes. Son siete caracteres.",
     terreno: "Un commit son siete caracteres de 0 a 9 y de la a a la f. Está anotado en historial/, entre otros que no lo son.",
     terminal: "El commit son siete caracteres hexadecimales seguidos. Descríbelo con grep -rE y llaves.",
     arma() {
@@ -507,27 +481,6 @@ const PISTAS_REGEX = [
       };
     },
   },
-  {
-    id: "nodo",
-    etiqueta: "Nodo de producción",
-    pista: "Necesito la dirección del <b>nodo</b> que se cayó. Es de la red interna, así que empieza igual que las demás de ahí.",
-    terreno: "Es una dirección de la red interna, empieza por 10.20. Está en infra/, junto a otras que no son.",
-    terminal: "El nodo es una dirección que empieza por 10.20. Usa grep -rE y escapa los puntos.",
-    arma() {
-      const ip = `10.20.${entero(1, 250)}.${entero(1, 250)}`;
-      return {
-        respuesta: ip,
-        solucion: 'grep -rE "10\\.20\\.[0-9]+\\.[0-9]+" .',
-        archivos: [
-          F("infra/inventario.txt", [
-            "Nodos del entorno de produccion.",
-            `Caido: ${ip}, sin responder al sondeo.`,
-          ]),
-          F("infra/retirados.txt", ["10.0.4.2 fuera de servicio", "10.20 sin completar", "172.16.0.9 ajena"]),
-        ],
-      };
-    },
-  },
 ];
 
 /* ---------- familia find: un atributo del archivo, no su contenido ---------- */
@@ -535,7 +488,7 @@ const PISTAS_FIND = [
   {
     id: "tocado",
     etiqueta: "Configuración tocada",
-    pista: "Alguien editó una configuración hace un rato y no lo dijo. Dime cuál: lo que la delata es la <b>fecha</b>, no lo que ponga dentro.",
+    pista: "Alguien editó una configuración hace un rato y no lo dijo. Dime cuál. Si buscas por <b>fecha</b> debería salir entre lo más reciente.",
     terreno: "No lo vas a sacar leyendo: lo que la delata es la fecha. Se tocó hace menos de una hora.",
     terminal: "Un archivo se modificó hace minutos. Búscalo con find y -mmin; su nombre es el que necesito.",
     arma() {
@@ -547,25 +500,6 @@ const PISTAS_FIND = [
           F(`config/${nombre}`, ["timeout = 2", "reintentos = 0"], 1000 * 60 * entero(2, 9)),
           F("config/base.conf", ["puerto = 8080"]),
           F("config/registro.conf", ["nivel = info"]),
-        ],
-      };
-    },
-  },
-  {
-    id: "volcado",
-    etiqueta: "Volcado de la base",
-    pista: "Antes de revertir alguien sacó un <b>volcado</b> de la base. Necesito su nombre: esos archivos tienen su propia extensión.",
-    terreno: "Un volcado de base de datos termina en .sql, y es el único que hay en el proyecto.",
-    terminal: "Solo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
-    arma() {
-      const nombre = "respaldo-" + entero(10, 99) + ".sql";
-      return {
-        respuesta: nombre,
-        solucion: "find . -name '*.sql'",
-        archivos: [
-          F(`volcados/${nombre}`, ["-- volcado parcial", "-- 1420 filas"]),
-          F("volcados/notas.txt", ["Volcado hecho a mano antes del rollback."]),
-          F("volcados/salida.log", ["exportacion terminada"]),
         ],
       };
     },
@@ -591,7 +525,7 @@ const PISTAS_FIND = [
   {
     id: "viejo",
     etiqueta: "Archivo más antiguo",
-    pista: "Queda un archivo de antes de que existiera el proyecto. Ese nombre me sirve: se distingue por la <b>fecha</b>, lleva más de un mes ahí.",
+    pista: "Queda un archivo de antes de que existiera el proyecto. Lleva más de un <b>mes</b> ahí, ese es el que necesito.",
     terreno: "Se distingue por la fecha: lleva más de un mes sin tocarse, y el resto es de esta semana.",
     terminal: "Un solo archivo tiene más de un mes. Búscalo con find y -mtime.",
     arma() {
@@ -832,7 +766,7 @@ function log(texto, clase) {
 
 const AYUDA = [
   "Comandos disponibles:",
-  "  ls [-l] [ruta]                 lista un directorio",
+  "  ls [-l] [-a] [ruta]             lista un directorio",
   "  cd <ruta>                      entra en un directorio",
   "  cat <archivo>                  muestra un archivo",
   "  head/tail [-n N] <archivo>     primeras o ultimas lineas",
@@ -884,7 +818,8 @@ function cmdLs(args) {
   const clave = resolver(libres[0]);
   if (clave === null || !existe(clave)) { log(`ls: ${libres[0] || ""}: no existe`, "mal"); return []; }
   if (!esDir(clave)) return [libres[0]];
-  return hijos(clave).map((h) => {
+  const nombres = flags.includes("-a") ? hijos(clave) : hijos(clave).filter((h) => !h.startsWith("."));
+  return nombres.map((h) => {
     const e = fs[clave ? clave + "/" + h : h];
     const marca = e && e.tipo === "dir" ? "/" : "";
     if (!flags.includes("-l")) return h + marca;

@@ -494,10 +494,10 @@ function revisar() {
 /**
  * La lista de objetivos.
  *
- * Salen TODOS desde el principio y cada uno se tacha cuando le toca. Antes se
- * enseñaban solo hasta el que estaba en curso y llevaban numero, que era
- * mentir sobre el orden: aqui se pueden hacer como se quiera, asi que el
- * numero se cambia por una marca de hecho o pendiente.
+ * Se pueden cumplir en cualquier orden (revisar() los evalua sueltos), pero
+ * se enseñan en el orden del array: los hechos arriba, y de los pendientes
+ * solo el primero. Mostrar los cinco pendientes a la vez desordenaba la
+ * lista sin motivo, aunque el estado de cada uno siga siendo independiente.
  */
 function pintarPasos() {
   const lista = desafios();
@@ -513,7 +513,10 @@ function pintarPasos() {
   titulo.appendChild(t);
   cont.appendChild(titulo);
 
-  lista.forEach((d) => {
+  const hechos = lista.filter((d) => d.hecho());
+  const aPintar = pendiente ? [...hechos, pendiente] : hechos;
+
+  aPintar.forEach((d) => {
     const hecho = d.hecho();
     const fila = document.createElement("div");
     fila.className = "gutter linea " + (hecho ? "done" : "cur");
