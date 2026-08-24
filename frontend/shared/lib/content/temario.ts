@@ -132,7 +132,13 @@ export const syllabus: Topic[] = [
     slug: "shell-scripting",
     title: "Shell scripting",
     description: "Variables, condicionales, ciclos y funciones en Bash.",
-    subTopics: [],
+    subTopics: [
+      { number: 1, title: "Tu primer script" },
+      { number: 2, title: "Variables y argumentos" },
+      { number: 3, title: "Tomar decisiones" },
+      { number: 4, title: "Repetir trabajo" },
+      { number: 5, title: "Funciones y un script completo" },
+    ],
   },
 ]
 
