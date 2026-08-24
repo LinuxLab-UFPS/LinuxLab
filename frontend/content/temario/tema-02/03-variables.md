@@ -1,6 +1,10 @@
 ## Variables en Bash
 
-El shell Bash mantiene un conjunto de variables que guardan información usada durante la sesión (NDG, 2024): el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que se quiera almacenar. Existen dos tipos: locales y de entorno.
+Una variable es un nombre con un valor guardado detrás. Nada más que eso: se escribe el nombre y el shell lo sustituye por lo que tenga dentro antes de ejecutar la línea.
+
+El shell Bash mantiene un conjunto de ellas que guardan información usada durante la sesión (NDG, 2024): el directorio de inicio, el historial de comandos, la lista de rutas donde buscar programas, y cualquier valor que se quiera almacenar. Ese conjunto es lo que se llama el **entorno** de la sesión, y es el estado que Bash arrastra desde que se abre la terminal hasta que se cierra. Cada comando que se lanza lo hereda, y de ahí sale que un programa sepa dónde está tu carpeta personal sin que nadie se lo diga.
+
+Existen dos tipos: locales y de entorno. La diferencia está en si ese valor se hereda o se queda donde nació.
 
 ## Variables locales
 
