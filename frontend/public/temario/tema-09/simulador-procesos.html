@@ -67,7 +67,7 @@ button.win-dot::after{
 .win-bar:hover button.win-dot::after{opacity:1}
 .win-tit{margin-left:6px;font-size:11px;color:var(--muted);letter-spacing:.02em}
 
-#w-mon{left:3%;top:5%;width:52%;height:66%}
+#w-mon{left:3%;top:5%;width:52%;height:80%}
 #w-term{left:58%;top:5%;width:39%;height:56%}
 
 /* ---------- monitor ---------- */
@@ -351,17 +351,25 @@ $("d-pasos").innerHTML = SVG.lista;
  * alrededor de ese valor para que la tabla respire como una de verdad.
  */
 const PLANTILLA = [
-  { pid: 2481, nombre: "minero-x",      tipo: "basura",   cpu: 31.2, mem: 88 },
-  { pid: 1907, nombre: "tubo-updater",  tipo: "arranque", cpu: 18.4, mem: 412, arr: "tubo" },
-  { pid: 3310, nombre: "barra-ofertas", tipo: "basura",   cpu: 12.7, mem: 196 },
-  { pid: 2044, nombre: "nube-sync",     tipo: "arranque", cpu:  9.3, mem: 268, arr: "nube" },
-  { pid: 2765, nombre: "actualizador",  tipo: "arranque", cpu:  7.8, mem: 154, arr: "act" },
+  { pid: 2481, nombre: "minero-x",      tipo: "basura",   cpu: 94.0, mem: 88 },
+  { pid: 1907, nombre: "tubo-updater",  tipo: "arranque", cpu: 61.0, mem: 412, arr: "tubo" },
+  { pid: 3310, nombre: "barra-ofertas", tipo: "basura",   cpu: 38.5, mem: 196 },
+  { pid: 2044, nombre: "nube-sync",     tipo: "arranque", cpu: 27.4, mem: 268, arr: "nube" },
+  { pid: 2765, nombre: "actualizador",  tipo: "arranque", cpu: 21.6, mem: 154, arr: "act" },
   { pid: 1422, nombre: "firefox",       tipo: "normal",   cpu:  4.1, mem: 526 },
   { pid: 1588, nombre: "code",          tipo: "normal",   cpu:  2.6, mem: 266 },
   { pid:  980, nombre: "plasmashell",   tipo: "esencial", cpu:  1.4, mem: 237 },
   { pid: 1001, nombre: "systemd",       tipo: "esencial", cpu:  0.3, mem:  42 },
   { pid: 1290, nombre: "pipewire",      tipo: "esencial", cpu:  0.7, mem:  61 },
+  // Se clona solo: matarlo por PID no sirve porque nace otro, y de eso trata
+  // matar por patron.
+  { pid: 4101, nombre: "worker-01",     tipo: "plaga",    cpu: 33.0, mem:  74 },
+  // Ignora TERM. Solo cae con KILL, que el Kernel no le entrega a el.
+  { pid: 3902, nombre: "render-colgado", tipo: "colgado", cpu: 44.2, mem: 318 },
 ];
+
+/** El siguiente numero de worker: los clones van 02, 03, 04... */
+let siguienteWorker = 2;
 
 const ARRANQUE = [
   { id: "tubo", nombre: "TUBO Updater",       desc: "Busca actualizaciones de la tienda al iniciar sesión", proceso: "tubo-updater" },
@@ -371,6 +379,15 @@ const ARRANQUE = [
 
 /** Memoria total de la maquina, para calcular el porcentaje. */
 const RAM_TOTAL = 4096;
+/**
+ * Nucleos de la maquina.
+ *
+ * La suma de los procesos pasa de 100 y eso no es un error: en `top` cada
+ * proceso puede marcar hasta 100 % por nucleo, asi que cuatro procesos a tope
+ * en cuatro nucleos dan 400. El medidor divide entre los nucleos para decir
+ * la carga de la maquina, que es lo que de verdad se mira.
+ */
+const NUCLEOS = 4;
 /** Por debajo de esto se considera rescatado. */
 const UMBRAL = 40;
 
@@ -383,6 +400,7 @@ function nuevaPartida() {
   paso = 0;
   roto = null;
   cerradosDelCompanero = 0;
+  siguienteWorker = 2;
   pestana = "proc";
   tecleado = "";
 }
@@ -390,8 +408,13 @@ function nuevaPartida() {
 const vivos = () => procs.filter((p) => p.vivo);
 const porNombre = (n) => vivos().filter((p) => p.nombre.includes(n));
 
-function cpuTotal() {
+/** La suma bruta, como la que sale al sumar la columna de `top`. */
+function cpuBruta() {
   return vivos().reduce((s, p) => s + p.cpu, 0);
+}
+/** La carga de la maquina, repartida entre sus nucleos. */
+function cpuTotal() {
+  return cpuBruta() / NUCLEOS;
 }
 function ramPct() {
   return (vivos().reduce((s, p) => s + p.mem, 0) / RAM_TOTAL) * 100;
@@ -414,6 +437,16 @@ function desafios() {
       objetivo: "Quita del arranque lo que vuelve solo",
       texto: "Alguno vuelve a los pocos segundos de cerrarlo. Desactívalo en la pestaña «Al inicio».",
       hecho: () => ARRANQUE.every((a) => !arranque[a.id]),
+    },
+    {
+      objetivo: "Acaba con los worker de una vez",
+      texto: "Los worker se abren solos y uno a uno no se acaban nunca. Ciérralos todos de golpe.",
+      hecho: () => vivos().every((p) => p.tipo !== "plaga"),
+    },
+    {
+      objetivo: "Cierra el proceso que no responde",
+      texto: "Hay uno que no se entera de la señal normal. Con ese hay que insistir de otra forma.",
+      hecho: () => vivos().every((p) => p.tipo !== "colgado"),
     },
     {
       objetivo: "Deja la memoria por debajo del 40%",
@@ -559,6 +592,7 @@ const AYUDA = [
   "  pkill <patron>          cierra los que coincidan con el nombre",
   "  kill <pid>              cierra uno por su número",
   "  kill -9 <pid>           lo mismo, sin negociación",
+  "  pkill -9 <patron>       por nombre y sin negociación",
   "  clear                   limpia la consola",
 ];
 
@@ -568,7 +602,18 @@ const AYUDA = [
  * Devuelve el texto del aviso cuando el proceso es del sistema: matarlo
  * rompe algo, y eso es lo que enseña a mirar con pgrep antes de disparar.
  */
-function matar(p) {
+/**
+ * Cerrar un proceso.
+ *
+ * Devuelve el nombre cuando el proceso es del sistema, para que quien llama
+ * avise. `colgado` es el unico que puede negarse: con la señal normal no se
+ * entera, y eso es lo que enseña para que existe `kill -9`.
+ */
+function matar(p, fuerte) {
+  if (p.tipo === "colgado" && !fuerte) {
+    log("  " + p.nombre + " no responde a la señal. Sigue ahí.", "bad");
+    return null;
+  }
   if (p.tipo === "esencial") {
     p.vivo = false;
     roto = p.nombre;
@@ -625,10 +670,12 @@ function cmdPkill(args) {
   if (!patron) return log("pkill: falta el patrón", "bad");
   const hits = porNombre(patron);
   if (hits.length === 0) return log("(ningún proceso coincide con " + patron + ")", "note");
+  const fuerte = args.includes("-9") || args.includes("-KILL");
   const rotos = [];
-  hits.forEach((p) => { const r = matar(p); if (r) rotos.push(r); });
-  log("Cerrados: " + hits.map((p) => p.nombre).join(", "), hits.length ? "ok" : "note");
-  hits.filter((p) => p.tipo === "normal").forEach(avisarDelCompanero);
+  hits.forEach((p) => { const r = matar(p, fuerte); if (r) rotos.push(r); });
+  const caidos = hits.filter((p) => !p.vivo);
+  if (caidos.length) log("Cerrados: " + caidos.map((p) => p.nombre).join(", "), "ok");
+  caidos.filter((p) => p.tipo === "normal").forEach(avisarDelCompanero);
   rotos.forEach(avisarRoto);
 }
 
@@ -637,9 +684,12 @@ function cmdKill(args) {
   if (!pid) return log("kill: falta el PID", "bad");
   const p = vivos().find((x) => x.pid === pid);
   if (!p) return log("kill: (" + pid + ") - No such process", "bad");
-  const r = matar(p);
-  log("Cerrado: " + p.nombre, "ok");
-  if (p.tipo === "normal") avisarDelCompanero(p);
+  const fuerte = args.includes("-9") || args.includes("-KILL");
+  const r = matar(p, fuerte);
+  if (!p.vivo) {
+    log("Cerrado: " + p.nombre, "ok");
+    if (p.tipo === "normal") avisarDelCompanero(p);
+  }
   if (r) avisarRoto(r);
 }
 
@@ -681,15 +731,35 @@ function tic() {
   if (ocupado()) return;
 
   vivos().forEach((p) => {
-    const base = PLANTILLA.find((x) => x.pid === p.pid).cpu;
+    const plantilla = PLANTILLA.find((x) => x.pid === p.pid);
+    // Los clones no estan en PLANTILLA: su base es la que nacieron.
+    const base = plantilla ? plantilla.cpu : p.cpu;
     const salto = (Math.random() - 0.5) * Math.max(1.2, base * 0.35);
-    p.cpu = Math.max(0.1, Math.min(60, p.cpu + salto));
+    p.cpu = Math.max(0.1, Math.min(100, p.cpu + salto));
   });
+
+  // La plaga se clona: mientras quede un worker vivo, aparece otro. Matarlos
+  // de uno en uno no acaba nunca, y por eso existe matar por patron.
+  const plaga = vivos().filter((p) => p.tipo === "plaga");
+  if (plaga.length && plaga.length < 4) {
+    const nuevo = {
+      pid: 4100 + siguienteWorker,
+      nombre: "worker-" + String(siguienteWorker).padStart(2, "0"),
+      tipo: "plaga",
+      cpu: 26 + Math.random() * 14,
+      mem: 60 + Math.random() * 30,
+      vivo: true,
+    };
+    siguienteWorker++;
+    procs.push(nuevo);
+    log("+ " + nuevo.nombre + " se ha abierto solo.", "note");
+  }
 
   // Los de arranque que sigan activados vuelven.
   procs.filter((p) => !p.vivo && p.tipo === "arranque" && arranque[p.arr]).forEach((p) => {
     p.vivo = true;
-    p.cpu = PLANTILLA.find((x) => x.pid === p.pid).cpu;
+    const base = PLANTILLA.find((x) => x.pid === p.pid);
+    if (base) p.cpu = base.cpu;
     log("↻ " + p.nombre + " ha vuelto a arrancar solo.", "note");
   });
 
