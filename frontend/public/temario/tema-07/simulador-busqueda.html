@@ -327,7 +327,7 @@ const PISTAS_GREP = [
   {
     id: "causa",
     etiqueta: "Causa raíz",
-    pista: "Ya escribieron el informe del incidente. Necesito la causa raíz, tal cual la anotaron.",
+    pista: "Ya se reportó la <b>causa raíz</b> del incidente. Necesito saber cuál fue, búscala en el historial de incidencias.",
     terreno: "Los informes están en incidencias/. La línea que busco empieza por «Causa raiz».",
     terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
@@ -354,7 +354,7 @@ const PISTAS_GREP = [
   {
     id: "autor",
     etiqueta: "Quién desplegó",
-    pista: "Nadie firmó el despliegue del viernes en el chat, pero en algún registro tuvo que quedar. Dime quién lo hizo.",
+    pista: "Nadie firmó el despliegue del viernes, pero en el registro tuvo que quedar quién lo hizo. Busca dónde dice <b>desplegado por</b>.",
     terreno: "Los registros de despliegue están en despliegues/. Busca una línea que hable de quién desplegó.",
     terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
     arma() {
@@ -379,7 +379,7 @@ const PISTAS_GREP = [
   {
     id: "rama",
     etiqueta: "Rama revertida",
-    pista: "Alguien deshizo cambios a mano y lo dejó anotado. Necesito la rama exacta donde estaban esos cambios.",
+    pista: "Alguien deshizo cambios a mano y lo dejó anotado en las notas. Necesito la rama exacta: busca algo como <b>revertida</b> o <b>restaurado</b>.",
     terreno: "Mira en notas/. Quien lo escribió pudo decirlo de varias formas: «revertida», «cambios a mano», «restaurado».",
     terminal: "Busca la palabra revertida con grep -ri sobre notas/.",
     arma() {
@@ -404,7 +404,7 @@ const PISTAS_GREP = [
   {
     id: "afectado",
     etiqueta: "Servicio afectado",
-    pista: "Monitorización mandó un aviso cuando se cayó. Dime qué servicio era.",
+    pista: "Monitorización mandó un aviso cuando se cayó. Dime qué servicio era: el aviso habla del <b>servicio afectado</b>.",
     terreno: "Los avisos están en avisos/. El que sirve es el crítico, y nombra el servicio afectado.",
     terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
@@ -434,7 +434,7 @@ const PISTAS_REGEX = [
   {
     id: "commit",
     etiqueta: "Commit desplegado",
-    pista: "Necesito el commit que se subió el viernes.",
+    pista: "Necesito el <b>commit</b> que se subió el viernes. Son siete caracteres, y por ahí hay varios que lo parecen sin serlo.",
     terreno: "Un commit son siete caracteres de 0 a 9 y de la a a la f. Está anotado en historial/, entre otros que no lo son.",
     terminal: "El commit son siete caracteres hexadecimales seguidos. Descríbelo con grep -rE y llaves.",
     arma() {
@@ -464,7 +464,7 @@ const PISTAS_REGEX = [
   {
     id: "build",
     etiqueta: "Número de build",
-    pista: "Dime el número de build que rompió producción.",
+    pista: "Dime el número de <b>build</b> que rompió producción. Va con esa etiqueta delante.",
     terreno: "Lleva la etiqueta BUILD y cinco dígitos. Mira en integracion/, y ojo que hay etiquetas parecidas que no valen.",
     terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
     arma() {
@@ -489,7 +489,7 @@ const PISTAS_REGEX = [
   {
     id: "version",
     etiqueta: "Versión publicada",
-    pista: "Quiero la versión que quedó publicada.",
+    pista: "Quiero la <b>versión</b> que quedó publicada. Lleva una v y tres números, y hay otras a medio escribir que no valen.",
     terreno: "Tiene una v delante y tres números separados por puntos. Está en paquetes/, con otras a medio escribir.",
     terminal: "La versión es v y tres números separados por puntos. Usa grep -rE y escapa los puntos.",
     arma() {
@@ -510,7 +510,7 @@ const PISTAS_REGEX = [
   {
     id: "nodo",
     etiqueta: "Nodo de producción",
-    pista: "Necesito la dirección del nodo que se cayó.",
+    pista: "Necesito la dirección del <b>nodo</b> que se cayó. Es de la red interna, así que empieza igual que las demás de ahí.",
     terreno: "Es una dirección de la red interna, empieza por 10.20. Está en infra/, junto a otras que no son.",
     terminal: "El nodo es una dirección que empieza por 10.20. Usa grep -rE y escapa los puntos.",
     arma() {
@@ -535,7 +535,7 @@ const PISTAS_FIND = [
   {
     id: "tocado",
     etiqueta: "Configuración tocada",
-    pista: "Alguien editó una configuración hace un rato y no lo dijo. Dime cuál.",
+    pista: "Alguien editó una configuración hace un rato y no lo dijo. Dime cuál: lo que la delata es la <b>fecha</b>, no lo que ponga dentro.",
     terreno: "No lo vas a sacar leyendo: lo que la delata es la fecha. Se tocó hace menos de una hora.",
     terminal: "Un archivo se modificó hace minutos. Búscalo con find y -mmin; su nombre es el que necesito.",
     arma() {
@@ -554,7 +554,7 @@ const PISTAS_FIND = [
   {
     id: "volcado",
     etiqueta: "Volcado de la base",
-    pista: "Antes de revertir alguien sacó un volcado de la base. Necesito su nombre.",
+    pista: "Antes de revertir alguien sacó un <b>volcado</b> de la base. Necesito su nombre: esos archivos tienen su propia extensión.",
     terreno: "Un volcado de base de datos termina en .sql, y es el único que hay en el proyecto.",
     terminal: "Solo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
     arma() {
@@ -573,7 +573,7 @@ const PISTAS_FIND = [
   {
     id: "oculto",
     etiqueta: "Carpeta oculta",
-    pista: "Hay una carpeta que no sale al listar el proyecto. Dime cómo se llama.",
+    pista: "Hay una carpeta que no sale al listar el proyecto. Dime cómo se llama: está <b>oculta</b>, y eso se nota en su nombre.",
     terreno: "Los nombres que empiezan por punto están ocultos. Busca por tipo directorio y por esa forma de nombre.",
     terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
     arma() {
@@ -591,7 +591,7 @@ const PISTAS_FIND = [
   {
     id: "viejo",
     etiqueta: "Archivo más antiguo",
-    pista: "Queda un archivo de antes de que existiera el proyecto actual. Ese nombre me sirve.",
+    pista: "Queda un archivo de antes de que existiera el proyecto. Ese nombre me sirve: se distingue por la <b>fecha</b>, lleva más de un mes ahí.",
     terreno: "Se distingue por la fecha: lleva más de un mes sin tocarse, y el resto es de esta semana.",
     terminal: "Un solo archivo tiene más de un mes. Búscalo con find y -mtime.",
     arma() {
@@ -616,7 +616,7 @@ const PISTAS_SORT = [
   {
     id: "servicio-fallos",
     etiqueta: "Servicio con más fallos",
-    pista: "Dime qué servicio falló más veces esa semana.",
+    pista: "Dime qué servicio <b>falló más veces</b> esa semana. El recuento está en las métricas, pero hay que ordenarlo.",
     terreno: "El recuento está en metricas/errores.csv, una línea por servicio. Hay que ordenarlo por el número, no por el nombre.",
     terminal: "En metricas/errores.csv cada línea es un servicio y sus fallos, separados por coma. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
@@ -634,7 +634,7 @@ const PISTAS_SORT = [
   {
     id: "endpoint",
     etiqueta: "Ruta más lenta",
-    pista: "Necesito saber qué ruta iba más lenta.",
+    pista: "Necesito saber qué ruta iba <b>más lenta</b>. Está en las métricas de latencias, con los milisegundos de cada una.",
     terreno: "Está en metricas/latencias.csv: fecha, ruta y milisegundos. Ordena por la tercera columna.",
     terminal: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Ordena por la tercera con sort -t, -k3 -n -r.",
     arma() {
@@ -654,7 +654,7 @@ const PISTAS_SORT = [
   {
     id: "quien-mas-subio",
     etiqueta: "Quién subió más cambios",
-    pista: "Dime quién subió más cambios esa semana.",
+    pista: "Dime <b>quién subió más</b> cambios esa semana. Está en las métricas, una línea por persona.",
     terreno: "Está en metricas/commits.csv, una línea por persona. Ordena por el número de la segunda columna.",
     terminal: "En metricas/commits.csv cada línea es una persona y sus cambios. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
@@ -672,7 +672,7 @@ const PISTAS_SORT = [
   {
     id: "primer-despliegue",
     etiqueta: "Hora del primer despliegue",
-    pista: "Quiero la hora del primer despliegue del día.",
+    pista: "Quiero la hora del <b>primer despliegue</b> del día. Están todas apuntadas, solo hay que ponerlas en orden.",
     terreno: "Está en despliegues/horas.csv y cada línea empieza por la hora, así que ordenarlas basta.",
     terminal: "En despliegues/horas.csv cada línea empieza por la hora. Ordénalas con sort: la primera línea es la más temprana.",
     arma() {
@@ -1207,7 +1207,10 @@ const GLOSARIO = {
   tail: "Enseña las últimas líneas. Útil en registros, donde lo reciente está al final.",
   wc: "Cuenta. Líneas, palabras o caracteres, según la opción.",
   cat: "Escribe el contenido entero de un archivo. Para archivos largos es mejor `head` o `grep`.",
-  ls: "Lista lo que hay en un directorio. Con `-l` añade tamaño y fecha.",
+  ls: "Lista lo que hay en un directorio: los nombres, y con la opción adecuada también el tamaño y la fecha. Lo que empieza por punto no sale salvo que lo pidas.",
+  archivo: "Un archivo es cualquier cosa guardada con un nombre: un texto, una imagen, un programa. En Linux hasta los dispositivos se tratan como archivos.",
+  directorio: "Lo que en otros sistemas se llama carpeta: un archivo especial cuyo contenido es una lista de otros nombres.",
+  tubo: "El mercado digital de videojuegos más grande del mundo. Ya tienes una tubodeck y la tubomachine? Poco tiene que ver con el incidente, pero se agradece la curiosidad.",
   cd: "Cambia de directorio.",
   pipe: "La barra vertical `|` encadena comandos: la salida del primero entra en el segundo, sin pasar por ningún archivo.",
   regex: "Una expresión regular describe la FORMA de un texto en vez del texto exacto: «siete caracteres hexadecimales», «tres números con puntos».",
@@ -1292,10 +1295,10 @@ function responderAyuda() {
   ayudas++;
   const o = lista[paso];
   if (ayudas === 1 && o.terreno) {
-    di("ella", escapar(o.terreno));
+    di("ella", o.terreno);   // texto propio: lleva <b> a proposito
     return;
   }
-  di("ella", escapar(o.terminal));
+  di("ella", o.terminal);
 }
 
 function responderTermino(clave) {
@@ -1307,7 +1310,7 @@ function responderTermino(clave) {
     di("ella", "De eso no sé lo suficiente como para explicártelo bien. Pregúntame por los comandos o por las opciones que estés usando.");
     return;
   }
-  di("ella", escapar(GLOSARIO[clave]));
+  di("ella", GLOSARIO[clave]);
 }
 
 /* ============================================================
@@ -1423,7 +1426,7 @@ function responderChat() {
   // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
   di("ella", tropiezos === 1
     ? "Eso no me cuadra. Si te has atascado, pregúntame «¿Cómo hago eso?»."
-    : escapar(lista[paso].terreno || lista[paso].terminal), true);
+    : (lista[paso].terreno || lista[paso].terminal), true);
 }
 
 /** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
