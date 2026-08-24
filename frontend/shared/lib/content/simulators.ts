@@ -63,7 +63,7 @@ const RAW = [
     id: "monitor-del-sistema",
     title: "Monitor del sistema",
     description:
-      "Un portátil que va a rastras. Cierra con pkill lo que sobra y quita del arranque lo que vuelve.",
+      "Un portátil que no da más de sí. Cierra con pkill lo que sobra y quita del arranque lo que vuelve.",
     topicNumber: 9,
     file: "simulador-procesos.html",
   },

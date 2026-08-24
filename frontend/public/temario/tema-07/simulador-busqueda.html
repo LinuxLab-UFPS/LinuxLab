@@ -199,7 +199,7 @@ button.win-dot::after{
     </div>
     <div class="chat" id="chat"></div>
     <div class="fono-in">
-      <input id="chat-in" placeholder="Escribe tu respuesta…" autocomplete="off" spellcheck="false" maxlength="60">
+      <input id="chat-in" placeholder="Escribe tu respuesta…" autocomplete="off" spellcheck="false" maxlength="90">
       <button id="enviar" aria-label="Enviar">&#10148;</button>
     </div>
   </div>
@@ -278,7 +278,7 @@ const barra = Barra.montar({
   titulo: 'El despliegue del viernes',
   ayuda: [
     { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
-    { clave: 'Laura',   tono: 'oro',  texto: 'Te pide un dato cada vez y te dice dónde mirar. Si tu respuesta falla, ella insiste con una pista más concreta.' },
+    { clave: 'Laura',   tono: 'oro',  texto: 'Te pide un dato cada vez. Pregúntale <b>«¿Cómo hago eso?»</b> si no sabes por dónde empezar, o <b>«¿Qué es...?»</b> para que te explique un comando o una opción.' },
     { clave: 'Terminal', tono: 'azul', texto: 'Buscar no cambia nada en el disco. La terminal anuncia con qué herramienta se saca cada dato; la respuesta se escribe en el teléfono.' },
   ],
   onReiniciar: () => empezar(),
@@ -327,7 +327,8 @@ const PISTAS_GREP = [
   {
     id: "causa",
     etiqueta: "Causa raíz",
-    pista: "Ya escribieron el informe del incidente, está en incidencias/. Busca la línea de la causa raíz y dime qué pone.",
+    pista: "Ya escribieron el informe del incidente. Necesito la causa raíz, tal cual la anotaron.",
+    terreno: "Los informes están en incidencias/. La línea que busco empieza por «Causa raiz».",
     terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
       const causa = alAzar(CAUSAS);
@@ -353,7 +354,8 @@ const PISTAS_GREP = [
   {
     id: "autor",
     etiqueta: "Quién desplegó",
-    pista: "Nadie firmó el despliegue del viernes en el chat, pero el registro sí lo guarda. Mira en despliegues/.",
+    pista: "Nadie firmó el despliegue del viernes en el chat, pero en algún registro tuvo que quedar. Dime quién lo hizo.",
+    terreno: "Los registros de despliegue están en despliegues/. Busca una línea que hable de quién desplegó.",
     terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
     arma() {
       const quien = alAzar(COMPANEROS);
@@ -377,7 +379,8 @@ const PISTAS_GREP = [
   {
     id: "rama",
     etiqueta: "Rama revertida",
-    pista: "Alguien deshizo cambios a mano y lo dejó anotado en las notas del traspaso. La palabra clave es revertida.",
+    pista: "Alguien deshizo cambios a mano y lo dejó anotado. Necesito la rama exacta donde estaban esos cambios.",
+    terreno: "Mira en notas/. Quien lo escribió pudo decirlo de varias formas: «revertida», «cambios a mano», «restaurado».",
     terminal: "Busca la palabra revertida con grep -ri sobre notas/.",
     arma() {
       const rama = alAzar(RAMAS);
@@ -401,7 +404,8 @@ const PISTAS_GREP = [
   {
     id: "afectado",
     etiqueta: "Servicio afectado",
-    pista: "El aviso que mandó monitorización dice qué servicio se cayó. Está en avisos/, busca la frase del servicio afectado.",
+    pista: "Monitorización mandó un aviso cuando se cayó. Dime qué servicio era.",
+    terreno: "Los avisos están en avisos/. El que sirve es el crítico, y nombra el servicio afectado.",
     terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
       const servicio = alAzar(SERVICIOS);
@@ -430,7 +434,8 @@ const PISTAS_REGEX = [
   {
     id: "commit",
     etiqueta: "Commit desplegado",
-    pista: "Necesito el commit que se subió el viernes. Son siete caracteres de 0 a 9 y de la a a la f, en algún sitio del proyecto.",
+    pista: "Necesito el commit que se subió el viernes.",
+    terreno: "Un commit son siete caracteres de 0 a 9 y de la a a la f. Está anotado en historial/, entre otros que no lo son.",
     terminal: "El commit son siete caracteres hexadecimales seguidos. Descríbelo con grep -rE y llaves.",
     arma() {
       const hex = "0123456789abcdef";
@@ -459,7 +464,8 @@ const PISTAS_REGEX = [
   {
     id: "build",
     etiqueta: "Número de build",
-    pista: "El build que rompió producción viene con la etiqueta BUILD y cinco dígitos. Está anotado en alguna parte.",
+    pista: "Dime el número de build que rompió producción.",
+    terreno: "Lleva la etiqueta BUILD y cinco dígitos. Mira en integracion/, y ojo que hay etiquetas parecidas que no valen.",
     terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
     arma() {
       const build = "BUILD-" + entero(10000, 99999);
@@ -483,7 +489,8 @@ const PISTAS_REGEX = [
   {
     id: "version",
     etiqueta: "Versión publicada",
-    pista: "Quiero la versión que quedó publicada. Tiene tres números separados por puntos, con una v delante.",
+    pista: "Quiero la versión que quedó publicada.",
+    terreno: "Tiene una v delante y tres números separados por puntos. Está en paquetes/, con otras a medio escribir.",
     terminal: "La versión es v y tres números separados por puntos. Usa grep -rE y escapa los puntos.",
     arma() {
       const v = `v${entero(2, 5)}.${entero(0, 9)}.${entero(0, 9)}`;
@@ -503,7 +510,8 @@ const PISTAS_REGEX = [
   {
     id: "nodo",
     etiqueta: "Nodo de producción",
-    pista: "El nodo donde se cayó está en la red interna: la dirección empieza por 10.20. Búscala por su forma.",
+    pista: "Necesito la dirección del nodo que se cayó.",
+    terreno: "Es una dirección de la red interna, empieza por 10.20. Está en infra/, junto a otras que no son.",
     terminal: "El nodo es una dirección que empieza por 10.20. Usa grep -rE y escapa los puntos.",
     arma() {
       const ip = `10.20.${entero(1, 250)}.${entero(1, 250)}`;
@@ -527,7 +535,8 @@ const PISTAS_FIND = [
   {
     id: "tocado",
     etiqueta: "Configuración tocada",
-    pista: "Alguien editó una configuración hace un rato y no lo dijo. Por la fecha lo encuentras: es de hace menos de una hora.",
+    pista: "Alguien editó una configuración hace un rato y no lo dijo. Dime cuál.",
+    terreno: "No lo vas a sacar leyendo: lo que la delata es la fecha. Se tocó hace menos de una hora.",
     terminal: "Un archivo se modificó hace minutos. Búscalo con find y -mmin; su nombre es el que necesito.",
     arma() {
       const nombre = alAzar(["nginx.conf", "app.env", "pool.conf", "limites.conf"]);
@@ -545,7 +554,8 @@ const PISTAS_FIND = [
   {
     id: "volcado",
     etiqueta: "Volcado de la base",
-    pista: "Antes de revertir alguien sacó un volcado de la base. Es el único archivo .sql que hay por aquí.",
+    pista: "Antes de revertir alguien sacó un volcado de la base. Necesito su nombre.",
+    terreno: "Un volcado de base de datos termina en .sql, y es el único que hay en el proyecto.",
     terminal: "Solo hay un archivo .sql en el proyecto. Búscalo por su extensión con find -name.",
     arma() {
       const nombre = "respaldo-" + entero(10, 99) + ".sql";
@@ -563,7 +573,8 @@ const PISTAS_FIND = [
   {
     id: "oculto",
     etiqueta: "Carpeta oculta",
-    pista: "Hay una carpeta que empieza por punto y no sale con un ls normal. Dime cómo se llama.",
+    pista: "Hay una carpeta que no sale al listar el proyecto. Dime cómo se llama.",
+    terreno: "Los nombres que empiezan por punto están ocultos. Busca por tipo directorio y por esa forma de nombre.",
     terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
     arma() {
       const nombre = "." + alAzar(["borradores", "cache", "parches", "local"]);
@@ -580,7 +591,8 @@ const PISTAS_FIND = [
   {
     id: "viejo",
     etiqueta: "Archivo más antiguo",
-    pista: "Queda un archivo de antes de que existiera el proyecto actual, de hace más de un mes. Ese nombre me sirve.",
+    pista: "Queda un archivo de antes de que existiera el proyecto actual. Ese nombre me sirve.",
+    terreno: "Se distingue por la fecha: lleva más de un mes sin tocarse, y el resto es de esta semana.",
     terminal: "Un solo archivo tiene más de un mes. Búscalo con find y -mtime.",
     arma() {
       const nombre = "manual-" + entero(2015, 2019) + ".txt";
@@ -604,7 +616,8 @@ const PISTAS_SORT = [
   {
     id: "servicio-fallos",
     etiqueta: "Servicio con más fallos",
-    pista: "En metricas/errores.csv está el recuento por servicio. Dime cuál falló más veces.",
+    pista: "Dime qué servicio falló más veces esa semana.",
+    terreno: "El recuento está en metricas/errores.csv, una línea por servicio. Hay que ordenarlo por el número, no por el nombre.",
     terminal: "En metricas/errores.csv cada línea es un servicio y sus fallos, separados por coma. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
       const lista = toma(SERVICIOS, 5);
@@ -621,7 +634,8 @@ const PISTAS_SORT = [
   {
     id: "endpoint",
     etiqueta: "Ruta más lenta",
-    pista: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Necesito la ruta más lenta.",
+    pista: "Necesito saber qué ruta iba más lenta.",
+    terreno: "Está en metricas/latencias.csv: fecha, ruta y milisegundos. Ordena por la tercera columna.",
     terminal: "En metricas/latencias.csv las columnas son fecha, ruta y milisegundos. Ordena por la tercera con sort -t, -k3 -n -r.",
     arma() {
       const lista = toma(ENDPOINTS, 4);
@@ -640,7 +654,8 @@ const PISTAS_SORT = [
   {
     id: "quien-mas-subio",
     etiqueta: "Quién subió más cambios",
-    pista: "En metricas/commits.csv está quién subió cuántos cambios esa semana. Dime quién va primero.",
+    pista: "Dime quién subió más cambios esa semana.",
+    terreno: "Está en metricas/commits.csv, una línea por persona. Ordena por el número de la segunda columna.",
     terminal: "En metricas/commits.csv cada línea es una persona y sus cambios. Ordena por el segundo campo con sort -t, -k2 -n -r.",
     arma() {
       const lista = toma(COMPANEROS, 5);
@@ -657,7 +672,8 @@ const PISTAS_SORT = [
   {
     id: "primer-despliegue",
     etiqueta: "Hora del primer despliegue",
-    pista: "En despliegues/horas.csv cada línea empieza por la hora. Quiero la del primer despliegue del día.",
+    pista: "Quiero la hora del primer despliegue del día.",
+    terreno: "Está en despliegues/horas.csv y cada línea empieza por la hora, así que ordenarlas basta.",
     terminal: "En despliegues/horas.csv cada línea empieza por la hora. Ordénalas con sort: la primera línea es la más temprana.",
     arma() {
       const horas = [];
@@ -685,7 +701,9 @@ const FAMILIAS = [
   { nombre: "find", pistas: PISTAS_FIND },
   { nombre: "sort", pistas: PISTAS_SORT },
 ];
-const DATOS_POR_CASO = 3;
+// Dos y no tres: la partida pide menos datos pero cada uno exige buscar de
+// verdad, ahora que Laura ya no dice donde mirar.
+const DATOS_POR_CASO = 2;
 
 /** Los senuelos que siempre estan: el proyecto nunca se ve vacio. */
 function archivosBase() {
@@ -1142,7 +1160,9 @@ function objetivos() {
   // Una entrada por dato de esta partida. Ya no hay dos listas que puedan
   // discrepar: antes `objetivos()` pedia un campo que `CAMPOS` no declaraba y el
   // ultimo objetivo no se marcaba nunca.
-  return caso.datos.map((d) => ({ campo: d.id, pista: d.pista, terminal: d.terminal }));
+  return caso.datos.map((d) => ({
+    campo: d.id, pista: d.pista, terreno: d.terreno, terminal: d.terminal,
+  }));
 }
 
 /** Los datos que pide esta partida, en el orden en que se piden. */
@@ -1166,6 +1186,129 @@ function contiene(mensaje, dato) {
   return new RegExp("(^|[^a-z0-9])" + escapado + "($|[^a-z0-9])").test(normal(mensaje));
 }
 const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuesta || "";
+
+/* ============================================================
+   LAURA AYUDA
+   Dos preguntas y un diccionario. La idea es que el simulador
+   tenga suelo y techo: se puede resolver mirando archivo por
+   archivo, y quien conoce las opciones lo hace en un comando.
+   Por eso la ayuda sube por escalones y la primera nunca dice
+   una opcion: dice donde mirar y que palabras salen por ahi.
+   ============================================================ */
+
+/** Lo que Laura sabe explicar. Se cierra en los terminos que este
+ *  simulador usa: preguntar por otra cosa recibe un "no se" honesto en vez
+ *  de una respuesta inventada. */
+const GLOSARIO = {
+  grep: "Busca texto DENTRO de los archivos y devuelve las líneas que lo contienen. Es para cuando sabes qué dice algo pero no dónde está escrito.",
+  find: "Busca archivos POR SUS DATOS: el nombre, el tipo, el tamaño o la fecha. No mira lo que hay escrito dentro.",
+  sort: "Ordena líneas. Por defecto alfabéticamente, y con las opciones adecuadas por un número o por una columna concreta.",
+  head: "Enseña las primeras líneas de un archivo. `head -3` son las tres primeras.",
+  tail: "Enseña las últimas líneas. Útil en registros, donde lo reciente está al final.",
+  wc: "Cuenta. Líneas, palabras o caracteres, según la opción.",
+  cat: "Escribe el contenido entero de un archivo. Para archivos largos es mejor `head` o `grep`.",
+  ls: "Lista lo que hay en un directorio. Con `-l` añade tamaño y fecha.",
+  cd: "Cambia de directorio.",
+  pipe: "La barra vertical `|` encadena comandos: la salida del primero entra en el segundo, sin pasar por ningún archivo.",
+  regex: "Una expresión regular describe la FORMA de un texto en vez del texto exacto: «siete caracteres hexadecimales», «tres números con puntos».",
+  commit: "Cada cambio guardado en el historial del proyecto. Se identifica con un código de siete caracteres de 0 a 9 y de la a a la f.",
+  rama: "Una línea de trabajo paralela dentro del proyecto. Se separa para trabajar sin tocar lo que ya funciona, y luego se junta.",
+  build: "Cada compilación del proyecto, numerada. Si una rompió producción, su número dice cuál fue.",
+  nodo: "Cada máquina del entorno. En la red interna sus direcciones empiezan igual, y eso permite reconocerlas.",
+  despliegue: "Subir una versión nueva a producción. Cuando algo se rompe, es lo primero que se mira.",
+  produccion: "El sistema que usan las personas de verdad, no el de pruebas. Por eso una caída ahí es urgente.",
+  volcado: "Una copia del contenido de una base de datos, guardada en un archivo. Suele terminar en .sql.",
+  oculto: "Un archivo o carpeta cuyo nombre empieza por punto. `ls` no los enseña salvo que se le pida.",
+  csv: "Un archivo de texto donde cada línea es una fila y las columnas van separadas por comas.",
+  help: "Escríbelo en la terminal y te enseña los comandos que puedes usar aquí.",
+  "-r": "Hace que la búsqueda entre en las carpetas y siga hacia dentro, en vez de quedarse en el sitio donde estás.",
+  "-i": "Hace que dé igual mayúsculas y minúsculas: así «ERROR» y «error» cuentan lo mismo.",
+  "-c": "En vez de enseñar las líneas, dice cuántas hay.",
+  "-l": "En vez de las líneas, devuelve solo los nombres de los archivos donde hay coincidencia.",
+  "-n": "Antepone a cada línea el número que ocupa dentro del archivo.",
+  "-v": "Le da la vuelta: enseña las líneas que NO contienen lo que buscas.",
+  "-e": "Deja usar una expresión regular extendida, con llaves y grupos.",
+  "-name": "Filtra por el nombre del archivo, y acepta comodines.",
+  "-type": "Filtra por lo que es: `f` para archivos, `d` para directorios.",
+  "-mmin": "Filtra por minutos desde la última modificación. `-mmin -60` es lo tocado en la última hora.",
+  "-mtime": "Filtra por días desde la última modificación. `-mtime +30` es lo que lleva más de un mes.",
+};
+
+/** Sinonimos, para que valga preguntar como se hable. */
+const ALIAS = {
+  "expresion regular": "regex", "expresiones regulares": "regex",
+  "tuberia": "pipe", "tuberias": "pipe",
+  "hexadecimal": "commit", "branch": "rama",
+  "servidor": "nodo", "maquina": "nodo",
+  "base de datos": "volcado", "backup": "volcado", "respaldo": "volcado",
+  "archivo oculto": "oculto", "carpeta oculta": "oculto",
+  "recursivo": "-r", "recursiva": "-r",
+};
+
+/** Sin acentos y sin signos, para reconocer la pregunta se escriba como se
+ *  escriba: "¿Cómo hago eso?", "como hago eso", "y eso como lo hago". */
+const pelado = (s) => (s || "")
+  .toLowerCase()
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[¿?¡!.,;:]/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+
+/** ¿Está pidiendo ayuda con la búsqueda en curso? */
+function pideAyuda(m) {
+  const s = pelado(m);
+  return /\bcomo\b/.test(s) && /\b(hago|lo hago|se hace|busco|encuentro|saco)\b/.test(s);
+}
+
+/** ¿Está preguntando por un término? Devuelve la clave o null. */
+function terminoDe(m) {
+  const s = pelado(m);
+  if (!/\bque\s+(es|son|significa|hace)\b/.test(s)) return null;
+  const resto = s.replace(/.*\bque\s+(?:es|son|significa|hace)\b/, "")
+                 .replace(/\b(un|una|el|la|los|las|lo|de)\b/g, " ")
+                 .replace(/\s+/g, " ").trim();
+  if (!resto) return "";
+  // Primero los sinonimos de varias palabras, despues las claves sueltas.
+  for (const [frase, clave] of Object.entries(ALIAS)) {
+    if (resto.includes(frase)) return clave;
+  }
+  for (const clave of Object.keys(GLOSARIO)) {
+    const c = pelado(clave);
+    if (new RegExp("(^|[^a-z0-9-])" + c.replace("-", "\\-") + "($|[^a-z0-9])").test(resto)) return clave;
+  }
+  return "";
+}
+
+/** Cuantas veces ha pedido ayuda con el dato en curso. */
+let ayudas = 0;
+
+/** La ayuda sube de escalon: primero el terreno, despues la herramienta. */
+function responderAyuda() {
+  const lista = objetivos();
+  if (paso >= lista.length) {
+    di("ella", "Ya está todo, no queda nada que buscar.");
+    return;
+  }
+  ayudas++;
+  const o = lista[paso];
+  if (ayudas === 1 && o.terreno) {
+    di("ella", escapar(o.terreno));
+    return;
+  }
+  di("ella", escapar(o.terminal));
+}
+
+function responderTermino(clave) {
+  if (clave === "") {
+    di("ella", "No te sigo. Dime «¿Qué es grep?», «¿Qué es -r?» o el término que sea, y te lo explico si lo conozco.");
+    return;
+  }
+  if (!GLOSARIO[clave]) {
+    di("ella", "De eso no sé lo suficiente como para explicártelo bien. Pregúntame por los comandos o por las opciones que estés usando.");
+    return;
+  }
+  di("ella", escapar(GLOSARIO[clave]));
+}
 
 /* ============================================================
    EL CHAT
@@ -1254,9 +1397,17 @@ function responderChat() {
   const id = lista[paso].campo;
   di("yo", escapar(valor));
 
+  // Las preguntas se atienden antes de mirar si es una respuesta: si no,
+  // "¿Que es grep?" contaria como intento fallido y Laura regañaria por
+  // preguntar, que es lo contrario de lo que queremos.
+  if (pideAyuda(valor)) { responderAyuda(); return; }
+  const termino = terminoDe(valor);
+  if (termino !== null) { responderTermino(termino); return; }
+
   if (contiene(valor, respuestaDe(id))) {
     resueltos[id] = true;
     tropiezos = 0;
+    ayudas = 0;
     log("dato confirmado: " + etiquetaDe(id).toLowerCase(), "ok");
     const ultimo = Object.values(resueltos).every(Boolean);
     di("ella", ultimo
@@ -1271,8 +1422,8 @@ function responderChat() {
   // Primero se repite lo pedido; a la segunda se dice con qué herramienta se
   // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
   di("ella", tropiezos === 1
-    ? "Eso no me cuadra. Vuelve a mirar, es lo que te dije."
-    : escapar(lista[paso].terminal), true);
+    ? "Eso no me cuadra. Si te has atascado, pregúntame «¿Cómo hago eso?»."
+    : escapar(lista[paso].terreno || lista[paso].terminal), true);
 }
 
 /** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
@@ -1308,10 +1459,14 @@ function pintar() {
     : "Informe cerrado", Math.min(paso, lista.length - 1), lista.length);
   // El objetivo no tiene ventana propia: se anuncia en la terminal cuando
   // cambia, que es donde el estudiante ya esta mirando.
+  //
+  // Se anuncia QUE dato toca, no como sacarlo: antes esta linea imprimia el
+  // campo `terminal`, o sea la ayuda mas concreta que hay, y regalaba el
+  // comando entero sin que nadie lo pidiera. Para eso esta Laura.
   if (paso !== ultimoAnuncio && paso < lista.length) {
     ultimoAnuncio = paso;
     log("");
-    log(`[${paso + 1}/${lista.length}] ${lista[paso].terminal}`, "nota");
+    log(`[${paso + 1}/${lista.length}] ${etiquetaDe(lista[paso].campo)}`, "nota");
   }
 }
 
@@ -1386,6 +1541,7 @@ function preparar() {
   ultimoAnuncio = -1;
   charla = [];
   tropiezos = 0;
+  ayudas = 0;
   cola = [];
   escribiendo = false;
   if (temporizador) { clearTimeout(temporizador); temporizador = null; }
@@ -1405,8 +1561,8 @@ function empezar() {
   $("portada").classList.add("hide");
   barra.jugando(true);
   di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
-  di("ella", "Tienes el proyecto clonado en el escritorio. Te voy pidiendo los datos de uno en uno.");
-  di("ella", "Mándame el dato y escríbelo bien. Que venga en el mensaje sin errores.");
+  di("ella", "Te voy a pedir unos datos. Tú los buscas en el proyecto y me los envías sin errores.");
+  di("ella", "Si necesitas ayuda con la búsqueda, pregúntame «¿Cómo hago eso?». Y si tienes dudas de algo, dime «¿Qué es...?».");
   pedir();
   enfocar();
 }
