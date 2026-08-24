@@ -28,7 +28,7 @@ kill -l
 
 ## kill
 
-Recibe el PID del proceso, que se averigua con `ps` del primer subtema:
+Recibe el PID del proceso, que se averigua con `ps` del primer tema:
 
 ```bash
 sleep 300 &
@@ -48,7 +48,7 @@ kill 38731
 
 Sin indicar señal, `kill` manda `TERM`. Eso es una petición de cierre ordenado: el programa se entera, cierra lo que tenga abierto y termina.
 
-También acepta el número de trabajo del subtema anterior, con el `%` delante:
+También acepta el número de trabajo del tema anterior, con el `%` delante:
 
 ```bash
 kill %1
@@ -111,7 +111,7 @@ pgrep -a sleep
 38742 sleep 60
 ```
 
-Esa lista es exactamente lo que `pkill` iba a alcanzar. Es la misma costumbre del módulo de comodines, mirar antes de borrar.
+Esa lista es exactamente lo que `pkill` iba a alcanzar. Es la misma costumbre del tema de comodines, mirar antes de borrar.
 
 ## Solo sobre lo propio
 
@@ -125,7 +125,7 @@ kill 1
 bash: kill: (1) - Operation not permitted
 ```
 
-Ese `1` es el proceso que arranca el sistema, y no pertenece a la cuenta del laboratorio. Es el mismo criterio de dueño y permisos del módulo cinco, aplicado a procesos en lugar de a archivos.
+Ese `1` es el proceso que arranca el sistema, y no pertenece a la cuenta del laboratorio. Es el mismo criterio de dueño y permisos del tema cinco, aplicado a procesos en lugar de a archivos.
 
 ## Resumen
 

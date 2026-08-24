@@ -1,6 +1,6 @@
 ## Administrar cuentas y grupos
 
-Los comandos de este subtema modifican `/etc/passwd`, `/etc/group` y `/etc/shadow`, así que **todos requieren privilegios de administrador** y la cuenta del laboratorio no los tiene. Se estudian igual porque aparecen en cualquier documentación y porque explican de dónde salen las cuentas con las que se ha trabajado hasta ahora.
+Los comandos de este tema modifican `/etc/passwd`, `/etc/group` y `/etc/shadow`, así que **todos requieren privilegios de administrador** y la cuenta del laboratorio no los tiene. Se estudian igual porque aparecen en cualquier documentación y porque explican de dónde salen las cuentas con las que se ha trabajado hasta ahora.
 
 ## Cómo se ejecuta un comando privilegiado
 
@@ -115,7 +115,7 @@ Y `groupdel` tiene una restricción que conviene conocer antes de tropezar con e
 - **`-n` cambia el nombre.** No rompe nada: los archivos pertenecen a GID, no a nombres de grupo, así que todos sus miembros conservan el acceso.
 - **`-g` cambia el GID.** Sí rompe. Los archivos siguen apuntando al número viejo, que ya no corresponde a ningún grupo, y pasan a llamarse **archivos huérfanos**.
 
-Esos archivos se localizan con `find`, ya conocido del módulo de búsqueda:
+Esos archivos se localizan con `find`, ya conocido del tema de búsqueda:
 
 ```bash
 find /home -nogroup
@@ -129,7 +129,7 @@ sudo gpasswd -d laura_pena proyecto
 
 ## Lo que sí se puede probar aquí
 
-Todas las cuentas del laboratorio se crearon exactamente con estos comandos, y aunque no se puedan ejecutar, su huella queda a la vista con lo del subtema anterior:
+Todas las cuentas del laboratorio se crearon exactamente con estos comandos, y aunque no se puedan ejecutar, su huella queda a la vista con lo del tema anterior:
 
 ```bash
 getent passwd andres_torres
@@ -137,7 +137,7 @@ getent group grp_cec1648c
 id andres_torres
 ```
 
-Leer esas tres salidas y reconocer qué opción de `useradd` produjo cada campo es el ejercicio real de este subtema.
+Leer esas tres salidas y reconocer qué opción de `useradd` produjo cada campo es el trabajo real de este tema.
 
 ---
 

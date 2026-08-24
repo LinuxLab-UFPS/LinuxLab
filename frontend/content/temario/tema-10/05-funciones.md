@@ -82,7 +82,7 @@ código: 2
 
 Cero significa que todo fue bien y cualquier otro número señala un problema (Free Software Foundation, 2025). Un script que va a usar otro script debe terminar con el código correcto, porque es lo único que el de fuera puede consultar.
 
-Hay dos herramientas más que se ven en scripts de administración y que conviene reconocer aunque no se usen aquí: `set -e` al principio hace que el script se detenga en cuanto un comando falle, y `trap` permite ejecutar una limpieza cuando el script recibe una señal de las del módulo nueve.
+Hay dos herramientas más que se ven en scripts de administración y que conviene reconocer aunque no se usen aquí: `set -e` al principio hace que el script se detenga en cuanto un comando falle, y `trap` permite ejecutar una limpieza cuando el script recibe una señal de las del tema nueve.
 
 ## Un script que junta todo
 

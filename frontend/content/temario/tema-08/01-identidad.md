@@ -1,10 +1,10 @@
 ## Quiénes somos para el sistema
 
-Un usuario es una cuenta con la que se accede al sistema y un grupo es un conjunto de cuentas. El módulo de permisos ya trabajó con los dos, porque cada archivo lleva anotado un usuario dueño y un grupo dueño. Aquí se ve de dónde sale esa identidad y cómo se consulta.
+Un usuario es una cuenta con la que se accede al sistema y un grupo es un conjunto de cuentas. El tema de permisos ya trabajó con los dos, porque cada archivo lleva anotado un usuario dueño y un grupo dueño. Aquí se ve de dónde sale esa identidad y cómo se consulta.
 
 Una cuenta no siempre corresponde a una persona. Los servicios que corren en segundo plano también tienen la suya (DevOps Daily, 2025), y eso explica buena parte de lo que aparece al listar las cuentas de un sistema.
 
-Tres comandos responden quién es eres, y los tres funcionan sin permisos especiales (Free Software Foundation, 2026).
+Tres comandos responden quién eres, y los tres funcionan sin permisos especiales (Free Software Foundation, 2026).
 
 ## whoami
 
@@ -112,7 +112,7 @@ Preguntando por el nombre de la cuenta, `id` lee la configuración actual del si
 
 La cuenta con la que se trabaja aquí es una cuenta de Linux dentro de un sistema compartido, y cada grupo del laboratorio es un grupo de Linux con su propio GID. Por eso `id` devuelve números reales y los archivos creados llevan el grupo del laboratorio.
 
-Eso trae una consecuencia que conviene tener clara desde ya: **esta cuenta no es administradora**. Los comandos que crean y modifican cuentas se estudian en el tercer subtema, pero ejecutarlos aquí devolverá un error de permisos. No es un fallo del entorno, es exactamente lo que le pasaría a cualquier usuario normal en cualquier servidor.
+Eso trae una consecuencia que conviene tener clara desde ya: **esta cuenta no es administradora**. Los comandos que crean y modifican cuentas se estudian en el tercer tema, pero ejecutarlos aquí devolverá un error de permisos. No es un fallo del entorno, es exactamente lo que le pasaría a cualquier usuario normal en cualquier servidor.
 
 ---
 

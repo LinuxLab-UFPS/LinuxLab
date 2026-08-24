@@ -1,6 +1,6 @@
 ## Tomar decisiones
 
-El subtema anterior terminó con un script que se queda mudo si no recibe argumentos. Un script útil comprueba antes de actuar, y para eso están los condicionales.
+El tema anterior terminó con un script que se queda mudo si no recibe argumentos. Un script útil comprueba antes de actuar, y para eso están los condicionales.
 
 ## if
 
@@ -94,7 +94,7 @@ Y para archivos, que es lo que más se usa en un script:
 | `-w` | Se puede escribir |
 | `-x` | Se puede ejecutar |
 
-Los tres últimos responden sobre los permisos del módulo cinco, y responden para **la cuenta que ejecuta el script**, no en abstracto.
+Los tres últimos responden sobre los permisos del tema cinco, y responden para **la cuenta que ejecuta el script**, no en abstracto.
 
 ## Combinar y negar
 

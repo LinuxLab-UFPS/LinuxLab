@@ -12,7 +12,7 @@ Un daemon arranca al encender la máquina, antes de que nadie inicie sesión, y 
 
 Por eso `ps` los muestra con `?`. Ese interrogante no es un dato que falte, es la respuesta: **este proceso no depende de ninguna terminal**.
 
-La diferencia con un trabajo en segundo plano de los del subtema anterior es justo esa. Un `comando &` sigue perteneciendo a la terminal donde se lanzó, y al cerrarla se va con ella:
+La diferencia con un trabajo en segundo plano de los del tema anterior es justo esa. Un `comando &` sigue perteneciendo a la terminal donde se lanzó, y al cerrarla se va con ella:
 
 ```bash
 sleep 300 &
@@ -95,7 +95,7 @@ Consultar el estado no requiere privilegios. Arrancar, parar o habilitar un serv
 
 ## Mandarles señales
 
-Un daemon se termina como cualquier otro proceso, pero rara vez es lo que se quiere. Lo habitual es pedirle que relea su configuración sin cortar el servicio, y para eso está la señal `HUP` del subtema anterior: quien administra la máquina manda `kill -HUP` al PID del daemon y este vuelve a leer sus archivos sin dejar de atender.
+Un daemon se termina como cualquier otro proceso, pero rara vez es lo que se quiere. Lo habitual es pedirle que relea su configuración sin cortar el servicio, y para eso está la señal `HUP` del tema anterior: quien administra la máquina manda `kill -HUP` al PID del daemon y este vuelve a leer sus archivos sin dejar de atender.
 
 Muchos daemons están escritos para responder a `HUP` recargándose en lugar de terminar, precisamente porque cortar un servicio para cambiarle una línea de configuración sería desproporcionado.
 

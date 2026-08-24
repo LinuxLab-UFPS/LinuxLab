@@ -34,7 +34,7 @@ Es la forma de repetir algo un número fijo de veces.
 
 ## for sobre archivos
 
-Aquí es donde el ciclo se vuelve útil de verdad. Un comodín del módulo cuatro se expande a la lista de archivos que coinciden, y `for` los recorre uno a uno:
+Aquí es donde el ciclo se vuelve útil de verdad. Un comodín del tema cuatro se expande a la lista de archivos que coinciden, y `for` los recorre uno a uno:
 
 ```bash
 ./procesar.sh
@@ -57,7 +57,7 @@ El shell resuelve el `*.txt` antes de empezar, así que el ciclo recibe los nomb
 
 ## while
 
-`while` no recorre una lista, repite **mientras** una condición se cumpla (Free Software Foundation, 2025). Lleva las mismas comparaciones del subtema anterior:
+`while` no recorre una lista, repite **mientras** una condición se cumpla (Free Software Foundation, 2025). Lleva las mismas comparaciones del tema anterior:
 
 ```
 c=1
@@ -121,7 +121,7 @@ No se borró nada: `echo` solo imprimió la orden. Si la lista es la esperada, s
 
 Conviene saber además que el laboratorio pone un techo. Cada sesión está limitada a **16 procesos**, así que un ciclo desbocado que intente abrir programas sin parar se detiene solo en cuanto llega a ese número, sin llevarse por delante el trabajo de nadie más. El límite es del entorno del curso, no de Linux: en un servidor de verdad ese ciclo seguiría creciendo.
 
-Y lo que ya se sabe del módulo cinco sigue valiendo: un script no tiene más alcance que la cuenta que lo ejecuta, así que no puede tocar lo que la cuenta no puede tocar.
+Y lo que ya se sabe del tema cinco sigue valiendo: un script no tiene más alcance que la cuenta que lo ejecuta, así que no puede tocar lo que la cuenta no puede tocar.
 
 ## Resumen
 

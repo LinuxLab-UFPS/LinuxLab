@@ -68,7 +68,7 @@ sleep 300
 [1]+  Stopped                 sleep 300
 ```
 
-**Detenido no es lo mismo que terminado.** El proceso sigue existiendo, con su PID y su memoria, pero congelado: no avanza ni consume procesador. `ps` lo muestra con el estado `T` del subtema anterior.
+**Detenido no es lo mismo que terminado.** El proceso sigue existiendo, con su PID y su memoria, pero congelado: no avanza ni consume procesador. `ps` lo muestra con el estado `T` del tema anterior.
 
 ## bg y fg
 
@@ -107,9 +107,9 @@ Sin ese `%2`, ambos comandos actúan sobre el trabajo marcado con `+` en `jobs`.
 
 Un proceso en segundo plano deja de escuchar el teclado de la terminal, y eso incluye <kbd>Ctrl</kbd> + <kbd>C</kbd>. Intentar interrumpirlo así no tiene ningún efecto.
 
-Hay dos formas de resolverlo. Traerlo al primer plano con `fg` y entonces sí interrumpirlo, o terminarlo por su número desde donde esté, que es lo del subtema siguiente.
+Hay dos formas de resolverlo. Traerlo al primer plano con `fg` y entonces sí interrumpirlo, o terminarlo por su número desde donde esté, que es lo del tema siguiente.
 
-Lo que sí atraviesa el segundo plano es la salida. Un programa que escriba en pantalla lo seguirá haciendo aunque esté detrás, y sus líneas aparecerán mezcladas con lo que se esté escribiendo. Se evita redirigiendo la salida a un archivo con lo del módulo de manejo de archivos:
+Lo que sí atraviesa el segundo plano es la salida. Un programa que escriba en pantalla lo seguirá haciendo aunque esté detrás, y sus líneas aparecerán mezcladas con lo que se esté escribiendo. Se evita redirigiendo la salida a un archivo con lo del tema de manejo de archivos:
 
 ```bash
 comando-largo > salida.txt 2>&1 &

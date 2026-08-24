@@ -1,4 +1,4 @@
-El subtema anterior terminó con `stat` imprimiendo dos formas del mismo permiso:
+El tema anterior terminó con `stat` imprimiendo dos formas del mismo permiso:
 
 ```
 -rw-rw-r--  664  notas.txt
@@ -32,7 +32,7 @@ stat -c "%A  (%04a)  %n" notas.txt
 -rw-rw-r--  (0664)  notas.txt
 ```
 
-Ese cero inicial no es un permiso más: marca que el número está escrito en octal, la misma convención que usa `umask`. Cuando ese dígito no es cero corresponde a los permisos especiales, que quedan fuera de este módulo.
+Ese cero inicial no es un permiso más: marca que el número está escrito en octal, la misma convención que usa `umask`. Cuando ese dígito no es cero corresponde a los permisos especiales, que quedan fuera de este tema.
 
 ## Los valores que se repiten
 
@@ -46,7 +46,7 @@ En la práctica aparecen casi siempre los mismos, porque responden a situaciones
 | `700` | `rwx------` | Un directorio privado |
 | `640` | `rw-r-----` | Un archivo que comparte el grupo pero no el resto |
 
-Conviene tener presente que `644` y `755` no son intercambiables. El `x` que sobra en `755` marca un archivo de texto como ejecutable sin serlo, y el `x` que falta en `644` deja un directorio inservible. El motivo se ve en el subtema de permisos sobre directorios.
+Conviene tener presente que `644` y `755` no son intercambiables. El `x` que sobra en `755` marca un archivo de texto como ejecutable sin serlo, y el `x` que falta en `644` deja un directorio inservible. El motivo se ve en el tema de permisos sobre directorios.
 
 
 ## Resumen

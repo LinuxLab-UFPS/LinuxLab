@@ -42,7 +42,7 @@ mkdir u1
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:22 u1
 ```
 
-Los dos máximos son distintos por una razón deliberada: un archivo nunca se crea con permiso de ejecución. Un documento de texto o una imagen no son programas, y marcarlos como ejecutables por defecto sería una puerta abierta a que cualquier cosa descargada pudiera correrse. La ejecución hay que concederla a mano con `chmod`, que es justo lo que se hizo en su subtema con `u+x`.
+Los dos máximos son distintos por una razón deliberada: un archivo nunca se crea con permiso de ejecución. Un documento de texto o una imagen no son programas, y marcarlos como ejecutables por defecto sería una puerta abierta a que cualquier cosa descargada pudiera correrse. La ejecución hay que concederla a mano con `chmod`, que es justo lo que se hizo en su tema con `u+x`.
 
 ## Cambiarla
 

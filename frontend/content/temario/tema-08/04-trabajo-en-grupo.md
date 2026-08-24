@@ -53,7 +53,7 @@ ls -l taller/notas.txt
 -rw-rw-r-- 1 andres_torres grp_cec1648c 0 Aug 18 11:25 taller/notas.txt
 ```
 
-El archivo nuevo no salió con el grupo `proyecto`, sino con el grupo **primario** de quien lo creó. Es lo que decía el primer subtema: el grupo primario es el que se le pone a lo que se crea. Y el resultado es que el resto del equipo no puede escribir en ese archivo, aunque el directorio sea suyo.
+El archivo nuevo no salió con el grupo `proyecto`, sino con el grupo **primario** de quien lo creó. Es lo que decía el primer tema: el grupo primario es el que se le pone a lo que se crea. Y el resultado es que el resto del equipo no puede escribir en ese archivo, aunque el directorio sea suyo.
 
 Corregirlo a mano con `chgrp` cada vez depende de que alguien se acuerde, así que el sistema ofrece una forma de que lo haga solo.
 
@@ -92,7 +92,7 @@ En notación octal el bit es un cuarto dígito por delante, `2` para setgid, que
 chmod 2770 taller
 ```
 
-## Lo que se veía desde el módulo de permisos
+## Lo que se veía desde el tema de permisos
 
 Este listado apareció en el tema de permisos:
 

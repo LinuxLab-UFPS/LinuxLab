@@ -1,12 +1,12 @@
 ## Tu primer script
 
-Un script es un archivo de texto con una lista de comandos dentro. El shell lo lee y los ejecuta uno detrás de otro, igual que si se hubieran tecleado en la terminal (Shotts, 2026). Todo lo que se ha aprendido hasta aquí sirve dentro de un script, y por eso este módulo va al final: no enseña comandos nuevos, enseña a guardarlos.
+Un script es un archivo de texto con una lista de comandos dentro. El shell lo lee y los ejecuta uno detrás de otro, igual que si se hubieran tecleado en la terminal (Shotts, 2026). Todo lo que se ha aprendido hasta aquí sirve dentro de un script, y por eso este tema va al final: no enseña comandos nuevos, enseña a guardarlos.
 
 Sirve para lo que se repite. Una secuencia de cinco comandos que hay que repetir cada semana se escribe una vez y se ejecuta con un nombre.
 
 ## Escribir el archivo
 
-Se crea con el editor del módulo cuatro. El nombre suele acabar en `.sh`, aunque no es obligatorio:
+Se crea con el editor del tema cuatro. El nombre suele acabar en `.sh`, aunque no es obligatorio:
 
 ```bash
 vi saludo.sh
@@ -28,7 +28,7 @@ La tercera es un comando corriente.
 
 ## Darle permiso de ejecución
 
-Un archivo de texto recién creado no se puede ejecutar. Es la protección del módulo cinco funcionando:
+Un archivo de texto recién creado no se puede ejecutar. Es la protección del tema cinco funcionando:
 
 ```bash
 ls -l saludo.sh

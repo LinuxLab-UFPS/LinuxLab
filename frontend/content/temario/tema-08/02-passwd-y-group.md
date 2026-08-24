@@ -10,7 +10,7 @@ Son tres, y cada uno guarda una cosa distinta:
 | `/etc/group` | Los grupos y sus miembros | Todo el mundo |
 | `/etc/shadow` | Las contraseñas cifradas | Solo `root` |
 
-Modificarlos a mano es posible y desaconsejado: un error de edición puede dejar a todos los usuarios sin poder iniciar sesión (NDG, 2024). Para eso existen los comandos del siguiente subtema.
+Modificarlos a mano es posible y desaconsejado: un error de edición puede dejar a todos los usuarios sin poder iniciar sesión (NDG, 2024). Para eso existen los comandos del siguiente tema.
 
 ## getent, mejor que cat
 
@@ -106,7 +106,7 @@ En orden: nombre del grupo, marca de contraseña, GID y la lista de los nombres 
 
 El cuarto campo tiene una particularidad que suele confundir:
 
-**Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c`, como mostró `id` en el subtema anterior, y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
+**Quien tiene el grupo como primario no aparece en esa lista.** En el ejemplo, `andres_torres` pertenece a `grp_cec1648c`, como mostró `id` en el tema anterior, y sin embargo su nombre no está. La razón es que su pertenencia no se guarda aquí, sino en el cuarto campo de su línea de `/etc/passwd`, el GID. La lista de `/etc/group` recoge únicamente a los miembros **secundarios**.
 
 De ahí que contar miembros leyendo solo `/etc/group` dé siempre de menos. Para saber los grupos reales de una cuenta, `id` es la respuesta fiable:
 
@@ -132,7 +132,7 @@ cat /etc/shadow
 cat: /etc/shadow: Permission denied
 ```
 
-Ese error es el comportamiento correcto. Se comprueba con lo aprendido en el módulo de permisos:
+Ese error es el comportamiento correcto. Se comprueba con lo aprendido en el tema de permisos:
 
 ```bash
 ls -l /etc/shadow /etc/passwd

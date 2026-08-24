@@ -74,7 +74,7 @@ El video mostró otro comando que trabaja con un argumento. Como ya viste, `cd` 
 cd Documentos
 ```
 
-`cd` no imprime nada. Su efecto se ve en el prompt, que pasa de `~` a `~/Documentos`: la respuesta del comando es el lugar nuevo. `cd` y `ls`, el comando con el que este apartado empezó, se practican a fondo en el módulo siguiente de Directorios.
+`cd` no imprime nada. Su efecto se ve en el prompt, que pasa de `~` a `~/Documentos`: la respuesta del comando es el lugar nuevo. `cd` y `ls`, el comando con el que este apartado empezó, se practican a fondo en Directorios, que es lo que viene a continuación.
 
 ## Opciones
 

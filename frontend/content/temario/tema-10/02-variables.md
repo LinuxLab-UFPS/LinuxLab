@@ -77,7 +77,7 @@ Cuenta: andres_torres
 Shell:  /bin/bash
 ```
 
-`HOME` guarda la ruta de la carpeta personal, y `PATH` es la del subtema anterior, la lista de directorios donde el shell busca los comandos. Se consultan igual, con `echo "$HOME"`.
+`HOME` guarda la ruta de la carpeta personal, y `PATH` es la del tema anterior, la lista de directorios donde el shell busca los comandos. Se consultan igual, con `echo "$HOME"`.
 
 ## Argumentos
 
@@ -114,7 +114,7 @@ Cuantos: 0
 Todos: 
 ```
 
-Un script que necesita argumentos tiene que comprobar `$#` antes de seguir, y eso es el subtema siguiente.
+Un script que necesita argumentos tiene que comprobar `$#` antes de seguir, y eso es el tema siguiente.
 
 ## Preguntar mientras corre
 
