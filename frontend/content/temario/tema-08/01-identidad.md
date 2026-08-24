@@ -1,10 +1,10 @@
-## Quién es uno para el sistema
+## Quiénes somos para el sistema
 
 Un usuario es una cuenta con la que se accede al sistema y un grupo es un conjunto de cuentas. El módulo de permisos ya trabajó con los dos, porque cada archivo lleva anotado un usuario dueño y un grupo dueño. Aquí se ve de dónde sale esa identidad y cómo se consulta.
 
 Una cuenta no siempre corresponde a una persona. Los servicios que corren en segundo plano también tienen la suya (DevOps Daily, 2025), y eso explica buena parte de lo que aparece al listar las cuentas de un sistema.
 
-Tres comandos responden quién es uno, y los tres funcionan sin permisos especiales (Free Software Foundation, 2026).
+Tres comandos responden quién es eres, y los tres funcionan sin permisos especiales (Free Software Foundation, 2026).
 
 ## whoami
 

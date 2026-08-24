@@ -50,7 +50,7 @@ andres_torres : x : 1004 : 1006 : Andrés Torres : /home/andres_torres : /bin/ba
       └──────────────────────────────────────────────────────────────────────── nombre de la cuenta
 ```
 
-La **`x` del segundo campo** es una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, 2025). Hace décadas la contraseña cifrada vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma. Separarla en otro archivo ilegible fue la solución.
+La **`x` del segundo campo** es una marca de que la contraseña real está en `/etc/shadow` (DevOps Daily, 2025). Antes vivía aquí mismo, y como este archivo lo lee cualquiera, bastaba con copiarlo para atacarlo con calma: de ahí que se separara a otro archivo ilegible.
 
 El **último campo es el shell**, y hace de interruptor de acceso. Un valor como `/usr/sbin/nologin` significa que la cuenta existe y puede ser dueña de archivos, pero nadie puede abrir una sesión con ella:
 
@@ -66,7 +66,7 @@ sys:x:3:3:sys:/dev:/usr/sbin/nologin
 
 ## Cuentas de persona y cuentas de servicio
 
-Esas tres líneas son **cuentas de sistema**. Existen para que los servicios que corren en segundo plano no tengan que hacerlo como `root`, de modo que si uno resulta comprometido el daño queda acotado.
+Esas tres líneas son **cuentas de sistema**, y existen para que los servicios que corren en segundo plano no lo hagan como `root`: si uno resulta comprometido, el daño queda acotado.
 
 Se distinguen por el UID. En Ubuntu y Debian las cuentas de persona empiezan en **1000**; por debajo de esa cifra el rango está reservado para el sistema. La convención está escrita en `/etc/login.defs`:
 
@@ -114,6 +114,12 @@ De ahí que contar miembros leyendo solo `/etc/group` dé siempre de menos. Para
 id laura_pena
 ```
 
+```
+uid=1005(laura_pena) gid=1005(laura_pena) groups=1005(laura_pena),1006(grp_cec1648c)
+```
+
+Ahí aparecen los dos: su grupo primario, que se llama igual que la cuenta, y `grp_cec1648c`, en el que figura como miembro secundario.
+
 ## /etc/shadow, el que no se puede leer
 
 El tercer archivo guarda las contraseñas cifradas, y por eso está cerrado incluso a la lectura (Shotts, 2026):
@@ -137,9 +143,9 @@ ls -l /etc/shadow /etc/passwd
 -rw-r--r-- 1 root root   2519 Aug 18 09:12 /etc/passwd
 ```
 
-`/etc/passwd` deja leer a otros; `/etc/shadow` no concede nada al bloque de otros. Es el mismo mecanismo de `r`, `w` y `x` de siempre, aplicado a un archivo que importa.
+`/etc/passwd` deja leer a otros y `/etc/shadow` no concede nada a ese bloque: es el mismo mecanismo de `r`, `w` y `x` de siempre, aplicado a un archivo que importa.
 
-Del contenido basta con saber dos cosas, porque se ven en cualquier documentación de administración. La línea tiene nueve campos: además de la contraseña cifrada, guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Sobre el estado de la cuenta, si el campo de la contraseña empieza por un signo de admiración `!`, la contraseña está bloqueada. La cuenta existe y conserva sus archivos, pero no puede entrar.
+Del contenido basta con saber dos cosas. La línea tiene nueve campos, y además de la contraseña cifrada guarda las fechas que controlan su caducidad: cuándo se cambió por última vez, cuántos días puede durar y cuántos días antes se avisa. Y si el campo de la contraseña empieza por un signo de admiración `!`, está bloqueada: la cuenta existe y conserva sus archivos, pero no puede entrar.
 
 ---
 

@@ -1,8 +1,6 @@
 ## Administrar cuentas y grupos
 
-Los comandos de este subtema modifican `/etc/passwd`, `/etc/group` y `/etc/shadow`, así que **todos requieren privilegios de administrador**. La cuenta del laboratorio no los tiene: ejecutarlos aquí devuelve un error de permisos, y eso es lo correcto.
-
-Se estudian igual por dos razones. Aparecen en cualquier documentación y en cualquier tutorial, así que hay que saber leerlos; y explican de dónde salen las cuentas con las que se ha trabajado hasta ahora.
+Los comandos de este subtema modifican `/etc/passwd`, `/etc/group` y `/etc/shadow`, así que **todos requieren privilegios de administrador** y la cuenta del laboratorio no los tiene. Se estudian igual porque aparecen en cualquier documentación y porque explican de dónde salen las cuentas con las que se ha trabajado hasta ahora.
 
 ## Cómo se ejecuta un comando privilegiado
 
@@ -23,8 +21,6 @@ sudo -l
 ```
 Sorry, user andres_torres may not run sudo on lab-01.
 ```
-
-Esa respuesta es la esperada en este laboratorio.
 
 ## Crear una cuenta
 
@@ -69,13 +65,13 @@ ls -a /etc/skel
 sudo usermod -aG proyecto laura_pena
 ```
 
-La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza.** Usarla sola obliga a listar todos los grupos a los que la cuenta deba pertenecer, y olvidarlo saca al usuario de todos sus grupos suplementarios anteriores (NDG, 2024). Este comando, tan parecido al anterior, deja a la cuenta únicamente en `proyecto`:
+La `-a` significa *append*, añadir. **Sin ella, `-G` no añade: reemplaza**, de modo que este comando, tan parecido al anterior, saca a la cuenta de todos sus grupos secundarios y la deja únicamente en `proyecto` (NDG, 2024):
 
 ```bash
 sudo usermod -G proyecto laura_pena
 ```
 
-No avisa ni pide confirmación. Es un error fácil de cometer y difícil de detectar, porque la cuenta sigue funcionando y solo falla al intentar entrar en archivos a los que antes llegaba. La regla es simple: **con `-G` siempre `-a`**, salvo que la intención sea justamente vaciar la lista.
+No avisa ni pide confirmación, y el fallo tarda en aparecer porque la cuenta sigue funcionando y solo falla al intentar entrar en archivos a los que antes llegaba. La regla es simple: **con `-G` siempre `-a`**, salvo que la intención sea justamente vaciar la lista.
 
 Otras dos opciones útiles:
 
@@ -133,7 +129,7 @@ sudo gpasswd -d laura_pena proyecto
 
 ## Lo que sí se puede probar aquí
 
-Ninguno de los comandos anteriores, pero sí su resultado. Todas las cuentas del laboratorio se crearon exactamente así, y la huella queda a la vista con lo del subtema anterior:
+Todas las cuentas del laboratorio se crearon exactamente con estos comandos, y aunque no se puedan ejecutar, su huella queda a la vista con lo del subtema anterior:
 
 ```bash
 getent passwd andres_torres
