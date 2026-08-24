@@ -49,7 +49,7 @@ Ese "hobby" es hoy el Kernel más usado del mundo, y lo que marcó la diferencia
 
 Aun así, Linux no es UNIX, sino **UNIX-like**. Torvalds no partió del código de nadie: escribió el suyo desde cero mirando cómo se comportaba MINIX. Por eso cumple los requisitos de la especificación y responde igual, pero no hereda una sola línea, y nunca ha pasado la certificación de The Open Group. Esa es la línea discontinua del árbol de arriba.
 
-<!-- IMAGE: linus-torvalds.jpg | Linus Torvalds junto a su equipo -->
+<!-- IMAGE: linus-torvalds.jpg | Linus Torvalds en su escritorio -->
 
 ## El proyecto GNU: las herramientas que completaron Linux
 
