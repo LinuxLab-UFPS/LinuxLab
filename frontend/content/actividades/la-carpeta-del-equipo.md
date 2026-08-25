@@ -12,7 +12,7 @@ id
 
 | Objeto | Lo que se espera de él |
 |---|---|
-| `equipo/` | Del grupo del curso. Tú y el grupo entráis y trabajáis dentro; los de fuera no pueden ni entrar |
+| `equipo/` | Del grupo del curso. Tú y el grupo pueden entrar y trabajar dentro; los de fuera no pueden ni entrar |
 | `equipo/` | Con setgid puesto, para que lo que se cree dentro herede el grupo del directorio |
 | `equipo/acta.txt` | Un archivo creado **dentro** de la carpeta, ya con el setgid puesto |
 | `prueba.txt` | El listado largo de ese archivo, donde se vea qué grupo heredó |
