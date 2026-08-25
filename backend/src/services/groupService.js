@@ -1,9 +1,10 @@
-const { randomUUID } = require("crypto")
+const { randomUUID, randomBytes } = require("crypto")
 const prisma = require("../../prisma/client")
 const enrollmentService = require("./enrollmentService")
 const containerService = require("./containerService")
 const logger = require("../lib/logger")
 const { AppError, ConflictError } = require("../lib/errors")
+const config = require("../config/env")
 const { runInTransaction } = require("../lib/transaction")
 const accessService = require("./accessService")
 const { groupNameOf } = require("../utils/groupName")
@@ -15,6 +16,24 @@ const auditService = require("./auditService")
 
 function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
+}
+
+function generateInviteToken() {
+  return randomBytes(32).toString("hex")
+}
+
+function buildInviteUrl(groupId, token) {
+  return `${config.frontendUrl}/inscripcion?token=${encodeURIComponent(token)}&group=${encodeURIComponent(groupId)}`
+}
+
+async function rotateInvite({ groupId, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+  const token = generateInviteToken()
+  await prisma.group.update({
+    where: { id: groupId },
+    data: { invite_token: token },
+  })
+  return { inviteUrl: buildInviteUrl(groupId, token) }
 }
 
 async function ensureTeacherRole(userId, tx = prisma) {
@@ -61,6 +80,7 @@ async function createGroup(args) {
       description: parsed.description?.trim() || null,
       teacher_id: teacherUserId,
       group_dir: null,
+      invite_token: generateInviteToken(),
     },
   })
   const groupDir = generateGroupDir(createdGroup.group_number)
@@ -412,4 +432,5 @@ module.exports = {
   teacherProvisioningSummary,
   archiveGroup,
   deleteGroup,
+  rotateInvite,
 }

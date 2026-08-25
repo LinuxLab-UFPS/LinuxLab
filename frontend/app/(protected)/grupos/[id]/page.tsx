@@ -24,6 +24,7 @@ import { downloadExcel } from "@shared/lib/excel"
 import { slugify } from "@shared/lib/utils"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
+import { GroupInviteActions } from "@/lib/features/teacher/components/group-invite-actions"
 import { Input } from "@shared/components/ui/input"
 import {
   Select,
@@ -168,7 +169,7 @@ function GroupDetailContent() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatTabs
           plain
           value={tab}
@@ -203,6 +204,14 @@ function GroupDetailContent() {
             },
           ]}
         />
+
+        {group.status === "active" && (
+          <GroupInviteActions
+            groupId={id}
+            token={group.inviteToken}
+            onRotated={() => queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })}
+          />
+        )}
       </div>
 
       {/* Header del tab: titulo, busqueda y acciones */}

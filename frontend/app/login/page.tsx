@@ -21,12 +21,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
+  const [code, setCode] = useState("")
   const [showPass, setShowPass] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
 
   useEffect(() => {
     if (!user) return
+    // Redirección hacia un destino pedido por el flujo (p.ej. /inscripcion).
+    // Solo se aceptan paths del mismo origen que empiecen con "/".
+    if (typeof window !== "undefined") {
+      const next = new URLSearchParams(window.location.search).get("next")
+      if (next && next.startsWith("/")) {
+        router.replace(next)
+        return
+      }
+    }
     const target = user.role === "admin" ? "/admin/docentes" : "/inicio"
     router.replace(target)
   }, [user, router])
@@ -60,12 +70,16 @@ export default function LoginPage() {
       notify.error(null, "Ingresa tu nombre completo.")
       return
     }
+    if (mode === "signup" && !code.trim()) {
+      notify.error(null, "Ingresa tu código de estudiante.")
+      return
+    }
     setSubmitting(true)
     try {
       if (mode === "login") {
         await signInWithEmail(trimmedEmail, password)
       } else {
-        await signUpWithEmail(trimmedEmail, password, name.trim())
+        await signUpWithEmail(trimmedEmail, password, name.trim(), code.trim())
         try {
           sessionStorage.setItem("pendingVerifyEmail", trimmedEmail)
         } catch {}
@@ -100,18 +114,32 @@ export default function LoginPage() {
 
         <form onSubmit={handleEmailSubmit} className="mt-8 space-y-4">
           {mode === "signup" ? (
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre completo</Label>
-              <Input
-                id="name"
-                autoComplete="name"
-                placeholder="Tu nombre"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-11"
-                disabled={busy}
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre completo</Label>
+                <Input
+                  id="name"
+                  autoComplete="name"
+                  placeholder="Tu nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-11"
+                  disabled={busy}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="code">Código de estudiante</Label>
+                <Input
+                  id="code"
+                  autoComplete="off"
+                  placeholder="Ej. 202310123"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  className="h-11"
+                  disabled={busy}
+                />
+              </div>
+            </>
           ) : null}
           <div className="space-y-2">
             <Label htmlFor="email">Correo electrónico</Label>

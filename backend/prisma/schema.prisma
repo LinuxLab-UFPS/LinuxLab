@@ -168,6 +168,7 @@ model Group {
   teacher      Teacher     @relation(fields: [teacher_id], references: [user_id])
   status       GroupStatus @default(active)
   group_dir    String?     @db.VarChar(64)
+  invite_token String?     @db.VarChar(64)
   created_at   DateTime    @default(now())
   updated_at   DateTime    @updatedAt
 

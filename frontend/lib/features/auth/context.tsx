@@ -19,7 +19,7 @@ interface AuthContextValue {
   loading: boolean
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<{ needsVerification: boolean }>
+  signUpWithEmail: (email: string, password: string, name: string, code: string) => Promise<{ needsVerification: boolean }>
   sendPasswordReset: (email: string) => Promise<{ debugLink?: string }>
   resendVerification: () => Promise<{ debugLink?: string }>
   hydrate: (user: User | null) => void
@@ -85,28 +85,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user)
   }, [])
 
-  const signUpWithEmail = useCallback(async (email: string, password: string, name: string) => {
-    const { auth } = getFirebaseAuth()
-    let cred
-    try {
-      cred = await createUserWithEmailAndPassword(auth, email, password)
-    } catch (e) {
-      throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo crear la cuenta."))
-    }
-    try {
-      if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() })
-    } catch {}
-    try {
-      await apiFetch("/api/auth/request-verification", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-      })
-    } catch {}
-    try {
-      await firebaseSignOut(auth)
-    } catch {}
-    return { needsVerification: true }
-  }, [])
+  const signUpWithEmail = useCallback(
+    async (email: string, password: string, name: string, code: string) => {
+      const { auth } = getFirebaseAuth()
+      let cred
+      try {
+        cred = await createUserWithEmailAndPassword(auth, email, password)
+      } catch (e) {
+        throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo crear la cuenta."))
+      }
+      try {
+        if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() })
+      } catch {}
+      try {
+        await apiFetch("/api/students/register", {
+          method: "POST",
+          body: JSON.stringify({ email, name: name.trim(), code: code.trim() }),
+        })
+      } catch (e) {
+        // El usuario ya quedó creado en Firebase; si falla el alta en la
+        // plataforma lo reportamos para no dejar la cuenta a medias.
+        throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo registrar la cuenta en la plataforma."))
+      }
+      try {
+        await apiFetch("/api/auth/request-verification", {
+          method: "POST",
+          body: JSON.stringify({ email }),
+        })
+      } catch {}
+      try {
+        await firebaseSignOut(auth)
+      } catch {}
+      return { needsVerification: true }
+    },
+    [],
+  )
 
   const sendPasswordReset = useCallback(async (email: string) => {
     try {

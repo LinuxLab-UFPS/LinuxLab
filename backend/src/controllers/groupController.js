@@ -42,6 +42,16 @@ const archiveGroup = asyncHandler(async (req, res) => {
   res.json(group)
 })
 
+const rotateInvite = asyncHandler(async (req, res) => {
+  res.json(
+    await groupService.rotateInvite({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 const registerStudent = asyncHandler(async (req, res) => {
   const { name, email, code } = req.body
   const outcome = await enrollmentService.registerStudent({
@@ -138,6 +148,7 @@ module.exports = {
   listGroups,
   getGroup,
   archiveGroup,
+  rotateInvite,
   deleteGroup,
   registerStudent,
   importCsv,

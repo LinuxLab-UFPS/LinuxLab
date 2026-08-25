@@ -54,9 +54,19 @@ function serializeGroup(group, studentCount, activityCount, extra = {}) {
     enabledTopics: [],
     activityCount: activityCount ?? 0,
     groupDir: group.group_dir ?? null,
+    inviteToken: group.invite_token ?? null,
     activeNow: extra.activeNow ?? 0,
     averageScore: extra.averageScore ?? null,
   }
 }
 
-module.exports = { createGroupSchema, registerStudentSchema, serializeGroup }
+const inviteTokenSchema = z.object({
+  token: z
+    .string({
+      required_error: "Se requiere el enlace de inscripción",
+      invalid_type_error: "Se requiere el enlace de inscripción",
+    })
+    .min(1, "Se requiere el enlace de inscripción"),
+})
+
+module.exports = { createGroupSchema, registerStudentSchema, inviteTokenSchema, serializeGroup }

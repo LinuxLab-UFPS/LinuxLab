@@ -5,10 +5,14 @@ const { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique } = requ
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { registerStudentSchema } = require("../dtos/groupDtos")
+const { registerSelfStudentSchema, setStudentCodeSchema } = require("../dtos/authDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { groupNameOf } = require("../utils/groupName")
 const accessService = require("./accessService")
 const auditService = require("./auditService")
+const config = require("../config/env")
+const logger = require("../lib/logger")
+const emailService = require("./emailService")
 const { EMAIL_REGEX, PRIORITIES } = require("../lib/constants")
 
 function validateEmail(email) {
@@ -33,6 +37,15 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
     throw new AppError(
       `El correo ${normalizedEmail} pertenece a un docente, no se puede inscribir como estudiante`,
       409,
+    )
+  }
+
+  const willCreateStudent = !user || (!user.student && user.role === Role.student)
+  if (willCreateStudent && !code?.trim()) {
+    throw new AppError(
+      "Debes definir tu código de estudiante antes de inscribirte.",
+      400,
+      "STUDENT_CODE_REQUIRED",
     )
   }
 
@@ -68,7 +81,7 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
 
   if (!user.student && user.role === Role.student) {
     await tx.student.create({
-      data: { user_id: user.id, code: code?.trim() || null },
+      data: { user: { connect: { id: user.id } }, code: code?.trim() || null },
     })
     user.student = { user_id: user.id, code: code?.trim() || null }
   }
@@ -93,6 +106,88 @@ function serializeStudent(user) {
   }
 }
 
+async function registerSelfStudent(args) {
+  const parsed = parseOrThrow(registerSelfStudentSchema, {
+    name: args.name,
+    email: args.email,
+    code: args.code,
+  })
+  return runInTransaction((tx) => registerSelfStudentInner({ ...parsed, tx }))
+}
+
+async function registerSelfStudentInner({ name, email, code, tx }) {
+  let user = await tx.user.findUnique({
+    where: { email },
+    include: { student: true, linuxAccount: true },
+  })
+
+  if (!user) {
+    user = await tx.user.create({
+      data: { email, name, role: "student", active: true },
+      include: { student: true, linuxAccount: true },
+    })
+    try {
+      await createLinuxAccountWithUniqueUsername(tx, user.id, email)
+    } catch (e) {
+      logger.error({ err: e, email }, "No se pudo crear la cuenta Linux en auto-registro")
+    }
+    user = await tx.user.findUnique({
+      where: { id: user.id },
+      include: { student: true, linuxAccount: true },
+    })
+  }
+
+  if (user.role !== Role.student) {
+    throw new AppError(
+      "Este correo ya está registrado con una cuenta de docente o administrador.",
+      409,
+      "CONFLICT",
+    )
+  }
+
+  if (!user.student) {
+    await tx.student.create({
+      data: { user: { connect: { id: user.id } }, code: code.trim() },
+    })
+  } else if (!user.student.code) {
+    await tx.student.update({
+      where: { user_id: user.id },
+      data: { code: code.trim() },
+    })
+  }
+
+  return user
+}
+
+async function setSelfStudentCode(args) {
+  const { code } = parseOrThrow(setStudentCodeSchema, { code: args.code })
+  return runInTransaction((tx) => setSelfStudentCodeInner({ code: code.trim(), userId: args.userId, tx }))
+}
+
+async function setSelfStudentCodeInner({ userId, code, tx }) {
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    include: { student: true, linuxAccount: true },
+  })
+  if (!user) {
+    throw new AppError("Usuario no encontrado", 404, "NOT_FOUND")
+  }
+  if (user.role !== Role.student) {
+    throw new AppError("Solo los estudiantes pueden definir su código.", 403, "FORBIDDEN")
+  }
+
+  if (user.student) {
+    if (user.student.code) return user
+    await tx.student.update({ where: { user_id: userId }, data: { code } })
+    return user
+  }
+
+  await tx.student.create({
+    data: { user: { connect: { id: userId } }, code },
+  })
+  return user
+}
+
 async function registerStudent(args) {
   // Se valida fuera de la transaccion: un email o codigo invalido es un error
   // del cliente (400) y no tiene sentido gastar una conexion en el.
@@ -111,7 +206,23 @@ async function registerStudent(args) {
   const groupDir = group.group_dir || undefined
   const groupName = groupDir ? groupNameOf(groupId) : undefined
   const teacherAccount = await tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
+
+  // Si el correo no tenía cuenta en la plataforma, la matrícula la pre-crea;
+  // hay que avisarle con el proceso de registro para que pueda entrar.
+  const wasNewUser = !(await tx.user.findUnique({ where: { email } }))
+
   const outcome = await enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
+
+  if (outcome.enrolled && wasNewUser) {
+    try {
+      const loginUrl = `${config.frontendUrl}/login`
+      const { subject, html, text } = emailService.renderStudentEnrollmentEmail(group.name, loginUrl)
+      await emailService.sendMail({ to: email, subject, html, text, category: "student_enrollment" })
+      logger.info({ email, groupId }, "email de inscripción enviado")
+    } catch (mailErr) {
+      logger.error({ err: mailErr, email, groupId }, "Fallo envío email de inscripción (no bloqueante)")
+    }
+  }
 
   if (outcome.enrolled) {
     auditService.audit({
@@ -261,7 +372,7 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
         await db.student.update({ where: { user_id: existing.id }, data: { code: r.code } })
       }
       if (!existing.student && existing.role === Role.student) {
-        await db.student.create({ data: { user_id: existing.id, code: r.code || null } })
+        await db.student.create({ data: { user: { connect: { id: existing.id } }, code: r.code || null } })
       }
       usersById.set(existing.id, {
         email: existing.email,
@@ -555,14 +666,104 @@ async function importCsv({ groupId, csvText, teacherUserId, role }) {
   return result
 }
 
+/**
+ * Información pública de un grupo para la pantalla de inscripción vía enlace.
+ * Valida el token; si quien consulta tiene sesión de estudiante, se incluye
+ * `enrolled` para que el frontend muestre el estado "ya inscrito".
+ */
+async function getGroupInfo({ groupId, token, req }) {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { teacher: { select: { user: { select: { name: true } } } } },
+  })
+  if (!group || group.status !== "active") {
+    throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+  }
+  if (!group.invite_token || group.invite_token !== token) {
+    throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")
+  }
+
+  let enrolled = null
+  if (req.user?.id && req.user.role === Role.student) {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { student_id_group_id: { student_id: req.user.id, group_id: groupId } },
+      select: { id: true },
+    })
+    enrolled = Boolean(enrollment)
+  }
+
+  return {
+    name: group.name,
+    description: group.description ?? "",
+    teacherName: group.teacher?.user?.name ?? null,
+    enrolled,
+  }
+}
+
+/**
+ * Auto-inscripción mediante el enlace compartido por el docente. Solo pueden
+ * usarlo usuarios con rol estudiante; el docente/admin recibe 403. Reutiliza
+ * `enrollOne`, de modo que se crea la cuenta Linux y el aprovisionamiento si
+ * hace falta, y la matrícula es idempotente.
+ */
+async function joinWithToken({ groupId, token, user, req }) {
+  return runInTransaction(async (tx) => {
+    const group = await tx.group.findUnique({ where: { id: groupId } })
+    if (!group || group.status !== "active") {
+      throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+    }
+    if (!group.invite_token || group.invite_token !== token) {
+      throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")
+    }
+    if (user.role !== Role.student) {
+      throw new AppError("Solo los estudiantes pueden inscribirse con este enlace", 403, "FORBIDDEN")
+    }
+
+    const teacherAccount = await tx.linuxAccount.findUnique({
+      where: { user_id: group.teacher_id },
+    })
+
+    const outcome = await enrollOne({
+      groupId,
+      email: user.email,
+      name: user.name,
+      code: null,
+      groupDir: group.group_dir || undefined,
+      groupName: groupNameOf(groupId),
+      teacherUsername: teacherAccount?.linux_username,
+      tx,
+    })
+
+    if (outcome.enrolled) {
+      const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+      auditService.audit({
+        userId: user.id,
+        groupId,
+        eventType: "student_joined",
+        target: user.email,
+        metadata: { groupId, groupName: group.name },
+        actorRole: actorRole ?? user.role,
+        ip,
+        userAgent,
+      })
+    }
+
+    return { ...outcome, groupName: group.name }
+  })
+}
+
 module.exports = {
   registerStudent,
   enrollOne,
   enrollMany,
   ensureStudentExists,
+  getGroupInfo,
+  joinWithToken,
   importCsv,
   listByGroup,
   hasActiveEnrollment,
   getActiveGroupId,
   serializeStudent,
+  registerSelfStudent,
+  setSelfStudentCode,
 }
