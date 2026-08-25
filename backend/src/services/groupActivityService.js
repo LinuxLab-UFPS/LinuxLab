@@ -89,6 +89,8 @@ function validateActivityInput(body) {
     throw new AppError("La modalidad de evaluación no es válida", 400, "VALIDATION_ERROR")
   }
 
+  const topicNumber = parsed.topicNumber !== undefined ? Number(parsed.topicNumber) || null : null
+
   let dueAt = null
   if (parsed.dueDate) {
     dueAt = new Date(parsed.dueDate)
@@ -102,12 +104,12 @@ function validateActivityInput(body) {
 
   const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
-  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks }
+  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber }
 }
 
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
     validateActivityInput(input ?? {})
 
   const groupActivity = await runInTransaction(async (tx) => {
@@ -123,6 +125,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         max_score: maxScore,
         checks,
         attempt_limit: attemptLimit,
+        topic_number: topicNumber,
         required: true,
         enabled: true,
         due_at: dueAt,
@@ -152,11 +155,11 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: group.id },
-    include: { _count: { select: { groupSubmissions: true } } },
+    include: { _count: { select: { submissions: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
-  if (ga._count.groupSubmissions > 0) {
+  if (ga._count.submissions > 0) {
     throw new AppError("La actividad ya tiene intentos o entregas; no se puede editar", 409, "CONFLICT")
   }
 
@@ -171,7 +174,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
   }
 
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
     validateActivityInput(body)
 
   const updated = await prisma.groupActivity.update({
@@ -183,6 +186,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
       evaluation_type: evaluationType,
       checks,
       attempt_limit: attemptLimit,
+      topic_number: topicNumber,
       due_at: dueAt,
     },
   })
@@ -231,10 +235,10 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
 
     const row = await tx.groupActivity.findFirst({
       where: { id: ga.id },
-      select: { _count: { select: { groupSubmissions: true } } },
+      select: { _count: { select: { submissions: true } } },
     })
     if (!row) throw new NotFoundError("Actividad no encontrada")
-    if (!enabled && row._count.groupSubmissions > 0) {
+    if (!enabled && row._count.submissions > 0) {
       throw new AppError(
         "La actividad ya tiene intentos o entregas; no se puede deshabilitar",
         409,

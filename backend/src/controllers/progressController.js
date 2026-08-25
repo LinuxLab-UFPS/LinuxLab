@@ -57,13 +57,13 @@ const getProgress = asyncHandler(async (req, res) => {
     }),
     prisma.lessonView.findMany({
       where: { enrollment_id: enrollment.id },
-      include: { subtopic: { select: { slug: true } } },
+      include: { subtopic: { select: { slug: true, topic: { select: { order_number: true } } } } },
     }),
     studentActivityService.listMine(req.user.id),
   ])
 
   const readKeys = lessonViews.map(
-    (lv) => `${lv.subtopic.slug}`,
+    (lv) => `${lv.subtopic.topic.order_number}/${lv.subtopic.slug}`,
   )
 
   res.json({

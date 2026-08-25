@@ -311,6 +311,7 @@ model GroupActivity {
   setup           Json?
   checks          Json
   attempt_limit   Int?
+  topic_number    Int?
   required        Boolean        @default(true)
   enabled         Boolean        @default(true)
   due_at          DateTime?

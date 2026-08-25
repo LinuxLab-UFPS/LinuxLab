@@ -36,7 +36,7 @@ function serializeGroupActivity(ga) {
   return {
     id: ga.id,
     title: ga.title,
-    topicNumber: 0,
+    topicNumber: ga.topic_number ?? 0,
     source: "teacher",
     difficulty: "basic",
     instructions: ga.instructions ?? "",
