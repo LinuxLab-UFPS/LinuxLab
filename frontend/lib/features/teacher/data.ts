@@ -40,6 +40,10 @@ export async function deactivateGroup(id: string): Promise<void> {
   await teacherApi.deactivateGroup(id)
 }
 
+export async function rotateGroupInvite(id: string): Promise<{ inviteUrl: string }> {
+  return teacherApi.rotateInvite(id)
+}
+
 export async function deleteGroup(id: string): Promise<void> {
   await teacherApi.deleteGroup(id)
 }

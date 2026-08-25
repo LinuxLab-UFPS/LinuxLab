@@ -46,6 +46,9 @@ export const teacherApi = {
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
   createGroup: (input: CreateGroupInput) =>
     apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
+  /** Regenera el token de inscripción del grupo; el enlace anterior queda inválido. */
+  rotateInvite: (id: string) =>
+    apiFetch<{ inviteUrl: string }>(`/api/groups/${id}/invite/rotate`, { method: "POST" }),
   // PATCH /archive desactiva el grupo, archiva sus matriculas y encola el
   // teardown del entorno (usuarios Linux y carpeta). Responde 409 si ya lo
   // estaba. No hay forma de reactivar, por eso la UI no la ofrece.
@@ -157,7 +160,7 @@ export const teacherApi = {
   },
 
   listGroupAuditLog: (groupId: string, limit = 10) =>
-    apiFetch<AuditEntry[]>(`/api/audit/groups/${groupId}/recent?limit=${limit}`),
+    apiFetch<AuditEntry[]>(`/api/audit/grupos/${groupId}/recent?limit=${limit}`),
 
   getGroupProgress: (groupId: string) =>
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),

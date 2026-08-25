@@ -1,8 +1,8 @@
 "use client"
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
-
-const STORAGE_KEY = "linuxlab:read-lessons"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
+import { fetchProgress, recordLessonView } from "@/lib/data/progress"
+import { syllabus } from "@shared/lib/content/temario"
 
 function lessonKey(topicNumber: number, subtopicId: string): string {
   return `${topicNumber}/${subtopicId}`
@@ -11,71 +11,71 @@ function lessonKey(topicNumber: number, subtopicId: string): string {
 interface LessonProgressValue {
   isRead: (topicNumber: number, subtopicId: string) => boolean
   markRead: (topicNumber: number, subtopicId: string) => void
+  readKeys: string[]
   /** How many lessons of a topic have been read. */
   readCountForTopic: (topicNumber: number) => number
   /** Clears all stored progress. */
   reset: () => void
+  loading: boolean
 }
 
 const LessonProgressContext = createContext<LessonProgressValue | null>(null)
 
-/**
- * Tracks which lessons the student has already read.
- *
- * INTERIM IMPLEMENTATION: progress lives in localStorage, so it is per-browser
- * and does not sync across devices or survive clearing site data. This stands in
- * for the progress seam (lib/data/submissions.ts) until the backend and auth
- * exist; when they do, swap the storage calls below for real API calls and no UI
- * component changes.
- */
 export function LessonProgressProvider({ children }: { children: React.ReactNode }) {
-  const [read, setRead] = useState<Set<string>>(new Set())
-  // Storage is only available on the client, so the first render (and the server
-  // render it hydrates against) always starts empty.
-  const [loaded, setLoaded] = useState(false)
+  const [readKeys, setReadKeys] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  // Guarda los subtemas cuya vista ya se informó al backend, para que cada
+  // lección genere una sola petición aunque markRead se dispare muchas veces
+  // (scroll repetido, ResizeObserver, o el settle del short-lesson).
+  const reportedViews = useRef(new Set<string>())
 
   useEffect(() => {
-    // Lectura unica de localStorage al montar (patron aceptado).
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setRead(new Set(JSON.parse(raw) as string[]))
-      }
-    } catch {
-      // Unavailable or corrupt storage: start from scratch rather than break.
+    let cancelled = false
+    fetchProgress()
+      .then((data) => {
+        if (cancelled) return
+        setReadKeys(data.readKeys ?? [])
+      })
+      .catch(() => {
+        /* sin conexión: empieza vacío */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
-    setLoaded(true)
   }, [])
 
-  useEffect(() => {
-    if (!loaded) return // don't overwrite storage with the pre-load empty set
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...read]))
-    } catch {
-      // Storage full or blocked: progress just won't persist this session.
-    }
-  }, [read, loaded])
+  const isRead = useCallback(
+    (topicNumber: number, subtopicId: string) => readKeys.includes(lessonKey(topicNumber, subtopicId)),
+    [readKeys],
+  )
 
   const markRead = useCallback((topicNumber: number, subtopicId: string) => {
     const key = lessonKey(topicNumber, subtopicId)
-    setRead((prev) => (prev.has(key) ? prev : new Set(prev).add(key)))
+    setReadKeys((prev) => (prev.includes(key) ? prev : [...prev, key]))
+
+    if (reportedViews.current.has(key)) return
+    reportedViews.current.add(key)
+
+    const slug = syllabus.find((t) => t.number === topicNumber)?.slug
+    if (slug) recordLessonView(slug, subtopicId).catch(() => {})
   }, [])
 
+  const readCountForTopic = useCallback(
+    (topicNumber: number) => {
+      const prefix = `${topicNumber}/`
+      return readKeys.filter((k) => k.startsWith(prefix)).length
+    },
+    [readKeys],
+  )
+
+  const reset = useCallback(() => setReadKeys([]), [])
+
   const value = useMemo<LessonProgressValue>(
-    () => ({
-      markRead,
-      isRead: (topicNumber, subtopicId) => read.has(lessonKey(topicNumber, subtopicId)),
-      readCountForTopic: (topicNumber) => {
-        // "1/" never prefixes "11/x", so topic numbers don't collide.
-        const prefix = `${topicNumber}/`
-        let count = 0
-        for (const key of read) if (key.startsWith(prefix)) count++
-        return count
-      },
-      reset: () => setRead(new Set()),
-    }),
-    [read, markRead],
+    () => ({ isRead, markRead, readKeys, readCountForTopic, reset, loading }),
+    [isRead, markRead, readKeys, readCountForTopic, reset, loading],
   )
 
   return (

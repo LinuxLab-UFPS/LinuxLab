@@ -171,7 +171,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link
-                          href={`/groups/${groupId}/activities/${a.id}?from=calificaciones`}
+                          href={`/grupos/${groupId}/actividades/${a.id}?from=calificaciones`}
                           className="block w-full px-1 py-2 text-center font-mono text-[11px] font-semibold text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
                         >
                           {a.workdir}

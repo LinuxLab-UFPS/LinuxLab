@@ -5,7 +5,11 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:seed": "node prisma/seed.js"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   },
   "repository": {
     "type": "git",
@@ -28,7 +32,9 @@
     "firebase-admin": "^14.2.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
+    "mailtrap": "^4.9.0",
     "morgan": "^1.11.0",
+    "nodemailer": "^9.0.5",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
     "ssh2": "^1.17.0",

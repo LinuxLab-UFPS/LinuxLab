@@ -6,12 +6,13 @@ export interface Group {
   name: string
   description: string
   createdAt: string
-  archived: boolean
+  status: "active" | "archived"
   enabledTopics: number[]
   studentCount: number
   activityCount: number
   /** Directorio del grupo dentro del home del docente: grupos/<group_dir>. */
   groupDir?: string
+  inviteToken?: string | null
   activeNow: number
   averageScore: number | null
 }
@@ -26,7 +27,7 @@ export interface Enrollment {
 export type CreateGroupInput = {
   name: string
   description: string
-  students: { name: string; email: string; code: string }[]
+  students?: { name: string; email: string; code: string }[]
 }
 
 export type ProgressStatus = "completed" | "in-progress" | "not-started" | "overdue"

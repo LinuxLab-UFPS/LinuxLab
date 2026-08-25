@@ -25,7 +25,7 @@ export default async function TerminalPage({
   const groupActivity = ga ? await getGroupActivityDetail(ga).catch(() => null) : null
 
   const topic = tema ? syllabus.find((t) => t.slug === tema) : undefined
-  const origin = topic ? `/group?tema=${topic.slug}${sub ? `&sub=${sub}` : ""}` : undefined
+  const origin = topic ? `/curso?tema=${topic.slug}${sub ? `&sub=${sub}` : ""}` : undefined
   const next = topic ? getLessonNeighbours(topic.number, sub ?? null).next : null
 
   return (

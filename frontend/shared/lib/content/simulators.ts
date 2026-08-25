@@ -3,7 +3,7 @@ import { syllabus } from "./temario"
 /**
  * Simulators registry. Simulators used to be course subtopics; now they live
  * here, decoupled from the syllabus content. Each one relates to a topic (for
- * its tag) and opens fullscreen at `/simulators/[id]`.
+ * its tag) and opens fullscreen at `/simuladores/[id]`.
  */
 export interface Simulator {
   id: string
@@ -79,7 +79,7 @@ export const simulators: Simulator[] = RAW.map((s) => {
     topicSlug: topic?.slug ?? "",
     topicTitle: topic?.title ?? "",
     src: `/temario/tema-${String(s.topicNumber).padStart(2, "0")}/${s.file}`,
-    href: `/simulators/${s.id}`,
+    href: `/simuladores/${s.id}`,
   }
 })
 

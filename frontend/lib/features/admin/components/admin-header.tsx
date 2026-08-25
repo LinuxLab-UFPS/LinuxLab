@@ -36,7 +36,7 @@ const NAV = [
   },
   {
     label: "Bitácora",
-    href: "/audit-log",
+    href: "/admin/bitacora",
     icon: ScrollText,
     hover: "hover:bg-sky-500/15 hover:text-sky-400",
     active: "bg-sky-500/15 text-sky-400",
@@ -54,7 +54,7 @@ export function AdminHeader() {
     <header className="h-16 shrink-0 border-b border-white/10 bg-[#0a0a0a] text-white">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-4 px-4 sm:px-6">
         {/* Logo + role tag */}
-        <Link href="/home" className="flex shrink-0 items-center gap-2">
+        <Link href="/inicio" className="flex shrink-0 items-center gap-2">
           <span className="text-xl font-extrabold tracking-tight">
             <span className="text-primary [text-shadow:0_0_18px_rgba(196,30,58,0.55)]">
               Linux

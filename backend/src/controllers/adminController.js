@@ -3,6 +3,8 @@ const reconcileService = require("../services/reconcileService")
 const environmentService = require("../services/environmentService")
 const jobService = require("../services/jobService")
 const auditService = require("../services/auditService")
+const authService = require("../services/authService")
+const logger = require("../lib/logger")
 const asyncHandler = require("../utils/asyncHandler")
 
 const listTeachers = asyncHandler(async (req, res) => {
@@ -11,8 +13,8 @@ const listTeachers = asyncHandler(async (req, res) => {
 })
 
 const registerTeacher = asyncHandler(async (req, res) => {
-  const { name, email } = req.body
-  const teacher = await userService.register({ name, email })
+  const { name, email, code } = req.body
+  const teacher = await userService.register({ name, email, code })
   const { ip, userAgent, actorRole } = auditService.requestMeta(req)
   auditService.audit({
     userId: req.user.id,
@@ -23,7 +25,19 @@ const registerTeacher = asyncHandler(async (req, res) => {
     ip,
     userAgent,
   })
-  res.status(201).json(teacher)
+  let debugLink
+  try {
+    ;({ debugLink } = await authService.inviteTeacher({ email: teacher.email, name: teacher.name }))
+  } catch (e) {
+    logger.error({ err: e, email }, "No se pudo enviar la invitación, pero el docente quedó registrado")
+  }
+  res.status(201).json({ ...teacher, debugLink })
+})
+
+const resendTeacherInvite = asyncHandler(async (req, res) => {
+  const teacher = await userService.findById(req.params.id)
+  const { debugLink } = await authService.inviteTeacher({ email: teacher.email, name: teacher.name })
+  res.json({ message: "Invitación reenviada", debugLink })
 })
 
 const toggleTeacherStatus = asyncHandler(async (req, res) => {
@@ -64,6 +78,7 @@ const listTeacherProvisioningJobs = asyncHandler(async (_req, res) => {
 module.exports = {
   listTeachers,
   registerTeacher,
+  resendTeacherInvite,
   toggleTeacherStatus,
   reconcileAll,
   environmentSnapshot,

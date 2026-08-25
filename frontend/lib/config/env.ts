@@ -24,11 +24,7 @@ export const env = {
    * lesson videos fall back to the local public/temario files if present.
    */
   videoBaseUrl: (process.env.NEXT_PUBLIC_VIDEO_BASE_URL ?? "").replace(/\/$/, ""),
-  /**
-   * JWT secret para verificar las sesiones (middleware y server components).
-   * Debe ser el MISMO del backend. Sin valor, la verificacion falla cerrado
-   * (todo redirige a "/"); el .env.local lo define en desarrollo.
-   */
+  frontendUrl: (process.env.NEXT_PUBLIC_FRONTEND_URL ?? "http://localhost:3001").replace(/\/$/, ""),
   jwtSecret: process.env.JWT_SECRET ?? "",
   nodeEnv: process.env.NODE_ENV ?? "development",
 } as const
