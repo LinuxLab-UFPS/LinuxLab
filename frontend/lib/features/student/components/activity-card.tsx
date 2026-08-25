@@ -19,10 +19,13 @@ const GLOW =
 export function ActivityCard({
   activity,
   completed = false,
+  score = null,
   compact = false,
 }: {
   activity: ActivityListing
   completed?: boolean
+  /** La nota del último intento, si ya entregó alguno. */
+  score?: { score: number; maxScore: number } | null
   compact?: boolean
 }) {
   return (
@@ -56,14 +59,22 @@ export function ActivityCard({
           >
             {activity.title}
           </h3>
-          {/* Junto al titulo queda solo el estado, que es lo unico que cambia
-              con el tiempo. La dificultad baja con el tema: las dos dicen que
-              clase de actividad es, no como va. */}
-          {completed && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <Tag tone="sky">Completada</Tag>
-            </div>
-          )}
+          {/* Bajo el titulo va como le fue y de que tamaño es el reto: primero
+              si esta completada, despues la nota del ultimo intento y al final
+              la dificultad. Se lee de izquierda a derecha como una frase. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            {completed && <Tag tone="sky">Completada</Tag>}
+            {score && (
+              <Tag tone={score.score >= 60 ? "emerald" : "amber"}>
+                {score.score}/{score.maxScore}
+              </Tag>
+            )}
+            {activity.difficulty && (
+              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
+                {DIFFICULTY_LABEL[activity.difficulty]}
+              </Tag>
+            )}
+          </div>
         </div>
       </div>
 
@@ -76,15 +87,10 @@ export function ActivityCard({
         {activity.description}
       </p>
 
-      {/* En una fila y con el tema delante: primero de que va la actividad y
-          despues lo que cuesta. */}
+      {/* Abajo queda el tema, que es lo unico que situa la actividad dentro del
+          curso. La dificultad subio junto al titulo, con el resto del estado. */}
       <div className="mt-4 flex flex-wrap gap-1.5">
         <Tag icon={BookOpen}>{activity.topicTitle}</Tag>
-        {activity.difficulty && (
-          <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
-            {DIFFICULTY_LABEL[activity.difficulty]}
-          </Tag>
-        )}
       </div>
     </Link>
   )

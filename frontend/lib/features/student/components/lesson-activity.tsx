@@ -11,7 +11,7 @@ import { getActivity } from "@shared/lib/content/activities"
  * which is the only place activities are solved.
  */
 export function LessonActivity({ slug }: { slug: string }) {
-  const { passed } = usePassedActivities()
+  const { passed, scores } = usePassedActivities()
   const params = useSearchParams()
   const activity = getActivity(slug)
   if (!activity) return null
@@ -35,6 +35,7 @@ export function LessonActivity({ slug }: { slug: string }) {
       <ActivityCard
         activity={{ ...activity, href }}
         completed={passed.has(activity.slug)}
+        score={scores[activity.slug] ?? null}
       />
     </div>
   )

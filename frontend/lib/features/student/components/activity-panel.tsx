@@ -67,12 +67,22 @@ export function ActivityPanel({
           )}
         </div>
 
+        {/* El mismo orden que en la tarjeta: primero si esta completada,
+            despues la nota del ultimo intento y al final la dificultad. */}
         <div className="mt-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Tag tone={activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"}>
-              {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
-            </Tag>
+            {passed && <Tag tone="sky">Completada</Tag>}
+            {data?.lastAttempt && (
+              <Tag tone={data.lastAttempt.score >= 60 ? "emerald" : "amber"}>
+                {data.lastAttempt.score}/{data.maxScore}
+              </Tag>
+            )}
+            {activity.difficulty && (
+              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
+                {DIFFICULTY_LABEL[activity.difficulty]}
+              </Tag>
+            )}
           </div>
         </div>
       </header>

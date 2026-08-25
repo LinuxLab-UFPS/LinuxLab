@@ -58,6 +58,35 @@ async function passedSlugs(studentUserId) {
   return attempts.map((a) => a.definition.slug).filter(Boolean)
 }
 
+/**
+ * La nota de cada actividad que el estudiante haya intentado, por slug.
+ *
+ * Es la del ULTIMO intento y no la mejor, que es el mismo criterio que usa
+ * `finalScore` para el libro de calificaciones: si vuelve a entregar, lo que
+ * vale es lo ultimo que entrego. Sirve para pintar la nota en la tarjeta sin
+ * pedir el detalle de cada actividad por separado.
+ */
+async function scoresBySlug(studentUserId) {
+  const attempts = await prisma.activityAttempt.findMany({
+    where: { student_id: studentUserId, definition: { slug: { not: null } } },
+    select: {
+      score: true,
+      definition: { select: { slug: true, max_score: true } },
+    },
+    // El mas reciente primero: `distinct` se queda con la primera fila de cada
+    // definicion, asi que este orden es lo que hace que gane el ultimo intento.
+    orderBy: { created_at: "desc" },
+    distinct: ["activity_definition_id"],
+  })
+
+  const scores = {}
+  for (const a of attempts) {
+    if (!a.definition?.slug) continue
+    scores[a.definition.slug] = { score: a.score, maxScore: a.definition.max_score }
+  }
+  return scores
+}
+
 /** El ultimo intento del estudiante, para que la leccion abra con su estado. */
 async function lastAttempt({ slug, studentUserId }) {
   const activity = await prisma.activityDefinition.findUnique({
@@ -106,4 +135,4 @@ async function listAttempts({ slug, studentUserId }) {
   }))
 }
 
-module.exports = { recordAttempt, passedSlugs, lastAttempt, listAttempts }
+module.exports = { recordAttempt, passedSlugs, scoresBySlug, lastAttempt, listAttempts }

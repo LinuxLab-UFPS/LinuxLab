@@ -233,6 +233,7 @@ module.exports = {
   resetSandbox,
   lastAttempt: attemptService.lastAttempt,
   passedSlugs: attemptService.passedSlugs,
+  scoresBySlug: attemptService.scoresBySlug,
   personalize,
   CHECKER,
   SETUP,
