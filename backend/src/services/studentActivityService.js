@@ -40,8 +40,17 @@ async function listMine(studentUserId) {
   })
   if (!enrollment) return { group: null, activities: [] }
 
+  // Las del curso quedan fuera de esta lista aunque esten publicadas en el
+  // grupo. El estudiante las abre desde Actividades, que es donde vive su
+  // enunciado completo; listarlas tambien aqui daria dos entradas a lo mismo,
+  // y la de aqui con menos texto. La publicacion existe para la nota, no para
+  // dar una segunda puerta.
   const rows = await prisma.groupActivity.findMany({
-    where: { group_id: enrollment.group_id, enabled: true },
+    where: {
+      group_id: enrollment.group_id,
+      enabled: true,
+      definition: { source: { not: "bank" } },
+    },
     include: {
       definition: { select: { topic_number: true } },
       attempts: {
