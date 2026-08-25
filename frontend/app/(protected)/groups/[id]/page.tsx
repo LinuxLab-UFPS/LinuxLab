@@ -156,7 +156,7 @@ function GroupDetailContent() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {group.name}
           </h1>
-          {group.archived && (
+          {group.status === "archived" && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
               Desactivado
             </span>
@@ -268,7 +268,7 @@ function GroupDetailContent() {
             </>
           )}
 
-          {!group.archived &&
+          {group.status === "active" &&
             tab !== "bitacora" &&
             (tab === "estudiantes" ? (
               <ActionButton tone="primary" onClick={() => setAdding(true)}>

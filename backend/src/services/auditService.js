@@ -93,14 +93,10 @@ async function audit({ userId, groupId, eventType, target, metadata, message, ac
     await prisma.auditEvent.create({
       data: {
         user_id: userId,
-        actor_role: actorRole ?? "unknown",
+        user_role: actorRole ?? "admin",
         group_id: groupId ?? null,
         event_type: eventType,
-        target: target ?? null,
         message: finalMessage,
-        metadata: metadata ?? undefined,
-        ip: ip ?? null,
-        user_agent: userAgent ?? null,
       },
     })
   } catch (err) {

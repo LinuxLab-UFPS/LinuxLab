@@ -13,6 +13,7 @@ const TEACHER_SELECT = {
   name: true,
   email: true,
   active: true,
+  teacher: { select: { code: true } },
   linuxAccount: {
     select: {
       linux_username: true,
@@ -22,7 +23,7 @@ const TEACHER_SELECT = {
 }
 
 async function findAll(filters = {}) {
-  const where = { role: Role.teacher }
+  const where = { teacher: { isNot: null } }
 
   if (filters.search) {
     where.OR = [
@@ -43,12 +44,12 @@ async function findAll(filters = {}) {
 }
 
 async function register(args) {
-  // La validacion de forma (nombre y email) ocurre antes de abrir la
+  // La validacion de forma (nombre, email, codigo) ocurre antes de abrir la
   // transaccion: es un error del cliente (400), no requiere conexion.
-  const parsed = parseOrThrow(registerTeacherSchema, { name: args.name, email: args.email })
+  const parsed = parseOrThrow(registerTeacherSchema, { name: args.name, email: args.email, code: args.code })
 
   if (!args.tx) {
-    return runInTransaction((tx) => register({ name: parsed.name, email: parsed.email, tx }))
+    return runInTransaction((tx) => register({ name: parsed.name, email: parsed.email, code: parsed.code, tx }))
   }
 
   const { tx } = args
@@ -68,6 +69,9 @@ async function register(args) {
       email: normalizedEmail,
       role: Role.teacher,
       active: true,
+      teacher: {
+        create: { code: parsed.code },
+      },
       linuxAccount: {
         create: {
           linux_username: linuxUsername,
@@ -78,11 +82,12 @@ async function register(args) {
     select: TEACHER_SELECT,
   })
 
-  await db.userProvisioningJob.create({
+  await db.job.create({
     data: {
-      user_id: user.id,
-      username: linuxUsername,
+      type: "user_provisioning",
       priority: PRIORITIES.TEACHER,
+      user_id: user.id,
+      payload: { username: linuxUsername },
     },
   })
   return serializeTeacher(user)
@@ -93,10 +98,10 @@ async function toggleActive(id, tx) {
 
   const user = await tx.user.findUnique({
     where: { id },
-    select: { id: true, role: true, active: true },
+    select: { id: true, teacher: { select: { user_id: true } }, active: true },
   })
 
-  if (!user || user.role !== Role.teacher) {
+  if (!user || !user.teacher) {
     throw new AppError("Docente no encontrado", 404)
   }
 

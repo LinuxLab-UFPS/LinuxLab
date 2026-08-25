@@ -25,7 +25,7 @@ export function useTeachers(filters?: TeacherFilters) {
   }, [teachersQuery.error])
 
   const registerMutation = useMutation({
-    mutationFn: (input: { name: string; email: string }) => adminData.registerTeacher(input),
+    mutationFn: (input: { name: string; email: string; code: string }) => adminData.registerTeacher(input),
     onSuccess: (newTeacher) => {
       queryClient.setQueryData(
         queryKeys.teachers(filters),
@@ -46,8 +46,8 @@ export function useTeachers(filters?: TeacherFilters) {
     },
   })
 
-  const register = async (name: string, email: string) => {
-    const created = await notifyPromise(registerMutation.mutateAsync({ name, email }), {
+  const register = async (name: string, email: string, code: string) => {
+    const created = await notifyPromise(registerMutation.mutateAsync({ name, email, code }), {
       loading: "Registrando docente…",
       success: "Docente registrado exitosamente",
       error: "Error al registrar docente",

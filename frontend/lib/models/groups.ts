@@ -6,7 +6,7 @@ export interface Group {
   name: string
   description: string
   createdAt: string
-  archived: boolean
+  status: "active" | "archived"
   enabledTopics: number[]
   studentCount: number
   activityCount: number

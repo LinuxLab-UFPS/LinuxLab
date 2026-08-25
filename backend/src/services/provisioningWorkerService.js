@@ -11,28 +11,17 @@ const CYCLE_TIMEOUT = 90000
 let intervalHandle = null
 let isRunning = false
 
-/**
- * Las tablas de jobs son un conjunto cerrado de constantes internas (nunca
- * llegan de una peticion), asi que interpolar el nombre como identificador es
- * seguro; el limite y los datos si van parametrizados.
- */
-const JOB_TABLES = {
-  groups: "group_provisioning_jobs",
-  users: "user_provisioning_jobs",
-  teardowns: "group_teardown_jobs",
-}
+const JOB_TYPES = ["group_provisioning", "user_provisioning", "group_teardown"]
 
-async function claimJobs(tableName) {
+async function claimJobs(type) {
   return prisma.$queryRaw(
     Prisma.sql`
-      UPDATE ${Prisma.raw(tableName)}
+      UPDATE "Job"
       SET status = 'processing', updated_at = NOW()
       WHERE id IN (
         SELECT id FROM (
-          SELECT id FROM ${Prisma.raw(tableName)}
-          WHERE status = 'pending' AND retries < "maxRetries"
-          -- Orden jerarquico: docentes (10) antes que grupos (5) antes que
-          -- estudiantes (1). La prioridad vive en el dato, no en el codigo.
+          SELECT id FROM "Job"
+          WHERE status = 'pending' AND retries < max_retries AND type = ${type}::"JobType"
           ORDER BY priority DESC, created_at ASC
           LIMIT ${BATCH_SIZE}
           FOR UPDATE SKIP LOCKED
@@ -55,108 +44,75 @@ async function runPool(items, worker) {
   await Promise.all(runners)
 }
 
+async function markCompleted(jobId) {
+  await prisma.job.update({ where: { id: jobId }, data: { status: "completed" } })
+}
+
+async function markFailed(job, err) {
+  const newRetries = job.retries + 1
+  const newStatus = newRetries >= (job.max_retries ?? 3) ? "failed" : "pending"
+  await prisma.job.update({
+    where: { id: job.id },
+    data: { retries: newRetries, status: newStatus, error: err?.message || String(err) },
+  })
+  return newRetries
+}
+
 async function processGroupJobs() {
-  const jobs = await claimJobs(JOB_TABLES.groups)
+  const jobs = await claimJobs("group_provisioning")
 
   await runPool(jobs, async (job) => {
+    const p = job.payload ?? {}
     try {
-      await createGroup(job.teacher_username, job.group_dir, job.group_name)
-      // El docente se hace dueno del directorio y entra al grupo Unix. Es
-      // idempotente: si el docente aun no esta provisionado, no hace nada y
-      // provisionTeacherAccount lo repara cuando lo cree.
-      await syncTeacherGroups(job.teacher_username)
-      await prisma.groupProvisioningJob.update({
-        where: { id: job.id },
-        data: { status: "completed" },
-      })
-      logger.info({ groupDir: job.group_dir }, "Group directory created")
+      await createGroup(p.teacher_username, p.group_dir, p.group_name)
+      await syncTeacherGroups(p.teacher_username)
+      await markCompleted(job.id)
+      logger.info({ groupDir: p.group_dir }, "Group directory created")
     } catch (err) {
-      const newRetries = job.retries + 1
-      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
-      await prisma.groupProvisioningJob.update({
-        where: { id: job.id },
-        data: {
-          retries: newRetries,
-          status: newStatus,
-          error: err?.message || String(err),
-        },
-      })
-      logger.error({ err, groupDir: job.group_dir, retries: newRetries }, "Group provisioning failed")
+      const retries = await markFailed(job, err)
+      logger.error({ err, groupDir: p.group_dir, retries }, "Group provisioning failed")
     }
   })
 }
 
 async function processUserJobs() {
-  const jobs = await claimJobs(JOB_TABLES.users)
+  const jobs = await claimJobs("user_provisioning")
 
   await runPool(jobs, async (job) => {
+    const p = job.payload ?? {}
     try {
-      if (job.group_id) {
-        await provisionStudentAccount(
-          job.user_id,
-          job.username,
-          job.teacher_username,
-          job.group_dir,
-          job.group_name,
-        )
+      if (p.group_id || p.group_dir) {
+        await provisionStudentAccount(job.user_id, p.username, p.teacher_username, p.group_dir, p.group_name)
       } else {
-        await provisionTeacherAccount(job.user_id, job.username)
+        await provisionTeacherAccount(job.user_id, p.username)
       }
-      await prisma.userProvisioningJob.update({
-        where: { id: job.id },
-        data: { status: "completed" },
-      })
-      logger.info({ username: job.username }, "User provisioning completed")
+      await markCompleted(job.id)
+      logger.info({ username: p.username }, "User provisioning completed")
     } catch (err) {
-      const newRetries = job.retries + 1
-      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
-      await prisma.userProvisioningJob.update({
-        where: { id: job.id },
-        data: {
-          retries: newRetries,
-          status: newStatus,
-          error: err?.message || String(err),
-        },
-      })
-      logger.error({ err, username: job.username, retries: newRetries }, "User provisioning failed")
+      const retries = await markFailed(job, err)
+      logger.error({ err, username: p.username, retries }, "User provisioning failed")
     }
   })
 }
 
 async function processTeardownJobs() {
-  const jobs = await claimJobs(JOB_TABLES.teardowns)
+  const jobs = await claimJobs("group_teardown")
 
   await runPool(jobs, async (job) => {
+    const p = job.payload ?? {}
+    const usernames = Array.isArray(p.usernames) ? p.usernames : []
     try {
-      let usernames = []
-      try {
-        usernames = JSON.parse(job.usernames || "[]")
-      } catch {
-        // un JSON invalido no debe tumbar el teardown: se borra la carpeta igual
-      }
       await teardownGroup({
-        teacherUsername: job.teacher_username,
-        groupDir: job.group_dir,
-        groupName: job.group_name,
+        teacherUsername: p.teacher_username,
+        groupDir: p.group_dir,
+        groupName: p.group_name,
         usernames,
       })
-      await prisma.groupTeardownJob.update({
-        where: { id: job.id },
-        data: { status: "completed" },
-      })
-      logger.info({ groupDir: job.group_dir, count: usernames.length }, "Group teardown completed")
+      await markCompleted(job.id)
+      logger.info({ groupDir: p.group_dir, count: usernames.length }, "Group teardown completed")
     } catch (err) {
-      const newRetries = job.retries + 1
-      const newStatus = newRetries >= (job.maxRetries ?? 3) ? "failed" : "pending"
-      await prisma.groupTeardownJob.update({
-        where: { id: job.id },
-        data: {
-          retries: newRetries,
-          status: newStatus,
-          error: err?.message || String(err),
-        },
-      })
-      logger.error({ err, groupDir: job.group_dir, retries: newRetries }, "Group teardown failed")
+      const retries = await markFailed(job, err)
+      logger.error({ err, groupDir: p.group_dir, retries }, "Group teardown failed")
     }
   })
 }

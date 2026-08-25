@@ -17,7 +17,7 @@ import { Plus } from "lucide-react"
 import { notify } from "@shared/lib/toast"
 
 interface RegisterTeacherDialogProps {
-  onRegister: (name: string, email: string) => Promise<unknown>
+  onRegister: (name: string, email: string, code: string) => Promise<unknown>
   submitting: boolean
 }
 
@@ -30,6 +30,7 @@ export function RegisterTeacherDialog({
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
+  const [code, setCode] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,11 +47,16 @@ export function RegisterTeacherDialog({
       notify.error(null, "El formato del correo no es válido")
       return
     }
+    if (!code.trim()) {
+      notify.error(null, "El código del docente es requerido")
+      return
+    }
 
-    const created = await onRegister(name.trim(), email.trim())
+    const created = await onRegister(name.trim(), email.trim(), code.trim())
     if (created) {
       setName("")
       setEmail("")
+      setCode("")
       setOpen(false)
     }
   }
@@ -59,6 +65,7 @@ export function RegisterTeacherDialog({
     if (!newOpen) {
       setName("")
       setEmail("")
+      setCode("")
     }
     setOpen(newOpen)
   }
@@ -102,6 +109,18 @@ export function RegisterTeacherDialog({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Ej: juan.perez@ufps.edu.co"
+                className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="code" className="text-muted-foreground">
+                Código
+              </Label>
+              <Input
+                id="code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Ej: DOC-001"
                 className="bg-secondary/30 border-border focus:border-primary focus:ring-primary/20"
               />
             </div>

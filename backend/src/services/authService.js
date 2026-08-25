@@ -15,7 +15,9 @@ const USER_INCLUDE = {
       linux_provisioned: true,
     },
   },
-  preferences: true,
+  student: { select: { code: true } },
+  teacher: { select: { code: true } },
+  settings: true,
 }
 
 /**
@@ -116,7 +118,7 @@ async function getSessionUser(userId) {
 /** Firma la cookie de sesion del usuario. */
 function signSession(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role, name: user.name, code: user.code ?? null },
+    { id: user.id, email: user.email, role: user.role, name: user.name, code: user.student?.code ?? user.teacher?.code ?? null },
     config.jwt.secret,
     { expiresIn: config.jwt.expiresIn },
   )

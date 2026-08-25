@@ -70,14 +70,14 @@ function serializeEntry(e, groupNames = new Map()) {
     userId: e.user_id,
     userName: e.user?.name ?? null,
     email: e.user?.email ?? null,
-    role: e.user?.role ?? e.actor_role ?? null,
+    role: e.user?.role ?? e.user_role ?? null,
     eventType: e.event_type,
     action: ACTION_LABELS[e.event_type] ?? e.event_type,
     message: e.message,
-    target: e.target ?? null,
+    target: null,
     groupId: e.group_id ?? null,
     groupName: e.group_id ? (groupNames.get(e.group_id) ?? null) : null,
-    metadata: e.metadata ?? null,
+    metadata: null,
   }
 }
 

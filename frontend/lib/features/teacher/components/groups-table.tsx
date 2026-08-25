@@ -54,15 +54,15 @@ export function GroupsTable() {
 
   const counts = useMemo(
     () => ({
-      activos: groups.filter((g) => !g.archived).length,
-      desactivados: groups.filter((g) => g.archived).length,
+      activos: groups.filter((g) => g.status === "active").length,
+      desactivados: groups.filter((g) => g.status === "archived").length,
     }),
     [groups],
   )
 
   const q = query.trim().toLowerCase()
   const visible = groups
-    .filter((g) => (tab === "activos" ? !g.archived : g.archived))
+    .filter((g) => (tab === "activos" ? g.status === "active" : g.status === "archived"))
     .filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -86,7 +86,7 @@ export function GroupsTable() {
     if (done.ok) {
       if (action === "deactivate") {
         queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
-          prev.map((g) => (g.id === group.id ? { ...g, archived: true } : g)),
+          prev.map((g) => (g.id === group.id ? { ...g, status: "archived" } : g)),
         )
         queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
       } else {
@@ -199,7 +199,7 @@ export function GroupsTable() {
                   <div className="flex items-center justify-center gap-1">
                     {/* Un grupo desactivado ya solo se consulta. El icono es un
                         archivador y no una equis: esto archiva, no borra. */}
-                    {!group.archived && (
+                    {group.status === "active" && (
                       <IconAction
                         label="Archivar grupo"
                         icon={Archive}

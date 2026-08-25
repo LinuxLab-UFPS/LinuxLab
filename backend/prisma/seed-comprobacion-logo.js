@@ -3,64 +3,54 @@ const prisma = require("./client")
 const SLUG = "logo-ufps"
 const RUTA = "/home/$usuario/logo.txt"
 
-/**
- * Tres filas del logo, no una: con una sola, pegar ese renglon repetido bastaria
- * para aprobar. Las de rojo solido quedan fuera por lo mismo. Si el snippet del
- * frontend cambia (lib/features/shared/snippets.ts), estas hay que actualizarlas.
- */
 const FILAS = [
   "🟥⬜🟥⬜🟥⬜⬜⬜🟥⬜⬜⬜🟥⬜⬜⬜🟥",
   "🟥⬜🟥⬜🟥⬜⬜🟥🟥⬜⬜⬜🟥⬜⬜⬜🟥",
   "🟥⬜⬜⬜🟥⬜🟥🟥🟥⬜🟥🟥🟥⬜⬜⬜🟥",
 ]
 
-async function main() {
-  const checks = [
-    { type: "archivo_existe", params: { ruta: RUTA }, points: 25, position: 0 },
-    ...FILAS.map((patron, i) => ({
-      type: "archivo_contiene",
-      params: { ruta: RUTA, patron },
-      points: 25,
-      position: i + 1,
-    })),
-  ]
+const CHECKS = [
+  { type: "archivo_existe", params: { ruta: RUTA }, points: 25, position: 0 },
+  ...FILAS.map((patron, i) => ({
+    type: "archivo_contiene",
+    params: { ruta: RUTA, patron },
+    points: 25,
+    position: i + 1,
+  })),
+]
 
-  const activity = await prisma.activityDefinition.upsert({
-    where: { slug: SLUG },
-    update: {
-      title: "Guarda el logo",
-      kind: "check",
-      difficulty: "basic",
-      instructions:
-        "Copia el logo con el botón de la lección y guárdalo en un archivo " +
-        "llamado logo.txt en tu carpeta personal.",
-      topic_number: 4,
-      max_score: 100,
-      checks: { deleteMany: {}, create: checks },
-    },
-    create: {
-      slug: SLUG,
-      title: "Guarda el logo",
-      kind: "check",
-      difficulty: "basic",
-      instructions:
-        "Copia el logo con el botón de la lección y guárdalo en un archivo " +
-        "llamado logo.txt en tu carpeta personal.",
-      topic_number: 4,
-      max_score: 100,
-      source: "bank",
-      active: true,
-      checks: { create: checks },
-    },
-    include: { checks: true },
+const TOPIC_NUMBER = 4
+const SUBTOPIC_SLUG = "pipes"
+
+const DATOS = {
+  title: "Guarda el logo",
+  kind: "check",
+  difficulty: "basic",
+  instructions:
+    "Copia el logo con el botón de la lección y guárdalo en un archivo " +
+    "llamado logo.txt en tu carpeta personal.",
+}
+
+async function main() {
+  const topic = await prisma.topic.findUnique({ where: { order_number: TOPIC_NUMBER } })
+  if (!topic) throw new Error(`Topic ${TOPIC_NUMBER} no encontrado. Corre seed-temario primero.`)
+
+  const subtopic = await prisma.subtopic.findUnique({
+    where: { topic_id_slug: { topic_id: topic.id, slug: SUBTOPIC_SLUG } },
   })
 
-  console.log(`Comprobacion sembrada: ${activity.slug} con ${activity.checks.length} aserciones`)
+  const activity = await prisma.topicActivity.upsert({
+    where: { slug: SLUG },
+    update: { ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+  })
+
+  console.log(`Comprobacion sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, subtopic ${SUBTOPIC_SLUG})`)
 }
 
 main()
   .catch((err) => {
-    console.error(err)
+    console.error(err.message)
     process.exit(1)
   })
   .finally(() => prisma.$disconnect())

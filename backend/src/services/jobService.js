@@ -4,12 +4,13 @@ const { serializeTeacherUserJob } = require("../dtos/provisioningDtos")
 /** Jobs de aprovisionamiento de todos los docentes (vista de admin). */
 async function listTeacherProvisioningJobs() {
   const teachers = await prisma.user.findMany({
-    where: { role: "teacher" },
+    where: { teacher: { isNot: null } },
     select: { id: true },
   })
   const teacherIds = teachers.map((t) => t.id)
-  const jobs = await prisma.userProvisioningJob.findMany({
+  const jobs = await prisma.job.findMany({
     where: {
+      type: "user_provisioning",
       user_id: { in: teacherIds },
       group_id: null,
     },

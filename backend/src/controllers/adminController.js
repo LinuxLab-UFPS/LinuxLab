@@ -11,8 +11,8 @@ const listTeachers = asyncHandler(async (req, res) => {
 })
 
 const registerTeacher = asyncHandler(async (req, res) => {
-  const { name, email } = req.body
-  const teacher = await userService.register({ name, email })
+  const { name, email, code } = req.body
+  const teacher = await userService.register({ name, email, code })
   const { ip, userAgent, actorRole } = auditService.requestMeta(req)
   auditService.audit({
     userId: req.user.id,

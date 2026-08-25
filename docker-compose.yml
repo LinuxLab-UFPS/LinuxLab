@@ -8,8 +8,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["npx", "prisma", "migrate", "deploy"]
+    entrypoint: ["/bin/sh", "/app/migrate.sh"]
     env_file: ./backend/.env
+    environment:
+      # Base local de docker: destino del seed (no es la base de la app).
+      SEED_DATABASE_URL: postgresql://linuxlab:${DB_PASSWORD:-linuxlab}@postgres:5432/linuxlab
 
   init:
     image: alpine:3
@@ -101,6 +104,8 @@ services:
       JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET:-linux-lab-31fc0.firebasestorage.app}
       FRONTEND_URL: http://frontend:3000
+      # Base local de docker: el seed la puebla, pero la app sigue en Neon.
+      SEED_DATABASE_URL: postgresql://linuxlab:${DB_PASSWORD:-linuxlab}@postgres:5432/linuxlab
     volumes:
       - ssh_keys:/ssh:ro
     networks:

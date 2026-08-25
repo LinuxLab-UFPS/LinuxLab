@@ -3,93 +3,130 @@ const { NotFoundError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 
 /**
- * Registra un intento de actividad. El numero de intento sale de contar los
- * intentos previos del estudiante en esa actividad (la definicion o la
- * publicacion de curso, segun el caso).
+ * Registra un intento de actividad de grupo. El numero de intento sale de contar
+ * los intentos previos del estudiante en esa publicacion.
  *
- * El conteo + alta viven en una transaccion que bloquea la fila del estudiante
- * (FOR UPDATE): dos evaluaciones concurrentes del mismo estudiante se
- * serializan en el lock y no pueden producir dos intentos con el mismo numero.
- * Estudiantes distintos no se bloquean entre si.
+ * El conteo + alta viven en una transaccion que bloquea la fila de la matricula
+ * (FOR UPDATE): dos evaluaciones concurrentes del mismo estudiante se serializan
+ * en el lock y no pueden producir dos intentos con el mismo numero. Estudiantes
+ * distintos no se bloquean entre si.
  *
  * Con `attemptLimit` configurado, el limite se valida en la MISMA transaccion:
  * contar y crear son una operacion atomica, asi que dos checks concurrentes no
  * pueden colarse pasadas ya consumidas (sin TOCTOU). Un intento fallido tambien
  * consume intento (el registro se crea igual), conforme a las reglas de negocio.
  */
-async function recordAttempt({ activityDefinitionId, groupActivityId, studentUserId, passed, score, results, attemptLimit }) {
+async function recordGroupAttempt({ studentId, groupId, groupActivityId, score, passed, results, attemptLimit }) {
   return runInTransaction(async (tx) => {
-    const countWhere = groupActivityId
-      ? { group_activity_id: groupActivityId, student_id: studentUserId }
-      : { activity_definition_id: activityDefinitionId, student_id: studentUserId }
+    const enrollment = await tx.enrollment.findFirst({
+      where: { student_id: studentId, group_id: groupId, status: "active", group: { status: "active" } },
+    })
+    if (!enrollment) throw new ConflictError("No hay matrícula activa en este grupo")
 
-    // Serializa los intentos de este estudiante: la segunda transaccion espera
-    // a que la primera confirme antes de contar de nuevo. El nombre de la
-    // tabla es `"User"` (Prisma no la mapea, la usa tal cual).
-    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${studentUserId} FOR UPDATE`
+    await tx.$queryRaw`SELECT id FROM "Enrollment" WHERE id = ${enrollment.id} FOR UPDATE`
 
-    const attemptNumber = await tx.activityAttempt.count({ where: countWhere })
+    const count = await tx.groupSubmission.count({
+      where: { enrollment_id: enrollment.id, group_activity_id: groupActivityId },
+    })
 
-    if (attemptLimit !== undefined && attemptLimit !== null && attemptNumber >= attemptLimit) {
+    if (attemptLimit !== undefined && attemptLimit !== null && count >= attemptLimit) {
       throw new ConflictError("Alcanzaste el límite de intentos de esta actividad")
     }
 
-    return tx.activityAttempt.create({
+    const submission = await tx.groupSubmission.create({
       data: {
-        activity_definition_id: activityDefinitionId,
-        group_activity_id: groupActivityId ?? null,
-        student_id: studentUserId,
-        attempt_number: attemptNumber + 1,
-        passed,
+        enrollment_id: enrollment.id,
+        group_activity_id: groupActivityId,
+        attempt_number: count + 1,
+        status: "graded",
         score,
-        results,
+        passed,
+      },
+    })
+
+    await tx.submissionAutoDetail.create({
+      data: { submission_id: submission.id, auto_results: results },
+    })
+
+    return submission
+  })
+}
+
+/**
+ * Registra un intento de comprobacion del temario. No requiere grupo especifico:
+ * se usa la matricula activa del estudiante (cualquier grupo). No tiene limite de
+ * intentos (el estudiante puede reintentar cuantas veces necesite).
+ */
+async function recordTopicAttempt({ studentId, topicActivityId, score, passed, results }) {
+  return runInTransaction(async (tx) => {
+    const enrollment = await tx.enrollment.findFirst({
+      where: { student_id: studentId, status: "active", group: { status: "active" } },
+      orderBy: { created_at: "asc" },
+    })
+    if (!enrollment) throw new ConflictError("No hay matrícula activa")
+
+    await tx.$queryRaw`SELECT id FROM "Enrollment" WHERE id = ${enrollment.id} FOR UPDATE`
+
+    const count = await tx.topicSubmission.count({
+      where: { enrollment_id: enrollment.id, topic_activity_id: topicActivityId },
+    })
+
+    return tx.topicSubmission.create({
+      data: {
+        enrollment_id: enrollment.id,
+        topic_activity_id: topicActivityId,
+        attempt_number: count + 1,
+        score,
+        passed,
+        auto_results: results,
       },
     })
   })
 }
 
-/** Los slugs que el estudiante ya aprobo (nota >= 60), para marcar sus tarjetas. */
-async function passedSlugs(studentUserId) {
-  const attempts = await prisma.activityAttempt.findMany({
-    where: { student_id: studentUserId, score: { gte: 60 } },
-    select: { definition: { select: { slug: true } } },
-    distinct: ["activity_definition_id"],
+/** Los slugs de comprobaciones del temario que el estudiante ya aprobo (nota >= 60). */
+async function passedSlugs(studentId) {
+  const submissions = await prisma.topicSubmission.findMany({
+    where: { enrollment: { student_id: studentId }, score: { gte: 60 } },
+    select: { topicActivity: { select: { slug: true } } },
+    distinct: ["topic_activity_id"],
   })
-  return attempts.map((a) => a.definition.slug).filter(Boolean)
+  return submissions.map((s) => s.topicActivity.slug).filter(Boolean)
 }
 
-/** El ultimo intento del estudiante, para que la leccion abra con su estado. */
-async function lastAttempt({ slug, studentUserId }) {
-  const activity = await prisma.activityDefinition.findUnique({
+/** El ultimo intento del estudiante en una comprobacion del temario, para que la
+ * leccion abra con su estado. */
+async function lastAttempt({ slug, studentId }) {
+  const activity = await prisma.topicActivity.findUnique({
     where: { slug },
     select: { id: true },
   })
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
-  const attempt = await prisma.activityAttempt.findFirst({
-    where: { activity_definition_id: activity.id, student_id: studentUserId },
+  const submission = await prisma.topicSubmission.findFirst({
+    where: { topic_activity_id: activity.id, enrollment: { student_id: studentId } },
     orderBy: { created_at: "desc" },
   })
-  if (!attempt) return null
+  if (!submission) return null
   return {
-    passed: attempt.passed,
-    score: attempt.score,
-    results: attempt.results,
-    at: attempt.created_at,
+    passed: submission.passed,
+    score: submission.score,
+    results: submission.auto_results,
+    at: submission.created_at,
   }
 }
 
-/** Todos los intentos del estudiante en una actividad del temario, del mas
+/** Todos los intentos del estudiante en una comprobacion del temario, del mas
  * reciente al mas antiguo, para la tabla de intentos de la vista del estudiante. */
-async function listAttempts({ slug, studentUserId }) {
-  const activity = await prisma.activityDefinition.findUnique({
+async function listAttempts({ slug, studentId }) {
+  const activity = await prisma.topicActivity.findUnique({
     where: { slug },
     select: { id: true },
   })
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
-  const attempts = await prisma.activityAttempt.findMany({
-    where: { activity_definition_id: activity.id, student_id: studentUserId },
+  const submissions = await prisma.topicSubmission.findMany({
+    where: { topic_activity_id: activity.id, enrollment: { student_id: studentId } },
     orderBy: { created_at: "desc" },
     select: {
       attempt_number: true,
@@ -98,12 +135,12 @@ async function listAttempts({ slug, studentUserId }) {
       created_at: true,
     },
   })
-  return attempts.map((a) => ({
-    attemptNumber: a.attempt_number,
-    passed: a.passed,
-    score: a.score,
-    createdAt: a.created_at.toISOString(),
+  return submissions.map((s) => ({
+    attemptNumber: s.attempt_number,
+    passed: s.passed,
+    score: s.score,
+    createdAt: s.created_at.toISOString(),
   }))
 }
 
-module.exports = { recordAttempt, passedSlugs, lastAttempt, listAttempts }
+module.exports = { recordGroupAttempt, recordTopicAttempt, passedSlugs, lastAttempt, listAttempts }
