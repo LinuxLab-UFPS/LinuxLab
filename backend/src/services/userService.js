@@ -56,9 +56,65 @@ async function register(args) {
   const db = tx
   const normalizedEmail = parsed.email
 
-  const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+  const existing = await db.user.findUnique({
+    where: { email: normalizedEmail },
+    include: { teacher: true, student: true, linuxAccount: true },
+  })
+
   if (existing) {
-    throw new AppError("El correo electrónico ya está registrado en la plataforma", 409)
+    // Ya es docente: registro idempotente.
+    if (existing.teacher) {
+      return serializeTeacher(existing)
+    }
+    // No se puede promover una cuenta de administrador.
+    if (existing.role === Role.admin) {
+      throw new AppError("Ese correo pertenece a un administrador", 409)
+    }
+    // Si ya tenía perfil de estudiante, solo se promueve si no tiene matrículas
+    // (borrar la fila Student rompería la FK de enrolamientos).
+    if (existing.student) {
+      const enrollCount = await db.enrollment.count({
+        where: { student_id: existing.student.user_id },
+      })
+      if (enrollCount > 0) {
+        throw new AppError(
+          "El correo ya tiene matrículas como estudiante; no se puede registrar como docente",
+          409,
+        )
+      }
+      await db.student.delete({ where: { user_id: existing.id } })
+    }
+
+    const linuxUsername = existing.linuxAccount?.linux_username ?? sanitizeUsername(normalizedEmail)
+
+    try {
+      const user = await db.user.update({
+        where: { id: existing.id },
+        data: {
+          role: Role.teacher,
+          name: parsed.name,
+          teacher: { create: { code: parsed.code } },
+          linuxAccount: existing.linuxAccount
+            ? undefined
+            : { create: { linux_username: linuxUsername, linux_provisioned: false } },
+        },
+        select: TEACHER_SELECT,
+      })
+      await db.job.create({
+        data: {
+          type: "user_provisioning",
+          priority: PRIORITIES.TEACHER,
+          user_id: user.id,
+          payload: { username: linuxUsername },
+        },
+      })
+      return serializeTeacher(user)
+    } catch (err) {
+      if (err?.code === "P2002") {
+        throw new AppError("El código de docente ya está en uso", 409)
+      }
+      throw err
+    }
   }
 
   const linuxUsername = sanitizeUsername(normalizedEmail)

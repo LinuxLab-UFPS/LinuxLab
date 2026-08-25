@@ -29,7 +29,7 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
     include: { linuxAccount: true, student: true },
   })
 
-  if (user && user.student === null && user.role === Role.teacher) {
+  if (user && user.role === Role.teacher) {
     throw new AppError(
       `El correo ${normalizedEmail} pertenece a un docente, no se puede inscribir como estudiante`,
       409,
