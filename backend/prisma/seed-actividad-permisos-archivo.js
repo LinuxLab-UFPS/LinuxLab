@@ -20,6 +20,7 @@ const CHECKS = [
 ]
 
 const TOPIC_NUMBER = 5
+const SUBTOPIC_SLUG = "chmod"
 
 const DATOS = {
   title: "Cada archivo en su sitio",
@@ -35,13 +36,17 @@ async function main() {
   const topic = await prisma.topic.findUnique({ where: { order_number: TOPIC_NUMBER } })
   if (!topic) throw new Error(`Topic ${TOPIC_NUMBER} no encontrado. Corre seed-temario primero.`)
 
-  const activity = await prisma.topicActivity.upsert({
-    where: { slug: SLUG },
-    update: { ...DATOS, topic_id: topic.id, subtopic_id: null, checks: CHECKS },
-    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: null, checks: CHECKS },
+  const subtopic = await prisma.subtopic.findUnique({
+    where: { topic_id_slug: { topic_id: topic.id, slug: SUBTOPIC_SLUG } },
   })
 
-  console.log(`Actividad sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, kind=activity)`)
+  const activity = await prisma.topicActivity.upsert({
+    where: { slug: SLUG },
+    update: { ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+  })
+
+  console.log(`Actividad sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, subtopic ${SUBTOPIC_SLUG})`)
 }
 
 main()

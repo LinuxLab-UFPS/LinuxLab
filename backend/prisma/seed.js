@@ -12,6 +12,15 @@ const seeds = [
   "seed-actividad-universidad.js",
   "seed-actividad-comodines.js",
   "seed-actividad-cerrar-proyecto.js",
+  "seed-actividad-guion-que-decide.js",
+  "seed-actividad-ficha-identidad.js",
+  "seed-actividad-carpeta-equipo.js",
+  "seed-actividad-rastro-registros.js",
+  "seed-actividad-primer-guion.js",
+  "seed-actividad-paquete-entrega.js",
+  "seed-actividad-turno-de-noche.js",
+  "seed-actividad-foto-sistema.js",
+  "seed-actividad-arbol-proyecto.js",
 ]
 
 function run(file) {

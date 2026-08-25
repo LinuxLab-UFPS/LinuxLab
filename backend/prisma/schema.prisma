@@ -228,14 +228,14 @@ model Subtopic {
   @@index([topic_id])
 
   lessonViews  LessonView[]
-  topicActivity TopicActivity?
+  topicActivities TopicActivity[]
 }
 
 model TopicActivity {
   id           String            @id @default(uuid()) @db.Uuid
   topic_id     String            @db.Uuid
   topic        Topic             @relation(fields: [topic_id], references: [id])
-  subtopic_id  String?           @unique @db.Uuid
+  subtopic_id  String?           @db.Uuid
   subtopic     Subtopic?         @relation(fields: [subtopic_id], references: [id])
   kind         TopicActivityKind
   slug         String            @unique @db.VarChar(64)

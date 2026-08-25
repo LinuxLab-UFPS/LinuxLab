@@ -32,15 +32,19 @@ async function recomputeTopicProgress(tx, enrollmentId, topicId) {
 
   const viewed = new Set(viewedSubs.map((v) => v.subtopic_id))
   const passed = new Set(passedSubs.map((p) => p.topic_activity_id))
-  const checkBySubtopic = new Map(
-    topic.activities.filter((a) => a.subtopic_id != null).map((a) => [a.subtopic_id, a.id]),
-  )
+  const activitiesBySubtopic = new Map()
+  for (const a of topic.activities) {
+    if (a.subtopic_id != null) {
+      if (!activitiesBySubtopic.has(a.subtopic_id)) activitiesBySubtopic.set(a.subtopic_id, [])
+      activitiesBySubtopic.get(a.subtopic_id).push(a.id)
+    }
+  }
 
   let subtopicsDone = 0
   for (const sub of topic.subtopics) {
     if (!viewed.has(sub.id)) continue
-    const checkId = checkBySubtopic.get(sub.id)
-    if (checkId && !passed.has(checkId)) continue
+    const acts = activitiesBySubtopic.get(sub.id)
+    if (acts && acts.some((id) => !passed.has(id))) continue
     subtopicsDone++
   }
 

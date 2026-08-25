@@ -12,4 +12,13 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+// The externally-provided pg Pool is not closed by Prisma's $disconnect(), so
+// seed scripts (and the server on shutdown) would hang on an open socket.
+// Closing it here lets the process exit once disconnect resolves.
+const _disconnect = prisma.$disconnect.bind(prisma);
+prisma.$disconnect = async () => {
+  await _disconnect();
+  await pool.end().catch(() => {});
+};
+
 module.exports = prisma;

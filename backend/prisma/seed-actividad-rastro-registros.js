@@ -3,23 +3,8 @@ const prisma = require("./client")
 const SLUG = "rastro-en-los-registros"
 const RAIZ = `/home/$usuario/actividades/${SLUG}`
 
-/**
- * La actividad facil del tema 7: encontrar una linea entre cientos.
- *
- * El comprobador solo mira archivos, asi que lo que se evalua no es el comando
- * sino su resultado escrito. Las dos respuestas estan elegidas para que leer a
- * ojo no compense:
- *
- *   - la linea de ERROR esta sola entre 95 lineas de relleno repartidas en tres
- *     archivos, y hay que dejarla EXACTA, sin el nombre del archivo delante
- *     (que es lo que ensena la opcion -h de grep),
- *   - el recuento de AVISO cruza los tres archivos, asi que un `grep -c` sobre
- *     uno solo da un numero equivocado.
- */
-
 const ERROR = "ERROR fallo critico en el modulo de pagos"
 
-/** Siete AVISO repartidos: tres, dos y dos. El total es la respuesta. */
 const SETUP = {
   dirs: ["registros"],
   files: [
@@ -57,6 +42,9 @@ const CHECKS = [
   { type: "archivo_es", params: { ruta: `${RAIZ}/cuenta.txt`, valor: "7" }, points: 50, position: 1 },
 ]
 
+const TOPIC_NUMBER = 7
+const SUBTOPIC_SLUG = "grep"
+
 const DATOS = {
   title: "El rastro en los registros",
   kind: "activity",
@@ -64,21 +52,26 @@ const DATOS = {
   instructions:
     "Tres bitácoras y una sola línea que importa. Sácala con grep y cuenta " +
     "cuántos avisos hay en total.",
-  topic_number: 7,
-  max_score: 100,
   setup: SETUP,
 }
 
 async function main() {
-  const a = await prisma.activityDefinition.upsert({
+  const topic = await prisma.topic.findUnique({ where: { order_number: TOPIC_NUMBER } })
+  if (!topic) throw new Error(`Topic ${TOPIC_NUMBER} no encontrado. Corre seed-temario primero.`)
+
+  const subtopic = SUBTOPIC_SLUG
+    ? await prisma.subtopic.findUnique({ where: { topic_id_slug: { topic_id: topic.id, slug: SUBTOPIC_SLUG } } })
+    : null
+
+  const activity = await prisma.topicActivity.upsert({
     where: { slug: SLUG },
-    update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },
-    create: { slug: SLUG, ...DATOS, source: "bank", active: true, checks: { create: CHECKS } },
-    include: { checks: true },
+    update: { ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
   })
-  console.log(`Actividad sembrada: ${a.slug} con ${a.checks.length} aserciones`)
+
+  console.log(`Actividad sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, kind=activity)`)
 }
 
 main()
-  .catch((err) => { console.error(err); process.exit(1) })
+  .catch((err) => { console.error(err.message); process.exit(1) })
   .finally(() => prisma.$disconnect())
