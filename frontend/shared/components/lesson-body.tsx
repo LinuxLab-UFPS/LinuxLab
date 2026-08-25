@@ -117,7 +117,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
             return <ExerciseCheck key={i} slug={block.slug} />
 
           case "activity":
-            return <LessonActivity key={i} slug={block.slug} />
+            return <LessonActivity key={i} slugs={block.slugs} />
 
           case "snippet":
             return <CopySnippet key={i} id={block.id} />
