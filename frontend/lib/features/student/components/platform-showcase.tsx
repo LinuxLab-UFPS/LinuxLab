@@ -4,12 +4,14 @@ import { useEffect, useRef, useState } from "react"
 import { TerminalFrame } from "@shared/components/terminal-frame"
 import { useReveal, claseRevelado } from "@shared/hooks/use-reveal"
 import { cn } from "@shared/lib/utils"
+import { syllabus, getTopic } from "@shared/lib/content/temario"
 import {
   SimulatorTreeIllustration,
   SimulatorViIllustration,
   SimulatorPermissionsIllustration,
   SimulatorCompressionIllustration,
   SimulatorSearchIllustration,
+  SimulatorProcessesIllustration,
 } from "./topic-illustrations"
 
 /**
@@ -27,9 +29,11 @@ import {
  * ademas envejece con cada cambio de interfaz.
  *
  * Sobre las cifras: solo se afirma lo que no depende de quien use la
- * plataforma. Los temas y las lecciones son contenido fijo, asi que van con
- * numero; los simuladores van a crecer y las actividades las trae cada
- * asignatura, asi que esos dos paneles se cuentan sin cifras a proposito.
+ * plataforma. Los temas y las lecciones se cuentan, pero SALEN DEL TEMARIO y no
+ * de un numero escrito aqui: la primera version decia «nueve temas, treinta y
+ * seis lecciones» y para cuando se subio ya eran diez y cuarenta. Las
+ * actividades las trae cada asignatura, asi que ese panel va sin cifras a
+ * proposito.
  */
 
 /** Lo que se teclea en el panel de la terminal. */
@@ -38,12 +42,55 @@ const COMANDO = "ls -l /home/estudiante"
  *  escribiendo y parece un volcado de texto. */
 const CPS = 14
 
+const TEMAS = syllabus.length
+const LECCIONES = syllabus.reduce((total, t) => total + t.subTopics.length, 0)
+
+const UNIDADES = [
+  "cero", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho",
+  "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis",
+  "diecisiete", "dieciocho", "diecinueve", "veinte",
+]
+const DECENAS = [
+  "", "", "veinte", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta",
+  "ochenta", "noventa",
+]
+/** Los veintitantos van sueltos porque llevan tilde donde el resto no. */
+const VEINTI = [
+  "", "veintiún", "veintidós", "veintitrés", "veinticuatro", "veinticinco",
+  "veintiséis", "veintisiete", "veintiocho", "veintinueve",
+]
+
+/**
+ * El numero en letra, que es como lee un titular. Por encima de noventa y nueve
+ * devuelve la cifra: el temario no va a llegar ahi, y una cadena rara se nota
+ * menos que un numero mal escrito.
+ */
+function enLetra(n: number, genero: "m" | "f" = "m"): string {
+  const palabra =
+    n <= 20
+      ? UNIDADES[n]
+      : n % 10 === 0
+        ? DECENAS[Math.floor(n / 10)]
+        : n < 30
+          ? VEINTI[n % 10]
+          : n < 100
+            ? `${DECENAS[Math.floor(n / 10)]} y ${UNIDADES[n % 10]}`
+            : String(n)
+  if (genero !== "f") return palabra
+  // «un» pasa a «una», y con tilde la pierde: veintiún → veintiuna.
+  if (palabra.endsWith("veintiún")) return palabra.replace("veintiún", "veintiuna")
+  return palabra.endsWith("un") ? `${palabra}a` : palabra
+}
+
+const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1)
+
 const SIMULADORES = [
   { Ilustracion: SimulatorTreeIllustration, escenario: "cd y ls" },
   { Ilustracion: SimulatorViIllustration, escenario: "vi" },
   { Ilustracion: SimulatorPermissionsIllustration, escenario: "chmod y umask" },
   { Ilustracion: SimulatorCompressionIllustration, escenario: "tar" },
   { Ilustracion: SimulatorSearchIllustration, escenario: "grep, find y sort" },
+  { Ilustracion: SimulatorProcessesIllustration, escenario: "ps, pkill y señales" },
 ]
 
 /** El panel: texto a un lado, figura al otro, y se turnan. */
@@ -170,12 +217,17 @@ function TerminalQueTeclea() {
 function RutaDeTemas() {
   const { ref, visible } = useReveal<HTMLDivElement>()
 
+  // Cuatro paradas repartidas por el temario, para que se vea de dónde a dónde
+  // va. El título sale del temario y no de aquí: escribirlo a mano era otra
+  // copia que se quedaba vieja al renombrar un tema.
   const paradas = [
-    { n: 1, titulo: "Introducción a Linux", nota: "las partes del sistema" },
-    { n: 4, titulo: "Manejo de archivos", nota: "crear, mover, comodines" },
-    { n: 7, titulo: "Búsqueda", nota: "grep, find y expresiones" },
-    { n: 9, titulo: "Gestión de procesos", nota: "ps, señales y daemons" },
-  ]
+    { n: 1, nota: "las partes del sistema" },
+    { n: 4, nota: "crear, mover, comodines" },
+    { n: 7, nota: "grep, find y expresiones" },
+    { n: 10, nota: "condicionales, ciclos y funciones" },
+  ].map((p) => ({ ...p, titulo: getTopic(p.n)?.title ?? `Tema ${p.n}` }))
+
+  const restantes = TEMAS - paradas.length
 
   return (
     <div ref={ref} className="relative pl-8">
@@ -206,7 +258,9 @@ function RutaDeTemas() {
           </li>
         ))}
       </ol>
-      <p className="mt-5 font-mono text-xs text-muted-foreground">y cinco temas más</p>
+      <p className="mt-5 font-mono text-xs text-muted-foreground">
+        y {enLetra(restantes)} temas más
+      </p>
     </div>
   )
 }
@@ -291,7 +345,12 @@ export function PlatformShowcase() {
     >
       <div className="space-y-20 sm:space-y-28">
         <Panel
-          titulo={<>Nueve temas. Treinta y seis lecciones.</>}
+          titulo={
+            <>
+              {conMayuscula(enLetra(TEMAS))} temas.{" "}
+              {conMayuscula(enLetra(LECCIONES, "f"))} lecciones.
+            </>
+          }
           figura={<RutaDeTemas />}
         >
           Teoría, video y práctica en una sola ruta, de la arquitectura del
@@ -319,8 +378,8 @@ export function PlatformShowcase() {
         >
           Un escenario propio para cada cosa que hay que aprender. Recorrer un
           árbol de directorios, sobrevivir a <Cmd>vi</Cmd>, arreglar permisos
-          contra reloj, preparar una entrega comprimida o reconstruir qué tumbó
-          el despliegue del viernes.
+          contra reloj, preparar una entrega comprimida, reconstruir qué tumbó
+          el despliegue del viernes o rescatar un portátil que no da para más.
         </Panel>
 
         <Panel
