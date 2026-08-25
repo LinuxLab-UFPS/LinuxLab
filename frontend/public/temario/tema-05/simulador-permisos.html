@@ -79,31 +79,68 @@ body{
 .ficha[data-estado="error"] {--acento:var(--red);  --acento-tinta:var(--red-tinta)}
 .ficha[data-estado="ok"]    {--acento:var(--green);--acento-tinta:var(--green-tinta)}
 
+/* El archivo que llega a la mesa, dibujado como un archivo.
+   Antes era una caja cuadrada oscura con lineas de barrido y un glifo
+   enorme dentro: se leia como una pantalla, no como el documento del que
+   se esta hablando. Es el mismo icono que usa el video del tema. */
+/* La hoja es BLANCA en los dos temas, no `--surf2`: en oscuro esa variable
+   vale #1C2128 y el icono salia negro, que no se lee como papel. Es el mismo
+   criterio que ya sigue la consola, oscura en claro y en oscuro. Por eso los
+   renglones y la esquina tambien llevan color fijo aqui abajo. */
 .visor{
-  position:relative;width:148px;height:148px;flex-shrink:0;overflow:hidden;
-  border:2px solid var(--acento);border-radius:4px;
+  position:relative;width:118px;height:152px;flex-shrink:0;
+  border:3px solid var(--acento);border-radius:7px;
+  background:#FFFFFF;
   display:flex;align-items:center;justify-content:center;
   transition:border-color .25s;
-  box-shadow:0 0 26px -6px var(--acento);
+  box-shadow:0 0 26px -10px var(--acento);
 }
 .ficha.entra .visor{animation:entra .4s ease-out}
 @keyframes entra{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
 
-/* Las lineas se desplazan justo un periodo, asi que el bucle no tiene costura. */
-.lineas{
-  position:absolute;inset:-20px;
-  background:repeating-linear-gradient(to bottom,
-    transparent 0 11px, var(--acento) 11px 12px);
-  opacity:.26;animation:deriva 3.2s linear infinite;transition:opacity .25s;
+/* La esquina doblada, arriba a la derecha. Va en el color del fondo de la
+   pagina, no en uno mas oscuro: asi se lee como papel plegado y no como un
+   agujero recortado en la hoja. */
+.visor::before{
+  content:"";position:absolute;top:0;right:0;width:28px;height:28px;
+  background:#E4E9F0;
+  border-left:2px solid var(--acento);border-bottom:2px solid var(--acento);
+  border-radius:0 4px 0 6px;transition:border-color .25s;
 }
-@keyframes deriva{to{background-position:0 12px}}
 
-.icono{
-  position:relative;font-size:54px;font-weight:700;line-height:1;
-  color:var(--acento);letter-spacing:-.04em;
-  transition:color .25s;filter:drop-shadow(0 0 14px var(--acento));
+/* Los renglones: lo que hace que se lea como un documento. El ultimo mas
+   corto, como una linea que termina antes del margen. */
+.lineas{
+  position:absolute;top:42px;left:16px;right:16px;height:39px;
+  background:repeating-linear-gradient(to bottom,
+    #D8DEE7 0 5px, transparent 5px 17px);
+  opacity:.9;transition:opacity .25s;
 }
-.icono.corto{font-size:33px;letter-spacing:.02em}
+.lineas::after{
+  content:"";position:absolute;left:0;top:51px;width:46%;height:5px;
+  background:#D8DEE7;
+}
+
+/* La extension, en su pestaña de color. El texto va oscuro porque el fondo
+   es el color de acento a plena saturacion. */
+.icono{
+  position:absolute;left:11px;right:11px;bottom:12px;height:30px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;line-height:1;letter-spacing:.02em;
+  color:#12161d;background:var(--acento);border-radius:5px;
+  transition:background-color .25s;
+}
+/* La ronda de umask no trae un archivo concreto sino "N archivos por
+   crear", asi que ahi el icono es un signo suelto y no una pestaña.
+   Los renglones y la esquina doblada se esconden con el: sin archivo del
+   que hablar, la hoja sobra. */
+.icono.neutro{
+  position:relative;left:auto;right:auto;bottom:auto;height:auto;
+  background:none;color:var(--acento);font-size:54px;
+  filter:drop-shadow(0 0 14px var(--acento));
+}
+.visor:has(.icono.neutro) .lineas{opacity:0}
+.visor:has(.icono.neutro)::before{opacity:0}
 
 .datos{display:flex;flex-direction:column;gap:3px;min-width:0}
 .doc-name{font-size:15px;color:var(--bright);font-weight:700;word-break:break-all;margin-bottom:7px}
@@ -396,9 +433,11 @@ function pintarExpediente() {
   need.innerHTML = "";
 
   if (r.tipo === "chmod") {
-    const icono = iconoDe(r.datos.nombre);
-    $("icono").textContent = icono;
-    $("icono").className = "icono" + (icono.length > 2 ? " corto" : "");
+    // La extension va en la pestaña del icono, siempre del mismo tamaño:
+    // ahora es una etiqueta y no un glifo gigante, asi que ya no hace falta
+    // encogerla cuando tiene mas de dos caracteres.
+    $("icono").textContent = iconoDe(r.datos.nombre);
+    $("icono").className = "icono";
     $("doc-name").textContent = r.datos.nombre;
     $("doc-mode").innerHTML = aLetras(actual.modo, false);
     r.datos.pedidas.forEach((e) => {
@@ -408,8 +447,10 @@ function pintarExpediente() {
       need.appendChild(el);
     });
   } else {
+    // Aqui no hay un archivo concreto sino varios por crear, asi que el
+    // icono no lleva pestaña de extension: va el signo suelto.
     $("icono").textContent = "+";
-    $("icono").className = "icono";
+    $("icono").className = "icono neutro";
     $("doc-name").textContent = `${r.datos.cuantos} archivos por crear`;
     $("doc-mode").innerHTML = `<b>umask</b> ${aLetras(0o666 & ~actual.mascara, false)}`;
     [["archivo", aLetras(r.datos.arch, false)], ["directorio", aLetras(r.datos.dir, true)]]

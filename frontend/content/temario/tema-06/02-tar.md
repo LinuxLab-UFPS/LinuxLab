@@ -176,6 +176,8 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 
 <!-- SIMULATOR: escritorio-comprimido -->
 
+<!-- ACTIVIDAD: paquete-de-entrega -->
+
 ## Resumen
 
 | Comando | Efecto |

@@ -305,6 +305,56 @@ export function SimulatorCompressionIllustration() {
   )
 }
 
+/**
+ * Simulador de procesos: la ventana del monitor con sus barras de consumo.
+ *
+ * Las barras son de alturas muy distintas y la mas alta va en rojo, que es lo
+ * que el estudiante ve al abrirlo: unos pocos procesos comiendose la maquina
+ * mientras el resto apenas gasta. La tijera de al lado dice que es lo que hay
+ * que hacer con ellos.
+ */
+export function SimulatorProcessesIllustration() {
+  // Alturas del grafico, en orden: dos que se disparan y tres normales.
+  const barras = [
+    { x: 34, alto: 46, gorda: true },
+    { x: 52, alto: 34, gorda: true },
+    { x: 70, alto: 14, gorda: false },
+    { x: 88, alto: 9, gorda: false },
+    { x: 106, alto: 18, gorda: false },
+  ]
+  return (
+    <Svg>
+      {/* la ventana del monitor */}
+      <path d="M20 22 h108 v76 h-108 Z" stroke={LINE} strokeWidth="2" />
+      <path d="M20 34 h108" stroke={BASE} strokeWidth="1.6" />
+      {[27, 34, 41].map((cx) => (
+        <circle key={cx} cx={cx} cy={28} r={2.2} fill={BASE} />
+      ))}
+
+      {/* las barras de consumo, apoyadas en la misma linea */}
+      {barras.map((b) => (
+        <rect
+          key={b.x}
+          x={b.x}
+          y={86 - b.alto}
+          width={11}
+          height={b.alto}
+          rx={2}
+          stroke={b.gorda ? RED : BASE}
+          strokeWidth="2"
+          fill="none"
+        />
+      ))}
+      <path d="M28 86 h94" stroke={BASE} strokeWidth="1.6" opacity="0.6" />
+
+      {/* la tijera: lo que sobra se corta */}
+      <path d="M150 40 l24 34 M174 40 l-24 34" stroke={RED} strokeWidth="2.4" />
+      <circle cx={147} cy={80} r={6} stroke={RED} strokeWidth="2.2" />
+      <circle cx={177} cy={80} r={6} stroke={RED} strokeWidth="2.2" />
+    </Svg>
+  )
+}
+
 /** Simulador de busqueda: una lupa recorre un log y encuentra la linea que
  *  no encaja, y el hallazgo sale por el chat. */
 export function SimulatorSearchIllustration() {

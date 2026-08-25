@@ -32,9 +32,6 @@ export function CopySnippet({ id }: { id: string }) {
         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
         {copied ? "Copiado" : snippet.label}
       </ActionButton>
-      <p className="text-xs text-muted-foreground">
-        No lo verás en pantalla: va directo a tu portapapeles.
-      </p>
     </div>
   )
 }

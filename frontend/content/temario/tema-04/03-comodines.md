@@ -1,8 +1,14 @@
+<!-- VIDEO: video-comodines | Comodines: cuatro naipes para nombrar archivos -->
+
+Aquí verás qué son los comodines y para qué sirven. Lo que viene abajo es la explicación a detalle, con los casos que el video no alcanza a cubrir.
+
 ## Nombrar varios archivos a la vez
 
-Escribir los nombres uno a uno deja de ser viable en cuanto hay unos cuantos archivos. Los **comodines** permiten nombrar varios a la vez por su forma, sin escribir ninguno completo (NDG, 2024).
+Un **comodín** es un carácter que no significa lo que dice, sino "cualquier cosa que encaje aquí". Escribes un patrón con uno de ellos dentro, como `*.txt`, y el shell hace lo siguiente antes de ejecutar nada: mira los nombres del directorio, se queda con los que casan con el patrón y **sustituye el patrón por esa lista**. El comando nunca llega a ver el `*`; recibe ya los nombres, uno por uno, como si los hubieras escrito todos a mano (NDG, 2024).
 
-Los ejemplos de esta lección trabajan sobre un directorio con estos archivos:
+Eso tiene una consecuencia que conviene entender de una vez: los comodines **no son una característica de `ls` ni de `cp`, sino del shell que los invoca**, así que funcionan igual en todos los comandos por igual.
+
+El video reparte los cuatro sobre un directorio de prueba que sigue siendo la mesa de todos los ejemplos de esta lección:
 
 ```bash
 ls
@@ -12,29 +18,9 @@ ls
 datos1.csv  datos2.csv  datos3.csv  foto.png  fotos.png  informe.txt  notas.txt  tareas.txt
 ```
 
-## El asterisco
+## El asterisco en otras posiciones
 
-El asterisco `*` sustituye cualquier cantidad de caracteres, incluida ninguna:
-
-```bash
-ls *.txt
-```
-
-```
-informe.txt  notas.txt  tareas.txt
-```
-
-Puede ir en cualquier posición del patrón. Al final del patrón selecciona por el comienzo del nombre:
-
-```bash
-ls datos*
-```
-
-```
-datos1.csv  datos2.csv  datos3.csv
-```
-
-Y puede aparecer más de una vez en el mismo patrón:
+En el video el asterisco cerró el patrón (`*.txt`) y lo abrió (`datos*`). Nada lo obliga a quedarse en un extremo, ni a aparecer una sola vez. El patrón `*o*.png` pide nombres que terminen en `.png` y contengan una `o` en cualquier parte:
 
 ```bash
 ls *o*.png
@@ -44,45 +30,30 @@ ls *o*.png
 foto.png  fotos.png
 ```
 
-## El signo de interrogación
-
-El signo de interrogación `?` sustituye exactamente un carácter. Ni ninguno ni dos:
+Ese mismo gesto es el que se usa para operar grupos completos. Un directorio nuevo más un asterisco basta para respaldar los tres CSV sin escribir ningún nombre completo:
 
 ```bash
-ls foto?.png
+mkdir respaldo
+cp datos*.csv respaldo/
 ```
 
-```
-fotos.png
-```
+## Exigir una cantidad exacta de caracteres
 
-Con `foto?.png` queda fuera `foto.png`, porque ahí no hay ningún carácter entre `foto` y el punto. Esa es la diferencia con el asterisco, que habría aceptado los dos.
-
-Se pueden encadenar varios para exigir una cantidad exacta de caracteres. `datos?.csv` pide uno solo después de `datos`, mientras que `datos??.csv` pediría dos y no encontraría nada.
-
-## Los corchetes
-
-Los corchetes `[ ]` también sustituyen un solo carácter, pero eligiendo de una lista concreta:
+La interrogación se puede encadenar para fijar cantidades exactas. `datos?.csv` pide un solo carácter después de `datos`:
 
 ```bash
-ls datos[13].csv
+ls datos?.csv
 ```
 
 ```
-datos1.csv  datos3.csv
+datos1.csv  datos2.csv  datos3.csv
 ```
 
-Dentro de los corchetes se escribe un rango con un guion en lugar de enumerar cada carácter:
+Mientras que `datos??.csv` exigiría dos y no encontraría nada, porque después de `datos` solo hay un carácter antes del punto.
 
-```bash
-ls datos[1-2].csv
-```
+## Un dígito en cualquier parte
 
-```
-datos1.csv  datos2.csv
-```
-
-Combinado con asteriscos, un rango pregunta por la presencia de cierto tipo de carácter en cualquier parte del nombre. El patrón `*[0-9]*` selecciona todo lo que contenga al menos un dígito:
+Combinado con asteriscos, el rango pregunta por la presencia de cierto tipo de carácter en cualquier parte del nombre. El patrón `*[0-9]*` selecciona todo lo que contenga al menos un dígito:
 
 ```bash
 ls *[0-9]*
@@ -93,20 +64,6 @@ datos1.csv  datos2.csv  datos3.csv
 ```
 
 El orden de los rangos es el de la tabla ASCII, así que van de menor a mayor. Un rango invertido como `[3-1]` no da error, simplemente no coincide con nada.
-
-## Negar con !
-
-Un signo de admiración justo después del corchete de apertura invierte la selección y deja pasar todo lo que **no** esté en la lista:
-
-```bash
-ls [!df]*
-```
-
-```
-informe.txt  notas.txt  tareas.txt
-```
-
-Quedaron fuera los que empiezan por `d` y por `f`. La negación también admite rangos, de modo que `[!0-9]*` selecciona los nombres que no empiezan por un dígito.
 
 ## Quién expande el comodín
 
@@ -132,7 +89,7 @@ echo datos[3-1].csv
 datos[3-1].csv
 ```
 
-Y de ahí sale también que los comodines funcionen igual en cualquier comando. No son una característica de `ls` ni de `cp`, sino del shell que los invoca, así que sirven en todos por igual.
+Es la misma regla del principio vista desde el otro lado: si no hay nada que sustituir, el patrón viaja intacto hasta el comando.
 
 ## Los ocultos no entran
 
@@ -146,23 +103,27 @@ echo *
 datos1.csv datos2.csv datos3.csv foto.png fotos.png informe.txt notas.txt tareas.txt
 ```
 
-Ninguno de los dos aparece, y tampoco los alcanzaría un `rm *`. Para llegar a ellos el patrón tiene que empezar por el punto:
+Ninguno de los dos aparece, y tampoco los alcanzaría un `rm *`. Para llegar a ellos el patrón tiene que empezar por el punto. Pero ese punto coincide también consigo mismo, así que el patrón `.*` arrastra además `.` y `..`, que son el propio directorio y su superior:
 
 ```bash
 echo .*
 ```
 
 ```
-.bashrc .perfil
+. .. .bashrc .perfil
 ```
 
-En versiones antiguas de Bash ese patrón arrastraba además `.` y `..`, que son el propio directorio y el superior, y el resultado salía mal. La forma que no falla combina el punto con la negación ya vista:
+La forma que no falla combina el punto con la negación ya vista:
 
 ```bash
 echo .[!.]*
 ```
 
-Se lee como un punto seguido de algo que no sea otro punto, de modo que `.` y `..` quedan descartados.
+Se lee como un punto seguido de algo que no sea otro punto, de modo que `.` y `..` quedan descartados:
+
+```
+.bashrc .perfil
+```
 
 ## Comprobar antes de borrar
 
@@ -182,13 +143,12 @@ Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el co
 
 | Patrón | Coincide con |
 |---|---|
-| `*` | Cualquier cantidad de caracteres, incluida ninguna |
+| `*` | Cualquier cantidad de caracteres |
 | `?` | Exactamente un carácter |
 | `[abc]` | Un carácter, de los de la lista |
 | `[a-z]` | Un carácter, dentro del rango |
 | `[!abc]` | Un carácter, ninguno de los de la lista |
-| `*.txt` | Todo lo que termine en `.txt` |
-| `*[0-9]*` | Todo lo que contenga un dígito |
+| `*texto*` | Todo lo que contenga `texto` |
 | `.[!.]*` | Los archivos ocultos, que `*` no alcanza |
 
 ---

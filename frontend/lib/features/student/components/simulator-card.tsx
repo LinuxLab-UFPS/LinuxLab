@@ -4,6 +4,7 @@ import { ContentCard } from "@/lib/features/student/components/content-card"
 import {
   SimulatorCompressionIllustration,
   SimulatorPermissionsIllustration,
+  SimulatorProcessesIllustration,
   SimulatorSearchIllustration,
   SimulatorTreeIllustration,
   SimulatorViIllustration,
@@ -17,6 +18,7 @@ const ILLUSTRATION: Record<string, ComponentType> = {
   "filtro-de-permisos": SimulatorPermissionsIllustration,
   "escritorio-comprimido": SimulatorCompressionIllustration,
   "despliegue-del-viernes": SimulatorSearchIllustration,
+  "monitor-del-sistema": SimulatorProcessesIllustration,
 }
 
 /** A simulator as a ContentCard, used on the simulators page and embedded

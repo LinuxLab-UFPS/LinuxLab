@@ -17,10 +17,10 @@ export const syllabus: Topic[] = [
     number: 1,
     slug: "introduccion-a-linux",
     title: "Introducción a Linux",
-    description: "Historia, las partes del sistema, el Kernel, entorno de ventanas e instalación.",
+    description: "Historia, las partes esenciales, el Kernel, entorno de ventanas e instalación.",
     subTopics: [
       { number: 1, title: "Linux: Dónde todo empezó" },
-      { number: 2, title: "Las partes del sistema" },
+      { number: 2, title: "Las partes esenciales" },
       { number: 3, title: "El Kernel" },
       { number: 4, title: "Entorno de ventanas" },
       { number: 5, title: "Instalación" },
@@ -48,7 +48,6 @@ export const syllabus: Topic[] = [
       { number: 1, title: "El sistema de archivos" },
       { number: 2, title: "Navegación esencial" },
       { number: 3, title: "Operaciones con directorios" },
-      { number: 4, title: "Práctica: crea tu estructura" },
     ],
   },
   {
@@ -74,7 +73,7 @@ export const syllabus: Topic[] = [
     subTopics: [
       { number: 1, title: "Dueño, grupo y permisos" },
       { number: 2, title: "Notación octal" },
-      { number: 3, title: "Cambiar permisos con chmod" },
+      { number: 3, title: "Chmod" },
       { number: 4, title: "Permisos sobre directorios" },
       { number: 5, title: "Permisos por defecto" },
     ],
@@ -132,7 +131,13 @@ export const syllabus: Topic[] = [
     slug: "shell-scripting",
     title: "Shell scripting",
     description: "Variables, condicionales, ciclos y funciones en Bash.",
-    subTopics: [],
+    subTopics: [
+      { number: 1, title: "Tu primer script" },
+      { number: 2, title: "Variables y argumentos" },
+      { number: 3, title: "Tomar decisiones" },
+      { number: 4, title: "Repetir trabajo" },
+      { number: 5, title: "Funciones y un script completo" },
+    ],
   },
 ]
 

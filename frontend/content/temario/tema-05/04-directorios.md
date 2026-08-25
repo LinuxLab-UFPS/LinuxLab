@@ -118,7 +118,7 @@ cat d/uno/dos/tres/final.txt
 dato
 ```
 
-Esto explica cómo funciona el aislamiento de este laboratorio. La ruta hasta la carpeta personal de cada estudiante atraviesa varios directorios que conceden `x` a todo el mundo pero no `r`: se puede pasar por ellos sin poder listar quién más hay. El último tramo, la carpeta propia, cierra el paso a los demás. Por eso ningún compañero llega a esos archivos, independientemente de los permisos que tengan los archivos en sí.
+Así está montado el aislamiento de este laboratorio. Los directorios por los que se pasa para llegar a tu carpeta dan `x` a todo el mundo pero no `r`: se cruzan sin poder listar quién más hay dentro. Y tu carpeta, al final del camino, no da nada a los demás. Por eso ningún compañero llega a tus archivos, tengan los permisos que tengan.
 
 ## Borrar depende del directorio, no del archivo
 

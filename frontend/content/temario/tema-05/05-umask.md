@@ -1,5 +1,3 @@
-<!-- VIDEO: video-permisos-linux | Permisos: de dónde salen los números de chmod y umask -->
-
 ## Permisos por defecto
 
 Los archivos creados hasta ahora nunca han llevado los mismos permisos que un directorio recién hecho, y nadie ha elegido ninguno de los dos. Eso lo decide la `umask` (Free Software Foundation, 2025), un valor que cada sesión arrastra y que determina con qué permisos se crea todo lo nuevo.
@@ -44,7 +42,7 @@ mkdir u1
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:22 u1
 ```
 
-Los dos máximos son distintos por una razón deliberada: un archivo nunca se crea con permiso de ejecución. Un documento de texto o una imagen no son programas, y marcarlos como ejecutables por defecto sería una puerta abierta a que cualquier cosa descargada pudiera correrse. La ejecución hay que concederla a mano con `chmod`, que es justo lo que se hizo en el subtema de `chmod` con `u+x`.
+Los dos máximos son distintos por una razón deliberada: un archivo nunca se crea con permiso de ejecución. Un documento de texto o una imagen no son programas, y marcarlos como ejecutables por defecto sería una puerta abierta a que cualquier cosa descargada pudiera correrse. La ejecución hay que concederla a mano con `chmod`, que es justo lo que se hizo en su tema con `u+x`.
 
 ## Cambiarla
 

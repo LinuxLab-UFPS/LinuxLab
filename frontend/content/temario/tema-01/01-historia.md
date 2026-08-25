@@ -4,7 +4,7 @@ El sistema operativo es el intermediario entre el hardware del computador y la p
 
 ## ¿Qué es Linux y dónde está?
 
-Linux es un sistema operativo, y es probable que hoy hayas usado varios sin darte cuenta. Cada búsqueda en internet, cada video en el celular y cada pedido en línea pasan por máquinas que corren Linux:
+Linux es un sistema operativo, y es probable que hoy hayas usado varios sin darte cuenta. Cada búsqueda en la web, cada video en el celular y cada pedido en línea pasan por máquinas que corren Linux:
 
 - Más del 90% de los servidores web del mundo (W3Techs, 2024).
 - Las 500 supercomputadoras más potentes del planeta, sin excepción (TOP500, 2024).
@@ -12,6 +12,10 @@ Linux es un sistema operativo, y es probable que hoy hayas usado varios sin dart
 - La infraestructura de nube detrás de AWS, Google Cloud y Azure.
 
 Linux empezó como el proyecto personal de un estudiante universitario y hoy sostiene buena parte de la infraestructura tecnológica global, construido de forma voluntaria por programadores repartidos por el mundo (NDG, 2024).
+
+<!-- IMAGE: tux-evolution.png | Las tres versiones de Tux, la mascota de Linux -->
+
+Ese pingüino es **Tux**, la mascota del proyecto desde 1996, cuando Larry Ewing lo dibujó a partir de una idea del propio Torvalds. Ahí está en sus tres versiones: el dibujo original y los dos redibujados que vinieron después. Aparece en el arranque de muchos sistemas y en la documentación oficial.
 
 ## Los orígenes: Unix
 
@@ -27,9 +31,13 @@ Unix también introdujo conceptos que hoy se dan por sentados y que reaparecen a
 
 Con el tiempo, distintas organizaciones modificaron y ramificaron Unix hasta producir múltiples variantes. Hoy UNIX es a la vez una marca registrada y una especificación de The Open Group, y solo el software que supera su programa de certificación recibe licencia para usar el nombre (The Open Group, 2024).
 
+<!-- ILLUSTRATION: unix-arbol -->
+
+De ese tronco salieron las dos grandes ramas de las que desciende casi todo lo demás: **BSD**, nacida en la Universidad de Berkeley, y **System V**, la línea comercial de AT&T. macOS viene de la primera y Solaris de la segunda. Linux cuelga aparte y con línea discontinua por un motivo que se aclara enseguida.
+
 ## El salto a Linux: Linus Torvalds (1991)
 
-En 1991, **Linus Torvalds**, estudiante de ciencias de la computación en la Universidad de Helsinki, estaba frustrado con MINIX, un sistema tipo Unix diseñado para enseñar, con una licencia que limitaba lo que se podía hacer con él y cuyo autor no quería convertirlo en un sistema operativo completo. Decidió escribir su propio Kernel y el 25 de agosto lo anunció en un grupo de noticias:
+En 1991, **Linus Torvalds**, estudiante de ciencias de la computación en la Universidad de Helsinki, estaba frustrado con MINIX, un sistema tipo Unix diseñado para enseñar, con una licencia que limitaba lo que se podía hacer con él y cuyo autor no quería convertirlo en un sistema operativo completo. Es gracias a esto que decidió escribir su propio Kernel, y el 25 de agosto lo anunció en `comp.os.minix`, el grupo de noticias donde se reunían los usuarios del propio MINIX. Los grupos de noticias eran los foros de la época: tableros públicos por tema donde cualquiera dejaba un mensaje y el resto respondía. Torvalds presentó su Kernel en la casa del sistema que lo tenía harto:
 
 ```
 Hello everybody out there using minix -
@@ -39,11 +47,13 @@ and professional like gnu) for 386(486) AT clones.
 
 Ese "hobby" es hoy el Kernel más usado del mundo, y lo que marcó la diferencia fue la licencia. Torvalds publicó el código fuente permitiendo que cualquiera lo estudiara, modificara y redistribuyera, así que programadores de todo el mundo empezaron a corregir errores y añadir funcionalidades sobre el trabajo de los demás.
 
-Aun así, Linux no es UNIX, sino **UNIX-like**. Cumple los requisitos de la especificación y se comporta de manera similar, pero nunca ha pasado la certificación de The Open Group.
+Aun así, Linux no es UNIX, sino **UNIX-like**. Torvalds no partió del código de nadie: escribió el suyo desde cero mirando cómo se comportaba MINIX. Por eso cumple los requisitos de la especificación y responde igual, pero no hereda una sola línea, y nunca ha pasado la certificación de The Open Group. Esa es la línea discontinua del árbol de arriba.
+
+<!-- IMAGE: linus-torvalds.jpg | Linus Torvalds en su escritorio -->
 
 ## El proyecto GNU: las herramientas que completaron Linux
 
-Un Kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio Kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix:
+Un Kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan editores, compiladores, un intérprete de comandos (el programa que lee lo que se escribe, lo entiende como una orden y la manda a ejecutar) y utilidades del sistema. Esas piezas ya existían. En 1983, **Richard Stallman** había lanzado el proyecto GNU con la ambición de construir un sistema operativo completamente libre. Nunca terminó su propio Kernel, pero sí resultó mucho más eficaz produciendo las herramientas que acompañan a un sistema tipo Unix:
 
 - **GCC:** el compilador de C que convierte código fuente en programas ejecutables.
 - **Bash:** el intérprete de comandos que usarás en este laboratorio.
@@ -51,6 +61,8 @@ Un Kernel por sí solo no alcanza para tener un sistema operativo usable. Faltan
 - **Coreutils:** las utilidades básicas del sistema (`ls`, `cp`, `mv`, `cat` y decenas más).
 
 Como el código de GNU era libre, los programadores de Linux pudieron incorporar esas herramientas y completar el sistema. A esa combinación se le llama técnicamente **GNU/Linux**, y es a lo que se refiere casi todo el mundo cuando dice simplemente "Linux", aunque el nombre a secas designa solo el Kernel.
+
+Nadie descarga el Kernel y las herramientas por separado para armarlas a mano. Quien las empaqueta juntas, con un instalador y unas decisiones ya tomadas, es una **distribución**: Ubuntu, Fedora, Debian y Arch son distribuciones distintas del mismo Kernel. El último tema entra en ellas.
 
 ---
 

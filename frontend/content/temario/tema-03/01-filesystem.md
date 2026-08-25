@@ -1,3 +1,7 @@
+Así está organizado por dentro cualquier sistema Linux, desde un portátil hasta el servidor más grande:
+
+<!-- FS-TREE -->
+
 ## Todo es un archivo
 
 En Linux, todo se representa como un archivo: los programas, los dispositivos de hardware, las conexiones de red. Los directorios son un tipo especial de archivo cuya función es contener a otros archivos. Esta idea parece abstracta al principio, pero explica por qué en Linux todo se manipula de la misma manera desde la terminal.
@@ -5,8 +9,6 @@ En Linux, todo se representa como un archivo: los programas, los dispositivos de
 ## La jerarquía del sistema de archivos
 
 El sistema de archivos de Linux tiene un único punto de partida llamado directorio raíz, representado por el carácter `/`. A partir de ahí, todos los directorios se ramifican hacia abajo formando una jerarquía. A diferencia de Windows, en Linux no existen letras de unidad como `C:\` o `D:\`. Cada dispositivo físico, incluyendo discos, memorias USB y particiones, se integra dentro de esta misma jerarquía bajo un directorio (NDG, 2024).
-
-<!-- FS-TREE -->
 
 Para ver qué contiene el directorio raíz:
 
@@ -18,7 +20,7 @@ ls /
 bin   boot  dev  etc  home  lib  lib64  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
 ```
 
-Cada directorio tiene una función definida por el estándar FHS (The Linux Foundation, 2015). Algunos de los más relevantes:
+Cada directorio tiene una función definida por el estándar FHS (The Linux Foundation, 2015). Algunos de los más relevantes contienen:
 
 - `/bin` Comandos esenciales disponibles para todos los usuarios
 - `/boot` Archivos necesarios para arrancar el sistema
