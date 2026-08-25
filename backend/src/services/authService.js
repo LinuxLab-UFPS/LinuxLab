@@ -45,9 +45,12 @@ async function loginWithIdToken({ idToken, req }) {
     throw new AppError("Error al iniciar sesión", 500, "INTERNAL_ERROR")
   }
 
-  const { email, uid } = decoded
+  const { email, uid, email_verified } = decoded
   if (!email) {
     throw new AppError("Se requiere un correo electrónico", 400, "VALIDATION_ERROR")
+  }
+  if (email_verified === false) {
+    throw new AppError("Debes verificar tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.", 403, "FORBIDDEN")
   }
 
   let user = await prisma.user.findUnique({
@@ -56,16 +59,29 @@ async function loginWithIdToken({ idToken, req }) {
   })
 
   if (!user) {
-    throw new AppError("El usuario no está registrado en la plataforma", 401, "UNAUTHORIZED")
+    const displayName = (decoded.name || decoded.email?.split("@")[0] || "Estudiante").trim()
+    const { createLinuxAccountWithUniqueUsername } = require("../utils/linuxUsername")
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: displayName,
+        role: "student",
+        active: true,
+        google_id: uid,
+      },
+      include: USER_INCLUDE,
+    })
+    try {
+      await createLinuxAccountWithUniqueUsername(prisma, user.id, email)
+      user = await prisma.user.findUnique({ where: { id: user.id }, include: USER_INCLUDE })
+    } catch {}
   }
 
   if (!user.active) {
     throw new AppError("Cuenta desactivada. Contacta al administrador.", 403, "FORBIDDEN")
   }
 
-  if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
-    throw new AppError("No te encuentras registrado en ningún grupo de laboratorio", 403, "FORBIDDEN")
-  }
+  const hasEnrollment = user.role !== "student" || (await enrollmentService.hasActiveEnrollment(user.id))
 
   const updates = { last_login: new Date() }
   if (!user.google_id) {
@@ -80,19 +96,19 @@ async function loginWithIdToken({ idToken, req }) {
   // Bitácora: inicio de sesión. Para los estudiantes se liga el grupo activo
   // (el docente audita las sesiones de su curso); para docentes y admin no.
   const { ip, userAgent, actorRole } = auditService.requestMeta(req)
-  const groupId = user.role === "student" ? await enrollmentService.getActiveGroupId(user.id) : null
+  const groupId = hasEnrollment && user.role === "student" ? await enrollmentService.getActiveGroupId(user.id) : null
   await auditService.audit({
     userId: user.id,
     groupId,
     eventType: "auth_login",
     target: user.email,
-    metadata: { email: user.email },
+    metadata: { email: user.email, hasEnrollment },
     actorRole: actorRole ?? user.role,
     ip,
     userAgent,
   })
 
-  return user
+  return { ...user, hasEnrollment }
 }
 
 /** Devuelve el usuario de la sesion, con las mismas reglas que el login. */
@@ -107,12 +123,8 @@ async function getSessionUser(userId) {
   if (!user.active) {
     throw new AppError("Cuenta desactivada", 403, "FORBIDDEN")
   }
-  // Misma regla que en el login: una sesion JWT dura 7 dias y puede seguir
-  // viva despues de que se archive el grupo del estudiante.
-  if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
-    throw new AppError("No te encuentras registrado en ningún grupo de laboratorio", 403, "FORBIDDEN")
-  }
-  return user
+  const hasEnrollment = user.role !== "student" || (await enrollmentService.hasActiveEnrollment(user.id))
+  return { ...user, hasEnrollment }
 }
 
 /** Firma la cookie de sesion del usuario. */

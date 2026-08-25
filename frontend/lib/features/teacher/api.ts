@@ -100,7 +100,7 @@ export const teacherApi = {
     }),
   getStudentActivityDetail: (groupId: string, activityId: string, studentId: string) =>
     apiFetch<StudentActivityDetail>(
-      `/api/groups/${groupId}/activities/${activityId}/students/${studentId}`,
+      `/api/groups/${groupId}/activities/${activityId}/estudiantes/${studentId}`,
     ),
   submitActivity: (activityId: string) =>
     apiFetch<void>(`/api/activities/${activityId}/submit`, { method: "POST" }),
@@ -110,13 +110,13 @@ export const teacherApi = {
   listEnrollments: (groupId: string) =>
     apiFetch<Enrollment[]>(`/api/groups/${groupId}/enrollments`),
   addStudent: (groupId: string, input: Omit<EnrollmentStudent, "id">) =>
-    apiFetch<EnrollmentStudent>(`/api/groups/${groupId}/students`, {
+    apiFetch<EnrollmentStudent>(`/api/groups/${groupId}/estudiantes`, {
       method: "POST",
       body: JSON.stringify(input),
     }),
   importStudentsCsv: async (groupId: string, file: File) => {
     const text = await file.text()
-    const res = await fetch(`${env.backendUrl}/api/groups/${groupId}/students/csv`, {
+    const res = await fetch(`${env.backendUrl}/api/groups/${groupId}/estudiantes/csv`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "text/plain" },
@@ -134,7 +134,7 @@ export const teacherApi = {
     }>
   },
   listStudents: (groupId: string) =>
-    apiFetch<EnrollmentStudent[]>(`/api/groups/${groupId}/students`),
+    apiFetch<EnrollmentStudent[]>(`/api/groups/${groupId}/estudiantes`),
   listProvisioningJobs: (groupId: string) =>
     apiFetch<ProvisioningJobSummary[]>(`/api/groups/${groupId}/provisioning-jobs`),
   getProvisioningStatus: () =>
@@ -157,13 +157,13 @@ export const teacherApi = {
   },
 
   listGroupAuditLog: (groupId: string, limit = 10) =>
-    apiFetch<AuditEntry[]>(`/api/audit/groups/${groupId}/recent?limit=${limit}`),
+    apiFetch<AuditEntry[]>(`/api/audit/grupos/${groupId}/recent?limit=${limit}`),
 
   getGroupProgress: (groupId: string) =>
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),
   getStudentGroupDetail: (groupId: string, studentId: string) =>
-    apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/students/${studentId}`),
+    apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/estudiantes/${studentId}`),
   getGradebook: (groupId: string) => apiFetch<Gradebook>(`/api/groups/${groupId}/gradebook`),
   getStudentPerformance: (groupId: string, studentId: string) =>
-    apiFetch<StudentPerformance>(`/api/groups/${groupId}/gradebook/students/${studentId}`),
+    apiFetch<StudentPerformance>(`/api/groups/${groupId}/gradebook/estudiantes/${studentId}`),
 }

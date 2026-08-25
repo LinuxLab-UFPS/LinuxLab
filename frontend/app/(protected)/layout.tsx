@@ -8,7 +8,7 @@ export default async function ProtectedLayout({
   children: React.ReactNode
 }) {
   const session = await getServerSession()
-  if (!session) redirect("/")
+  if (!session) redirect("/login")
 
   return <Shell role={session.user.role}>{children}</Shell>
 }

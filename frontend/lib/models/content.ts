@@ -42,4 +42,5 @@ export interface RouteRule {
   path: string
   roles: Role[]
   exact?: boolean
+  requiresEnrollment?: boolean
 }

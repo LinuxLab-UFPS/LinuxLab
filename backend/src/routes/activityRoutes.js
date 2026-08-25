@@ -1,6 +1,7 @@
 const express = require("express")
 const rateLimit = require("express-rate-limit")
 const authMiddleware = require("../middleware/authMiddleware")
+const requireEnrollment = require("../middleware/requireEnrollment")
 const requireRoles = require("../middleware/requireRoles")
 const activityController = require("../controllers/activityController")
 
@@ -20,9 +21,9 @@ const evalLimiter = rateLimit({
 // pide "evalua esta actividad", no "aprueba a este usuario".
 // El catalogo va ANTES de /:slug para que "catalog" no se coma el slug.
 router.get("/catalog", requireRoles("teacher", "admin"), activityController.getCatalog)
-router.get("/mine/status", authMiddleware, activityController.getMyStatus)
-router.get("/:slug", authMiddleware, activityController.getActivity)
-router.post("/:slug/check", authMiddleware, evalLimiter, activityController.checkActivity)
-router.post("/:slug/reset", authMiddleware, evalLimiter, activityController.resetActivity)
+router.get("/mine/status", authMiddleware, requireEnrollment, activityController.getMyStatus)
+router.get("/:slug", authMiddleware, requireEnrollment, activityController.getActivity)
+router.post("/:slug/check", authMiddleware, requireEnrollment, evalLimiter, activityController.checkActivity)
+router.post("/:slug/reset", authMiddleware, requireEnrollment, evalLimiter, activityController.resetActivity)
 
 module.exports = router

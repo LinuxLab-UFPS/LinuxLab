@@ -66,7 +66,7 @@ export function SiteHeader({
     <header className="h-16 shrink-0 border-b border-white/10 bg-[#0a0a0a] text-white">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-4 px-4 sm:px-6">
         {/* Logo */}
-        <Link href="/home" className="shrink-0 text-xl font-extrabold tracking-tight">
+        <Link href="/inicio" className="shrink-0 text-xl font-extrabold tracking-tight">
           <span className="text-primary [text-shadow:0_0_18px_rgba(196,30,58,0.55)]">Linux</span>
           <span className="text-white">Lab</span>
         </Link>
@@ -85,7 +85,7 @@ export function SiteHeader({
           </Link>
 
           <NavDropdown
-            href="/activities"
+            href="/actividades"
             label="Actividades"
             icon={Target}
             itemIcon={Target}
@@ -98,7 +98,7 @@ export function SiteHeader({
           />
 
           <NavDropdown
-            href="/simulators"
+            href="/simuladores"
             label="Simuladores"
             icon={MonitorPlay}
             itemIcon={FolderTree}
@@ -149,13 +149,13 @@ export function SiteHeader({
               {/* El grupo es del estudiante, no del temario: vive aquí y no en
                   la barra, que es para el contenido del curso. */}
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/mi-grupo">
+                <Link href="/estudiante/grupo">
                   <Users className="mr-2 h-4 w-4" />
                   Mi Grupo
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/mis-calificaciones">
+                <Link href="/estudiante/calificaciones">
                   <BarChart3 className="mr-2 h-4 w-4" />
                   Mis Calificaciones
                 </Link>
