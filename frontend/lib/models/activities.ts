@@ -91,6 +91,8 @@ export interface ManualSubmission {
 export interface Activity {
   id: string
   title: string
+  /** Solo las del curso lo traen; las del docente nacen sin slug. */
+  slug?: string | null
   topicNumber: number
   source: ActivitySource
   difficulty?: Difficulty

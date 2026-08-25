@@ -87,7 +87,7 @@ function averageValueOf(cell) {
 async function loadGroupData(groupId) {
   const activities = await prisma.groupActivity.findMany({
     where: { group_id: groupId, enabled: true },
-    include: { definition: { select: { topic_number: true } } },
+    include: { definition: { select: { topic_number: true, source: true, difficulty: true } } },
     orderBy: { created_at: "asc" },
   })
 
@@ -196,6 +196,8 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       topicNumber: ga.definition?.topic_number ?? null,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+      source: ga.definition?.source === "bank" ? "bank" : "teacher",
+      difficulty: ga.definition?.difficulty ?? null,
       dueAt: ga.due_at?.toISOString() ?? null,
       enabled: ga.enabled,
       maxScore: ga.max_score,
@@ -279,6 +281,8 @@ function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMa
       topicNumber,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+      source: ga.definition?.source === "bank" ? "bank" : "teacher",
+      difficulty: ga.definition?.difficulty ?? null,
       score: cell.score,
       status: cell.status,
       attempts: cell.attempts,

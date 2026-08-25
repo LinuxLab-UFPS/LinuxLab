@@ -112,6 +112,10 @@ export interface GradebookActivity {
   topicNumber: number | null
   evaluationType: "manual" | "automatic"
   activityType: "workshop" | "quiz"
+  /** De donde sale: "bank" son las del curso, "teacher" las que arma el docente. */
+  source: "bank" | "teacher"
+  /** Solo las del curso la traen; clasifica en lugar de quiz/taller. */
+  difficulty: "basic" | "intermediate" | "advanced" | null
   dueAt: string | null
   enabled: boolean
   maxScore: number
@@ -141,6 +145,10 @@ export interface GradeSeriesPoint {
   topicNumber: number
   evaluationType: "manual" | "automatic"
   activityType: "workshop" | "quiz"
+  /** De donde sale: "bank" son las del curso, "teacher" las que arma el docente. */
+  source: "bank" | "teacher"
+  /** Solo las del curso la traen; clasifica en lugar de quiz/taller. */
+  difficulty: "basic" | "intermediate" | "advanced" | null
   score: number | null
   status: GradebookCellStatus
   attempts: number

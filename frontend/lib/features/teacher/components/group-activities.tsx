@@ -20,6 +20,8 @@ import { setActivityEnabled } from "@/lib/features/teacher/data"
 import { queryKeys } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
+import { Tag } from "@shared/components/tag"
+import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import type { Activity } from "@/lib/features/teacher/types"
 
 const PAGE_SIZE = 10
@@ -43,10 +45,14 @@ export function GroupActivities({
   const queryClient = useQueryClient()
 
   const q = query.trim().toLowerCase()
+  // Filtrar por quiz o taller solo puede devolver actividades del docente: las
+  // del curso no se clasifican asi, y colarlas en el resultado seria decir que
+  // son talleres cuando nadie lo decidio.
   const filtered = activities.filter(
     (a) =>
       (!q || a.title.toLowerCase().includes(q)) &&
-      (activityTypeFilter === "all" || a.activityType === activityTypeFilter) &&
+      (activityTypeFilter === "all" ||
+        (a.source !== "bank" && a.activityType === activityTypeFilter)) &&
       (evalFilter === "all" || (a.evaluationType === "atomic" ? "automatic" : a.evaluationType) === evalFilter),
   )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -119,8 +125,23 @@ export function GroupActivities({
                   {getTopic(activity.topicNumber)?.title ??
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                 </TableCell>
+                {/* Las del curso llevan dificultad y las del docente quiz o
+                    taller: son dos formas de clasificar que no se mezclan, así
+                    que la columna pinta la que corresponde a cada fila. */}
                 <TableCell className="text-sm text-muted-foreground">
-                  {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+                  {activity.source === "bank" ? (
+                    <Tag
+                      tone={
+                        activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"
+                      }
+                    >
+                      {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
+                    </Tag>
+                  ) : (
+                    <Tag tone="neutral">
+                      {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+                    </Tag>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {activity.evaluationType === "manual" ? "Manual" : "Automática"}

@@ -134,6 +134,71 @@ function validateActivityInput(body) {
 }
 
 /**
+ * Publica en un grupo las actividades que trae la plataforma.
+ *
+ * Una actividad del banco no puede tener nota mientras no exista como
+ * publicacion: el libro de calificaciones busca los intentos por
+ * `group_activity_id`, y sin publicacion quedan sueltos y no los ve nadie.
+ * Publicarlas mete las del curso en el mismo circuito que las del docente sin
+ * tocar el evaluador ni los enunciados.
+ *
+ * Es idempotente: se salta las que ya estan publicadas, asi que sirve igual al
+ * crear un grupo que para rellenar los que ya existian.
+ */
+async function publishBankActivities(groupId, tx = prisma) {
+  const definiciones = await tx.activityDefinition.findMany({
+    where: { source: "bank", kind: "activity", active: true, slug: { not: null } },
+    include: { checks: { orderBy: { position: "asc" } } },
+    orderBy: [{ topic_number: "asc" }, { slug: "asc" }],
+  })
+  if (definiciones.length === 0) return 0
+
+  const publicadas = await tx.groupActivity.findMany({
+    where: {
+      group_id: groupId,
+      activity_definition_id: { in: definiciones.map((d) => d.id) },
+    },
+    select: { activity_definition_id: true },
+  })
+  const yaEsta = new Set(publicadas.map((p) => p.activity_definition_id))
+
+  let creadas = 0
+  for (const def of definiciones) {
+    if (yaEsta.has(def.id)) continue
+    await tx.groupActivity.create({
+      data: {
+        group_id: groupId,
+        activity_definition_id: def.id,
+        title: def.title,
+        instructions: def.instructions ?? "",
+        activity_type: def.activity_type,
+        evaluation_type: def.evaluation_type,
+        max_score: def.max_score,
+        // El snapshot de aserciones es el mismo mecanismo que usa el docente.
+        // Las del banco llevan rutas absolutas (`/home/$usuario/...`), que
+        // `resolveRuta` respeta tal cual, asi que la carpeta de trabajo no se
+        // usa para resolver nada: se guarda el slug porque se lee mejor que un
+        // `T-0001` y porque es la carpeta real donde vive la actividad.
+        checks: def.checks.map((c) => ({
+          id: c.id,
+          type: c.type,
+          params: c.params,
+          points: c.points,
+          position: c.position,
+        })),
+        attempt_limit: null,
+        required: true,
+        enabled: true,
+        due_at: null,
+        workdir: def.slug,
+      },
+    })
+    creadas++
+  }
+  return creadas
+}
+
+/**
  * Crea una actividad propia del docente dentro de su grupo (RF-GRP-03).
  *
  * Nace con su definicion (source=teacher: es del docente, no aparece en el
@@ -216,6 +281,11 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
  * (siempre true) no se editan. Y la actividad con intentos o entregas no se
  * toca: cambiar las condiciones con historial seria cambiar las reglas a mitad
  * de partida (la politica queda congelada tras el primer intento).
+ *
+ * Las actividades que trae la plataforma tampoco se editan aqui. El docente
+ * puede habilitarlas o no y ponerles fecha de entrega, pero su enunciado y sus
+ * aserciones son material del curso: si cada grupo pudiera reescribirlas,
+ * dejaria de haber una sola version del curso.
  */
 async function updateGroupActivity({ groupId, activityId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
@@ -224,10 +294,18 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     where: { id: activityId, group_id: group.id },
     include: {
       _count: { select: { attempts: true, submissions: true } },
-      definition: { select: { id: true } },
+      definition: { select: { id: true, source: true } },
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
+
+  if (ga.definition?.source === "bank") {
+    throw new AppError(
+      "Las actividades del curso no se editan; puedes habilitarlas o ponerles fecha de entrega",
+      403,
+      "FORBIDDEN",
+    )
+  }
 
   if (ga._count.attempts > 0 || ga._count.submissions > 0) {
     throw new AppError("La actividad ya tiene intentos o entregas; no se puede editar", 409, "CONFLICT")
@@ -275,7 +353,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
         attempt_limit: attemptLimit,
         due_at: dueAt,
       },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     })
   })
 
@@ -296,7 +374,7 @@ async function listGroupActivities({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const rows = await prisma.groupActivity.findMany({
     where: { group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     orderBy: { created_at: "desc" },
   })
   return rows.map((ga) => serializeGroupActivity(ga, ga.definition))
@@ -306,7 +384,7 @@ async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
   return serializeGroupActivity(ga, ga.definition)
@@ -328,7 +406,7 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
   if (ga.enabled === enabled) return serializeGroupActivity(ga, ga.definition)
@@ -352,7 +430,7 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { enabled },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     })
   })
 
@@ -385,7 +463,7 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true } } },
+    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
@@ -408,7 +486,7 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { due_at: newDueAt },
-      include: { definition: { select: { topic_number: true, difficulty: true } } },
+      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     })
   })
 
@@ -511,6 +589,7 @@ async function getManualSubmissions({ groupId, activityId, teacherUserId, role }
 }
 
 module.exports = {
+  publishBankActivities,
   createGroupActivity,
   updateGroupActivity,
   listGroupActivities,

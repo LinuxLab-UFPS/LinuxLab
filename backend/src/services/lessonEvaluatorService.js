@@ -65,6 +65,32 @@ async function getBySlug(slug) {
 }
 
 /**
+ * La publicacion de esta actividad en el grupo activo del estudiante, si la hay.
+ *
+ * Devuelve null cuando el estudiante no esta matriculado, cuando la actividad
+ * no esta publicada (las comprobaciones del temario nunca lo estan) o cuando el
+ * docente la deshabilito. En los tres casos el intento se guarda igual, solo
+ * que suelto: se pierde la nota, no el trabajo.
+ */
+async function publicacionDelEstudiante(activityDefinitionId, studentUserId) {
+  const matricula = await prisma.enrollment.findFirst({
+    where: { student_id: studentUserId, status: "active", group: { archived: false } },
+    select: { group_id: true },
+    orderBy: { enrolled_at: "asc" },
+  })
+  if (!matricula) return null
+
+  return prisma.groupActivity.findFirst({
+    where: {
+      group_id: matricula.group_id,
+      activity_definition_id: activityDefinitionId,
+      enabled: true,
+    },
+    select: { id: true },
+  })
+}
+
+/**
  * Corre las aserciones de una actividad sobre el entorno del estudiante.
  *
  * Quien evalua es el checker de la imagen, ejecutado CON LA IDENTIDAD del
@@ -137,11 +163,16 @@ async function evaluate({ slug, studentUserId }) {
   // La comprobacion del temario se aprueba con una nota de 60 o mas.
   const passed = score >= 60
 
-  // Los intentos por slug (comprobaciones del temario) no tienen publicacion:
-  // group_activity_id queda NULL y el numero de intento es el siguiente del
-  // estudiante en esta definicion.
+  // Las actividades del curso SI tienen publicacion en el grupo del estudiante,
+  // y el intento tiene que colgar de ella: el libro de calificaciones busca por
+  // `group_activity_id`, asi que sin esto la nota no llegaria ni al panel del
+  // docente ni a "Mis calificaciones". Las comprobaciones del temario
+  // (`kind: "check"`) siguen sin publicacion y quedan en NULL.
+  const publicacion = await publicacionDelEstudiante(activity.id, studentUserId)
+
   await attemptService.recordAttempt({
     activityDefinitionId: activity.id,
+    groupActivityId: publicacion?.id,
     studentUserId,
     passed,
     score,

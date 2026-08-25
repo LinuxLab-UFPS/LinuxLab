@@ -19,6 +19,7 @@ import { CheckCircle2, Clock3, Users, TrendingUp, CalendarX } from "lucide-react
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
 import { MetricCard } from "@shared/components/metric-card"
+import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
 import type { GradebookCellStatus, MyGrades } from "@/lib/models/groups"
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
@@ -212,9 +213,16 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
                     >
                       <td className="px-5 py-2.5 text-left">
                         <span className="block text-sm font-medium">{s.title}</span>
+                        {/* Las del curso se clasifican por dificultad y las del
+                            docente por quiz o taller; nunca por las dos. */}
                         <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
-                          #{s.activityNumber} · {s.activityType === "quiz" ? "Quiz" : "Taller"} ·{" "}
-                          {s.evaluationType === "manual" ? "Revisión docente" : "Auto-evaluada"}
+                          #{s.activityNumber} ·{" "}
+                          {s.source === "bank"
+                            ? (s.difficulty ? DIFFICULTY_LABEL[s.difficulty] : "Curso")
+                            : s.activityType === "quiz"
+                              ? "Quiz"
+                              : "Taller"}{" "}
+                          · {s.evaluationType === "manual" ? "Revisión docente" : "Auto-evaluada"}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 text-center">

@@ -12,6 +12,7 @@ const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 const { finalScore } = require("../utils/finalScore")
 const auditService = require("./auditService")
+const groupActivityService = require("./groupActivityService")
 
 function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
@@ -77,6 +78,11 @@ async function createGroup(args) {
       teacher_username: teacherAccount.linux_username,
     },
   })
+
+  // Las actividades del curso nacen publicadas en el grupo. Sin publicacion no
+  // tendrian nota ni saldrian en el libro de calificaciones, y para el
+  // estudiante no hay diferencia entre estas y las que arma el docente.
+  await groupActivityService.publishBankActivities(group.id, db)
 
   const enrollment = await enrollmentService.enrollMany({
     groupId: group.id,
