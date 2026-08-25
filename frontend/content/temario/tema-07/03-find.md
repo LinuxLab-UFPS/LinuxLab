@@ -1,3 +1,5 @@
+<!-- VIDEO: video-find | Buscar archivos con find -->
+
 ## Buscar archivos con find
 
 `find` busca archivos y directorios. No lee lo que hay dentro: los localiza por su nombre, su tipo, su tamaño o su fecha, y escribe la ruta de cada uno (Free Software Foundation, 2026).

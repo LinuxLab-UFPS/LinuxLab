@@ -1,12 +1,10 @@
-## Cambiar permisos con chmod
+<!-- VIDEO: video-permisos-linux | Permisos con chmod -->
 
 `chmod` (change mode) modifica los permisos de un archivo o un directorio (Free Software Foundation, 2026). Solo puede usarlo el dueño del archivo, o el administrador.
 
-Admite dos formas de escribir el permiso nuevo. La numérica resume cada bloque en un dígito y reescribe los nueve permisos de una vez. La simbólica los nombra con letras, `u+x` o `g-w`, y modifica solo lo que menciona. Conviene manejar las dos, pero la de letras es la que resuelve la mayoría de los casos del día a día y la que se usa cuando el archivo ya tiene permisos que no hay que estropear.
+## Las dos formas de escribirlo
 
-## Forma numérica
-
-Cada bloque de permisos se resume en un dígito octal, según la tabla del subtema anterior. Tres dígitos describen el archivo entero, en el orden de siempre: dueño, grupo, otros.
+Admite dos maneras de expresar el permiso nuevo. La numérica reescribe los nueve permisos de una vez:
 
 ```bash
 chmod 640 notas.txt
@@ -16,21 +14,9 @@ chmod 640 notas.txt
 -rw-r----- 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
 ```
 
-El `6` da lectura y escritura al dueño, el `4` deja al grupo solo leer, y el `0` cierra el archivo a los demás. Para dejarlo privado del todo:
+El `6` da lectura y escritura al dueño, el `4` deja al grupo solo leer, y el `0` cierra el archivo a los demás.
 
-```bash
-chmod 600 notas.txt
-```
-
-```
--rw------- 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
-```
-
-La forma numérica siempre escribe los nueve permisos de golpe. Eso la hace rápida cuando se sabe exactamente cómo debe quedar el archivo, y peligrosa cuando solo se quiere retocar una cosa: lo que no se menciona no se conserva, se borra.
-
-## Forma simbólica
-
-La forma simbólica nombra qué se toca y lo modifica sin alterar el resto (NDG, 2024). Se compone de tres partes:
+La simbólica nombra qué se toca y no altera el resto (NDG, 2024). Se compone de tres partes:
 
 | Parte | Valores |
 |---|---|
@@ -43,10 +29,14 @@ chmod u+x notas.txt
 ```
 
 ```
--rwx------ 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
+-rwxr----- 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
 ```
 
-Añadió ejecución al dueño y no tocó nada más. Se pueden encadenar varios cambios separándolos con comas, sin espacios:
+Añadió ejecución al dueño y no tocó nada más.
+
+## Encadenar varios cambios
+
+Un solo `chmod` puede hacer varias cosas. Los tramos se separan con comas, sin espacios:
 
 ```bash
 chmod g+r,o-r notas.txt
@@ -56,7 +46,7 @@ chmod g+r,o-r notas.txt
 -rwxr----- 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
 ```
 
-Cada tramo separado por comas es un cambio completo e independiente, y dentro de uno se pueden pedir varios permisos a la vez escribiéndolos seguidos. Eso permite dejar un archivo como debe quedar en un solo comando, por muchas cosas que haya que tocar. Partiendo de `bitacora.log` en `640`:
+Cada tramo es un cambio completo e independiente, y dentro de uno se pueden pedir varios permisos seguidos. Partiendo de `bitacora.log` en `640`:
 
 ```bash
 chmod u+wx,g+w bitacora.log
@@ -68,7 +58,19 @@ chmod u+wx,g+w bitacora.log
 
 El primer tramo dio escritura y ejecución al dueño, el segundo dio escritura al grupo, y los demás quedaron como estaban. Merece la pena acostumbrarse a esto: evita encadenar tres o cuatro `chmod` seguidos sobre el mismo archivo.
 
-El signo `=` es el más tajante de los tres: fija el bloque tal cual y descarta lo que hubiera.
+Los destinatarios también se agrupan sin llegar a `a`:
+
+```bash
+chmod ug+rw informe.txt
+```
+
+```
+-rw-rw---- 1 andres_torres grp_cec1648c 0 Aug 11 01:27 informe.txt
+```
+
+## El signo igual
+
+Los signos `+` y `-` retocan lo que hay. El `=` es distinto: fija el bloque tal cual y descarta lo que hubiera.
 
 ```bash
 chmod a=r notas.txt
@@ -78,9 +80,19 @@ chmod a=r notas.txt
 -r--r--r-- 1 andres_torres grp_cec1648c 6 Aug 10 22:19 notas.txt
 ```
 
-### La a: los tres bloques de una vez
+Y un bloque se vacía dejando el `=` sin ninguna letra detrás, que es la forma corta de cerrarlo por completo:
 
-De los cuatro destinatarios, `a` es el que conviene mirar aparte, porque no es un bloque más: equivale a escribir `u`, `g` y `o` juntos. Partiendo de un archivo en `640`:
+```bash
+chmod o= informe.txt
+```
+
+```
+-rwxr-x--- 1 andres_torres grp_cec1648c 0 Aug 11 01:27 informe.txt
+```
+
+## La a alcanza también al dueño
+
+De los cuatro destinatarios, `a` conviene mirarlo aparte, porque equivale a escribir `u`, `g` y `o` juntos. Partiendo de un archivo en `640`:
 
 ```bash
 chmod a+r informe.txt
@@ -102,29 +114,7 @@ chmod a-w informe.txt
 
 Ahí está el descuido que hay que tener presente: `a-w` deja el archivo de solo lectura para su propio dueño. Cuando el cambio no es para todo el mundo, conviene nombrar los bloques exactos.
 
-### Combinar destinatarios
-
-Los destinatarios también se agrupan sin llegar a `a`, escribiéndolos seguidos:
-
-```bash
-chmod ug+rw informe.txt
-```
-
-```
--rw-rw---- 1 andres_torres grp_cec1648c 0 Aug 11 01:27 informe.txt
-```
-
-Y un bloque se vacía dejando el `=` sin ninguna letra detrás, que es la forma corta de cerrarlo por completo:
-
-```bash
-chmod o= informe.txt
-```
-
-```
--rwxr-x--- 1 andres_torres grp_cec1648c 0 Aug 11 01:27 informe.txt
-```
-
-### El destinatario no se omite
+## El destinatario no se omite
 
 `chmod +w informe.txt` es válido en un sistema real, pero no significa lo que aparenta: sin destinatario, el cambio se aplica a los tres bloques descontando la `umask` vigente, de modo que el resultado depende de una configuración que no está a la vista. Escribir siempre `u`, `g`, `o` o `a` evita esa sorpresa.
 
@@ -136,7 +126,7 @@ La simbólica conviene en todo lo demás, y es la que más se usa. Describe el c
 
 ## Varios archivos y directorios enteros
 
-`chmod` acepta varios nombres, y los comodines del tema anterior funcionan igual que en cualquier otro comando:
+`chmod` acepta varios nombres, y los comodines del tema de manejo de archivos funcionan igual que en cualquier otro comando:
 
 ```bash
 chmod 644 a.txt b.txt
@@ -162,7 +152,7 @@ drwx------ 1 andres_torres grp_cec1648c 14 Aug 10 22:19 sub
 -rwx------ 1 andres_torres grp_cec1648c  0 Aug 10 22:19 uno.txt
 ```
 
-Conviene mirar ese resultado con atención. El `700` era el permiso adecuado para el directorio, pero se aplicó también a `uno.txt`, que ha quedado ejecutable sin ser un programa. Un `chmod -R` con un número pensado para directorios estropea los archivos, y con un número pensado para archivos deja los directorios inservibles. La razón está en el subtema siguiente: `x` no significa lo mismo en un directorio que en un archivo.
+Conviene mirar ese resultado con atención. El `700` era el permiso adecuado para el directorio, pero se aplicó también a `uno.txt`, que ha quedado ejecutable sin ser un programa. Un `chmod -R` con un número pensado para directorios estropea los archivos, y con un número pensado para archivos deja los directorios inservibles. La razón está en el tema siguiente: `x` no significa lo mismo en un directorio que en un archivo.
 
 <!-- ACTIVIDAD: cada-archivo-en-su-sitio -->
 
@@ -170,6 +160,7 @@ Conviene mirar ese resultado con atención. El `700` era el permiso adecuado par
 
 | Comando | Efecto |
 |---|---|
+| `stat -c "%A %a %n" archivo` | Muestra los permisos en letras y en octal |
 | `chmod 600 archivo` | Fija los nueve permisos de una vez |
 | `chmod u+x archivo` | Añade un permiso sin tocar los demás |
 | `chmod g-w archivo` | Quita un permiso |

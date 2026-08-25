@@ -110,34 +110,6 @@ La diferencia está en el algoritmo. `gzip` usa Lempel-Ziv, `bzip2` usa la orden
 
 La elección entre uno y otro es un intercambio: `gzip` cuando importa la rapidez, `bzip2` cuando importa el tamaño final. Existen otros compresores con el mismo esquema de uso, como `xz`, que no está instalado en este laboratorio.
 
-## Cuando no hay nada que ganar
-
-Si la compresión vive de la repetición, un archivo sin repeticiones no se puede encoger. Y no es que se quede igual: crece, porque el formato añade su propia cabecera. Con cuarenta mil bytes tomados al azar:
-
-```bash
-gzip azar.bin
-gzip -l azar.bin.gz
-```
-
-```
-         compressed        uncompressed  ratio uncompressed_name
-              40037               40000  -0.0% azar.bin
-```
-
-Treinta y siete bytes más de los que había. El porcentaje sale negativo.
-
-Esto importa porque **un archivo ya comprimido se parece mucho a uno aleatorio**: el compresor que actuó primero se llevó las repeticiones y dejó pocas. Por eso meter fotos en un `.zip` no reduce casi nada, ya que un JPEG o un PNG están comprimidos por dentro, y por eso volver a comprimir un paquete rara vez compensa.
-
-`gzip` incluso se niega cuando reconoce su propia extensión, en lugar de gastar tiempo para nada:
-
-```bash
-gzip practica.tar.gz
-```
-
-```
-gzip: practica.tar.gz already has .gz suffix -- unchanged
-```
-
 ## Resumen
 
 | Comando | Efecto |

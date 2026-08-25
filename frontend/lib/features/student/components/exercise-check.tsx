@@ -55,7 +55,7 @@ export function ExerciseCheck({ slug }: { slug: string }) {
             ) : (
               <ShieldCheck className="h-4 w-4" />
             )}
-            {checking ? "Comprobando..." : "Comprobar ejercicio"}
+            {checking ? "Comprobando..." : "Comprobar"}
           </ActionButton>
           <p className="text-xs text-muted-foreground">
             Se revisa tu propia carpeta dentro del laboratorio.

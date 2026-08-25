@@ -191,41 +191,17 @@ Cada parte cumple una función:
 
 Sin el `%` la sustitución afecta únicamente a la línea actual. Con una `c` al final, `vi` se detiene a pedir confirmación antes de cada cambio.
 
-## nano como alternativa
-
-`nano` no tiene modos: al abrirlo se escribe directamente y los atajos aparecen listados al pie de la pantalla, donde `^X` significa <kbd>Ctrl</kbd> + <kbd>X</kbd> (Free Software Foundation, 2026).
-
-| Atajo | Efecto |
-|---|---|
-| <kbd>Ctrl</kbd> + <kbd>O</kbd> | Guarda |
-| <kbd>Ctrl</kbd> + <kbd>X</kbd> | Sale |
-| <kbd>Ctrl</kbd> + <kbd>K</kbd> | Corta la línea |
-| <kbd>Ctrl</kbd> + <kbd>U</kbd> | Pega |
-| <kbd>Ctrl</kbd> + <kbd>W</kbd> | Busca |
-
-Es más cómodo para una edición rápida, pero no siempre está instalado. En un servidor recién montado o en un sistema de rescate suele haber únicamente `vi`, y por eso conviene manejarlo.
-
 ## Práctica
 
-El ejercicio consiste en crear una ficha personal dentro del directorio home, usando `vi` para escribirla.
+Escribe con `vi` una ficha personal en tu carpeta personal. El archivo se llama como tu código estudiantil, con extensión `.txt`, y lleva tres cosas dentro:
 
-El archivo debe llamarse como el código estudiantil, con extensión `.txt`. Para un código 1152186 el comando sería:
-
-```bash
-vi 1152186.txt
-```
-
-El contenido tiene esta estructura:
-
-1. El nombre completo en la primera línea.
+1. Tu nombre completo en la primera línea.
 2. Tres comandos aprendidos hasta ahora, uno por línea.
-3. El correo institucional en la última línea.
+3. Tu correo institucional en la última.
 
-El recorrido dentro del editor es el de la lección: `i` para entrar en modo inserción, <kbd>Esc</kbd> para volver al modo normal y `:wq` para guardar y salir.
+Para un código 1152186 se abre con `vi 1152186.txt`. Dentro, el recorrido es el de la lección: `i` para insertar, <kbd>Esc</kbd> para salir del modo inserción y `:wq` para guardar y cerrar.
 
 <!-- EJERCICIO: ficha-personal -->
-
-El nombre de la primera línea no se revisa. Lo que se comprueba es que el archivo se llame como el código, que tenga las líneas suficientes y que la última sea el correo institucional registrado en la plataforma.
 
 <!-- SIMULATOR: retos-de-vi -->
 
@@ -253,7 +229,6 @@ El nombre de la primera línea no se revisa. Lo que se comprueba es que el archi
 
 **Fuentes**
 
-- Free Software Foundation. (2026). *GNU nano manual* (versión 9.2). https://www.nano-editor.org/dist/latest/nano.html
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
 - Shotts, W. (2026). *The Linux command line* (3.ª ed.). No Starch Press. https://linuxcommand.org/tlcl.php
 - The Open Group. (2024). *POSIX.1-2024: The Open Group base specifications issue 8*. https://pubs.opengroup.org/onlinepubs/9799919799/

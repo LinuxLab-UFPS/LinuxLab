@@ -94,6 +94,87 @@ const RAW = [
     topicNumber: 4,
     checks: 2,
   },
+  {
+    slug: "paquete-de-entrega",
+    title: "El paquete de entrega",
+    description:
+      "Empaqueta el informe en un .tar.gz, deja por escrito qué trae dentro y comprueba que abre.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 6,
+    checks: 5,
+  },
+  {
+    slug: "rastro-en-los-registros",
+    title: "El rastro en los registros",
+    description:
+      "Tres bitácoras y una sola línea que importa. Sácala con grep y cuenta los avisos.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 7,
+    checks: 2,
+  },
+  {
+    slug: "el-arbol-del-proyecto",
+    title: "El árbol del proyecto",
+    description:
+      "Qué configuraciones hay, cuánto ocupan las bitácoras y qué servicio falla más.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 7,
+    checks: 4,
+  },
+  {
+    slug: "tu-ficha-de-identidad",
+    title: "Tu ficha de identidad",
+    description:
+      "Deja por escrito quién eres para el sistema, de qué archivo sale y con qué shell entras.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 8,
+    checks: 4,
+  },
+  {
+    slug: "la-carpeta-del-equipo",
+    title: "La carpeta del equipo",
+    description:
+      "Monta una carpeta compartida con setgid para que lo que nazca dentro herede el grupo.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 8,
+    checks: 4,
+  },
+  {
+    slug: "foto-del-sistema",
+    title: "La foto del sistema",
+    description:
+      "Captura lo que corre en tu cuenta y averigua el nombre de las dos señales de cierre.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 9,
+    checks: 4,
+  },
+  {
+    slug: "el-turno-de-noche",
+    title: "El turno de noche",
+    description:
+      "Tres tareas en segundo plano, apunta cuáles son, cierra una y cuenta las que quedan.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 9,
+    checks: 3,
+  },
+  {
+    slug: "tu-primer-guion",
+    title: "Tu primer guion",
+    description:
+      "Un script con cabecera y permiso de ejecución que al correr deja tu código escrito.",
+    difficulty: "basic" as Difficulty,
+    topicNumber: 10,
+    checks: 4,
+  },
+  {
+    slug: "el-guion-que-decide",
+    title: "El guion que decide",
+    description:
+      "Un ciclo que recorre las bitácoras y un condicional que decide si hay que revisar.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 10,
+    checks: 7,
+  },
 ]
 
 export const activities: ActivityListing[] = RAW.map((a) => {

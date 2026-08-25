@@ -1,10 +1,10 @@
 ## Crear archivos
 
-En Linux casi todo termina siendo un archivo: unos apuntes, la configuración de un programa, un script. Crear uno desde la terminal es cuestión de un comando, y hay varias formas según lo que quieras dejar dentro.
+Crear un archivo desde la terminal es cuestión de un comando, y hay varias formas según lo que quieras dejar dentro: vacío, con una línea suelta o con el contenido de otro.
 
 ## touch
 
-`touch` (como ya se había visto en el modulo anterior) crea un archivo vacío con el nombre que le des:
+`touch` (como ya se había visto en el tema anterior) crea un archivo vacío con el nombre que le des:
 
 ```bash
 touch notas.txt

@@ -30,7 +30,7 @@ ls
 Documentos  Descargas  proyectos  notas.txt
 ```
 
-Con `-a` ves también los archivos ocultos, los que empiezan con un punto (Shotts, 2026):
+Con `-a` aparecen también los archivos ocultos, los que empiezan con un punto (Shotts, 2026):
 
 ```bash
 ls -a
