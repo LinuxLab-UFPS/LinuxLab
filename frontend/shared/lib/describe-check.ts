@@ -47,25 +47,25 @@ export function describeCheck(type: string, params: Record<string, unknown>): st
 
   switch (type) {
     case "directorio_existe":
-      return `Verifica que exista el directorio '${name}'`
+      return `Verifica que en el directorio de trabajo exista el directorio '${name}'`
     case "archivo_existe":
-      return `Verifica que exista el archivo '${name}'`
+      return `Verifica que en el directorio de trabajo exista el archivo '${name}'`
     case "archivo_no_existe":
-      return `Verifica que '${name}' ya no exista`
+      return `Verifica que en el directorio de trabajo '${name}' ya no exista`
     case "permisos_son":
-      return `Verifica que '${name}' tenga permisos ${base("modo")} (${permsToSentence(base("modo"))})`
+      return `Verifica que en el directorio de trabajo '${name}' tenga permisos ${base("modo")} (${permsToSentence(base("modo"))})`
     case "propietario_es":
       return base("usuario") === "$usuario"
-        ? `Verifica que '${name}' pertenezca al estudiante`
-        : `Verifica que '${name}' pertenezca a '${base("usuario")}'`
+        ? `Verifica que en el directorio de trabajo '${name}' pertenezca al estudiante`
+        : `Verifica que en el directorio de trabajo '${name}' pertenezca a '${base("usuario")}'`
     case "archivo_contiene":
-      return `Verifica que '${name}' contenga el texto '${base("patron")}'`
+      return `Verifica que el archivo '${name}' del directorio de trabajo contenga el texto '${base("patron")}'`
     case "minimo_lineas":
-      return `Verifica que '${name}' tenga al menos ${base("cantidad")} líneas con contenido`
+      return `Verifica que el archivo '${name}' del directorio de trabajo tenga al menos ${base("cantidad")} líneas con contenido`
     case "archivo_es":
-      return `Verifica que '${name}' tenga el contenido exacto esperado`
+      return `Verifica que el archivo '${name}' del directorio de trabajo tenga el contenido exacto esperado`
     case "ultima_linea_es":
-      return `Verifica que la última línea de '${name}' sea '${base("valor")}'`
+      return `Verifica que la última línea del archivo '${name}' del directorio de trabajo sea '${base("valor")}'`
     default:
       return type
   }

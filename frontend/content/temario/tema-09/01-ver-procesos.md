@@ -2,7 +2,7 @@
 
 Un **proceso** es un programa en ejecución. No es lo mismo que el programa, que es un archivo quieto en el disco: el proceso es esa copia cargada en memoria y trabajando. Abrir tres terminales crea tres procesos a partir del mismo `bash`.
 
-El kernel lleva la cuenta de todos, y para distinguirlos le asigna a cada uno un número, el **PID** (*process ID*). Los reparte en orden ascendente y el primero, el que arranca el sistema entero, siempre lleva el `1` (Shotts, 2026).
+El Kernel lleva la cuenta de todos, y para distinguirlos le asigna a cada uno un número, el **PID** (*process ID*). Los reparte en orden ascendente y el primero, el que arranca el sistema entero, siempre lleva el `1` (Shotts, 2026).
 
 Cada proceso guarda además el PID del que lo lanzó, su **PPID**. Escribir un comando en la terminal hace que `bash` cree un proceso hijo, así que todo lo que se ejecuta cuelga de algo. De ahí sale un árbol con un único origen.
 
@@ -39,27 +39,28 @@ La opción `x` amplía la lista a todos los procesos propios, estén atados a un
 ps x
 ```
 
-Ahí aparecen muchos con un `?` en la columna `TTY`. Ese interrogante significa que el proceso no tiene terminal asociada. Son los servicios del sistema, que trabajan en segundo plano sin que nadie los mire, y tienen su propio subtema al final del módulo.
+Ahí aparecen muchos con un `?` en la columna `TTY`. Ese interrogante significa que el proceso no tiene terminal asociada. Son los servicios del sistema, que trabajan en segundo plano sin que nadie los mire, y tienen su propio tema al final.
 
-La lista es larga, así que se combina con lo del módulo de pipes:
+La lista es larga, así que se combina con lo del tema de pipes:
 
 ```bash
 ps x | wc -l
 ```
 
-Con `aux` la lista pasa a incluir los procesos de todas las cuentas, no solo los propios, y añade columnas de consumo:
+Con `aux` la lista añade la cuenta dueña de cada proceso y sus columnas de consumo:
 
 ```bash
-ps aux | head -3
+ps aux
 ```
 
 ```
-USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-root         1  0.0  0.1 168404 12996 ?        Ss   09:12   0:02 /sbin/init
-root         2  0.0  0.0      0     0 ?        S    09:12   0:00 [kthreadd]
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+maurox1+     135  0.0  0.0   4372  3076 ?        S<s  14:08   0:00 bash
+maurox1+     136  0.0  0.0   2800  1600 ?        S    14:08   0:00 sleep 300
+maurox1+     138  0.0  0.0   7072  3036 ?        R<   14:08   0:00 ps aux
 ```
 
-Ese `PID 1` es el proceso del que descienden todos los demás.
+En un servidor corriente esa lista traería también los procesos de las demás cuentas, empezando por el `PID 1`. Aquí no: el laboratorio monta `/proc` de forma que cada cuenta solo ve lo suyo, así que `ps aux` devuelve lo mismo que `ps x` más las columnas de consumo. Es la misma barrera que impide leer los archivos de otro estudiante, aplicada a los procesos.
 
 ### El estado de un proceso
 

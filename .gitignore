@@ -57,3 +57,10 @@ deploy/.deploy.env
 1152186
 # Copias de la base con intentos de estudiantes
 backend/prisma/respaldo/
+
+# Compose de desarrollo local. Se queda fuera del repo porque cada maquina
+# apunta a un backend distinto: NEXT_PUBLIC_BACKEND_URL se incrusta en el
+# bundle del navegador y en local tiene que ser localhost, no el nombre de la
+# red de Docker ni produccion. El despliegue real no lo usa, va con
+# deploy/compose.podman.yml.
+docker-compose.yml

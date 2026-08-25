@@ -1,6 +1,6 @@
 ## Copiar, mover y borrar
 
-Crear un archivo es solo el primer paso. El trabajo diario con el sistema de archivos consiste en duplicar, reubicar y eliminar lo que ya existe. Tres comandos cubren esas operaciones sobre archivos. Sus variantes para directorios se vieron en el módulo anterior.
+Crear un archivo es solo el primer paso. El trabajo diario con el sistema de archivos consiste en duplicar, reubicar y eliminar lo que ya existe. Tres comandos cubren esas operaciones sobre archivos. Sus variantes para directorios se vieron en el tema anterior.
 
 ## cp
 

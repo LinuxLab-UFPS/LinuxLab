@@ -5,10 +5,14 @@ const { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique } = requ
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { registerStudentSchema } = require("../dtos/groupDtos")
+const { registerSelfStudentSchema, setStudentCodeSchema } = require("../dtos/authDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { groupNameOf } = require("../utils/groupName")
 const accessService = require("./accessService")
 const auditService = require("./auditService")
+const config = require("../config/env")
+const logger = require("../lib/logger")
+const emailService = require("./emailService")
 const { EMAIL_REGEX, PRIORITIES } = require("../lib/constants")
 
 function validateEmail(email) {
@@ -26,13 +30,22 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
   const normalizedEmail = validateEmail(email)
   let user = await tx.user.findUnique({
     where: { email: normalizedEmail },
-    include: { linuxAccount: true },
+    include: { linuxAccount: true, student: true },
   })
 
-  if (user && user.role !== Role.student) {
+  if (user && user.role === Role.teacher) {
     throw new AppError(
-      `El correo ${normalizedEmail} pertenece a un usuario con rol ${user.role}, no se puede inscribir como estudiante`,
+      `El correo ${normalizedEmail} pertenece a un docente, no se puede inscribir como estudiante`,
       409,
+    )
+  }
+
+  const willCreateStudent = !user || (!user.student && user.role === Role.student)
+  if (willCreateStudent && !code?.trim()) {
+    throw new AppError(
+      "Debes definir tu código de estudiante antes de inscribirte.",
+      400,
+      "STUDENT_CODE_REQUIRED",
     )
   }
 
@@ -42,9 +55,12 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
         name: name?.trim() || normalizedEmail.split("@")[0],
         email: normalizedEmail,
         role: Role.student,
-        code: code?.trim() || null,
         active: true,
+        student: {
+          create: { code: code?.trim() || null },
+        },
       },
+      include: { student: true },
     })
     const linuxUsername = await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
     user.linuxAccount = {
@@ -55,19 +71,26 @@ async function ensureStudentExists({ email, name, code, tx = prisma }) {
     return user
   }
 
-  if (code?.trim() && !user.code) {
-    await tx.user.update({
-      where: { id: user.id },
+  if (code?.trim() && user.student && !user.student.code) {
+    await tx.student.update({
+      where: { user_id: user.id },
       data: { code: code.trim() },
     })
-    user.code = code.trim()
+    user.student.code = code.trim()
+  }
+
+  if (!user.student && user.role === Role.student) {
+    await tx.student.create({
+      data: { user: { connect: { id: user.id } }, code: code?.trim() || null },
+    })
+    user.student = { user_id: user.id, code: code?.trim() || null }
   }
 
   if (!user.linuxAccount) {
     await createLinuxAccountWithUniqueUsername(tx, user.id, normalizedEmail)
     user = await tx.user.findUnique({
       where: { id: user.id },
-      include: { linuxAccount: true },
+      include: { linuxAccount: true, student: true },
     })
   }
 
@@ -79,8 +102,90 @@ function serializeStudent(user) {
     id: user.id,
     name: user.name,
     email: user.email,
-    code: user.code ?? null,
+    code: user.student?.code ?? null,
   }
+}
+
+async function registerSelfStudent(args) {
+  const parsed = parseOrThrow(registerSelfStudentSchema, {
+    name: args.name,
+    email: args.email,
+    code: args.code,
+  })
+  return runInTransaction((tx) => registerSelfStudentInner({ ...parsed, tx }))
+}
+
+async function registerSelfStudentInner({ name, email, code, tx }) {
+  let user = await tx.user.findUnique({
+    where: { email },
+    include: { student: true, linuxAccount: true },
+  })
+
+  if (!user) {
+    user = await tx.user.create({
+      data: { email, name, role: "student", active: true },
+      include: { student: true, linuxAccount: true },
+    })
+    try {
+      await createLinuxAccountWithUniqueUsername(tx, user.id, email)
+    } catch (e) {
+      logger.error({ err: e, email }, "No se pudo crear la cuenta Linux en auto-registro")
+    }
+    user = await tx.user.findUnique({
+      where: { id: user.id },
+      include: { student: true, linuxAccount: true },
+    })
+  }
+
+  if (user.role !== Role.student) {
+    throw new AppError(
+      "Este correo ya está registrado con una cuenta de docente o administrador.",
+      409,
+      "CONFLICT",
+    )
+  }
+
+  if (!user.student) {
+    await tx.student.create({
+      data: { user: { connect: { id: user.id } }, code: code.trim() },
+    })
+  } else if (!user.student.code) {
+    await tx.student.update({
+      where: { user_id: user.id },
+      data: { code: code.trim() },
+    })
+  }
+
+  return user
+}
+
+async function setSelfStudentCode(args) {
+  const { code } = parseOrThrow(setStudentCodeSchema, { code: args.code })
+  return runInTransaction((tx) => setSelfStudentCodeInner({ code: code.trim(), userId: args.userId, tx }))
+}
+
+async function setSelfStudentCodeInner({ userId, code, tx }) {
+  const user = await tx.user.findUnique({
+    where: { id: userId },
+    include: { student: true, linuxAccount: true },
+  })
+  if (!user) {
+    throw new AppError("Usuario no encontrado", 404, "NOT_FOUND")
+  }
+  if (user.role !== Role.student) {
+    throw new AppError("Solo los estudiantes pueden definir su código.", 403, "FORBIDDEN")
+  }
+
+  if (user.student) {
+    if (user.student.code) return user
+    await tx.student.update({ where: { user_id: userId }, data: { code } })
+    return user
+  }
+
+  await tx.student.create({
+    data: { user: { connect: { id: userId } }, code },
+  })
+  return user
 }
 
 async function registerStudent(args) {
@@ -101,7 +206,23 @@ async function registerStudent(args) {
   const groupDir = group.group_dir || undefined
   const groupName = groupDir ? groupNameOf(groupId) : undefined
   const teacherAccount = await tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } })
+
+  // Si el correo no tenía cuenta en la plataforma, la matrícula la pre-crea;
+  // hay que avisarle con el proceso de registro para que pueda entrar.
+  const wasNewUser = !(await tx.user.findUnique({ where: { email } }))
+
   const outcome = await enrollOne({ groupId, name, email, code, groupDir, groupName, teacherUsername: teacherAccount?.linux_username, tx })
+
+  if (outcome.enrolled && wasNewUser) {
+    try {
+      const loginUrl = `${config.frontendUrl}/login`
+      const { subject, html, text } = emailService.renderStudentEnrollmentEmail(group.name, loginUrl)
+      await emailService.sendMail({ to: email, subject, html, text, category: "student_enrollment" })
+      logger.info({ email, groupId }, "email de inscripción enviado")
+    } catch (mailErr) {
+      logger.error({ err: mailErr, email, groupId }, "Fallo envío email de inscripción (no bloqueante)")
+    }
+  }
 
   if (outcome.enrolled) {
     auditService.audit({
@@ -154,15 +275,18 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
   }
 
   if (user.linuxAccount && !user.linuxAccount.linux_provisioned) {
-    await tx.userProvisioningJob.create({
+    await tx.job.create({
       data: {
-        user_id: user.linuxAccount.user_id,
-        username: user.linuxAccount.linux_username,
-        group_id: groupDir ? groupId : null,
-        group_dir: groupDir || null,
-        group_name: groupName || null,
-        teacher_username: teacherUsername || null,
+        type: "user_provisioning",
         priority: PRIORITIES.STUDENT,
+        user_id: user.linuxAccount.user_id,
+        group_id: groupDir ? groupId : null,
+        payload: {
+          username: user.linuxAccount.linux_username,
+          group_dir: groupDir || null,
+          group_name: groupName || null,
+          teacher_username: teacherUsername || null,
+        },
       },
     })
   }
@@ -224,7 +348,7 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
   // error de fila; los demas se usan tal cual.
   const existingUsers = await db.user.findMany({
     where: { email: { in: emails } },
-    include: { linuxAccount: true },
+    include: { linuxAccount: true, student: true },
   })
   const byEmail = new Map(existingUsers.map((u) => [u.email, u]))
 
@@ -244,8 +368,11 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
     }
     if (existing) {
       // Un codigo que faltaba se rellena, como hacia el flujo fila por fila.
-      if (r.code && !existing.code) {
-        await db.user.update({ where: { id: existing.id }, data: { code: r.code } })
+      if (r.code && existing.student && !existing.student.code) {
+        await db.student.update({ where: { user_id: existing.id }, data: { code: r.code } })
+      }
+      if (!existing.student && existing.role === Role.student) {
+        await db.student.create({ data: { user: { connect: { id: existing.id } }, code: r.code || null } })
       }
       usersById.set(existing.id, {
         email: existing.email,
@@ -261,14 +388,27 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
   // Usuarios nuevos, en lote. skipDuplicates absorbe la carrera de dos
   // requests creando el mismo correo; los que queden sin fila (el otro
   // request los creo entre el createMany y el findMany) se releen de a uno.
+  const codeByEmail = new Map(toCreate.map((s) => [s.email, s.code || null]))
+
   if (toCreate.length > 0) {
     await db.user.createMany({
       data: toCreate.map((s) => ({
         name: s.name || s.email.split("@")[0],
         email: s.email,
         role: Role.student,
-        code: s.code,
         active: true,
+      })),
+      skipDuplicates: true,
+    })
+
+    const createdForStudent = await db.user.findMany({
+      where: { email: { in: toCreate.map((s) => s.email) } },
+      select: { id: true, email: true },
+    })
+    await db.student.createMany({
+      data: createdForStudent.map((u) => ({
+        user_id: u.id,
+        code: codeByEmail.get(u.email) || null,
       })),
       skipDuplicates: true,
     })
@@ -347,17 +487,20 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
     const u = usersById.get(e.userId)
     if (!u?.linuxUsername || u.linuxProvisioned) continue
     jobRows.push({
-      user_id: e.userId,
-      username: u.linuxUsername,
-      group_id: groupDir ? groupId : null,
-      group_dir: groupDir || null,
-      group_name: groupName || null,
-      teacher_username: teacherUsername || null,
+      type: "user_provisioning",
       priority: PRIORITIES.STUDENT,
+      user_id: e.userId,
+      group_id: groupDir ? groupId : null,
+      payload: {
+        username: u.linuxUsername,
+        group_dir: groupDir || null,
+        group_name: groupName || null,
+        teacher_username: teacherUsername || null,
+      },
     })
   }
   if (jobRows.length > 0) {
-    await db.userProvisioningJob.createMany({ data: jobRows })
+    await db.job.createMany({ data: jobRows })
   }
 
   result.registered = newEnrollments.length
@@ -372,41 +515,46 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     include: {
       student: {
         select: {
-          id: true,
-          name: true,
-          email: true,
           code: true,
-          last_login: true,
-          linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              last_login: true,
+              linuxAccount: { select: { linux_username: true, linux_provisioned: true } },
+            },
+          },
         },
       },
     },
-    orderBy: { enrolled_at: "asc" },
+    orderBy: { created_at: "asc" },
   })
 
   const totalActivities = await prisma.groupActivity.count({ where: { group_id: groupId } })
 
   const completedRows = await prisma.$queryRaw`
-    SELECT student_id, COUNT(DISTINCT group_activity_id)::int AS completed
-    FROM activity_attempts a
-    JOIN group_activities ga ON ga.id = a.group_activity_id
+    SELECT e.student_id, COUNT(DISTINCT gs.group_activity_id)::int AS completed
+    FROM "GroupSubmission" gs
+    JOIN "Enrollment" e ON e.id = gs.enrollment_id
+    JOIN "GroupActivity" ga ON ga.id = gs.group_activity_id
     WHERE ga.group_id = ${groupId}
-    GROUP BY student_id
+    GROUP BY e.student_id
   `
   const completedMap = new Map(completedRows.map((r) => [r.student_id, r.completed]))
 
   return enrollments.map((e) => ({
     enrollmentId: e.id,
-    id: e.student.id,
-    name: e.student.name,
-    email: e.student.email,
+    id: e.student.user.id,
+    name: e.student.user.name,
+    email: e.student.user.email,
     code: e.student.code,
     status: e.status,
-    linuxUsername: e.student.linuxAccount?.linux_username ?? null,
-    linuxProvisioned: e.student.linuxAccount?.linux_provisioned ?? false,
-    enrolledAt: e.enrolled_at,
-    lastLogin: e.student.last_login?.toISOString() ?? null,
-    completedActivities: completedMap.get(e.student.id) ?? 0,
+    linuxUsername: e.student.user.linuxAccount?.linux_username ?? null,
+    linuxProvisioned: e.student.user.linuxAccount?.linux_provisioned ?? false,
+    enrolledAt: e.created_at,
+    lastLogin: e.student.user.last_login?.toISOString() ?? null,
+    completedActivities: completedMap.get(e.student.user_id) ?? 0,
     totalActivities,
   }))
 }
@@ -421,7 +569,7 @@ async function hasActiveEnrollment(userId) {
     where: {
       student_id: userId,
       status: "active",
-      group: { archived: false },
+      group: { status: "active" },
     },
   })
   return count > 0
@@ -433,10 +581,10 @@ async function getActiveGroupId(userId) {
     where: {
       student_id: userId,
       status: "active",
-      group: { archived: false },
+      group: { status: "active" },
     },
     select: { group_id: true },
-    orderBy: { enrolled_at: "asc" },
+    orderBy: { created_at: "asc" },
   })
   return enrollment?.group_id ?? null
 }
@@ -518,14 +666,104 @@ async function importCsv({ groupId, csvText, teacherUserId, role }) {
   return result
 }
 
+/**
+ * Información pública de un grupo para la pantalla de inscripción vía enlace.
+ * Valida el token; si quien consulta tiene sesión de estudiante, se incluye
+ * `enrolled` para que el frontend muestre el estado "ya inscrito".
+ */
+async function getGroupInfo({ groupId, token, req }) {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { teacher: { select: { user: { select: { name: true } } } } },
+  })
+  if (!group || group.status !== "active") {
+    throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+  }
+  if (!group.invite_token || group.invite_token !== token) {
+    throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")
+  }
+
+  let enrolled = null
+  if (req.user?.id && req.user.role === Role.student) {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { student_id_group_id: { student_id: req.user.id, group_id: groupId } },
+      select: { id: true },
+    })
+    enrolled = Boolean(enrollment)
+  }
+
+  return {
+    name: group.name,
+    description: group.description ?? "",
+    teacherName: group.teacher?.user?.name ?? null,
+    enrolled,
+  }
+}
+
+/**
+ * Auto-inscripción mediante el enlace compartido por el docente. Solo pueden
+ * usarlo usuarios con rol estudiante; el docente/admin recibe 403. Reutiliza
+ * `enrollOne`, de modo que se crea la cuenta Linux y el aprovisionamiento si
+ * hace falta, y la matrícula es idempotente.
+ */
+async function joinWithToken({ groupId, token, user, req }) {
+  return runInTransaction(async (tx) => {
+    const group = await tx.group.findUnique({ where: { id: groupId } })
+    if (!group || group.status !== "active") {
+      throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+    }
+    if (!group.invite_token || group.invite_token !== token) {
+      throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")
+    }
+    if (user.role !== Role.student) {
+      throw new AppError("Solo los estudiantes pueden inscribirse con este enlace", 403, "FORBIDDEN")
+    }
+
+    const teacherAccount = await tx.linuxAccount.findUnique({
+      where: { user_id: group.teacher_id },
+    })
+
+    const outcome = await enrollOne({
+      groupId,
+      email: user.email,
+      name: user.name,
+      code: null,
+      groupDir: group.group_dir || undefined,
+      groupName: groupNameOf(groupId),
+      teacherUsername: teacherAccount?.linux_username,
+      tx,
+    })
+
+    if (outcome.enrolled) {
+      const { ip, userAgent, actorRole } = auditService.requestMeta(req)
+      auditService.audit({
+        userId: user.id,
+        groupId,
+        eventType: "student_joined",
+        target: user.email,
+        metadata: { groupId, groupName: group.name },
+        actorRole: actorRole ?? user.role,
+        ip,
+        userAgent,
+      })
+    }
+
+    return { ...outcome, groupName: group.name }
+  })
+}
+
 module.exports = {
   registerStudent,
   enrollOne,
   enrollMany,
   ensureStudentExists,
+  getGroupInfo,
+  joinWithToken,
   importCsv,
   listByGroup,
   hasActiveEnrollment,
   getActiveGroupId,
   serializeStudent,
+  registerSelfStudent,
+  setSelfStudentCode,
 }

@@ -9,7 +9,8 @@ export async function listTeachers(filters?: TeacherFilters): Promise<TeacherLis
 export async function registerTeacher(input: {
   name: string
   email: string
-}): Promise<TeacherListItem> {
+  code: string
+}): Promise<TeacherListItem & { debugLink?: string }> {
   return adminApi.registerTeacher(input)
 }
 

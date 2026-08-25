@@ -57,28 +57,34 @@ echo "[entrypoint] Habilitando limites de CPU por estudiante (cgroups v2)..."
 
 # El techo de CPU por estudiante (10% de 1 CPU) vive en un cgroup por usuario.
 # Docker monta /sys/fs/cgroup como read-only por defecto; con CAP_SYS_ADMIN se
-# puede remontar como rw. Si el host no lo permite, se cae gracilmente y el
-# fallback nice+ulimit del Nivel 1 protege igual.
+# puede remontar como rw, pero ademas el controlador "cpu" debe estar delegado
+# al contenedor (cgroup.subtree_control del padre). Si el host no lo permite,
+# se cae gracilmente y el fallback nice+ulimit del Nivel 1 protege igual.
 if mount -o remount,rw /sys/fs/cgroup 2>/dev/null; then
   mkdir -p /sys/fs/cgroup/linuxlab
-  # Controlador cpu disponible para los sub-cgroups que crea createStudent.
-  echo "+cpu" > /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null || true
-  # Cgroups para los docentes y usuarios de nivel superior.
-  for d in /home/*/; do
-    [ -d "$d" ] || continue
-    u=$(basename "$d")
-    mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
-    echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max" 2>/dev/null || true
-  done
-  # Cgroups para los estudiantes que ya existen (los nuevos los crea
-  # createStudent al aprovisionar).
-  for d in /home/*/grupos/*/*/; do
-    [ -d "$d" ] || continue
-    u=$(basename "$d")
-    mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
-    echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max" 2>/dev/null || true
-  done
-  echo "[entrypoint] cgroups v2 rw: limites de CPU por usuario activos"
+  # Habilitar el controlador cpu; si no esta delegado, la escritura falla y
+  # grep detecta que no quedo activo (evita loguear "activos" en falso).
+  { echo "+cpu" > /sys/fs/cgroup/cgroup.subtree_control; } 2>/dev/null || true
+  if grep -qw cpu /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null; then
+    # Cgroups para los docentes y usuarios de nivel superior.
+    for d in /home/*/; do
+      [ -d "$d" ] || continue
+      u=$(basename "$d")
+      mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
+      { echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max"; } 2>/dev/null || true
+    done
+    # Cgroups para los estudiantes que ya existen (los nuevos los crea
+    # createStudent al aprovisionar).
+    for d in /home/*/grupos/*/*/; do
+      [ -d "$d" ] || continue
+      u=$(basename "$d")
+      mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
+      { echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max"; } 2>/dev/null || true
+    done
+    echo "[entrypoint] cgroups v2 rw: limites de CPU por usuario activos"
+  else
+    echo "[entrypoint] cgroups v2 sin permisos: fallback a nice + ulimit"
+  fi
 else
   echo "[entrypoint] cgroups v2 sin permisos: fallback a nice + ulimit"
 fi

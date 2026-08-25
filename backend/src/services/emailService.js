@@ -5,6 +5,8 @@ const config = require("../config/env")
 const logger = require("../lib/logger")
 const { renderResetPasswordEmail } = require("../templates/resetPassword")
 const { renderVerificationEmail } = require("../templates/verification")
+const { renderSetupAccountEmail } = require("../templates/setupAccount")
+const { renderStudentEnrollmentEmail } = require("../templates/studentEnrollment")
 
 let transport = null
 
@@ -68,4 +70,4 @@ async function sendMail({ to, subject, html, text, category }) {
   return info
 }
 
-module.exports = { sendMail, renderResetPasswordEmail, renderVerificationEmail, getTransport }
+module.exports = { sendMail, renderResetPasswordEmail, renderVerificationEmail, renderSetupAccountEmail, renderStudentEnrollmentEmail, getTransport }

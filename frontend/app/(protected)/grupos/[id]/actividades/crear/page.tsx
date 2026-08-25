@@ -1,7 +1,6 @@
 "use client"
 
 import { Suspense, useEffect, useState } from "react"
-import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, Send } from "lucide-react"
@@ -244,14 +243,6 @@ function NewActivityPage() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-muted-foreground">Puntuación</Label>
-              {/* La escala es fija, así que se muestra en vez de pedirse. */}
-              <div className="flex h-9 items-center rounded-md border border-table-line bg-secondary/40 px-3 font-mono text-sm text-muted-foreground">
-                {MAX_SCORE} pts
-              </div>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="dueDate" className="text-muted-foreground">
                 Fecha y hora de cierre
               </Label>
@@ -261,7 +252,7 @@ function NewActivityPage() {
                 value={dueDate}
                 min={minDateTime}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="border-table-line [color-scheme:dark]"
+                className="border-table-line [color-scheme:light] dark:[color-scheme:dark]"
               />
             </div>
 
@@ -303,20 +294,18 @@ function NewActivityPage() {
               </div>
             )}
           </div>
-        </Seccion>
 
-        <Seccion
-          title="Enunciado"
-          description="Lo que el estudiante lee junto a la terminal cuando abre la actividad."
-        >
           <div className="space-y-2">
+            <Label htmlFor="instructions" className="text-muted-foreground">
+              Enunciado
+            </Label>
             <Textarea
+              id="instructions"
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              rows={7}
               placeholder="Escribe las instrucciones de la actividad…"
               maxLength={2000}
-              className="resize-y border-table-line"
+              className="h-28 resize-none overflow-y-auto border-table-line text-sm"
             />
           </div>
         </Seccion>
@@ -370,15 +359,8 @@ function NewActivityPage() {
             </>
           ) : (
             <p className="text-sm leading-relaxed text-muted-foreground">
-              El estudiante envía su trabajo desde la vista de la actividad y el aviso te
-              llega al{" "}
-              <Link
-                href={`/grupos/${groupId}/seguimiento`}
-                className="text-primary hover:underline"
-              >
-                panel de seguimiento
-              </Link>
-              , donde asignas los {MAX_SCORE} pts y la retroalimentación.
+              Cuando el estudiante envíe su trabajo debes revisar la entrega, asignar la
+              calificación y escribir una retroalimentación o comentario.
             </p>
           )}
         </Seccion>

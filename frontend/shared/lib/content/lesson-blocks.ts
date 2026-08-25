@@ -42,7 +42,7 @@ export type LessonBlock =
   | { kind: "fs-tree" }
   | { kind: "illustration"; id: string }
   | { kind: "exercise"; slug: string }
-  | { kind: "activity"; slug: string }
+  | { kind: "activity"; slugs: string[] }
   | { kind: "snippet"; id: string }
 
 interface Directive {
@@ -164,6 +164,36 @@ function splitTerminals(chunk: string): LessonBlock[] {
   return blocks
 }
 
+/**
+ * Recoge la tanda de ACTIVIDAD seguidas que empieza en `from`, saltando el
+ * texto en blanco de en medio.
+ *
+ * Una lección puede ofrecer más de una actividad, y antes cada directivo era su
+ * propio bloque: salía el encabezado repetido, una tarjeta debajo de otra. Al
+ * juntarlas en un bloque, el encabezado se escribe una vez y las tarjetas caben
+ * en la misma fila.
+ */
+function runOfActivities(
+  tokens: Token[],
+  from: number,
+  first: string,
+): { slugs: string[]; last: number } {
+  const slugs: string[] = [first]
+  let last = from
+
+  for (let j = from + 1; j < tokens.length; j++) {
+    const token = tokens[j]
+    if (token.kind === "markdown") {
+      if (token.content.trim()) break
+      continue
+    }
+    if (token.directive.type !== "ACTIVIDAD") break
+    slugs.push(token.directive.value)
+    last = j
+  }
+  return { slugs, last }
+}
+
 /** Find the complementary IMAGE-DARK/IMAGE-LIGHT directive, allowing blank text between. */
 function findPartner(
   tokens: Token[],
@@ -250,7 +280,9 @@ export function parseLessonBlocks(
     }
 
     if (type === "ACTIVIDAD") {
-      blocks.push({ kind: "activity", slug: value })
+      const tanda = runOfActivities(tokens, i, value)
+      blocks.push({ kind: "activity", slugs: tanda.slugs })
+      i = tanda.last // consume las que se juntaron con esta
       continue
     }
 

@@ -2,14 +2,14 @@
 function serializeGroupUserJob(job) {
   return {
     id: job.id,
-    username: job.username,
+    username: job.payload?.username ?? null,
     status: job.status,
     retries: job.retries,
     error: job.error,
     student: {
       name: job.user.name,
       email: job.user.email,
-      code: job.user.code ?? null,
+      code: job.user.student?.code ?? null,
     },
     createdAt: job.created_at,
   }
@@ -19,7 +19,7 @@ function serializeGroupUserJob(job) {
 function serializeTeacherUserJob(job) {
   return {
     id: job.id,
-    username: job.username,
+    username: job.payload?.username ?? null,
     status: job.status,
     retries: job.retries,
     error: job.error,

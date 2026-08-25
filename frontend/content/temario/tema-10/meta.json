@@ -1,0 +1,59 @@
+{
+  "id": "tema-10",
+  "number": 10,
+  "title": "Shell scripting",
+  "description": "Guardar comandos en un archivo y darle decisiones, ciclos y funciones para que trabaje solo",
+  "subtopics": [
+    {
+      "id": "primer-script",
+      "title": "Tu primer script",
+      "file": "01-primer-script.md"
+    },
+    {
+      "id": "variables",
+      "title": "Variables y argumentos",
+      "file": "02-variables.md"
+    },
+    {
+      "id": "condicionales",
+      "title": "Tomar decisiones",
+      "file": "03-condicionales.md"
+    },
+    {
+      "id": "ciclos",
+      "title": "Repetir trabajo",
+      "file": "04-ciclos.md"
+    },
+    {
+      "id": "scripting",
+      "title": "Funciones y un script completo",
+      "file": "05-funciones.md"
+    }
+  ],
+  "resources": [
+    {
+      "type": "book",
+      "title": "The Linux Command Line",
+      "url": "https://linuxcommand.org/tlcl.php",
+      "detail": "Shotts · Cap. 24: escribir el primer script · Gratis, Creative Commons"
+    },
+    {
+      "type": "link",
+      "title": "Bash Reference Manual",
+      "url": "https://www.gnu.org/software/bash/manual/bash.html",
+      "detail": "gnu.org · La referencia completa del lenguaje"
+    },
+    {
+      "type": "link",
+      "title": "Shell Scripting Basics",
+      "url": "https://devops-daily.com/guides/introduction-to-linux/09-shell-scripting",
+      "detail": "devops-daily.com · Recorrido práctico con ejemplos"
+    },
+    {
+      "type": "link",
+      "title": "ShellCheck",
+      "url": "https://www.shellcheck.net/",
+      "detail": "Pega un script y señala los errores típicos, empezando por las comillas"
+    }
+  ]
+}

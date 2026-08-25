@@ -84,7 +84,10 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 src={block.src}
                 controls
                 preload="metadata"
-                className="w-full my-8 rounded-lg border border-border bg-black"
+                // El fondo va en el color de la tarjeta, no en negro: los videos
+                // se renderizan sobre el fondo claro del sitio, y un contenedor
+                // negro les pone banda alrededor y da un destello al cargar.
+                className="w-full my-8 rounded-lg border border-border bg-card"
               />
             ) : (
               <Pending
@@ -114,7 +117,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
             return <ExerciseCheck key={i} slug={block.slug} />
 
           case "activity":
-            return <LessonActivity key={i} slug={block.slug} />
+            return <LessonActivity key={i} slugs={block.slugs} />
 
           case "snippet":
             return <CopySnippet key={i} id={block.id} />

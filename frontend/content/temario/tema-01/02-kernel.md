@@ -1,64 +1,70 @@
-<!-- VIDEO: video-arquitectura-linux | Arquitectura de Linux: qué pasa cuando ejecutas un comando -->
+El tema anterior terminó con el proyecto GNU aportando las piezas que al Kernel le faltaban para ser un sistema usable. Una de las más importantes es la **shell**, el programa que recibe lo que se escribe en la terminal y lo convierte en trabajo. Es la que manda a ejecutar tus instrucciones.
 
-## ¿Qué es el kernel?
+Pero la shell no trabaja sola. Entre lo que se teclea y el disco que responde hay varias capas, cada una con un oficio distinto. Aquí las verás una por una y luego, ya con los nombres puestos, seguirás el recorrido completo del comando `ls -l /home`.
 
-El kernel es el núcleo del sistema operativo. Es el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador, desde el procesador y la memoria RAM hasta los discos, las interfaces de red y los periféricos (Silberschatz et al., 2021). Al ejecutar un comando, abrir un archivo o establecer una conexión a internet, es el kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos, siempre pasan por él (NDG, 2024).
+`ls`, como veremos más adelante, sirve para listar los contenidos de un directorio: cualquier archivo o subdirectorio que haya dentro de este. Puedes probar en tu propia terminal para ver lo que sucede al poner la opción `-l`.
 
-## Funciones principales del kernel
+## La terminal
 
-El kernel tiene cinco responsabilidades. Todo lo demás que hace se desprende de estas:
+Es la ventana donde se escribe. Su único oficio es dibujar texto: recoge las teclas que se pulsan, se las entrega a la shell y luego pinta en pantalla lo que le devuelvan. No entiende ni un solo comando.
 
-| # | Función | De qué se encarga |
-|---|---|---|
-| 1 | Gestión de procesos | Crear, planificar y terminar los programas en ejecución |
-| 2 | Gestión de memoria | Repartir la RAM entre los procesos y usar el disco cuando falta |
-| 3 | Sistema de archivos | Almacenar, organizar y recuperar los datos del disco |
-| 4 | Gestión de dispositivos | Hablar con el hardware a través de controladores |
-| 5 | Comunicación de red | Implementar TCP/IP y administrar las conexiones |
+Suena a poco y es exactamente el punto. La terminal es el papel, no quien escribe, y por eso el mismo comando funciona igual en la ventana de un escritorio, en una sesión de texto sin gráficos o en la terminal de esta plataforma.
 
-### 1. Gestión de procesos
+## La shell
 
-Un proceso es una instancia de un programa en ejecución, y en un sistema Linux típico hay cientos corriendo a la vez. El kernel decide cuál usa la CPU, cuánto tiempo y en qué orden. Como casi siempre hay más procesos que núcleos disponibles, los alterna en turnos tan rápidos que parecen simultáneos. Eso es la **multitarea**, y es lo que ocurre cuando están abiertos a la vez el navegador, la terminal y el reproductor de música. Cuando dos procesos piden el mismo recurso, el kernel decide quién lo obtiene; si la memoria se agota, puede terminar uno para que el sistema no colapse.
+Es la primera parada del comando y hace tres cosas antes de que nada se ejecute.
 
-<!-- ILLUSTRATION: kernel-procesos -->
+Primero **lo parte en piezas**. En `ls -l /home` reconoce que `ls` es el programa, que `-l` es una opción que modifica su comportamiento y que `/home` es el argumento sobre el que va a actuar.
 
-Cada aplicación abierta consume CPU a ratos, sube cuando trabaja y baja cuando espera. El kernel es quien reparte esos turnos. Más adelante en el curso esta misma lista se puede consultar desde la terminal, con el consumo real del equipo.
+Después **resuelve lo que haya que resolver**: si hay un alias definido lo sustituye, si hay una variable la reemplaza por su valor, y si hay comodines los expande a la lista de archivos que corresponda. `ls` es un archivo que vive en algún sitio del disco, y la shell lo localiza recorriendo una lista de directorios conocidos hasta encontrarlo.
 
-### 2. Gestión de memoria
+No es parte del Kernel ni tiene privilegios especiales. Es un programa corriente, y de hecho se puede cambiar por otro: Bash es la más común en Linux, pero hay varias, y el tema de la terminal entra en ellas.
 
-El kernel asigna bloques de RAM a los procesos que la solicitan y los libera cuando dejan de usarse. Desde dentro, cada proceso cree tener un bloque grande y continuo solo para él; esa ilusión la sostiene el kernel (Tanenbaum y Bos, 2023), que reparte bloques físicos más pequeños, comparte memoria entre procesos cuando puede y manda al espacio de intercambio o **swap** lo que lleva tiempo sin usarse. El proceso no se entera de nada de eso, solo ve memoria disponible.
+## Bibliotecas y APIs
 
-<!-- ILLUSTRATION: kernel-memoria -->
+Es la pieza menos visible y la que explica cómo se comunican las otras. Un programa no le habla al Kernel directamente: llama a una función de una biblioteca, y es esa biblioteca la que traduce la llamada al formato que el Kernel entiende.
 
-### 3. Sistema de archivos
+La principal en Linux es la biblioteca estándar de C, **glibc**. Cuando `ls` necesita saber qué hay dentro de `/home`, no puede leer el disco por su cuenta. Llama a una función de glibc, y glibc emite la **llamada al sistema** correspondiente.
 
-Para el kernel todo es un archivo: los documentos, los directorios, los dispositivos de hardware e incluso los procesos en ejecución se representan dentro de una misma jerarquía. Linux soporta varios sistemas de archivos, entre ellos ext4 (el más común), XFS, Btrfs y NTFS para compatibilidad con Windows, y expone la misma interfaz para todos. Cuando una aplicación lee un archivo no sabe si está en un SSD, en un disco mecánico o en un recurso compartido de red, ni le hace falta saberlo, porque el kernel se encarga de las diferencias por debajo, y por eso el mismo programa funciona igual sin importar dónde estén los datos.
+Ese es el punto exacto donde una petición deja de ser código corriente y pasa a ser una petición al Kernel. Sin esta capa, cada programa tendría que saber hablarle al Kernel en su propio idioma.
 
-<!-- ILLUSTRATION: kernel-archivos -->
+## El Kernel
 
-### 4. Gestión de dispositivos
+El Kernel es el núcleo del sistema operativo. Es el software que se ejecuta directamente sobre el hardware y actúa como intermediario entre las aplicaciones y los recursos físicos del computador, desde el procesador y la memoria RAM hasta los discos, las interfaces de red y los periféricos (Silberschatz et al., 2021). Al ejecutar un comando, abrir un archivo o establecer una conexión a internet, es el Kernel quien realiza esa operación a nivel de hardware. Las aplicaciones nunca tocan los componentes físicos, siempre pasan por él (NDG, 2024).
 
-El kernel se comunica con el hardware a través de **controladores** (drivers). Cada dispositivo conectado necesita uno que le indique al kernel cómo interactuar con él. Linux incluye controladores para una enorme cantidad de hardware dentro del propio kernel, y por eso la mayoría de dispositivos funcionan sin instalar software adicional.
+Es la parada donde por fin se lee el disco. El Kernel consulta el sistema de archivos, obtiene los nombres que hay dentro de `/home` junto con sus permisos, su tamaño y sus fechas, y devuelve esa información hacia arriba.
 
-<!-- ILLUSTRATION: kernel-dispositivos -->
+Tiene cinco responsabilidades, y todo lo demás que hace se desprende de ellas: gestión de procesos, gestión de memoria, sistema de archivos, gestión de dispositivos y comunicación de red. Cada una se desarrolla en el tema siguiente.
 
-### 5. Comunicación de red
+## El entorno de ventanas
 
-El kernel implementa los protocolos de red (TCP/IP, UDP, ICMP) que permiten al sistema comunicarse con otros computadores, y administra las interfaces, las tablas de enrutamiento, los sockets y las conexiones activas.
+Es la capa que dibuja el escritorio, las ventanas y los menús. Tampoco forma parte del Kernel, y por eso se puede desinstalar sin que el sistema deje de funcionar. Un servidor suele arrancar sin ninguno.
 
-<!-- ILLUSTRATION: kernel-red -->
+Es lo que se ve antes de que empiece nada: el escritorio, el dock y el icono desde el que se abre la terminal. El cuarto tema lo desarrolla.
 
-## Espacio de kernel vs. espacio de usuario
+## La frontera: espacio de usuario y espacio de Kernel
 
-Linux divide la memoria en dos zonas claramente separadas:
+Linux divide la memoria en dos zonas claramente separadas.
 
-**Espacio de kernel (kernel space):** donde se ejecuta el kernel, con acceso total al hardware y privilegios completos sobre el sistema.
+**Espacio de usuario:** donde se ejecutan las aplicaciones, la shell y las bibliotecas. No pueden acceder al hardware por su cuenta. Para cualquier operación deben pedírsela al Kernel mediante **llamadas al sistema** (system calls).
 
-**Espacio de usuario (user space):** donde se ejecutan las aplicaciones. No pueden acceder al hardware por su cuenta. Para cualquier operación deben pedírsela al kernel mediante **llamadas al sistema** (system calls).
+**Espacio de Kernel:** donde se ejecuta el Kernel, con acceso total al hardware y privilegios completos sobre el sistema.
 
 <!-- ILLUSTRATION: kernel-espacios -->
 
-Esa separación es la que mantiene el sistema estable y seguro, porque si una aplicación falla, no puede corromper el kernel ni arrastrar consigo a los demás procesos.
+Esa separación es la que mantiene el sistema estable y seguro, porque si una aplicación falla, no puede corromper el Kernel ni arrastrar consigo a los demás procesos.
+
+Cruzar esa frontera no es gratis y por eso no se hace a la ligera: es la línea que el comando atraviesa a la ida, y la que atraviesa de vuelta cargando el resultado.
+
+## El recorrido completo
+
+Ya están todas las piezas con su nombre. Ahora veamos a qué responde cada una cuando ejecutas un comando, de principio a fin.
+
+<!-- VIDEO: video-arquitectura-linux | El viaje de un comando -->
+
+El camino de regreso importa tanto como el de ida. El Kernel devuelve los datos, `ls` les da formato de texto con sus columnas alineadas, y para escribirlos en pantalla vuelve a pedirle permiso al Kernel con otra llamada al sistema. El Kernel los entrega a la terminal, y la terminal los dibuja.
+
+Solo entonces el programa termina, la shell se entera de que su trabajo acabó y vuelve a mostrar el prompt, lista para la siguiente orden.
 
 ---
 
@@ -66,4 +72,3 @@ Esa separación es la que mantiene el sistema estable y seguro, porque si una ap
 
 - NDG. (2024). *NDG Linux Essentials* [Curso en línea]. Cisco Networking Academy. https://www.netdevgroup.com/online/courses/open-source/linux-essentials
 - Silberschatz, A., Galvin, P. B. y Gagne, G. (2021). *Operating system concepts* (10.ª ed.). Wiley.
-- Tanenbaum, A. S. y Bos, H. (2023). *Modern operating systems* (5.ª ed.). Pearson.

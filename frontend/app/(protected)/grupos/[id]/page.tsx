@@ -13,7 +13,7 @@ import {
   Plus,
   Search,
   BarChart3,
-  FileSpreadsheet,
+  Download,
   ScrollText,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
@@ -24,6 +24,7 @@ import { downloadExcel } from "@shared/lib/excel"
 import { slugify } from "@shared/lib/utils"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
+import { GroupInviteActions } from "@/lib/features/teacher/components/group-invite-actions"
 import { Input } from "@shared/components/ui/input"
 import {
   Select,
@@ -74,7 +75,7 @@ function GroupDetailContent() {
     setExporting(true)
     try {
       await downloadExcel({
-        fileName: `calificaciones-${slugify(group?.name ?? "curso")}.xlsx`,
+        fileName: `calificaciones-${slugify(group?.name ?? "grupo")}.xlsx`,
         sheets: [buildGradebookSheet(gradebookQuery.data)],
       })
       notify.success("Excel generado", {
@@ -132,12 +133,12 @@ function GroupDetailContent() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <BookOpen className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Grupo no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Este curso no existe o aun no tiene datos."}
+          {error instanceof Error ? error.message : "Este grupo no existe o aun no tiene datos."}
         </p>
         <Link href="/inicio">
-          <Button variant="outline">Volver a Cursos</Button>
+          <Button variant="outline">Volver a Grupos</Button>
         </Link>
       </div>
     )
@@ -156,7 +157,7 @@ function GroupDetailContent() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {group.name}
           </h1>
-          {group.archived && (
+          {group.status === "archived" && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
               Desactivado
             </span>
@@ -168,7 +169,7 @@ function GroupDetailContent() {
       </div>
 
       {/* Tabs */}
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <StatTabs
           plain
           value={tab}
@@ -203,18 +204,26 @@ function GroupDetailContent() {
             },
           ]}
         />
+
+        {group.status === "active" && (
+          <GroupInviteActions
+            groupId={id}
+            token={group.inviteToken}
+            onRotated={() => queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })}
+          />
+        )}
       </div>
 
       {/* Header del tab: titulo, busqueda y acciones */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <h2 className="text-base font-semibold text-foreground">
           {tab === "estudiantes"
-            ? `Estudiantes del curso (${group.studentCount})`
+            ? `Estudiantes del grupo (${group.studentCount})`
             : tab === "actividades"
-              ? `Actividades del curso (${group.activityCount})`
+              ? `Actividades del grupo (${group.activityCount})`
               : tab === "bitacora"
-                ? "Bitácora del curso"
-                : "Calificaciones del curso"}
+                ? "Bitácora del grupo"
+                : "Calificaciones del grupo"}
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -268,7 +277,7 @@ function GroupDetailContent() {
             </>
           )}
 
-          {!group.archived &&
+          {group.status === "active" &&
             tab !== "bitacora" &&
             (tab === "estudiantes" ? (
               <ActionButton tone="primary" onClick={() => setAdding(true)}>
@@ -290,7 +299,7 @@ function GroupDetailContent() {
                 {exporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <FileSpreadsheet className="h-4 w-4" />
+                  <Download className="h-4 w-4" />
                 )}
                 {exporting ? "Generando…" : "Exportar Excel"}
               </ActionButton>

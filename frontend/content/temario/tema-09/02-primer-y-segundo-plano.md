@@ -23,7 +23,7 @@ Esos dos números no son lo mismo:
 | Número | Qué es |
 |---|---|
 | `[1]` | El **número de trabajo**, que cuenta el shell dentro de esta terminal |
-| `38731` | El **PID**, que cuenta el kernel para todo el sistema |
+| `38731` | El **PID**, que cuenta el Kernel para todo el sistema |
 
 El número de trabajo es pequeño y empieza en uno en cada terminal. El PID es único en la máquina entera. Los dos sirven para referirse al proceso, pero el de trabajo solo lo entiende el shell que lo lanzó.
 
@@ -68,7 +68,7 @@ sleep 300
 [1]+  Stopped                 sleep 300
 ```
 
-**Detenido no es lo mismo que terminado.** El proceso sigue existiendo, con su PID y su memoria, pero congelado: no avanza ni consume procesador. `ps` lo muestra con el estado `T` del subtema anterior.
+**Detenido no es lo mismo que terminado.** El proceso sigue existiendo, con su PID y su memoria, pero congelado: no avanza ni consume procesador. `ps` lo muestra con el estado `T` del tema anterior.
 
 ## bg y fg
 
@@ -107,24 +107,12 @@ Sin ese `%2`, ambos comandos actúan sobre el trabajo marcado con `+` en `jobs`.
 
 Un proceso en segundo plano deja de escuchar el teclado de la terminal, y eso incluye <kbd>Ctrl</kbd> + <kbd>C</kbd>. Intentar interrumpirlo así no tiene ningún efecto.
 
-Hay dos formas de resolverlo. Traerlo al primer plano con `fg` y entonces sí interrumpirlo, o terminarlo por su número desde donde esté, que es lo del subtema siguiente.
+Hay dos formas de resolverlo. Traerlo al primer plano con `fg` y entonces sí interrumpirlo, o terminarlo por su número desde donde esté, que es lo del tema siguiente.
 
-Lo que sí atraviesa el segundo plano es la salida. Un programa que escriba en pantalla lo seguirá haciendo aunque esté detrás, y sus líneas aparecerán mezcladas con lo que se esté escribiendo. Se evita redirigiendo la salida a un archivo con lo del módulo de manejo de archivos:
+Lo que sí atraviesa el segundo plano es la salida. Un programa que escriba en pantalla lo seguirá haciendo aunque esté detrás, y sus líneas aparecerán mezcladas con lo que se esté escribiendo. Se evita redirigiendo la salida a un archivo con lo del tema de manejo de archivos:
 
 ```bash
 comando-largo > salida.txt 2>&1 &
-```
-
-## El ciclo completo
-
-Puestos en orden, los cuatro pasos cubren cualquier situación:
-
-```bash
-sleep 300        # arranca ocupando la terminal
-                 # Ctrl+Z lo detiene y devuelve el prompt
-bg               # continúa, ahora en segundo plano
-jobs             # confirma que sigue vivo
-fg               # lo trae de vuelta cuando interese
 ```
 
 ## Resumen

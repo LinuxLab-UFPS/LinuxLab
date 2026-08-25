@@ -1,8 +1,8 @@
+<!-- VIDEO: video-grupos | Compartir archivos con un grupo -->
+
 ## Compartir archivos con un grupo
 
-Un grupo permite que varias personas trabajen sobre los mismos archivos. La receta es siempre la misma: hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG, 2024). Sin grupos habría que conceder permisos a **otros**, que significa todo el mundo, o no conceder nada.
-
-Este subtema arma ese montaje con lo ya visto y resuelve, de paso, un detalle que viene apareciendo desde el módulo de permisos sin explicación.
+Un grupo permite que varias personas trabajen sobre los mismos archivos sin tener que abrirlos a **otros**, que significa todo el mundo. La receta es siempre la misma: hacer a esas personas miembros de un grupo común, poner el directorio a nombre de ese grupo y ajustar sus permisos para que los miembros puedan entrar (NDG, 2024).
 
 ## Cambiar el grupo de un archivo
 
@@ -53,7 +53,7 @@ ls -l taller/notas.txt
 -rw-rw-r-- 1 andres_torres grp_cec1648c 0 Aug 18 11:25 taller/notas.txt
 ```
 
-El archivo nuevo no salió con el grupo `proyecto`, sino con el grupo **primario** de quien lo creó. Es lo que decía el primer subtema: el grupo primario es el que se le pone a lo que se crea. Y el resultado es que el resto del equipo no puede escribir en ese archivo, aunque el directorio sea suyo.
+El archivo nuevo no salió con el grupo `proyecto`, sino con el grupo **primario** de quien lo creó. Es lo que decía el primer tema: el grupo primario es el que se le pone a lo que se crea. Y el resultado es que el resto del equipo no puede escribir en ese archivo, aunque el directorio sea suyo.
 
 Corregirlo a mano con `chgrp` cada vez depende de que alguien se acuerde, así que el sistema ofrece una forma de que lo haga solo.
 
@@ -70,7 +70,7 @@ ls -ld taller
 drwxrws--- 1 andres_torres proyecto 0 Aug 18 11:27 taller
 ```
 
-Ahí está la `s`, en el lugar donde iba la `x` del bloque de grupo. No la sustituye: significa que el permiso de ejecución **sigue puesto** y que además el directorio lleva setgid. Si apareciera una `S` mayúscula sería el aviso contrario: setgid puesto pero sin permiso de ejecución, una combinación que no sirve de nada.
+Ahí está la `s`, en el lugar donde iba la `x` del bloque de grupo. No la sustituye: significa que el permiso de ejecución **sigue puesto** y que además el directorio lleva setgid.
 
 A partir de ese momento el comportamiento es el buscado:
 
@@ -86,15 +86,13 @@ ls -l taller
 
 El archivo nuevo hereda `proyecto`. El anterior no cambia: setgid actúa al crear, no hacia atrás. Los que ya existían se arreglan con `chgrp`.
 
-En notación octal el bit es un cuarto dígito por delante, y por eso en la documentación de administración se ve escrito así:
+En notación octal el bit es un cuarto dígito por delante, `2` para setgid, que es como aparece escrito en la documentación de administración:
 
 ```bash
 chmod 2770 taller
 ```
 
-`2` es setgid, `770` los permisos de siempre.
-
-## Lo que se veía desde el módulo de permisos
+## Lo que se veía desde el tema de permisos
 
 Este listado apareció en el tema de permisos:
 
@@ -106,35 +104,67 @@ Esa `s` estaba ahí desde el principio. Y allí se dijo que en este laboratorio 
 
 ## Práctica
 
-El montaje completo, sobre el grupo primario propio, para poder comprobarlo sin depender de nadie más. Primero el directorio con setgid:
+La cuenta de este laboratorio pertenece a dos grupos: el primario, que se llama igual que la cuenta, y el del curso. Eso es justo lo que hace falta, porque la herencia solo se ve cuando el directorio pertenece a un grupo **distinto** del primario. El nombre del grupo del curso lo dice `id`:
+
+```bash
+id
+```
+
+```
+uid=1001(maurox1177) gid=1001(maurox1177) groups=1001(maurox1177),1002(grp_387a8af4)
+```
+
+El segundo de la lista es el del curso, y es el que va en los comandos siguientes. Primero el directorio, a nombre de ese grupo y todavía sin marcar:
 
 ```bash
 mkdir compartido
-chmod g+s compartido
-ls -ld compartido
+chgrp grp_387a8af4 compartido
+chmod 770 compartido
+touch compartido/antes.txt
+ls -l compartido/antes.txt
 ```
 
-La `s` tiene que aparecer en el bloque de grupo. Después, un archivo dentro y la comprobación de que heredó el grupo del directorio y no otro:
+```
+-rw-rw-r-- 1 maurox1177 maurox1177 0 Aug 24 04:24 compartido/antes.txt
+```
+
+El archivo salió con el grupo primario, no con el del directorio. Ahora el mismo montaje con setgid:
 
 ```bash
-touch compartido/prueba.txt
-ls -l compartido/prueba.txt
+chmod g+s compartido
+ls -ld compartido
+touch compartido/despues.txt
+ls -l compartido
 ```
 
-Y la comparación que lo demuestra: un archivo creado fuera del directorio marcado.
+```
+drwxrws--- 1 maurox1177 grp_387a8af4 18 Aug 24 04:24 compartido
+-rw-rw-r-- 1 maurox1177 maurox1177   0 Aug 24 04:24 antes.txt
+-rw-rw-r-- 1 maurox1177 grp_387a8af4 0 Aug 24 04:24 despues.txt
+```
+
+Los dos archivos están en la misma carpeta y los creó la misma persona con el mismo comando. El segundo heredó el grupo del directorio porque nació después del `chmod g+s`, y el primero se quedó como estaba.
+
+La comprobación final es un archivo creado fuera:
 
 ```bash
 touch suelto.txt
-ls -l suelto.txt compartido/prueba.txt
+ls -l suelto.txt
 ```
 
-Si los dos grupos coinciden es porque el grupo primario y el del directorio son el mismo, que es lo normal en una cuenta recién hecha. La diferencia se aprecia cuando el directorio pertenece a un grupo distinto del primario, que es exactamente el caso de un directorio de equipo.
+```
+-rw-rw-r-- 1 maurox1177 maurox1177 0 Aug 24 04:24 suelto.txt
+```
+
+Vuelve a salir el grupo primario, que confirma que la herencia era cosa del directorio y no de la cuenta.
 
 Para terminar, conviene no dejar rastro:
 
 ```bash
 rm -r compartido suelto.txt
 ```
+
+<!-- ACTIVIDAD: la-carpeta-del-equipo -->
 
 ---
 

@@ -13,6 +13,10 @@
  */
 
 import {
+  PromptDollarIllustration,
+  UnixTreeIllustration,
+} from "@shared/components/intro-illustrations"
+import {
   KernelArchivosIllustration,
   KernelDispositivosIllustration,
   KernelMemoriaIllustration,
@@ -499,6 +503,8 @@ function PlasmaScreen() {
 
 /** Lo que puede pedir un `<!-- ILLUSTRATION: id -->` desde una leccion. */
 export const LESSON_ILLUSTRATIONS: Record<string, () => React.JSX.Element> = {
+  "unix-arbol": UnixTreeIllustration,
+  "prompt-dollar": PromptDollarIllustration,
   "gui-cli": GuiCliIllustration,
   terminal: TerminalIllustration,
   "gnome-kde": GnomeKdeIllustration,
