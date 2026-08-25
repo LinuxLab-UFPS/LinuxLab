@@ -10,7 +10,7 @@ export async function registerTeacher(input: {
   name: string
   email: string
   code: string
-}): Promise<TeacherListItem> {
+}): Promise<TeacherListItem & { debugLink?: string }> {
   return adminApi.registerTeacher(input)
 }
 

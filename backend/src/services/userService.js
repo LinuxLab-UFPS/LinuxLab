@@ -113,4 +113,15 @@ async function toggleActive(id, tx) {
   return serializeTeacher(updated)
 }
 
-module.exports = { findAll, register, toggleActive }
+async function findById(id) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, teacher: { select: { user_id: true } } },
+  })
+  if (!user || !user.teacher) {
+    throw new AppError("Docente no encontrado", 404)
+  }
+  return user
+}
+
+module.exports = { findAll, register, toggleActive, findById }

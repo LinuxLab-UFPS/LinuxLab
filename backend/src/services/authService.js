@@ -1,3 +1,4 @@
+const crypto = require("crypto")
 const jwt = require("jsonwebtoken")
 const { getAuth } = require("firebase-admin/auth")
 const firebaseApp = require("../config/firebase-admin")
@@ -7,6 +8,7 @@ const logger = require("../lib/logger")
 const { AppError } = require("../lib/errors")
 const config = require("../config/env")
 const auditService = require("./auditService")
+const emailService = require("./emailService")
 
 const USER_INCLUDE = {
   linuxAccount: {
@@ -136,9 +138,62 @@ function signSession(user) {
   )
 }
 
+function extractOobCode(firebaseLink) {
+  try {
+    const url = new URL(firebaseLink)
+    return url.searchParams.get("oobCode")
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Crea (si no existe) la cuenta Firebase del docente con una contraseña
+ * aleatoria y envía el enlace de configuración: un reset de Firebase que
+ * apunta a /auth/setup-account. La contraseña aleatoria NUNCA se persiste;
+ * el docente la reemplaza por la suya vía el enlace. Si el envío falla
+ * (y el provider no es "log") se devuelve `debugLink` para usar en dev.
+ */
+async function inviteTeacher({ email, name }) {
+  if (!firebaseApp) {
+    logger.info({ email }, "inviteTeacher: Firebase no configurado, omitiendo cuenta Auth")
+    return { debugLink: undefined }
+  }
+  const auth = getAuth(firebaseApp)
+  try {
+    try {
+      await auth.getUserByEmail(email)
+    } catch {
+      await auth.createUser({
+        email,
+        password: crypto.randomBytes(12).toString("hex"),
+        displayName: name,
+        emailVerified: true,
+      })
+    }
+    const firebaseLink = await auth.generatePasswordResetLink(email)
+    const oobCode = extractOobCode(firebaseLink)
+    const setupUrl = `${config.frontendUrl}/auth/setup-account?oobCode=${encodeURIComponent(oobCode ?? "")}`
+    const { subject, html, text } = emailService.renderSetupAccountEmail(setupUrl)
+    try {
+      await emailService.sendMail({ to: email, subject, html, text, category: "teacher_invite" })
+      logger.info({ email }, "invitación de docente enviada")
+      return { debugLink: undefined }
+    } catch (mailErr) {
+      logger.error({ err: mailErr, email }, "Fallo envío email invitación docente")
+      if (config.email.provider === "log") throw mailErr
+      return { debugLink: setupUrl }
+    }
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    logger.error({ err, email }, "Error en inviteTeacher")
+    throw new AppError(err.message || "No se pudo enviar la invitación", 500, "INTERNAL_ERROR")
+  }
+}
+
 /** Verifica un JWT de sesion. Es la unica implementacion (HTTP y WS). */
 function verifyToken(token) {
   return jwt.verify(token, config.jwt.secret)
 }
 
-module.exports = { loginWithIdToken, getSessionUser, signSession, verifyToken, USER_INCLUDE }
+module.exports = { loginWithIdToken, getSessionUser, signSession, verifyToken, USER_INCLUDE, inviteTeacher }

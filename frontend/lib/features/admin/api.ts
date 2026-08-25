@@ -20,7 +20,7 @@ export const adminApi = {
     apiFetch<TeacherListItem[]>(`/api/admin/docentes${buildQuery(filters)}`),
 
   registerTeacher: (input: { name: string; email: string; code: string }) =>
-    apiFetch<TeacherListItem>("/api/admin/docentes", {
+    apiFetch<TeacherListItem & { debugLink?: string }>("/api/admin/docentes", {
       method: "POST",
       body: JSON.stringify(input),
     }),

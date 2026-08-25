@@ -54,6 +54,11 @@ export function RegisterTeacherDialog({
 
     const created = await onRegister(name.trim(), email.trim(), code.trim())
     if (created) {
+      const dbg = (created as { debugLink?: string } | null)?.debugLink
+      if (dbg) {
+        console.log("[PoC] setup link:", dbg)
+        notify.info(`Enlace de configuración (modo dev): ${dbg}`)
+      }
       setName("")
       setEmail("")
       setCode("")
