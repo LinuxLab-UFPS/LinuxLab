@@ -162,7 +162,7 @@ def check_permisos_son(params, home):
         if sobran:
             partes.append(("sobra" if len(sobran) == 1 else "sobran") + " " + natural_join(sobran))
         raise CheckError(f"Para '{name}' " + " y ".join(partes) + ".")
-    return f"Los permisos de '{name}' son correctos: {actual}."
+    return f"Los permisos de '{name}' son los correctos."
 
 
 def check_propietario_es(params, home):
@@ -174,8 +174,8 @@ def check_propietario_es(params, home):
     owner = pwd.getpwuid(os.stat(path).st_uid).pw_name
     if owner != expected:
         raise CheckError(
-            f"Se esperaba que el propietario de '{name}' fuera '{expected}'. "
-            f"El propietario actual es '{owner}'"
+            f"El propietario de '{name}' no es el que pide el enunciado. "
+            f"Ahora mismo es '{owner}'"
         )
     return f"El propietario de '{name}' es correcto: '{owner}'."
 
@@ -208,15 +208,16 @@ def check_archivo_es(params, home):
 
     obtenidas = lineas_utiles(path)
     if len(obtenidas) != len(esperadas):
+        sobran = len(obtenidas) > len(esperadas)
         raise CheckError(
-            f"Se esperaba que '{name}' tuviera exactamente {len(esperadas)} líneas con "
-            f"contenido. Tiene {len(obtenidas)}"
+            f"'{name}' tiene {len(obtenidas)} líneas con contenido y "
+            + ("sobran algunas." if sobran else "faltan algunas.")
         )
     for i, (tuya, esperada) in enumerate(zip(obtenidas, esperadas), start=1):
         if tuya != esperada:
             raise CheckError(
-                f"Se esperaba que la línea {i} de '{name}' fuera '{esperada}'. "
-                f"La línea {i} es '{tuya}'"
+                f"La línea {i} de '{name}' no es la que pide el enunciado. "
+                f"Dice '{tuya}'"
             )
     return f"El contenido de '{name}' es exactamente el esperado."
 
@@ -233,10 +234,9 @@ def check_minimo_lineas(params, home):
     lineas = lineas_utiles(path)
     if len(lineas) < minimo:
         raise CheckError(
-            f"Se esperaban al menos {minimo} líneas con contenido en '{name}'. "
-            f"El archivo tiene {len(lineas)}"
+            f"'{name}' tiene {len(lineas)} líneas con contenido y hacen falta más"
         )
-    return f"El archivo '{name}' tiene suficientes líneas ({len(lineas)} líneas, mínimo {minimo})."
+    return f"'{name}' tiene suficientes líneas ({len(lineas)})."
 
 
 def check_ultima_linea_es(params, home):
@@ -249,13 +249,13 @@ def check_ultima_linea_es(params, home):
         raise CheckError("No se indico que debia ir en la ultima linea")
     lineas = lineas_utiles(path)
     if not lineas:
-        raise CheckError(f"Se esperaba que la última línea de '{name}' fuera '{esperado}'. El archivo está vacío")
+        raise CheckError(f"'{name}' está vacío: no hay última línea que revisar")
     if lineas[-1] != esperado:
         raise CheckError(
-            f"Se esperaba que la última línea de '{name}' fuera '{esperado}'. "
-            f"La última línea es '{lineas[-1]}'"
+            f"La última línea de '{name}' no es la que pide el enunciado. "
+            f"Dice '{lineas[-1]}'"
         )
-    return f"La última línea de '{name}' es '{esperado}', como se esperaba."
+    return f"La última línea de '{name}' es la correcta."
 
 
 def check_archivo_contiene(params, home):
@@ -273,10 +273,8 @@ def check_archivo_contiene(params, home):
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if needle in line:
-                return f"El archivo '{name}' contiene el texto '{needle}', como se esperaba."
-    raise CheckError(
-        f"Se esperaba que '{name}' contuviera el texto '{needle}'. El archivo no contiene lo esperado"
-    )
+                return f"'{name}' contiene lo que se pedía."
+    raise CheckError(f"'{name}' no contiene lo que pide el enunciado")
 
 
 CHECKS = {

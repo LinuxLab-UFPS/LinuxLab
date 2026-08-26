@@ -33,7 +33,11 @@ export interface ActivityCheck {
 export interface ActivityCheckResult {
   id: string
   type: string
-  params: Record<string, string>
+  /**
+   * Los valores esperados. El servidor NO los manda al estudiante: llevan la
+   * respuesta del ejercicio. Solo llegan en las vistas de docente.
+   */
+  params?: Record<string, string>
   points: number
   passed: boolean
   detail: string

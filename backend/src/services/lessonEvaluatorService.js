@@ -28,10 +28,17 @@ function personalize(params, student) {
 
 const NEEDS_CODE = /\$codigo\b/
 
+/**
+ * La comprobacion tal como puede verla el estudiante.
+ *
+ * Sin `params`: ahi viven el contenido exacto que debe tener un archivo, el
+ * modo octal o la ultima linea esperada, o sea la respuesta del ejercicio.
+ * Viajaba al navegador junto al enunciado, de modo que se leia entera sin
+ * intentar la actividad. Fuera del servidor solo salen el tipo y los puntos.
+ */
 const publicCheck = (check) => ({
   id: check.id,
   type: check.type,
-  params: check.params,
   points: check.points,
 })
 
@@ -116,7 +123,6 @@ async function evaluate({ slug, studentUserId }) {
     return {
       id: check.id,
       type: check.type,
-      params: check.params,
       points: check.points,
       passed: outcome?.passed ?? false,
       detail: outcome?.detail ?? "No se pudo evaluar",
