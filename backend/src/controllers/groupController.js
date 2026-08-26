@@ -2,6 +2,7 @@ const groupService = require("../services/groupService")
 const enrollmentService = require("../services/enrollmentService")
 const reconcileService = require("../services/reconcileService")
 const gradebookService = require("../services/gradebookService")
+const groupProgressService = require("../services/groupProgressService")
 const accessService = require("../services/accessService")
 const asyncHandler = require("../utils/asyncHandler")
 
@@ -40,6 +41,16 @@ const archiveGroup = asyncHandler(async (req, res) => {
     teacherUserId: req.user.id,
   })
   res.json(group)
+})
+
+const rotateInvite = asyncHandler(async (req, res) => {
+  res.json(
+    await groupService.rotateInvite({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
 })
 
 const registerStudent = asyncHandler(async (req, res) => {
@@ -133,11 +144,22 @@ const getStudentPerformance = asyncHandler(async (req, res) => {
   )
 })
 
+const getGroupProgress = asyncHandler(async (req, res) => {
+  res.json(
+    await groupProgressService.getGroupProgress({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 module.exports = {
   createGroup,
   listGroups,
   getGroup,
   archiveGroup,
+  rotateInvite,
   deleteGroup,
   registerStudent,
   importCsv,
@@ -147,4 +169,5 @@ module.exports = {
   reconcileGroup,
   getGradebook,
   getStudentPerformance,
+  getGroupProgress,
 }

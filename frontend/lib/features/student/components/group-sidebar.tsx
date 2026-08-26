@@ -48,7 +48,7 @@ export function GroupSidebar({
         {/* Nav: home + title */}
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
           <Link
-            href="/home"
+            href="/inicio"
             title="Volver al inicio"
             aria-label="Volver al inicio"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -74,7 +74,7 @@ export function GroupSidebar({
               return (
                 <li key={topic.slug}>
                   <LessonLink
-                    href={`/group?tema=${topic.slug}`}
+                    href={`/curso?tema=${topic.slug}`}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-colors",
                       isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
@@ -125,7 +125,7 @@ export function GroupSidebar({
                         return (
                           <li key={sub.id}>
                             <LessonLink
-                              href={`/group?tema=${topic.slug}&sub=${sub.id}`}
+                              href={`/curso?tema=${topic.slug}&sub=${sub.id}`}
                               className={cn(
                                 "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
                                 activeSub

@@ -30,7 +30,7 @@ async function hasEnrollmentInGroup(studentUserId, groupId) {
       student_id: studentUserId,
       group_id: groupId,
       status: "active",
-      group: { archived: false },
+      group: { status: "active" },
     },
   })
   return count > 0

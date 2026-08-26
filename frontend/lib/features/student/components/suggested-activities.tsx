@@ -101,7 +101,7 @@ export function SuggestedActivities({
               columna y tiene que estar a la vista haya cuatro tarjetas o
               quince, sin obligar a llegar al final para encontrarlo. */}
           <Link
-            href="/activities"
+            href="/actividades"
             className="mt-3 block shrink-0 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Ver más

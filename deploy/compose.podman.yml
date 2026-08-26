@@ -95,7 +95,7 @@ services:
     image: linuxlab-backend:latest
     container_name: linuxlab-backend
     networks: [internal, external]
-    mem_limit: 192m
+    mem_limit: 256m
     cpu_shares: 1024
     # Loopback y no 0.0.0.0: el proxy lo alcanza por la red de contenedores y
     # deploy-server.sh sigue pudiendo consultar /api/health, pero desde fuera
@@ -109,7 +109,7 @@ services:
       SSH_USER: labadmin
       SSH_KEY_PATH: /ssh/ssh_key
       JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
-      FRONTEND_URL: http://frontend:3000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
     depends_on:
       - postgres
       - migrate

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { ArrowRight, Play } from "lucide-react"
 import { syllabus } from "@shared/lib/content/temario"
-import { getLessonSequence, getTopicPreviews } from "@shared/lib/content/lessons"
+import { getTopicPreviews } from "@shared/lib/content/lessons"
 import { getServerSession } from "@/lib/features/auth/session"
 import { conNext } from "@shared/lib/next-url"
 import { HomeHero } from "@/lib/features/student/components/home-hero"
@@ -39,11 +39,11 @@ const BLOQUE = "flex min-h-screen flex-col justify-center pt-14"
 export default async function LandingPage() {
   const session = await getServerSession()
   const previews = getTopicPreviews()
-  // El primer tema sale de la secuencia y no escrito a mano: el `sub` vive en un
-  // meta.json y cambiaria en silencio al reordenar el contenido.
-  const primeraLeccion = getLessonSequence()[0]?.href ?? "/group"
-  const irAlCurso = session ? primeraLeccion : conNext(primeraLeccion)
-  const irAlTemario = session ? "/home" : conNext("/home")
+  // Al tablero y no a la primera leccion: `/inicio` aguanta mejor los estados
+  // raros. Quien no esta matriculado en ningun grupo lo desvia desde ahi la
+  // puerta del middleware, sin que la portada tenga que saber nada de eso.
+  const irAlCurso = session ? "/inicio" : conNext("/inicio")
+  const irAlTemario = irAlCurso
   const portada = syllabus.slice(0, TEMAS_EN_PORTADA)
   return (
     <div className="min-h-screen bg-background">
@@ -77,7 +77,7 @@ export default async function LandingPage() {
             {portada.map((topic) => (
               <ContentCard
                 key={topic.slug}
-                href={session ? `/group?tema=${topic.slug}` : conNext(`/group?tema=${topic.slug}`)}
+                href={session ? `/curso?tema=${topic.slug}` : conNext(`/curso?tema=${topic.slug}`)}
                 title={`${topic.number}. ${topic.title}`}
                 description={topic.description}
                 illustration={topicIllustration(topic.number)}

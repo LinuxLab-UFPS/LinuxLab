@@ -14,7 +14,7 @@
  */
 
 /** A donde va quien entra sin pedir ningun sitio en concreto. */
-export const DESTINO_POR_DEFECTO = "/home"
+export const DESTINO_POR_DEFECTO = "/inicio"
 
 /** La ruta del login, en un solo sitio para no repetirla por medio proyecto. */
 export const RUTA_LOGIN = "/login"

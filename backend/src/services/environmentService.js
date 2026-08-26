@@ -40,12 +40,12 @@ async function snapshot() {
       },
     }),
     prisma.group.findMany({
-      where: { archived: false },
+      where: { status: "active" },
       select: {
         id: true,
         name: true,
         group_dir: true,
-        teacher: { select: { linuxAccount: { select: { linux_username: true } } } },
+        teacher: { select: { user: { select: { linuxAccount: { select: { linux_username: true } } } } } },
       },
     }),
     containerUsers(),
@@ -84,14 +84,16 @@ async function snapshot() {
     })
   }
 
-  const [userJobs, groupJobs, teardownJobs] = await Promise.all([
-    prisma.userProvisioningJob.groupBy({ by: ["status"], _count: true }),
-    prisma.groupProvisioningJob.groupBy({ by: ["status"], _count: true }),
-    prisma.groupTeardownJob.groupBy({ by: ["status"], _count: true }),
-  ])
+  const jobCounts = await prisma.job.groupBy({
+    by: ["type", "status"],
+    _count: true,
+  })
 
-  const countsOf = (rows) =>
-    rows.reduce((acc, row) => ({ ...acc, [row.status]: row._count }), {})
+  const countsByType = {}
+  for (const row of jobCounts) {
+    countsByType[row.type] = countsByType[row.type] || {}
+    countsByType[row.type][row.status] = row._count
+  }
 
   return {
     accounts: {
@@ -102,30 +104,20 @@ async function snapshot() {
     },
     courses,
     jobs: {
-      users: countsOf(userJobs),
-      groups: countsOf(groupJobs),
-      teardown: countsOf(teardownJobs),
+      users: countsByType["user_provisioning"] || {},
+      groups: countsByType["group_provisioning"] || {},
+      teardown: countsByType["group_teardown"] || {},
     },
   }
 }
 
 /** Devuelve a "pendiente" los trabajos que agotaron sus reintentos. */
 async function requeueFailed() {
-  const [users, groups, teardowns] = await Promise.all([
-    prisma.userProvisioningJob.updateMany({
-      where: { status: "failed" },
-      data: { status: "pending", retries: 0, error: null },
-    }),
-    prisma.groupProvisioningJob.updateMany({
-      where: { status: "failed" },
-      data: { status: "pending", retries: 0, error: null },
-    }),
-    prisma.groupTeardownJob.updateMany({
-      where: { status: "failed" },
-      data: { status: "pending", retries: 0, error: null },
-    }),
-  ])
-  return { users: users.count, groups: groups.count, teardowns: teardowns.count }
+  const result = await prisma.job.updateMany({
+    where: { status: "failed" },
+    data: { status: "pending", retries: 0, error: null },
+  })
+  return { total: result.count }
 }
 
 /**
@@ -149,8 +141,13 @@ async function ensureOwnAccount(userId) {
   await prisma.linuxAccount.create({
     data: { user_id: user.id, linux_username: username, linux_provisioned: false },
   })
-  await prisma.userProvisioningJob.create({
-    data: { user_id: user.id, username, priority: PRIORITIES.TEACHER },
+  await prisma.job.create({
+    data: {
+      type: "user_provisioning",
+      priority: PRIORITIES.TEACHER,
+      user_id: user.id,
+      payload: { username },
+    },
   })
   return { created: true, username }
 }

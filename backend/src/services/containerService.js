@@ -2,6 +2,7 @@ const sshClient = require("./sshService")
 const prisma = require("../../prisma/client")
 const logger = require("../lib/logger")
 const { AppError } = require("../lib/errors")
+const { groupNameOf } = require("../utils/groupName")
 
 const ACCOUNT_STORE = "/var/lib/linuxlab"
 
@@ -82,7 +83,7 @@ async function syncTeacherGroups(teacherUsername) {
   if (!account) return
 
   const groups = await prisma.group.findMany({
-    where: { teacher_id: account.user_id, archived: false, group_dir: { not: null } },
+    where: { teacher_id: account.user_id, status: "active", group_dir: { not: null } },
     select: { id: true, group_dir: true },
   })
 

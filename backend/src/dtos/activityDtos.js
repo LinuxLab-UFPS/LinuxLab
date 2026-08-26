@@ -32,13 +32,13 @@ const activityInputSchema = z.object({
 })
 
 /** La forma que espera el frontend para la tabla de actividades de un curso. */
-function serializeGroupActivity(ga, definition) {
+function serializeGroupActivity(ga) {
   return {
     id: ga.id,
     title: ga.title,
-    topicNumber: definition?.topic_number ?? 0,
+    topicNumber: ga.topic_number ?? 0,
     source: "teacher",
-    difficulty: definition?.difficulty ?? "basic",
+    difficulty: "basic",
     instructions: ga.instructions ?? "",
     maxScore: ga.max_score,
     dueDate: ga.due_at?.toISOString(),

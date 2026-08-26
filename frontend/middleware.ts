@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
-import { ROUTE_RULES } from "@shared/lib/rules"
+import { ROUTE_RULES, PUBLIC_ROUTES } from "@shared/lib/rules"
 import { conNext } from "@shared/lib/next-url"
 import { env } from "@/lib/config/env"
 import type { Role } from "@/lib/models/auth"
@@ -27,16 +27,25 @@ function alLogin(request: NextRequest) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-
   const token = request.cookies.get("token")?.value
 
   // `/` es la portada publica y la ve todo el mundo, con sesion o sin ella.
-  // Antes rebotaba a `/home` a quien ya habia entrado, y con la portada aqui eso
-  // significaba que nadie logueado podia verla nunca.
+  // Main la rebotaba a `/inicio` o a `/login`, y con la portada aqui eso
+  // significaba que nadie podia verla nunca.
   if (pathname === "/") return NextResponse.next()
 
   const rule = ROUTE_RULES.find((r) => matchesRoute(pathname, r))
-  if (!rule) return NextResponse.next()
+
+  const isPublic = !rule || PUBLIC_ROUTES.has(pathname) || rule.roles.length === 0
+  if (isPublic) {
+    if (token && (pathname === "/login" || pathname === "/auth/verificacion")) {
+      try {
+        await jwtVerify(token, JWT_SECRET)
+        return NextResponse.redirect(new URL("/inicio", request.url))
+      } catch {}
+    }
+    return NextResponse.next()
+  }
 
   if (!token) return alLogin(request)
 
@@ -46,6 +55,10 @@ export async function middleware(request: NextRequest) {
     if (!rule.roles.includes(role)) {
       return NextResponse.redirect(new URL("/unauthorized", request.url))
     }
+    const hasEnrollment = (payload.hasEnrollment as boolean | undefined) ?? false
+    if (role === "student" && hasEnrollment === false && rule.requiresEnrollment) {
+      return NextResponse.redirect(new URL("/inscripcion/pendiente", request.url))
+    }
     return NextResponse.next()
   } catch {
     return alLogin(request)
@@ -53,7 +66,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|__/auth|.*\\.png$|.*\\.svg$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|__/auth|.*\\.png$|.*\\.svg$).*)"],
 }

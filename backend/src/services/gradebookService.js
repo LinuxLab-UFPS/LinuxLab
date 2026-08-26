@@ -13,13 +13,6 @@ function round1(value) {
 
 /**
  * Estado y nota de una casilla estudiante x actividad.
- *
- * - automaticas con intentos -> `completed` con nota final (finalScore).
- * - manuales con entrega calificada (`graded`) -> `completed`.
- * - manuales en revision (`submitted`/`under_review`) -> `under-review`.
- * - sin actividad y con cierre vencido -> `overdue` con nota 0 (penaliza en el
- *   promedio; "no entregar" no es lo mismo que "sin evaluar").
- * - sin actividad y sin cierre vencido -> `not-started` sin nota.
  */
 function buildCell(ga, attempts, submissions, now) {
   if (ga.evaluation_type === "manual") {
@@ -66,72 +59,63 @@ function buildCell(ga, attempts, submissions, now) {
 }
 
 /**
- * La nota que aporta una casilla al promedio. Solo las completadas (su nota) y
- * las vencidas sin entregar (0) cuentan: las que estan en revision o sin
- * iniciar aun no tienen evaluacion y no penalizan.
+ * La nota que aporta una casilla al promedio.
  */
 function contributesToAverage(cell) {
   return cell.status === "completed" && cell.score !== null || cell.status === "overdue"
 }
 
 function averageValueOf(cell) {
-  return cell.status === "overdue" ? 0 : cell.score
+  return cell.status === "overdue" ? 0 : cell.score ?? 0
 }
 
 /**
- * Carga en pocas consultas todo lo que alimenta el cuaderno: actividades
- * habilitadas del grupo, estudiantes matriculados e intentos y entregas de la
- * carpeta. Se indexan en memoria por (estudiante, actividad) para que las
- * casillas no cuesten N x M consultas.
+ * Carga en pocas consultas todo lo que alimenta el cuaderno.
  */
 async function loadGroupData(groupId) {
   const activities = await prisma.groupActivity.findMany({
     where: { group_id: groupId, enabled: true },
-    include: { definition: { select: { topic_number: true } } },
     orderBy: { created_at: "asc" },
   })
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    select: { student: { select: { id: true, name: true, email: true, code: true } } },
-    orderBy: { enrolled_at: "asc" },
+    include: { student: { include: { user: true } } },
+    orderBy: { created_at: "asc" },
   })
 
   const activityIds = activities.map((a) => a.id)
-  const [attempts, submissions] = await Promise.all([
-    activityIds.length > 0
-      ? prisma.activityAttempt.findMany({
-          where: { group_activity_id: { in: activityIds } },
-          select: { student_id: true, group_activity_id: true, score: true, created_at: true },
-        })
-      : Promise.resolve([]),
-    activityIds.length > 0
-      ? prisma.activitySubmission.findMany({
-          where: { group_activity_id: { in: activityIds } },
-          select: {
-            student_id: true,
-            group_activity_id: true,
-            status: true,
-            score: true,
-            submitted_at: true,
-            graded_at: true,
-          },
-        })
-      : Promise.resolve([]),
-  ])
+  const submissions = activityIds.length > 0
+    ? await prisma.groupSubmission.findMany({
+        where: { group_activity_id: { in: activityIds } },
+        include: {
+          autoDetail: true,
+          manualDetail: { select: { graded_at: true } },
+          enrollment: { select: { student_id: true } },
+        },
+        orderBy: { created_at: "asc" },
+      })
+    : []
 
   const attemptMap = new Map()
-  for (const a of attempts) {
-    const k = key(a.student_id, a.group_activity_id)
-    if (!attemptMap.has(k)) attemptMap.set(k, [])
-    attemptMap.get(k).push({ score: a.score, created_at: a.created_at })
-  }
-
   const submissionMap = new Map()
   for (const s of submissions) {
-    const k = key(s.student_id, s.group_activity_id)
-    if (!submissionMap.has(k)) submissionMap.set(k, [])
-    submissionMap.get(k).push(s)
+    const studentId = s.enrollment?.student_id
+    if (!studentId) continue
+    const k = key(studentId, s.group_activity_id)
+    if (s.autoDetail) {
+      if (!attemptMap.has(k)) attemptMap.set(k, [])
+      attemptMap.get(k).push({ score: s.score, created_at: s.created_at })
+    }
+    if (s.manualDetail) {
+      if (!submissionMap.has(k)) submissionMap.set(k, [])
+      submissionMap.get(k).push({
+        status: s.status,
+        score: s.score,
+        submitted_at: s.created_at,
+        graded_at: s.manualDetail.graded_at,
+      })
+    }
   }
   for (const list of submissionMap.values()) {
     list.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
@@ -140,15 +124,15 @@ async function loadGroupData(groupId) {
   return { activities, enrollments, attemptMap, submissionMap }
 }
 
-/**
- * Cuaderno del docente: una fila por estudiante, una columna por actividad,
- * con promedio por actividad y por estudiante.
- */
 async function getGroupGradebook({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
 
-  const students = enrollments.map((e) => e.student)
+  const students = enrollments.map((e) => ({
+    id: e.student.user.id,
+    name: e.student.user.name,
+    code: e.student.code,
+  }))
   const now = new Date()
 
   const cells = {}
@@ -193,7 +177,7 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       activityNumber: ga.activity_number,
       workdir: ga.workdir,
       title: ga.title,
-      topicNumber: ga.definition?.topic_number ?? null,
+      topicNumber: null,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
       dueAt: ga.due_at?.toISOString() ?? null,
@@ -206,7 +190,6 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
   }
 }
 
-/** El estado de casilla (kebab) a su clave en el resumen (camel). */
 const STATUS_TO_KEY = {
   completed: "completed",
   "under-review": "underReview",
@@ -236,10 +219,6 @@ function summarizeSeries(series) {
   return summary
 }
 
-/**
- * Serie del estudiante por actividad (para la linea de rendimiento) y
- * desglose por tema, mas el promedio del grupo por actividad como referencia.
- */
 function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMap, submissionMap) {
   const now = new Date()
   const series = []
@@ -260,7 +239,7 @@ function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMa
     }
     const groupAverage = count > 0 ? round1(sum / count) : null
 
-    const topicNumber = ga.definition?.topic_number ?? 0
+    const topicNumber = 0
     if (!topicsMap.has(topicNumber)) {
       topicsMap.set(topicNumber, { topicNumber, completed: 0, total: 0, sum: 0 })
     }
@@ -298,13 +277,12 @@ function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMa
   return { series, topics }
 }
 
-/** Rendimiento de un estudiante concreto (vista del docente). */
 async function getStudentPerformance({ groupId, studentId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const student = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { id: true, name: true, email: true, code: true },
+    select: { id: true, name: true, email: true, student: { select: { code: true } } },
   })
   if (!student) throw new NotFoundError("Estudiante no encontrado")
 
@@ -314,23 +292,22 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
   if (!enrollment) throw new NotFoundError("El estudiante no está inscrito en este grupo")
 
   const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
-  const groupStudentIds = enrollments.map((e) => e.student.id)
+  const groupStudentIds = enrollments.map((e) => e.student.user.id)
   const { series, topics } = buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMap, submissionMap)
 
   return {
-    student: { id: student.id, name: student.name, email: student.email, code: student.code },
+    student: { id: student.id, name: student.name, email: student.email, code: student.student?.code ?? null },
     series,
     topics,
     summary: summarizeSeries(series),
   }
 }
 
-/** Calificaciones del estudiante autenticado en su grupo activo. */
 async function getMyGrades(studentUserId) {
   const enrollment = await prisma.enrollment.findFirst({
-    where: { student_id: studentUserId, status: "active", group: { archived: false } },
+    where: { student_id: studentUserId, status: "active", group: { status: "active" } },
     include: { group: { select: { id: true, name: true } } },
-    orderBy: { enrolled_at: "asc" },
+    orderBy: { created_at: "asc" },
   })
 
   const empty = {
@@ -342,7 +319,7 @@ async function getMyGrades(studentUserId) {
   if (!enrollment) return empty
 
   const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(enrollment.group_id)
-  const groupStudentIds = enrollments.map((e) => e.student.id)
+  const groupStudentIds = enrollments.map((e) => e.student.user.id)
   const { series, topics } = buildSeriesForStudent(studentUserId, activities, groupStudentIds, attemptMap, submissionMap)
 
   return {
