@@ -19,6 +19,10 @@ function AuthAccionInner() {
   const rawMode = sp.get("mode") as Mode | null
   const oobCode = sp.get("oobCode") ?? sp.get("oob_code") ?? sp.get("code") ?? ""
   const mode: Mode = rawMode ?? (oobCode ? "unknown" : "unknown")
+  const rawNext = sp.get("next")
+  const safeNext = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : ""
+
+  const goLogin = () => router.replace(safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login")
 
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error" | "form">("idle")
   const [message, setMessage] = useState<string | null>(null)
@@ -146,7 +150,7 @@ function AuthAccionInner() {
       setStatus("success")
       setMessage("Contraseña restablecida. Inicia sesión con tu nueva contraseña.")
       notify.success("Contraseña actualizada.")
-      setTimeout(() => router.replace("/login"), 1200)
+      setTimeout(() => goLogin(), 1200)
     } catch (err) {
       notify.error(err, mapFirebaseError(errorCodeOf(err), "No se pudo restablecer la contraseña."))
     } finally {
@@ -171,9 +175,9 @@ function AuthAccionInner() {
             </div>
             <h1 className="text-xl font-bold text-foreground">{mode === "resetPassword" ? "Contraseña actualizada" : "Verificación completada"}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-            <Button onClick={() => router.replace("/login")} className="mt-8 h-11 w-full">
-              Ir a iniciar sesión
-            </Button>
+             <Button onClick={() => goLogin()} className="mt-8 h-11 w-full">
+               Ir a iniciar sesión
+             </Button>
           </>
         ) : status === "form" ? (
           <>
@@ -231,10 +235,10 @@ function AuthAccionInner() {
             <h1 className="text-xl font-bold text-foreground">No se pudo completar</h1>
             <p className="mt-2 text-sm text-muted-foreground">{message ?? "Enlace inválido."}</p>
             <div className="mt-8 flex flex-col gap-3">
-              <Button onClick={() => router.replace("/login")} className="h-11 w-full">
-                Volver a iniciar sesión
-              </Button>
-              <Button variant="outline" onClick={() => router.replace("/auth/verificacion")} className="h-11 w-full">
+               <Button onClick={() => goLogin()} className="h-11 w-full">
+                 Volver a iniciar sesión
+               </Button>
+              <Button variant="outline" onClick={() => router.replace(safeNext ? `/auth/verificacion?next=${encodeURIComponent(safeNext)}` : "/auth/verificacion")} className="h-11 w-full">
                 Reenviar verificación
               </Button>
             </div>

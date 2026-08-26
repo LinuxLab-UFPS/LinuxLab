@@ -64,11 +64,13 @@ router.post(
     if (!firebaseApp) {
       throw new AppError("Firebase no está configurado en el servidor", 500, "INTERNAL_ERROR")
     }
+    const rawNext = typeof req.body?.next === "string" ? req.body.next : ""
+    const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : ""
     try {
       const auth = getAuth(firebaseApp)
       const firebaseLink = await auth.generateEmailVerificationLink(email)
       const oobCode = extractOobCode(firebaseLink)
-      const customLink = `${config.frontendUrl}/auth/accion?mode=verifyEmail&oobCode=${encodeURIComponent(oobCode ?? "")}`
+      const customLink = `${config.frontendUrl}/auth/accion?mode=verifyEmail&oobCode=${encodeURIComponent(oobCode ?? "")}${next ? `&next=${encodeURIComponent(next)}` : ""}`
       const { subject, html, text } = emailService.renderVerificationEmail(customLink)
       try {
         await emailService.sendMail({ to: email, subject, html, text, category: "verification" })

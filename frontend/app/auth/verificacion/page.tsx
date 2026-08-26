@@ -8,12 +8,14 @@ function VerificarCorreoInner() {
   const router = useRouter()
   const sp = useSearchParams()
   const [email, setEmail] = useState<string | null>(null)
+  const next = sp.get("next")
 
   useEffect(() => {
     const oobCode = sp.get("oobCode") ?? sp.get("oob_code")
     const mode = sp.get("mode")
     if (oobCode && mode) {
-      router.replace(`/auth/accion?mode=${mode}&oobCode=${encodeURIComponent(oobCode)}`)
+      const target = `/auth/accion?mode=${mode}&oobCode=${encodeURIComponent(oobCode)}${next ? `&next=${encodeURIComponent(next)}` : ""}`
+      router.replace(target)
       return
     }
     let cancelled = false
@@ -34,16 +36,16 @@ function VerificarCorreoInner() {
           return
         }
       } catch {}
-      router.replace("/login")
+      router.replace(next ? `/login?next=${encodeURIComponent(next)}` : "/login")
     }
     resolve()
     return () => {
       cancelled = true
     }
-  }, [router, sp])
+  }, [router, sp, next])
 
   if (!email) return null
-  return <VerifyEmailPage email={email} />
+  return <VerifyEmailPage email={email} next={next} />
 }
 
 export default function VerificarCorreoPage() {

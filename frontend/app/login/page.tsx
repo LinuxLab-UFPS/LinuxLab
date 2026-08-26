@@ -57,6 +57,8 @@ export default function LoginPage() {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    const params = new URLSearchParams(window.location.search)
+    const next = params.get("next")
     const trimmedEmail = email.trim()
     if (!EMAIL_REGEX.test(trimmedEmail)) {
       notify.error(null, "Ingresa un correo válido.")
@@ -79,11 +81,11 @@ export default function LoginPage() {
       if (mode === "login") {
         await signInWithEmail(trimmedEmail, password)
       } else {
-        await signUpWithEmail(trimmedEmail, password, name.trim(), code.trim())
+        await signUpWithEmail(trimmedEmail, password, name.trim(), code.trim(), next ?? undefined)
         try {
           sessionStorage.setItem("pendingVerifyEmail", trimmedEmail)
         } catch {}
-        router.push("/auth/verificacion")
+        router.push(next ? `/auth/verificacion?next=${encodeURIComponent(next)}` : "/auth/verificacion")
         notify.success("Cuenta creada. Verifica tu correo para continuar.")
       }
     } catch (err) {
@@ -93,7 +95,7 @@ export default function LoginPage() {
           sessionStorage.setItem("pendingVerifyEmail", trimmedEmail)
         } catch {}
         notify.error(err, msg)
-        router.push("/auth/verificacion")
+        router.push(next ? `/auth/verificacion?next=${encodeURIComponent(next)}` : "/auth/verificacion")
       } else {
         notify.error(err, msg)
       }

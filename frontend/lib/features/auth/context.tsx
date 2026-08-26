@@ -19,9 +19,9 @@ interface AuthContextValue {
   loading: boolean
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string, name: string, code: string) => Promise<{ needsVerification: boolean }>
+  signUpWithEmail: (email: string, password: string, name: string, code: string, next?: string) => Promise<{ needsVerification: boolean }>
   sendPasswordReset: (email: string) => Promise<{ debugLink?: string }>
-  resendVerification: () => Promise<{ debugLink?: string }>
+  resendVerification: (next?: string) => Promise<{ debugLink?: string }>
   hydrate: (user: User | null) => void
   signOut: () => Promise<void>
 }
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signUpWithEmail = useCallback(
-    async (email: string, password: string, name: string, code: string) => {
+    async (email: string, password: string, name: string, code: string, next?: string) => {
       const { auth } = getFirebaseAuth()
       let cred
       try {
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await apiFetch("/api/auth/request-verification", {
           method: "POST",
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({ email, next }),
         })
       } catch {}
       try {
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const resendVerification = useCallback(async () => {
+  const resendVerification = useCallback(async (next?: string) => {
     let email: string | null = null
     try {
       const { auth } = getFirebaseAuth()
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await apiFetch<{ message: string; debugLink?: string }>("/api/auth/request-verification", {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, next }),
       })
       if (data.debugLink) console.log("[PoC] custom verify link:", data.debugLink)
       return { debugLink: data.debugLink }

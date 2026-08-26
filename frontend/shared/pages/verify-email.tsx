@@ -8,7 +8,7 @@ import { notify } from "@shared/lib/toast"
 import { useAuth } from "@/lib/features/auth/context"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
 
-export function VerifyEmailPage({ email }: { email: string }) {
+export function VerifyEmailPage({ email, next }: { email: string; next?: string | null }) {
   const router = useRouter()
   const { resendVerification } = useAuth()
   const [sending, setSending] = useState(false)
@@ -20,7 +20,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
     if (cooldown > 0) return
     setSending(true)
     try {
-      const { debugLink: link } = await resendVerification()
+      const { debugLink: link } = await resendVerification(next ?? undefined)
       if (link) setDebugLink(link)
       notify.success("Correo reenviado. Revisa logs del backend para el enlace [PoC].")
       setCooldown(60)
@@ -51,7 +51,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
           const idToken = await u.getIdToken()
           const { apiFetch } = await import("@/lib/api/client")
           await apiFetch("/api/auth/firebase", { method: "POST", body: JSON.stringify({ idToken }) })
-          router.push("/inicio")
+          router.push(next || "/inicio")
           return
         }
       }
@@ -59,7 +59,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
       try {
         await signOut(getFirebaseAuth().auth)
       } catch {}
-      router.push("/login")
+      router.push(next ? `/login?next=${encodeURIComponent(next)}` : "/login")
       notify.info("Aún no verificado. Revisa tu correo y vuelve a iniciar sesión.")
     } catch (e) {
       notify.error(e, "No se pudo verificar el estado.")
@@ -94,7 +94,7 @@ export function VerifyEmailPage({ email }: { email: string }) {
           <Button variant="outline" onClick={handleChecked} disabled={checking} className="h-11 w-full">
             {checking ? "Verificando…" : "Ya verifiqué, continuar"}
           </Button>
-          <Button variant="ghost" onClick={() => router.push("/login")} className="h-11 w-full">
+          <Button variant="ghost" onClick={() => router.push(next || "/login")} className="h-11 w-full">
             Volver al inicio
           </Button>
         </div>
