@@ -20,6 +20,11 @@ const DATOS = {
   instructions:
     "Deja por escrito quién eres para el sistema: tu identidad completa, tu " +
     "línea de /etc/passwd y, recortado de ella, el shell con el que entras.",
+  /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
+     la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
+     encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de
+     rehacer archivos funciona igual que en las demas. */
+  setup: {},
 }
 
 async function main() {

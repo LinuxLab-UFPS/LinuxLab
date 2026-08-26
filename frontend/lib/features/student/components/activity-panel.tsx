@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Markdown } from "@shared/components/markdown"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
+import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -42,6 +44,23 @@ export function ActivityPanel({
 }) {
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
+
+  const goToWorkdir = () => {
+    if (!data?.workdir) return
+    sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
+  }
+
+  /* Reiniciar borra la carpeta de la actividad y la vuelve a montar. Se
+     pregunta antes porque el boton vive al lado del de ir a la carpeta, y
+     confundirlos costaria el trabajo hecho. */
+  const confirmReset = () => {
+    const ok = window.confirm(
+      "Se van a rehacer los archivos de esta actividad.\n\n" +
+        "Lo que hayas escrito dentro de su carpeta se pierde. El resto de tu " +
+        "entorno no se toca.\n\n¿Continuar?",
+    )
+    if (ok) reset()
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
@@ -136,17 +155,23 @@ export function ActivityPanel({
             {checking ? "Comprobando..." : "Comprobar actividad"}
           </ActionButton>
 
-          {/* Sólo las actividades que preparan archivos se pueden rehacer, y es
-              lo que permite plantear ejercicios donde haya que borrar cosas. */}
-          {data?.hasSetup && (
-            <ActionButton tone="neutral" onClick={reset} disabled={resetting || loading}>
-              {resetting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RotateCcw className="h-4 w-4" />
-              )}
-              {resetting ? "Preparando..." : "Reiniciar archivos"}
+          {/* Volver a la carpeta es lo que se hace muchas veces por sesion, asi
+              que va como boton; rehacer los archivos se hace una vez y borra
+              trabajo, asi que va como icono y pregunta antes. */}
+          {data?.workdir && (
+            <ActionButton tone="neutral" onClick={goToWorkdir}>
+              <FolderOpen className="h-4 w-4" />
+              Ir a la carpeta
             </ActionButton>
+          )}
+
+          {data?.hasSetup && data?.workdir && (
+            <IconAction
+              label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
+              icon={resetting ? Loader2 : RotateCcw}
+              onClick={confirmReset}
+              disabled={resetting || loading}
+            />
           )}
         </div>
       </footer>

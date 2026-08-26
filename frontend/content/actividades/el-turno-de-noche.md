@@ -1,7 +1,6 @@
-Antes de empezar, crea el directorio y muévete a él:
+Antes de empezar, muévete al directorio `~/actividades/el-turno-de-noche`:
 
 ```bash
-mkdir -p ~/actividades/el-turno-de-noche
 cd ~/actividades/el-turno-de-noche
 ```
 

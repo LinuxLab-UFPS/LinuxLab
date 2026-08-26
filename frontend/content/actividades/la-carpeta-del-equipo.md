@@ -1,7 +1,6 @@
-Antes de empezar, crea el directorio y muévete a él:
+Antes de empezar, muévete al directorio `~/actividades/la-carpeta-del-equipo`:
 
 ```bash
-mkdir -p ~/actividades/la-carpeta-del-equipo
 cd ~/actividades/la-carpeta-del-equipo
 ```
 

@@ -62,6 +62,11 @@ function bankSlugOf(activityId) {
  */
 const SIN_CARPETA_PROPIA = new Set(["universidad-facultades"])
 
+/** La carpeta de trabajo de una actividad del temario, o null si no tiene. */
+function workdirOf(slug) {
+  return SIN_CARPETA_PROPIA.has(slug) ? null : slug
+}
+
 /**
  * Una actividad del temario con la misma forma que una del docente.
  *
@@ -87,7 +92,7 @@ function serializeTopicActivity(ta) {
     // clasifican por dificultad, y la interfaz pinta una u otra segun `source`.
     activityType: null,
     attemptLimit: null,
-    workdir: SIN_CARPETA_PROPIA.has(ta.slug) ? null : ta.slug,
+    workdir: workdirOf(ta.slug),
     enabled: true,
     checks: (ta.checks ?? []).map((c) => ({
       id: c.id,
@@ -132,4 +137,5 @@ module.exports = {
   serializeTopicActivity,
   bankActivityId,
   bankSlugOf,
+  workdirOf,
 }

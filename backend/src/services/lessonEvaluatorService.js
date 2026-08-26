@@ -6,6 +6,7 @@ const { AppError, NotFoundError } = require("../lib/errors")
 const linuxAccountService = require("./linuxAccountService")
 const attemptService = require("./attemptService")
 const { audit } = require("./auditService")
+const { workdirOf } = require("../dtos/activityDtos")
 
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
 const SETUP = "/usr/local/lib/linuxlab/setup.py"
@@ -61,6 +62,9 @@ const serialize = (activity) => ({
   topicNumber: activity.topic_id,
   maxScore: 100,
   hasSetup: Boolean(activity.setup),
+  // La carpeta donde se trabaja, para poder volver a ella desde el enunciado.
+  // Null en la que monta su arbol en la carpeta personal (ver activityDtos).
+  workdir: workdirOf(activity.slug),
   checks: withIds(activity.checks).map(publicCheck),
 })
 

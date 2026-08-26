@@ -35,19 +35,21 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   const [checking, setChecking] = useState(false)
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
   const [attempts, setAttempts] = useState(detail.attempts)
-  const [openedFolder, setOpenedFolder] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(!!detail.submission)
   const [submission, setSubmission] = useState(detail.submission)
 
   const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
   const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
+  /* Comprobar no exige haber pulsado antes "ir a la carpeta". Lo exigia, y era
+     estado de React: al recargar la pagina el boton volvia a salir gris y le
+     decia "primero abre la carpeta" a quien ya habia resuelto la actividad
+     ayer. El evaluador mira los archivos en el disco, no donde esta la shell. */
   const canCheck =
-    detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached && openedFolder
+    detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached
 
   const goToWorkdir = () => {
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
-    setOpenedFolder(true)
   }
 
   const check = async () => {
@@ -209,9 +211,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
         {detail.evaluationType === "atomic" && !canCheck && (
           <p className="text-xs text-muted-foreground">
-              {!openedFolder
-               ? "Primero abre la carpeta de trabajo."
-               : !detail.enabled
+              {!detail.enabled
                ? "La actividad está deshabilitada."
               : closed
                 ? "La actividad venció."

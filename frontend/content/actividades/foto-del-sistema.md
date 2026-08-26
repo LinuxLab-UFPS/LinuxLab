@@ -1,7 +1,6 @@
-Antes de empezar, crea el directorio y muévete a él:
+Antes de empezar, muévete al directorio `~/actividades/foto-del-sistema`:
 
 ```bash
-mkdir -p ~/actividades/foto-del-sistema
 cd ~/actividades/foto-del-sistema
 ```
 

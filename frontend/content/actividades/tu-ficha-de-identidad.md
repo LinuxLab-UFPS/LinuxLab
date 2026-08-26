@@ -1,7 +1,6 @@
-Antes de empezar, crea el directorio y muévete a él:
+Antes de empezar, muévete al directorio `~/actividades/tu-ficha-de-identidad`:
 
 ```bash
-mkdir -p ~/actividades/tu-ficha-de-identidad
 cd ~/actividades/tu-ficha-de-identidad
 ```
 

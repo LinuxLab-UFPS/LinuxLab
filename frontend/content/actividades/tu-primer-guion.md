@@ -1,7 +1,6 @@
-Antes de empezar, crea el directorio y muévete a él:
+Antes de empezar, muévete al directorio `~/actividades/tu-primer-guion`:
 
 ```bash
-mkdir -p ~/actividades/tu-primer-guion
 cd ~/actividades/tu-primer-guion
 ```
 
