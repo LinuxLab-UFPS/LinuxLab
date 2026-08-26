@@ -21,7 +21,7 @@ function groupNameOf(group) {
  * estudiantes al final, para que ninguna dependencia quede sin resolver.
  */
 async function reconcileAll() {
-  const out = { teachers: 0, groups: 0, students: 0 }
+  const out = { teachers: 0, groups: 0, students: 0, admins: 0 }
 
   // 1. Docentes: si su usuario Linux falta, se encola su job (prioridad 10).
   const teachers = await prisma.user.findMany({
@@ -46,6 +46,35 @@ async function reconcileAll() {
       })
     } catch (err) {
       logger.error({ err, username: teacher.linuxAccount.linux_username }, "Reconcile teacher failed")
+    }
+  }
+
+  // 1b. Admins: tienen linuxAccount y necesitan usuario Linux para la terminal,
+  //     pero no tienen relacion teacher/student, asi que el paso de docentes los
+  //     omite. El job es igual al de docente (prioridad 10, sin grupo): el
+  //     worker lo enruta a provisionTeacherAccount y crea usuario + home.
+  const admins = await prisma.user.findMany({
+    where: { role: "admin", linuxAccount: { linux_provisioned: true } },
+    include: { linuxAccount: true },
+  })
+  for (const admin of admins) {
+    try {
+      if (await userExists(admin.linuxAccount.linux_username)) continue
+      out.admins += 1
+      await prisma.linuxAccount.update({
+        where: { user_id: admin.linuxAccount.user_id },
+        data: { linux_provisioned: false },
+      })
+      await prisma.job.create({
+        data: {
+          type: "user_provisioning",
+          priority: PRIORITIES.TEACHER,
+          user_id: admin.linuxAccount.user_id,
+          payload: { username: admin.linuxAccount.linux_username },
+        },
+      })
+    } catch (err) {
+      logger.error({ err, username: admin.linuxAccount.linux_username }, "Reconcile admin failed")
     }
   }
 
@@ -130,7 +159,7 @@ async function reconcileAll() {
     }
   }
 
-  return { checked: teachers.length + groups.length + enrollments.length, ...out }
+  return { checked: teachers.length + admins.length + groups.length + enrollments.length, ...out }
 }
 
 async function reconcileGroup({ groupId }) {

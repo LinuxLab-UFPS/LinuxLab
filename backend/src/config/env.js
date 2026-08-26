@@ -43,10 +43,8 @@ const config = Object.freeze({
   }),
   frontendUrl: (process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3001").replace(/\/$/, ""),
   email: Object.freeze({
-    provider: (process.env.EMAIL_PROVIDER || "log").toLowerCase(),
-    fromAddress: process.env.EMAIL_FROM_ADDRESS || "hello@demomailtrap.co",
+    fromAddress: process.env.EMAIL_FROM_ADDRESS || "no-reply@linuxlab.local",
     fromName: process.env.EMAIL_FROM_NAME || "LinuxLab",
-    mailtrapToken: process.env.MAILTRAP_TOKEN || "",
     smtp: Object.freeze({
       host: process.env.SMTP_HOST || "",
       port: Number.parseInt(process.env.SMTP_PORT || "587", 10),

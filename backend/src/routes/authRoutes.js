@@ -43,7 +43,6 @@ router.post(
         logger.info({ email }, "password reset email enviado")
       } catch (mailErr) {
         logger.error({ err: mailErr, email }, "Fallo envío email reset")
-        if (config.email.provider === "log") throw mailErr
       }
       res.json({ message: "Si el correo existe, se ha enviado el enlace de recuperación." })
     } catch (err) {
@@ -65,18 +64,19 @@ router.post(
     if (!firebaseApp) {
       throw new AppError("Firebase no está configurado en el servidor", 500, "INTERNAL_ERROR")
     }
+    const rawNext = typeof req.body?.next === "string" ? req.body.next : ""
+    const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : ""
     try {
       const auth = getAuth(firebaseApp)
       const firebaseLink = await auth.generateEmailVerificationLink(email)
       const oobCode = extractOobCode(firebaseLink)
-      const customLink = `${config.frontendUrl}/auth/accion?mode=verifyEmail&oobCode=${encodeURIComponent(oobCode ?? "")}`
+      const customLink = `${config.frontendUrl}/auth/accion?mode=verifyEmail&oobCode=${encodeURIComponent(oobCode ?? "")}${next ? `&next=${encodeURIComponent(next)}` : ""}`
       const { subject, html, text } = emailService.renderVerificationEmail(customLink)
       try {
         await emailService.sendMail({ to: email, subject, html, text, category: "verification" })
         logger.info({ email }, "verification email enviado")
       } catch (mailErr) {
         logger.error({ err: mailErr, email }, "Fallo envío email verificación")
-        if (config.email.provider === "log") throw mailErr
       }
       res.json({ message: "Si el correo existe, se ha enviado el enlace de verificación." })
     } catch (err) {
