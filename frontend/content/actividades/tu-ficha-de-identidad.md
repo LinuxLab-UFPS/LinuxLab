@@ -1,16 +1,20 @@
-El sistema no te conoce por tu nombre, sino por un número y por los grupos a los que perteneces. Esta actividad es dejar eso por escrito.
+Antes de empezar, crea el directorio y muévete a él:
 
 ```bash
 mkdir -p ~/actividades/tu-ficha-de-identidad
 cd ~/actividades/tu-ficha-de-identidad
 ```
 
-## Lo que hay que hacer
+El sistema no te conoce por tu nombre, sino por un número y por los grupos a los que perteneces. Deja esos datos por escrito.
+
+**Objetivos:**
 
 | Archivo | Qué tiene que quedar dentro |
 |---|---|
-| `identidad.txt` | Tu identidad completa: usuario, grupo primario y todos los grupos a los que perteneces |
-| `cuenta.txt` | Tu línea entera de la base de cuentas del sistema |
-| `shell.txt` | Solo el shell con el que entras, recortado de esa línea |
+| `identidad.txt` | Tu identidad completa: usuario, grupo primario y todos los grupos a los que perteneces. |
+| `cuenta.txt` | Tu línea entera de la base de cuentas del sistema. |
+| `shell.txt` | Solo el shell con el que entras, recortado de esa línea. |
 
-Tu línea de cuenta no hay que buscarla a mano en el archivo: existe un comando que la consulta directamente por nombre de usuario. Y esa línea tiene siete campos separados por `:`, de los cuales aquí interesa el último, así que hace falta cortarla por ese separador en vez de copiar el valor a ojo.
+**Hint:**
+
+Tu línea de cuenta no hay que buscarla a mano: existe un comando que la consulta directamente por nombre de usuario. Esa línea tiene siete campos separados por `:`, y aquí interesa el último.

@@ -59,7 +59,7 @@ const RAW = [
     checks: 7,
   },
   {
-    slug: "limpieza-con-comodines",
+    slug: "limpieza",
     title: "Limpieza con comodines",
     description:
       "Una carpeta con nueve archivos de tres tipos. Borra unos, reparte los otros.",
@@ -71,19 +71,19 @@ const RAW = [
     slug: "cada-archivo-en-su-sitio",
     title: "Cada archivo en su sitio",
     description:
-      "Cuatro archivos llegaron con los permisos por defecto. Deja cada uno como pide su función.",
+      "El empleado anterior dejó cinco archivos con los permisos incorrectos. Deja cada uno como pide su función.",
     difficulty: "basic" as Difficulty,
     topicNumber: 5,
-    checks: 4,
+    checks: 5,
   },
   {
-    slug: "cerrar-el-proyecto",
-    title: "Cerrar el proyecto",
+    slug: "permisos-por-escrito",
+    title: "Permisos por escrito",
     description:
-      "Una carpeta a punto de entregarse. Revisa permisos de archivos y de directorios, y quita lo que sobra.",
+      "Un colega no sabe cambiar permisos. Escríbelos por él, en notación simbólica.",
     difficulty: "intermediate" as Difficulty,
     topicNumber: 5,
-    checks: 5,
+    checks: 3,
   },
   {
     slug: "mensaje-oculto",
@@ -104,7 +104,7 @@ const RAW = [
     checks: 5,
   },
   {
-    slug: "rastro-en-los-registros",
+    slug: "logs-servicio1",
     title: "El rastro en los registros",
     description:
       "Tres bitácoras y una sola línea que importa. Sácala con grep y cuenta los avisos.",

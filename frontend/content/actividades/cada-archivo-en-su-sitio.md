@@ -1,23 +1,23 @@
-Dentro de `~/actividades/cada-archivo-en-su-sitio` hay cuatro archivos:
+Antes de empezar, muévete al directorio `~/actividades/cada-archivo-en-su-sitio`:
 
 ```bash
 cd ~/actividades/cada-archivo-en-su-sitio
-ls -l
 ```
 
-Todos llegaron con los mismos permisos, los que el sistema pone por defecto. Ninguno de los cuatro los tiene como debería.
+El empleado anterior que tenía tus mismas responsabilidades dejó unos archivos con los permisos incorrectos.
 
-## Lo que hay que hacer
+**Objetivo:**
 
 Dejar cada archivo con los permisos que pide su función:
 
-| Archivo | Para qué es |
+| Archivo | Modificación |
 |---|---|
-| `notas.txt` | Apuntes privados: solo tú puedes leerlo y modificarlo |
-| `informe.txt` | Se entrega: cualquiera puede leerlo, solo tú modificarlo |
-| `arranque.sh` | Es un programa: cualquiera puede leerlo y ejecutarlo, solo tú modificarlo |
-| `plantilla.txt` | Documento oficial: cualquiera puede leerlo y nadie modificarlo, tú tampoco |
+| `notas.txt` | Que solo el usuario (tú) puedas leerlo. |
+| `informe.txt` | Cualquiera debe poder leerlo, pero solo tú debes poder modificarlo. |
+| `arranque.sh` | Cualquiera debería poder leerlo y ejecutarlo, solo tú modificarlo. |
+| `plantilla.txt` | Cualquiera debe poder leerlo y nadie modificarlo. Tú tampoco. |
+| `TUBO.exe` | Solo tú puedes ejecutarlo, verlo y modificarlo. Nadie más. |
 
-Cada descripción admite una única combinación. Traducirla a permisos es el ejercicio.
+**Hint:**
 
-(Pista: `ls -l` muestra cómo están ahora, y comparar lo que hay con lo que se pide suele ser más rápido que calcular el número desde cero).
+`ls -l` muestra cómo están ahora, y comparar lo que hay con lo que se pide suele ser más rápido que calcular el número desde cero.

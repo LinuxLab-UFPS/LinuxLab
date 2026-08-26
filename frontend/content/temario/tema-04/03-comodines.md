@@ -137,7 +137,7 @@ rm *.png
 
 Un patrón demasiado amplio alcanza más de lo previsto. `rm *` borra todo el contenido del directorio, y `rm *.txt` en el directorio equivocado borra los archivos equivocados. Mientras el patrón todavía no sea de fiar, `rm -i` pregunta archivo por archivo.
 
-<!-- ACTIVIDAD: limpieza-con-comodines -->
+<!-- ACTIVIDAD: limpieza -->
 
 ## Resumen
 

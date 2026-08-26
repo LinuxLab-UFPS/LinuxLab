@@ -143,6 +143,19 @@ practica1.txt:14:TODO revisar los permisos
 practica2.txt:3:TODO falta la conclusion
 ```
 
+Ese prefijo es útil para saber de dónde salió cada línea, pero estorba cuando lo que interesa es el texto en sí, por ejemplo para guardarlo tal cual en otro archivo. La opción `-h` lo quita:
+
+```bash
+grep -h TODO practica1.txt practica2.txt
+```
+
+```
+TODO revisar los permisos
+TODO falta la conclusion
+```
+
+Con un solo archivo no hace falta, porque entonces `grep` no antepone nada.
+
 Para buscar en un directorio completo, incluidas sus subcarpetas, se usa `-r`:
 
 ```bash
@@ -195,7 +208,7 @@ drwx------ 2 andres_torres grp_cec1648c 4096 Aug 11 18:48 backup
 
 Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la parte que interesa de una salida demasiado larga.
 
-<!-- ACTIVIDAD: rastro-en-los-registros -->
+<!-- ACTIVIDAD: logs-servicio1 -->
 
 ## Resumen
 
@@ -208,6 +221,7 @@ Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la pa
 | `grep -i` | Ignora mayúsculas y minúsculas |
 | `grep -w` | Solo palabras completas |
 | `grep -v` | Muestra las líneas que no contienen el texto |
+| `grep -h` | Quita el nombre del archivo cuando se busca en varios |
 | `grep -r ruta` | Busca en un directorio y sus subcarpetas |
 | `grep -l` | Muestra solo los nombres de archivo |
 | `grep -C 2` | Añade dos líneas de contexto a cada lado |
