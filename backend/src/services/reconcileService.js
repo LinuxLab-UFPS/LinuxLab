@@ -5,6 +5,7 @@ const {
   userExists,
   groupExists,
   homeOwnedBy,
+  inGroup,
   repairGroupOwnership,
 } = require("./containerService")
 const { groupNameOf: groupNameFromId } = require("../utils/groupName")
@@ -130,8 +131,12 @@ async function reconcileAll() {
     const teacherUsername = group.teacher?.user?.linuxAccount?.linux_username
     try {
       if (await userExists(account.linux_username)) {
+        // La membresia se mira aparte del home: un estudiante creado antes de
+        // que el aprovisionamiento la anadiera tiene el home correcto y sigue
+        // fuera del grupo, y solo re-aprovisionando se arregla.
         const ok = groupName && teacherUsername
-          ? await homeOwnedBy(account.linux_username, teacherUsername, group.group_dir)
+          ? (await homeOwnedBy(account.linux_username, teacherUsername, group.group_dir)) &&
+            (await inGroup(account.linux_username, groupName))
           : true
         if (ok) continue
       }
@@ -212,8 +217,12 @@ async function reconcileGroup({ groupId }) {
     out.checked += 1
     try {
       if (await userExists(account.linux_username)) {
+        // La membresia se mira aparte del home: un estudiante creado antes de
+        // que el aprovisionamiento la anadiera tiene el home correcto y sigue
+        // fuera del grupo, y solo re-aprovisionando se arregla.
         const ok = groupName && teacherUsername
-          ? await homeOwnedBy(account.linux_username, teacherUsername, group.group_dir)
+          ? (await homeOwnedBy(account.linux_username, teacherUsername, group.group_dir)) &&
+            (await inGroup(account.linux_username, groupName))
           : true
         if (ok) continue
       }

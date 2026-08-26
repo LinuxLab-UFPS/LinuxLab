@@ -52,6 +52,20 @@ async function homeOwnedBy(username, teacherUsername, groupDir) {
   return stdout.trim() === idRes.stdout.trim()
 }
 
+/**
+ * True si el usuario pertenece al grupo Unix del curso.
+ *
+ * Se comprueba aparte del dueño del home porque son cosas distintas y fallan
+ * por separado: el home puede tener el grupo correcto (se lo pone el chown)
+ * mientras el usuario sigue sin ser miembro. Ver `createStudent` para lo que
+ * eso rompe.
+ */
+async function inGroup(username, groupName) {
+  const { code, stdout } = await sshClient.execCommand(`id -nG ${username} 2>/dev/null`)
+  if (code !== 0) return false
+  return stdout.trim().split(/\s+/).includes(groupName)
+}
+
 async function createTeacher(teacherUsername) {
   const root = `/home/${teacherUsername}`
   const home = `${root}/home`
@@ -129,6 +143,14 @@ async function createGroup(teacherUsername, groupDir, groupName) {
  *
  * Si el chown falla no se deja un home root:root colgado: el directorio vacio
  * se borra y el worker reintenta en el siguiente ciclo.
+ *
+ * El `usermod -aG` es facil de creer innecesario: el home lleva setgid, asi que
+ * lo que el estudiante crea hereda el grupo del curso aunque no sea miembro, y
+ * el trabajo del dia a dia funciona igual. Lo que no funciona sin la membresia
+ * es `chgrp` hacia ese grupo: el kernel solo lo permite a quien pertenece a el.
+ * Un estudiante que cambie el grupo de una carpeta por error no puede
+ * devolverlo, e `id` tampoco lo lista, que es justo lo que piden las
+ * actividades de gestion de usuarios.
  */
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
@@ -142,6 +164,7 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
       await execChecked(
         `sudo mkdir -p ${home} && ` +
         `(sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} 2>/dev/null || true) && ` +
+        `sudo usermod -aG ${groupName} ${studentUsername} && ` +
         `sudo chown ${studentUsername}:${groupName} ${home} && ` +
         `sudo chmod 2750 ${home}`,
         `createStudent(${studentUsername})`,
@@ -217,6 +240,9 @@ async function provisionStudentAccount(linuxAccountId, username, teacherUsername
   if (!(await homeOwnedBy(username, teacherUsername, groupDir))) {
     throw new Error(`Verification failed: home of ${username} is not owned by the user`)
   }
+  if (!(await inGroup(username, groupName))) {
+    throw new Error(`Verification failed: ${username} is not a member of ${groupName}`)
+  }
   await prisma.linuxAccount.update({
     where: { user_id: linuxAccountId },
     data: { linux_provisioned: true },
@@ -283,6 +309,7 @@ module.exports = {
   userExists,
   groupExists,
   homeOwnedBy,
+  inGroup,
   createTeacher,
   syncTeacherGroups,
   repairGroupOwnership,
