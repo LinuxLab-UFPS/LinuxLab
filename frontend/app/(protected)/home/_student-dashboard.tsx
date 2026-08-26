@@ -1,15 +1,19 @@
 import { HomeHero } from "@/lib/features/student/components/home-hero"
-import { PlatformShowcase } from "@/lib/features/student/components/platform-showcase"
 import { TopicGrid } from "@/lib/features/student/components/topic-grid"
 import { getTopicLessons, getTopicPreviews } from "@shared/lib/content/lessons"
 
-/** Student landing: hero, the platform tour, and the topic catalogue below. */
+/**
+ * El panel del estudiante: la cabecera y el temario entero con su progreso.
+ *
+ * Sin el recorrido de la plataforma ni el pie, que se fueron a la portada
+ * publica. Aqui sobraban: a quien ya entro no hay que contarle que hay una
+ * terminal, la tiene a un clic en la barra de arriba.
+ */
 export function StudentDashboard() {
   return (
-    <div className="min-h-full pb-24">
+    <div className="min-h-full">
       <HomeHero />
-      <PlatformShowcase />
-      <section className="mx-auto max-w-7xl px-6">
+      <section className="mx-auto max-w-7xl px-6 pb-20">
         <TopicGrid topicLessons={getTopicLessons()} previews={getTopicPreviews()} />
       </section>
     </div>
