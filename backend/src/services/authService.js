@@ -188,8 +188,7 @@ async function inviteTeacher({ email, name }) {
       return { debugLink: undefined }
     } catch (mailErr) {
       logger.error({ err: mailErr, email }, "Fallo envío email invitación docente")
-      if (config.email.provider === "log") throw mailErr
-      return { debugLink: setupUrl }
+      throw new AppError("No se pudo enviar la invitación por correo", 500, "EMAIL_SEND_FAILED")
     }
   } catch (err) {
     if (err instanceof AppError) throw err

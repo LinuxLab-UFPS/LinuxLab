@@ -43,7 +43,6 @@ router.post(
         logger.info({ email }, "password reset email enviado")
       } catch (mailErr) {
         logger.error({ err: mailErr, email }, "Fallo envío email reset")
-        if (config.email.provider === "log") throw mailErr
       }
       res.json({ message: "Si el correo existe, se ha enviado el enlace de recuperación." })
     } catch (err) {
@@ -76,7 +75,6 @@ router.post(
         logger.info({ email }, "verification email enviado")
       } catch (mailErr) {
         logger.error({ err: mailErr, email }, "Fallo envío email verificación")
-        if (config.email.provider === "log") throw mailErr
       }
       res.json({ message: "Si el correo existe, se ha enviado el enlace de verificación." })
     } catch (err) {

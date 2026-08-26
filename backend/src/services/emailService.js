@@ -12,35 +12,17 @@ let transport = null
 
 function getTransport() {
   if (transport) return transport
-  const provider = config.email.provider
-  if (provider === "mailtrap" && config.email.mailtrapToken) {
-    try {
-      const { MailtrapTransport } = require("mailtrap")
-      transport = nodemailer.createTransport(
-        MailtrapTransport({ token: config.email.mailtrapToken })
-      )
-      return transport
-    } catch (err) {
-      logger.error({ err }, "No se pudo inicializar MailtrapTransport, fallback a log")
-    }
+  const s = config.email.smtp
+  if (!s.host) {
+    throw new Error("SMTP no configurado: define SMTP_HOST/SMTP_USER/SMTP_PASS")
   }
-  if (provider === "smtp" && config.email.smtp.host) {
-    const s = config.email.smtp
-    transport = nodemailer.createTransport({
-      host: s.host,
-      port: s.port,
-      secure: s.secure,
-      auth: s.user || s.pass ? { user: s.user, pass: s.pass } : undefined,
-      tls: { rejectUnauthorized: false },
-    })
-    return transport
-  }
-  transport = {
-    sendMail: async (opts) => {
-      logger.info({ to: opts.to, subject: opts.subject }, "[log] email (provider=log)")
-      return { messageId: "log" }
-    },
-  }
+  transport = nodemailer.createTransport({
+    host: s.host,
+    port: s.port,
+    secure: s.secure,
+    auth: s.user || s.pass ? { user: s.user, pass: s.pass } : undefined,
+    tls: { rejectUnauthorized: false },
+  })
   return transport
 }
 
