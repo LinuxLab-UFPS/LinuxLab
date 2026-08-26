@@ -5,6 +5,7 @@ const logger = require("../lib/logger")
 const { AppError, NotFoundError } = require("../lib/errors")
 const linuxAccountService = require("./linuxAccountService")
 const attemptService = require("./attemptService")
+const { audit } = require("./auditService")
 
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
 const SETUP = "/usr/local/lib/linuxlab/setup.py"
@@ -132,12 +133,27 @@ async function evaluate({ slug, studentUserId }) {
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
   const passed = score >= 60
 
-  await attemptService.recordTopicAttempt({
+  const submission = await attemptService.recordTopicAttempt({
     studentId: studentUserId,
     topicActivityId: activity.id,
     score,
     passed,
     results,
+  })
+
+  /* Las del temario tambien dejan rastro. Antes solo se auditaban las del
+     docente, asi que un estudiante podia resolver el curso entero sin que
+     apareciera una linea en la bitacora.
+
+     El `groupId` no es opcional: el docente ve la bitacora filtrada por sus
+     grupos, de modo que un evento sin grupo no lo veria nadie. Sale de la
+     matricula con la que se registro el intento. */
+  audit({
+    userId: studentUserId,
+    groupId: submission.group_id,
+    eventType: "activity_checked",
+    target: activity.title,
+    metadata: { topicActivityId: activity.id, slug, passed, score },
   })
 
   logger.info({ slug, username: account.linux_username, passed, score }, "Activity evaluated")
