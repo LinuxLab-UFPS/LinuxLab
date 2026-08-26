@@ -58,6 +58,7 @@ function GroupDetailContent() {
   const [exporting, setExporting] = useState(false)
   const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
   const [evalFilter, setEvalFilter] = useState<"all" | "automatic" | "manual">("all")
+  const [sourceFilter, setSourceFilter] = useState<"all" | "bank" | "teacher">("all")
 
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
@@ -249,6 +250,20 @@ function GroupDetailContent() {
           {tab === "actividades" && (
             <>
               <Select
+                value={sourceFilter}
+                onValueChange={(v) => setSourceFilter(v as "all" | "bank" | "teacher")}
+              >
+                <SelectTrigger className="w-auto border-table-line">
+                  <SelectValue placeholder="Origen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="bank">Del curso</SelectItem>
+                  <SelectItem value="teacher">Creadas por mí</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
                 value={activityTypeFilter}
                 onValueChange={(v) => setActivityTypeFilter(v as "all" | ActivityType)}
               >
@@ -324,6 +339,10 @@ function GroupDetailContent() {
         )
       ) : tab === "actividades" ? (
         <div data-section="actividades">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Las actividades del curso vienen con el temario y son las mismas en todos los
+            grupos: no se editan ni se deshabilitan. Aquí solo puedes modificar las que crees tú.
+          </p>
           {activitiesQuery.isLoading ? (
             <SkeletonScreen>
               <div className="space-y-3">
@@ -339,6 +358,7 @@ function GroupDetailContent() {
               groupId={id}
               activityTypeFilter={activityTypeFilter}
               evalFilter={evalFilter}
+              sourceFilter={sourceFilter}
             />
           )}
         </div>

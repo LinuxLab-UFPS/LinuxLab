@@ -91,7 +91,7 @@ interface GradebookTableProps {
 }
 
 export function GradebookTable({ gradebook, groupId, students, onStudentClick }: GradebookTableProps) {
-  const { activities, cells, activityAverages, studentAverages } = gradebook
+  const { activities, cells, activityAverages, studentAverages, topicActivities } = gradebook
 
   // Columnas agrupadas por tema: cada tema aparece una sola vez con sus
   // actividades contiguas, ordenadas según el temario ("Sin tema" al final).
@@ -152,6 +152,26 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   {topicTitleOf(group.topicNumber)}
                 </th>
               ))}
+              {/* Las del curso, en una sola columna. No son catorce columnas
+                  porque esta tabla ya crece a lo ancho con cada actividad que
+                  publica el docente, y ademas lo util de ellas es cuantas lleva
+                  cada quien, no la nota de cada una. */}
+              <th
+                rowSpan={2}
+                className="w-24 min-w-24 border-b border-l border-table-line bg-table-surface px-3 py-3 text-center align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">Curso</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Actividades del temario que el estudiante ya aprobó. No entran en la
+                      definitiva: es un recuento, no una nota.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </th>
               <th
                 rowSpan={2}
                 className="sticky right-0 z-20 w-24 min-w-24 border-b border-l border-table-line bg-table-surface px-3 py-3 text-center align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground"
@@ -228,6 +248,12 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </td>
                   ))}
 
+                  <td className="border-b border-l border-table-line px-3 py-2.5 text-center">
+                    <span className="font-mono text-sm text-muted-foreground">
+                      {topicActivities.done[student.id] ?? 0}/{topicActivities.total}
+                    </span>
+                  </td>
+
                   <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center">
                     {studentAverages[student.id] != null ? (
                       <span className={cn("font-mono text-sm font-semibold", scoreColor(studentAverages[student.id]!))}>
@@ -263,6 +289,11 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   )}
                 </td>
               ))}
+              {/* La columna del curso es un recuento por estudiante: no tiene
+                  promedio de grupo que enseñar aqui. */}
+              <td className="border-t border-l border-table-line px-3 py-2.5 text-center">
+                <span className="text-muted-foreground">—</span>
+              </td>
               <td className="sticky right-0 z-10 border-t border-l border-table-line bg-table-surface px-3 py-2.5 text-center">
                 {overallAverage != null ? (
                   <span className="font-mono text-sm font-bold text-foreground">

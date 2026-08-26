@@ -33,12 +33,15 @@ export function GroupActivities({
   groupId,
   activityTypeFilter,
   evalFilter,
+  sourceFilter = "all",
 }: {
   activities: Activity[]
   query: string
   groupId: string
   activityTypeFilter: "all" | Activity["activityType"]
   evalFilter: "all" | "automatic" | "manual"
+  /** Que mostrar: todo, solo las del curso, o solo las que armo el docente. */
+  sourceFilter?: "all" | "bank" | "teacher"
 }) {
   const [page, setPage] = useState(1)
   const [toggling, setToggling] = useState<string | null>(null)
@@ -51,6 +54,7 @@ export function GroupActivities({
   const filtered = activities.filter(
     (a) =>
       (!q || a.title.toLowerCase().includes(q)) &&
+      (sourceFilter === "all" || a.source === sourceFilter) &&
       (activityTypeFilter === "all" ||
         (a.source !== "bank" && a.activityType === activityTypeFilter)) &&
       (evalFilter === "all" || (a.evaluationType === "atomic" ? "automatic" : a.evaluationType) === evalFilter),
@@ -152,12 +156,17 @@ export function GroupActivities({
                     : "Sin fecha"}
                 </TableCell>
                 <TableCell className="text-center">
+                  {/* Las del curso van siempre habilitadas: son el temario, y
+                      apagarlas en un grupo lo dejaria con el curso a medias. El
+                      backend tambien lo rechaza, esto solo evita el intento. */}
                   <span className="relative z-20 inline-flex">
                     <Switch
                       checked={activity.enabled ?? false}
                       onCheckedChange={() => {}}
-                      disabled={toggling === activity.id}
-                      onClick={(e: React.MouseEvent) => toggle(activity, e)}
+                      disabled={activity.source === "bank" || toggling === activity.id}
+                      onClick={(e: React.MouseEvent) =>
+                        activity.source === "bank" ? e.preventDefault() : toggle(activity, e)
+                      }
                     />
                   </span>
                 </TableCell>

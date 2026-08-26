@@ -37,7 +37,8 @@ function cellFrom(cell: GradebookCell | undefined): ExcelCell {
  * columna "Definitiva" y la fila de promedios por actividad al final.
  */
 export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
-  const { students, activities, cells, activityAverages, studentAverages } = gradebook
+  const { students, activities, cells, activityAverages, studentAverages, topicActivities } =
+    gradebook
 
   // Columnas agrupadas por tema: cada tema aparece una sola vez con sus
   // actividades contiguas, ordenadas según el temario ("Sin tema" al final).
@@ -55,7 +56,8 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
     }))
   const orderedActivities = groups.flatMap((g) => g.activities)
 
-  const colCount = orderedActivities.length + 3 // Código, Nombre, actividades, Definitiva
+  // Código, Nombre, actividades, Curso, Definitiva
+  const colCount = orderedActivities.length + 4
   const merges: ExcelMerge[] = []
 
   const header: ExcelCell[] = [
@@ -75,10 +77,13 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
     }
     col += group.activities.length
   }
+  // Las del temario van como recuento, igual que en pantalla.
+  header.push({ value: "Curso", bold: true, align: "center", fill: HEADER_FILL })
   header.push({ value: "Definitiva", bold: true, align: "center", fill: HEADER_FILL })
 
   merges.push({ from: { row: 0, col: 0 }, to: { row: 1, col: 0 } })
   merges.push({ from: { row: 0, col: 1 }, to: { row: 1, col: 1 } })
+  merges.push({ from: { row: 0, col: colCount - 2 }, to: { row: 1, col: colCount - 2 } })
   merges.push({ from: { row: 0, col: colCount - 1 }, to: { row: 1, col: colCount - 1 } })
 
   const workdirRow: ExcelCell[] = [
@@ -94,6 +99,7 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
         }) as ExcelCell,
     ),
     { value: null },
+    { value: null },
   ]
 
   const body = students.map((student) => {
@@ -103,6 +109,10 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
       { value: student.name, align: "left" },
       ...orderedActivities.map((a) => cellFrom(studentCells[a.id])),
     ]
+    row.push({
+      value: `${topicActivities.done[student.id] ?? 0}/${topicActivities.total}`,
+      align: "center",
+    })
     const avg = studentAverages[student.id]
     row.push(
       avg != null
@@ -128,6 +138,7 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
         ? { value: v, align: "center", fill: HEADER_FILL }
         : { value: null, align: "center", fill: HEADER_FILL }
     }),
+    { value: null, align: "center", fill: HEADER_FILL },
     overallAverage != null
       ? { value: overallAverage, align: "center", bold: true, fill: HEADER_FILL }
       : ({ value: null, align: "center", fill: HEADER_FILL } as ExcelCell),
@@ -138,6 +149,6 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
     grid: [header, workdirRow, ...body, footer],
     merges,
     freeze: { xSplit: 2, ySplit: 2 },
-    columnWidths: [14, 32, ...orderedActivities.map(() => 12), 12],
+    columnWidths: [14, 32, ...orderedActivities.map(() => 12), 12, 12],
   }
 }
