@@ -26,7 +26,7 @@ const AUTORES: Persona[] = [
     enlace: "https://github.com/anderssonccg",
   },
   {
-    nombre: "Mauricio Di Donato Sanchez",
+    nombre: "Mauricio Di Donato Sánchez",
     foto: "/equipo/mauricio.jpg",
     enlace: "https://github.com/MauricioDDS",
   },
