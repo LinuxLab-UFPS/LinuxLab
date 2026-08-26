@@ -161,7 +161,8 @@ export interface Gradebook {
 
 export interface GradeSeriesPoint {
   activityId: string
-  activityNumber: number
+  /** Null en las del temario: ese contador es de las del docente. */
+  activityNumber: number | null
   /** Código del directorio de trabajo (ej. T-0001): etiqueta corta en gráficas. */
   workdir: string
   title: string

@@ -20,7 +20,7 @@ import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
 import { MetricCard } from "@shared/components/metric-card"
 import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
-import type { GradebookCellStatus, MyGrades } from "@/lib/models/groups"
+import type { GradebookCellStatus, GradeSeriesPoint, MyGrades } from "@/lib/models/groups"
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
 function topicTitleOf(topicNumber: number): string {
@@ -56,8 +56,14 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
 
   const { series, topics, summary } = grades
 
+  /* El eje X de la grafica. Las del docente traen un codigo corto (T-0001);
+     las del temario traen su slug, que es una frase entera y no cabe, asi que
+     se recorta. El titulo completo sigue en el tooltip y en la tabla. */
+  const etiqueta = (s: GradeSeriesPoint) =>
+    s.source === "bank" && s.workdir.length > 12 ? `${s.workdir.slice(0, 11)}…` : s.workdir
+
   const lineData = series.map((s) => ({
-    name: s.workdir,
+    name: etiqueta(s),
     estudiante: s.score,
     grupo: s.groupAverage,
   }))
@@ -216,7 +222,9 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
                         {/* Las del curso se clasifican por dificultad y las del
                             docente por quiz o taller; nunca por las dos. */}
                         <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
-                          #{s.activityNumber} ·{" "}
+                          {/* Las del temario no llevan numero de actividad: ese
+                              contador es de las que publica el docente. */}
+                          {s.source === "bank" ? "Del curso" : `#${s.activityNumber}`} ·{" "}
                           {s.source === "bank"
                             ? (s.difficulty ? DIFFICULTY_LABEL[s.difficulty] : "Curso")
                             : s.activityType === "quiz"
