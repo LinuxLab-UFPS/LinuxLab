@@ -39,22 +39,54 @@ export function useReveal<T extends HTMLElement = HTMLDivElement>(
       return
     }
 
+    // `scrollerDe` puede devolver null si cambia la disposicion del shell.
+    // `root: null` es el viewport del documento, que es la caida correcta.
+    const raiz = scrollerDe(nodo)
+    const desplazable: HTMLElement | Window = raiz ?? window
+
+    let limpiar = () => {}
+    const revelar = () => {
+      setVisible(true)
+      limpiar()
+    }
+
     const observador = new IntersectionObserver(
       (entradas) => {
         for (const entrada of entradas) {
-          if (!entrada.isIntersecting) continue
-          setVisible(true)
-          // Una sola vez: al volver a subir no se repite.
-          observador.disconnect()
+          if (entrada.isIntersecting) revelar()
         }
       },
-      // `scrollerDe` puede devolver null si cambia la disposicion del shell.
-      // `root: null` es el viewport del documento, que es la caida correcta.
-      { root: scrollerDe(nodo), threshold: visibilidad },
+      { root: raiz, threshold: visibilidad },
     )
 
+    /**
+     * El respaldo para los saltos de scroll.
+     *
+     * Un salto —la tecla Fin, un ancla, arrastrar la barra— puede llevarse el
+     * bloque de debajo de la pantalla a encima sin que llegue a cruzarla. La
+     * proporcion visible se queda en cero todo el rato, asi que para el
+     * observador no hubo NINGUN cambio y no llama a nadie: el bloque se quedaba
+     * invisible para siempre. Aqui se mira la posicion a mano, que es lo unico
+     * que distingue «todavia no ha llegado» de «ya se paso de largo».
+     */
+    const yaLlego = () => {
+      const caja = nodo.getBoundingClientRect()
+      const limite = raiz ? raiz.getBoundingClientRect().bottom : window.innerHeight
+      return caja.top < limite
+    }
+    const alDesplazar = () => {
+      if (yaLlego()) revelar()
+    }
+
+    limpiar = () => {
+      observador.disconnect()
+      desplazable.removeEventListener("scroll", alDesplazar)
+    }
+
     observador.observe(nodo)
-    return () => observador.disconnect()
+    desplazable.addEventListener("scroll", alDesplazar, { passive: true })
+
+    return () => limpiar()
   }, [visibilidad])
 
   return { ref, visible }
