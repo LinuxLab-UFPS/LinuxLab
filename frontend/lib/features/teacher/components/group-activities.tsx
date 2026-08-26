@@ -32,14 +32,12 @@ export function GroupActivities({
   query,
   groupId,
   activityTypeFilter,
-  evalFilter,
   sourceFilter = "all",
 }: {
   activities: Activity[]
   query: string
   groupId: string
   activityTypeFilter: "all" | Activity["activityType"]
-  evalFilter: "all" | "automatic" | "manual"
   /** Que mostrar: todo, solo las del curso, o solo las que armo el docente. */
   sourceFilter?: "all" | "bank" | "teacher"
 }) {
@@ -56,8 +54,7 @@ export function GroupActivities({
       (!q || a.title.toLowerCase().includes(q)) &&
       (sourceFilter === "all" || a.source === sourceFilter) &&
       (activityTypeFilter === "all" ||
-        (a.source !== "bank" && a.activityType === activityTypeFilter)) &&
-      (evalFilter === "all" || (a.evaluationType === "atomic" ? "automatic" : a.evaluationType) === evalFilter),
+        (a.source !== "bank" && a.activityType === activityTypeFilter)),
   )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -157,18 +154,21 @@ export function GroupActivities({
                 </TableCell>
                 <TableCell className="text-center">
                   {/* Las del curso van siempre habilitadas: son el temario, y
-                      apagarlas en un grupo lo dejaria con el curso a medias. El
-                      backend tambien lo rechaza, esto solo evita el intento. */}
-                  <span className="relative z-20 inline-flex">
-                    <Switch
-                      checked={activity.enabled ?? false}
-                      onCheckedChange={() => {}}
-                      disabled={activity.source === "bank" || toggling === activity.id}
-                      onClick={(e: React.MouseEvent) =>
-                        activity.source === "bank" ? e.preventDefault() : toggle(activity, e)
-                      }
-                    />
-                  </span>
+                      apagarlas en un grupo lo dejaria a medias. Un interruptor
+                      que no se puede mover solo confunde, asi que en esas filas
+                      la celda queda vacia. */}
+                  {activity.source === "bank" ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <span className="relative z-20 inline-flex">
+                      <Switch
+                        checked={activity.enabled ?? false}
+                        onCheckedChange={() => {}}
+                        disabled={toggling === activity.id}
+                        onClick={(e: React.MouseEvent) => toggle(activity, e)}
+                      />
+                    </span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

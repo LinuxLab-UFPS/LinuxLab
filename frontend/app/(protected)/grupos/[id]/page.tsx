@@ -57,7 +57,6 @@ function GroupDetailContent() {
   const [adding, setAdding] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
-  const [evalFilter, setEvalFilter] = useState<"all" | "automatic" | "manual">("all")
   const [sourceFilter, setSourceFilter] = useState<"all" | "bank" | "teacher">("all")
 
   const groupQuery = useGroup(id)
@@ -276,20 +275,6 @@ function GroupDetailContent() {
                   <SelectItem value="workshop">Taller</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Select
-                value={evalFilter}
-                onValueChange={(v) => setEvalFilter(v as "all" | "automatic" | "manual")}
-              >
-                <SelectTrigger className="w-auto border-table-line">
-                  <SelectValue placeholder="Evaluación" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="automatic">Automática</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
-                </SelectContent>
-              </Select>
             </>
           )}
 
@@ -357,7 +342,6 @@ function GroupDetailContent() {
               query={query}
               groupId={id}
               activityTypeFilter={activityTypeFilter}
-              evalFilter={evalFilter}
               sourceFilter={sourceFilter}
             />
           )}
