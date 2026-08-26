@@ -41,6 +41,16 @@ const registerStudentSchema = z.object({
   code: z.string().trim().max(20, "El código no puede superar los 20 caracteres").optional().nullable(),
 })
 
+/**
+ * Cuenta las actividades que propone un grupo.
+ *
+ * Suma las del temario, que todo grupo trae por el simple hecho de existir. Sin
+ * ellas un curso recien creado decia "0 actividades" cuando en realidad ya
+ * ofrecia las del curso completo, y el docente no tenia forma de saberlo.
+ *
+ * El total del temario lo inyecta quien llama (una sola consulta por peticion,
+ * no una por grupo cuando se listan varios).
+ */
 function serializeGroup(group, studentCount, activityCount, extra = {}) {
   return {
     id: group.id,
@@ -52,7 +62,7 @@ function serializeGroup(group, studentCount, activityCount, extra = {}) {
     teacherName: group.teacher?.user?.name ?? null,
     studentCount: studentCount ?? 0,
     enabledTopics: [],
-    activityCount: activityCount ?? 0,
+    activityCount: (activityCount ?? 0) + (extra.topicActivityCount ?? 0),
     groupDir: group.group_dir ?? null,
     inviteToken: group.invite_token ?? null,
     activeNow: extra.activeNow ?? 0,

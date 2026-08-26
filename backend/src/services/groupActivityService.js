@@ -4,7 +4,12 @@ const logger = require("../lib/logger")
 const { AppError, NotFoundError } = require("../lib/errors")
 const accessService = require("./accessService")
 const checkCatalog = require("./checkCatalogService")
-const { activityInputSchema, serializeGroupActivity } = require("../dtos/activityDtos")
+const {
+  activityInputSchema,
+  serializeGroupActivity,
+  serializeTopicActivity,
+  bankSlugOf,
+} = require("../dtos/activityDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { audit } = require("./auditService")
 const { runInTransaction } = require("../lib/transaction")
@@ -12,6 +17,26 @@ const { finalScore } = require("../utils/finalScore")
 
 function normalizeEvaluationType(value) {
   return value === "atomic" ? "automatic" : value
+}
+
+/**
+ * Corta cualquier intento de modificar una actividad del temario.
+ *
+ * Son el curso: iguales en todos los grupos y las mismas para todos los
+ * estudiantes. Editarlas desde un grupo cambiaria el curso de los demas, y
+ * deshabilitarlas dejaria a ese grupo con un temario incompleto.
+ *
+ * Se comprueba aqui, en el servicio, y no escondiendo el boton: la ruta acepta
+ * cualquier `:activityId` que le manden.
+ */
+function rechazarSiEsDelTemario(activityId, accion) {
+  if (bankSlugOf(activityId)) {
+    throw new AppError(
+      `Las actividades del curso no se pueden ${accion}: son iguales en todos los grupos`,
+      409,
+      "CONFLICT",
+    )
+  }
 }
 
 function generateWorkdir(activityType, activityNumber) {
@@ -151,6 +176,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
 }
 
 async function updateGroupActivity({ groupId, activityId, teacherUserId, role, input }) {
+  rechazarSiEsDelTemario(activityId, "editar")
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
@@ -203,17 +229,57 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
   return serializeGroupActivity(updated)
 }
 
+/**
+ * Las actividades del temario, iguales en todos los grupos.
+ *
+ * Solo `kind: "activity"`. Las de tipo `check` son ejercicios incrustados en una
+ * leccion y no tienen tarjeta propia: listarlas aqui llenaria la tabla del
+ * docente de filas que ningun estudiante reconoce.
+ *
+ * Se ordenan por tema y no por fecha: no tienen fecha que signifique nada, y el
+ * docente las busca por donde caen en el curso.
+ */
+async function listTopicActivities() {
+  const rows = await prisma.topicActivity.findMany({
+    where: { kind: "activity" },
+    include: { topic: { select: { order_number: true } } },
+  })
+  return rows
+    .map(serializeTopicActivity)
+    .sort((a, b) => a.topicNumber - b.topicNumber || a.title.localeCompare(b.title))
+}
+
+/**
+ * Todo lo que el grupo propone: las del temario y las que armo el docente.
+ *
+ * Las del temario van primero porque son las que el estudiante encuentra al
+ * recorrer el curso; las del docente se anaden encima de eso.
+ */
 async function listGroupActivities({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const rows = await prisma.groupActivity.findMany({
-    where: { group_id: groupId },
-    orderBy: { created_at: "desc" },
-  })
-  return rows.map(serializeGroupActivity)
+  const [rows, delTemario] = await Promise.all([
+    prisma.groupActivity.findMany({
+      where: { group_id: groupId },
+      orderBy: { created_at: "desc" },
+    }),
+    listTopicActivities(),
+  ])
+  return [...delTemario, ...rows.map(serializeGroupActivity)]
 }
 
 async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const slug = bankSlugOf(activityId)
+  if (slug) {
+    const ta = await prisma.topicActivity.findFirst({
+      where: { slug, kind: "activity" },
+      include: { topic: { select: { order_number: true } } },
+    })
+    if (!ta) throw new NotFoundError("Actividad no encontrada")
+    return serializeTopicActivity(ta)
+  }
+
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
   })
@@ -222,6 +288,7 @@ async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
 }
 
 async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, role, enabled }) {
+  rechazarSiEsDelTemario(activityId, "deshabilitar")
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
@@ -265,6 +332,7 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
 }
 
 async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, role, dueDate }) {
+  rechazarSiEsDelTemario(activityId, "reprogramar")
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({

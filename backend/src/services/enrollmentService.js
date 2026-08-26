@@ -9,6 +9,7 @@ const { registerSelfStudentSchema, setStudentCodeSchema } = require("../dtos/aut
 const { parseOrThrow } = require("../dtos/common")
 const { groupNameOf } = require("../utils/groupName")
 const accessService = require("./accessService")
+const attemptService = require("./attemptService")
 const auditService = require("./auditService")
 const config = require("../config/env")
 const logger = require("../lib/logger")
@@ -531,7 +532,15 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     orderBy: { created_at: "asc" },
   })
 
-  const totalActivities = await prisma.groupActivity.count({ where: { group_id: groupId } })
+  // Lo que propone el grupo son las suyas mas las del temario, que trae todo
+  // grupo. Contar solo las del docente daba un "N de M" donde M se quedaba en 0
+  // en un curso recien creado.
+  const [delDocente, delTemario, completadasTemario] = await Promise.all([
+    prisma.groupActivity.count({ where: { group_id: groupId } }),
+    attemptService.topicActivitiesTotal(),
+    attemptService.passedTopicCountByEnrollment(enrollments.map((e) => e.id)),
+  ])
+  const totalActivities = delDocente + delTemario
 
   const completedRows = await prisma.$queryRaw`
     SELECT e.student_id, COUNT(DISTINCT gs.group_activity_id)::int AS completed
@@ -554,8 +563,12 @@ async function listByGroup({ groupId, teacherUserId, role }) {
     linuxProvisioned: e.student.user.linuxAccount?.linux_provisioned ?? false,
     enrolledAt: e.created_at,
     lastLogin: e.student.user.last_login?.toISOString() ?? null,
-    completedActivities: completedMap.get(e.student.user_id) ?? 0,
+    completedActivities:
+      (completedMap.get(e.student.user_id) ?? 0) + (completadasTemario.get(e.id) ?? 0),
     totalActivities,
+    // Aparte del total, porque la columna del cuaderno cuenta solo estas.
+    topicActivitiesDone: completadasTemario.get(e.id) ?? 0,
+    topicActivitiesTotal: delTemario,
   }))
 }
 

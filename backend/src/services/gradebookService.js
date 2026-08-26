@@ -2,6 +2,7 @@ const prisma = require("../../prisma/client")
 const accessService = require("./accessService")
 const { NotFoundError } = require("../lib/errors")
 const { finalScore } = require("../utils/finalScore")
+const attemptService = require("./attemptService")
 
 function key(studentId, groupActivityId) {
   return `${studentId}::${groupActivityId}`
@@ -71,6 +72,12 @@ function averageValueOf(cell) {
 
 /**
  * Carga en pocas consultas todo lo que alimenta el cuaderno.
+ *
+ * Las columnas son solo las actividades del docente. Las del temario no entran
+ * como catorce columnas mas: esta tabla ya crece a lo ancho con cada actividad
+ * que el docente publica, y su calculo recorre a todos los estudiantes por cada
+ * casilla. Entran como un unico recuento por estudiante, "N de M", que ademas es
+ * lo que de verdad se quiere saber de ellas.
  */
 async function loadGroupData(groupId) {
   const activities = await prisma.groupActivity.findMany({
@@ -83,6 +90,11 @@ async function loadGroupData(groupId) {
     include: { student: { include: { user: true } } },
     orderBy: { created_at: "asc" },
   })
+
+  const [topicDone, topicTotal] = await Promise.all([
+    attemptService.passedTopicCountByEnrollment(enrollments.map((e) => e.id)),
+    attemptService.topicActivitiesTotal(),
+  ])
 
   const activityIds = activities.map((a) => a.id)
   const submissions = activityIds.length > 0
@@ -121,12 +133,13 @@ async function loadGroupData(groupId) {
     list.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
   }
 
-  return { activities, enrollments, attemptMap, submissionMap }
+  return { activities, enrollments, attemptMap, submissionMap, topicDone, topicTotal }
 }
 
 async function getGroupGradebook({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
+  const { activities, enrollments, attemptMap, submissionMap, topicDone, topicTotal } =
+    await loadGroupData(groupId)
 
   const students = enrollments.map((e) => ({
     id: e.student.user.id,
@@ -177,7 +190,7 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       activityNumber: ga.activity_number,
       workdir: ga.workdir,
       title: ga.title,
-      topicNumber: null,
+      topicNumber: ga.topic_number ?? null,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
       dueAt: ga.due_at?.toISOString() ?? null,
@@ -187,6 +200,15 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
     cells,
     activityAverages,
     studentAverages,
+    /* Las del temario, como recuento y no como nota: son catorce iguales para
+       todos y lo que interesa del cuaderno es cuantas lleva cada quien. Al no
+       ser una nota, no entra en `studentAverages`. */
+    topicActivities: {
+      total: topicTotal,
+      done: Object.fromEntries(
+        enrollments.map((e) => [e.student.user.id, topicDone.get(e.id) ?? 0]),
+      ),
+    },
   }
 }
 
