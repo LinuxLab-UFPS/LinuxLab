@@ -20,8 +20,6 @@ import { setActivityEnabled } from "@/lib/features/teacher/data"
 import { queryKeys } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
-import { Tag } from "@shared/components/tag"
-import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import type { Activity } from "@/lib/features/teacher/types"
 
 const PAGE_SIZE = 10
@@ -31,13 +29,11 @@ export function GroupActivities({
   activities,
   query,
   groupId,
-  activityTypeFilter,
   sourceFilter = "all",
 }: {
   activities: Activity[]
   query: string
   groupId: string
-  activityTypeFilter: "all" | Activity["activityType"]
   /** Que mostrar: todo, solo las del curso, o solo las que armo el docente. */
   sourceFilter?: "all" | "bank" | "teacher"
 }) {
@@ -52,9 +48,7 @@ export function GroupActivities({
   const filtered = activities.filter(
     (a) =>
       (!q || a.title.toLowerCase().includes(q)) &&
-      (sourceFilter === "all" || a.source === sourceFilter) &&
-      (activityTypeFilter === "all" ||
-        (a.source !== "bank" && a.activityType === activityTypeFilter)),
+      (sourceFilter === "all" || a.source === sourceFilter),
   )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -97,7 +91,6 @@ export function GroupActivities({
               <TableHead>Titulo</TableHead>
               <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
-              <TableHead className="w-36">Tipo</TableHead>
               <TableHead className="w-40">Evaluación</TableHead>
               <TableHead className="w-44">Fecha de entrega</TableHead>
               <TableHead className="w-24 text-center">Habilitada</TableHead>
@@ -125,24 +118,6 @@ export function GroupActivities({
                 <TableCell className="text-sm text-muted-foreground">
                   {getTopic(activity.topicNumber)?.title ??
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
-                </TableCell>
-                {/* Las del curso llevan dificultad y las del docente quiz o
-                    taller: son dos formas de clasificar que no se mezclan, así
-                    que la columna pinta la que corresponde a cada fila. */}
-                <TableCell className="text-sm text-muted-foreground">
-                  {activity.source === "bank" ? (
-                    <Tag
-                      tone={
-                        activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"
-                      }
-                    >
-                      {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
-                    </Tag>
-                  ) : (
-                    <Tag tone="neutral">
-                      {activity.activityType === "quiz" ? "Quiz" : "Taller"}
-                    </Tag>
-                  )}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {activity.evaluationType === "manual" ? "Manual" : "Automática"}

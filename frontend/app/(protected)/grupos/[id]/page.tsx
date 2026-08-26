@@ -39,7 +39,6 @@ import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
-import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
@@ -56,7 +55,6 @@ function GroupDetailContent() {
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
   const [sourceFilter, setSourceFilter] = useState<"all" | "bank" | "teacher">("all")
 
   const groupQuery = useGroup(id)
@@ -261,20 +259,6 @@ function GroupDetailContent() {
                   <SelectItem value="teacher">Creadas por mí</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Select
-                value={activityTypeFilter}
-                onValueChange={(v) => setActivityTypeFilter(v as "all" | ActivityType)}
-              >
-                <SelectTrigger className="w-auto border-table-line">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value="quiz">Quiz</SelectItem>
-                  <SelectItem value="workshop">Taller</SelectItem>
-                </SelectContent>
-              </Select>
             </>
           )}
 
@@ -341,7 +325,6 @@ function GroupDetailContent() {
               activities={activitiesQuery.data ?? []}
               query={query}
               groupId={id}
-              activityTypeFilter={activityTypeFilter}
               sourceFilter={sourceFilter}
             />
           )}
