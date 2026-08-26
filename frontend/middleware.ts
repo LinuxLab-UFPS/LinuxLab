@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 import { ROUTE_RULES, PUBLIC_ROUTES } from "@shared/lib/rules"
+import { conNext } from "@shared/lib/next-url"
 import { env } from "@/lib/config/env"
 import type { Role } from "@/lib/models/auth"
 import type { RouteRule } from "@/lib/models/content"
@@ -12,21 +13,26 @@ function matchesRoute(pathname: string, rule: RouteRule): boolean {
   return rule.exact ? pathname === rule.path : pathname.startsWith(rule.path)
 }
 
+/**
+ * El login, recordando de donde se venia.
+ *
+ * Se guarda la ruta con su cadena de consulta: un estudiante al que se le
+ * caduco la sesion leyendo una leccion vuelve a esa leccion y no al principio
+ * del curso.
+ */
+function alLogin(request: NextRequest) {
+  const { pathname, search } = request.nextUrl
+  return NextResponse.redirect(new URL(conNext(pathname + search), request.url))
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get("token")?.value
 
-  if (pathname === "/") {
-    if (token) {
-      try {
-        await jwtVerify(token, JWT_SECRET)
-        return NextResponse.redirect(new URL("/inicio", request.url))
-      } catch {
-        return NextResponse.redirect(new URL("/login", request.url))
-      }
-    }
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
+  // `/` es la portada publica y la ve todo el mundo, con sesion o sin ella.
+  // Main la rebotaba a `/inicio` o a `/login`, y con la portada aqui eso
+  // significaba que nadie podia verla nunca.
+  if (pathname === "/") return NextResponse.next()
 
   const rule = ROUTE_RULES.find((r) => matchesRoute(pathname, r))
 
@@ -41,9 +47,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
+  if (!token) return alLogin(request)
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET)
@@ -57,7 +61,7 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next()
   } catch {
-    return NextResponse.redirect(new URL("/login", request.url))
+    return alLogin(request)
   }
 }
 

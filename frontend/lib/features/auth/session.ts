@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api/client"
 import { env } from "@/lib/config/env"
 import type { Role, Session } from "@/lib/features/auth/types"
+import { RUTA_LOGIN } from "@shared/lib/next-url"
 
 export async function getSession(): Promise<Session | null> {
   try {
@@ -49,7 +50,7 @@ export async function requireAuth(): Promise<Session> {
   const session = await getServerSession()
   if (!session) {
     const { redirect } = await import("next/navigation")
-    redirect("/login")
+    redirect(RUTA_LOGIN)
     throw new Error("unreachable")
   }
   return session
@@ -59,7 +60,7 @@ export async function requireServerRole(allowedRoles: Role[]): Promise<Session> 
   const session = await getServerSession()
   if (!session) {
     const { redirect } = await import("next/navigation")
-    redirect("/login")
+    redirect(RUTA_LOGIN)
     throw new Error("unreachable")
   }
   if (!allowedRoles.includes(session.user.role)) {

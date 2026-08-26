@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
+import { destinoSeguro } from "@shared/lib/next-url"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Button } from "@shared/components/ui/button"
@@ -28,17 +29,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return
-    // Redirección hacia un destino pedido por el flujo (p.ej. /inscripcion).
-    // Solo se aceptan paths del mismo origen que empiecen con "/".
-    if (typeof window !== "undefined") {
-      const next = new URLSearchParams(window.location.search).get("next")
-      if (next && next.startsWith("/")) {
-        router.replace(next)
-        return
-      }
+    // El admin no tiene curso al que volver: su sitio es siempre el panel. Para
+    // el resto manda el destino que venia en `?next=`, ya validado.
+    //
+    // La validacion la hace `destinoSeguro` y no un `startsWith("/")` a secas:
+    // `//otro.sitio` tambien empieza por barra, y el navegador lo lee como otro
+    // dominio, asi que colaba una salida fuera del sitio justo despues de que
+    // alguien acabara de confiar sus credenciales a esta pantalla.
+    if (user.role === "admin") {
+      router.replace("/admin/docentes")
+      return
     }
-    const target = user.role === "admin" ? "/admin/docentes" : "/inicio"
-    router.replace(target)
+    const next =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("next")
+        : null
+    router.replace(destinoSeguro(next))
   }, [user, router])
 
   const handleGoogleSignIn = async () => {
