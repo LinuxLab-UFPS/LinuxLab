@@ -1,21 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { Suspense, useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
+import { destinoSeguro } from "@shared/lib/next-url"
 
-export default function LoginPage() {
+function LoginForm() {
   const { user, loading, signInWithGoogle } = useAuth()
   const router = useRouter()
+  const params = useSearchParams()
   const [signingIn, setSigningIn] = useState(false)
 
   useEffect(() => {
     if (!user) return
-    const target = user.role === "admin" ? "/admin/docentes" : "/home"
+    // El admin no tiene curso al que volver: su sitio es siempre el panel.
+    // Para el resto manda el destino que venia en `?next=`, ya validado.
+    const target =
+      user.role === "admin" ? "/admin/docentes" : destinoSeguro(params.get("next"))
     router.replace(target)
-  }, [user, router])
+  }, [user, router, params])
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true)
@@ -83,5 +88,18 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * `useSearchParams` obliga a un limite de Suspense: sin el, Next no puede
+ * prerenderizar esta pagina y la build falla. El respaldo va vacio a proposito,
+ * porque lo unico que se espera es leer `?next=` y eso tarda un instante.
+ */
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   )
 }
