@@ -12,7 +12,7 @@
  *
  * Para un docente inicial, repetir con --role teacher:
  *
- *   podman exec -it linuxlab-backend node bootstrap-admin.js docente@ufps.edu.co "Nombre" --role teacher
+ *   podman exec -it linuxlab-backend node bootstrap-admin.js docente@ufps.edu.co "Nombre" --role teacher --code 0000001
  */
 // Funciona ejecutado desde el repo (deploy/) o copiado al contenedor como
 // /app/bootstrap-admin.js (donde prisma/ cuelga de la raiz del backend).
@@ -30,6 +30,10 @@ try {
 const email = (process.argv[2] || "").toLowerCase().trim()
 const name = process.argv[3]?.trim() || email.split("@")[0]
 const role = process.argv.includes("--role") ? process.argv[process.argv.indexOf("--role") + 1] : "admin"
+// Solo lo usa el docente: su perfil lleva codigo propio y es obligatorio.
+const code = process.argv.includes("--code")
+  ? (process.argv[process.argv.indexOf("--code") + 1] || "").trim()
+  : ""
 
 const VALID = new Set(["admin", "teacher", "student"])
 
@@ -57,8 +61,17 @@ async function asegurarCuentaLinux(user) {
     return
   }
 
-  const pendiente = await prisma.userProvisioningJob.findFirst({
-    where: { user_id: user.id, status: { in: ["pending", "processing"] } },
+  // Las tres colas separadas (`userProvisioningJob`, `groupProvisioningJob`,
+  // `groupTeardownJob`) se unificaron en una sola tabla `Job` con un `type`, y
+  // este script se quedo llamando a la vieja: fallaba con «Cannot read
+  // properties of undefined» justo despues de crear al usuario, dejandolo sin
+  // cuenta Unix y por tanto sin terminal.
+  const pendiente = await prisma.job.findFirst({
+    where: {
+      type: "user_provisioning",
+      user_id: user.id,
+      status: { in: ["pending", "processing"] },
+    },
     select: { id: true },
   })
   if (pendiente) {
@@ -66,11 +79,12 @@ async function asegurarCuentaLinux(user) {
     return
   }
 
-  await prisma.userProvisioningJob.create({
+  await prisma.job.create({
     data: {
-      user_id: user.id,
-      username: account.linux_username,
+      type: "user_provisioning",
       priority: PRIORITIES.TEACHER,
+      user_id: user.id,
+      payload: { username: account.linux_username },
     },
   })
   console.log("Job encolado: el worker la crea en el entorno en unos segundos")
@@ -78,7 +92,7 @@ async function asegurarCuentaLinux(user) {
 
 async function main() {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    console.error("Uso: node bootstrap-admin.js <correo> [nombre] [--role admin|teacher|student]")
+    console.error("Uso: node bootstrap-admin.js <correo> [nombre] [--role admin|teacher|student] [--code <codigo>]")
     process.exit(1)
   }
   if (!VALID.has(role)) {
@@ -93,6 +107,23 @@ async function main() {
   })
 
   console.log(`Listo: ${user.email} (${user.name}) con rol ${user.role}`)
+
+  // El rol vive en `User`, pero los datos propios de cada perfil cuelgan de su
+  // tabla: un docente sin fila en `Teacher` no tiene codigo, y el panel que
+  // lista docentes lo lee de ahi. Antes esto no hacia falta porque el codigo
+  // estaba en `User`.
+  if (role === "teacher") {
+    if (!code) {
+      console.error("Un docente necesita codigo: pasalo con --code <codigo>")
+      process.exit(1)
+    }
+    await prisma.teacher.upsert({
+      where: { user_id: user.id },
+      update: { code },
+      create: { user_id: user.id, code },
+    })
+    console.log(`Perfil de docente con codigo ${code}`)
+  }
 
   // La cuenta de la plataforma no basta para abrir la terminal: el gateway
   // exige ademas una cuenta Unix aprovisionada. El alta de docente del panel
