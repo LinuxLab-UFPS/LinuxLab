@@ -22,6 +22,7 @@ router.post("/:id/students/csv", groupController.importCsv)
 router.get("/:id/students", groupController.listStudents)
 router.get("/:id/gradebook", groupController.getGradebook)
 router.get("/:id/gradebook/students/:studentId", groupController.getStudentPerformance)
+router.get("/:id/progress", groupController.getGroupProgress)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 

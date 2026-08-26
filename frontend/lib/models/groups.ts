@@ -42,6 +42,15 @@ export interface StudentProgress {
   activitiesTotal?: number
   /** Promedio de puntuación de las entregas, en escala 0-5. */
   averageScore?: number
+  /** Desglose por tema: subtemas completados sobre el total del tema. */
+  topicProgress?: StudentTopicProgress[]
+}
+
+export interface StudentTopicProgress {
+  topicNumber: number
+  title: string
+  completed: number
+  total: number
 }
 
 export interface GroupProgressSummary {

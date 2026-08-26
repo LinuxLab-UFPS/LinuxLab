@@ -11,7 +11,6 @@ import type {
   AuditListResult,
   GroupProgressSummary,
   Gradebook,
-  StudentGroupDetail,
   StudentPerformance,
   Enrollment,
   ProvisioningJobSummary,
@@ -164,8 +163,6 @@ export const teacherApi = {
 
   getGroupProgress: (groupId: string) =>
     apiFetch<GroupProgressSummary>(`/api/groups/${groupId}/progress`),
-  getStudentGroupDetail: (groupId: string, studentId: string) =>
-    apiFetch<StudentGroupDetail>(`/api/groups/${groupId}/students/${studentId}`),
   getGradebook: (groupId: string) => apiFetch<Gradebook>(`/api/groups/${groupId}/gradebook`),
   getStudentPerformance: (groupId: string, studentId: string) =>
     apiFetch<StudentPerformance>(`/api/groups/${groupId}/gradebook/students/${studentId}`),
