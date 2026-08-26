@@ -3,10 +3,10 @@
  *
  * Va al final de las dos portadas, la publica y la del estudiante.
  *
- * Los nombres y las fotos viven en las dos constantes de abajo, para que
- * cambiarlos no obligue a leer el resto del archivo. Las rutas de foto apuntan
- * a `public/equipo/`; mientras un archivo no exista, `Avatar` pinta las
- * iniciales en un circulo en vez de dejar una imagen rota.
+ * Los nombres, las fotos y los enlaces viven en las dos constantes de abajo,
+ * para que cambiarlos no obligue a leer el resto del archivo. Las rutas de foto
+ * apuntan a `public/equipo/`; sin `foto`, `Avatar` pinta las iniciales en un
+ * circulo en vez de dejar el hueco de una imagen rota.
  */
 
 interface Persona {
@@ -15,18 +15,30 @@ interface Persona {
   foto?: string
   /** Solo la direccion lo lleva: sale como etiqueta al lado del nombre. */
   cargo?: string
+  /** Con esto el nombre se vuelve enlace. Siempre a un sitio de fuera. */
+  enlace?: string
 }
 
-/* Sin `foto` todavia: los archivos no existen y una ruta a un archivo que falta
-   deja el hueco de una imagen rota, que se ve peor que unas iniciales. Al
-   colocar el retrato en `public/equipo/`, se añade aqui su ruta y ya. */
 const AUTORES: Persona[] = [
-  { nombre: "Andersson Camilo Cardenas Guarin" },
-  { nombre: "Mauricio Di Donato Sanchez" },
+  {
+    nombre: "Andersson Camilo Cardenas Guarin",
+    foto: "/equipo/andersson.jpg",
+    enlace: "https://github.com/anderssonccg",
+  },
+  {
+    nombre: "Mauricio Di Donato Sanchez",
+    foto: "/equipo/mauricio.jpg",
+    enlace: "https://github.com/MauricioDDS",
+  },
 ]
 
 const DIRECCION: Persona[] = [
-  { nombre: "Ph.D. Marco Antonio Adarme Jaimes", cargo: "Director" },
+  {
+    nombre: "Ph.D. Marco Antonio Adarme Jaimes",
+    foto: "/equipo/marco.jpg",
+    cargo: "Director",
+    enlace: "https://madarme.co/",
+  },
 ]
 
 /** Las iniciales del nombre, saltandose los titulos y las particulas. */
@@ -74,7 +86,21 @@ function Columna({ titulo, gente }: { titulo: string; gente: Persona[] }) {
         {gente.map((persona) => (
           <li key={persona.nombre} className="flex items-center gap-3">
             <Avatar persona={persona} />
-            <span className="text-sm font-medium text-white">{persona.nombre}</span>
+            {/* `noreferrer` ademas de `noopener`: el segundo cierra el acceso a
+                esta pestaña desde la que se abre, el primero evita mandar de
+                donde vino. Salen fuera del sitio, asi que van los dos. */}
+            {persona.enlace ? (
+              <a
+                href={persona.enlace}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-white underline-offset-4 transition-colors hover:text-primary hover:underline"
+              >
+                {persona.nombre}
+              </a>
+            ) : (
+              <span className="text-sm font-medium text-white">{persona.nombre}</span>
+            )}
             {persona.cargo && (
               <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/60">
                 {persona.cargo}
