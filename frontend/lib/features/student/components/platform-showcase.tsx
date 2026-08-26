@@ -15,13 +15,17 @@ import {
 } from "./topic-illustrations"
 
 /**
- * El recorrido de la plataforma, en la portada del estudiante.
+ * El recorrido de la plataforma, en la portada publica.
  *
  * Cuatro paneles que se revelan al entrar en pantalla, alternando el lado del
- * texto. Lo ve quien ya inicio sesion, asi que no es captacion: es para que
- * alguien que acaba de entrar entienda que hay una terminal de verdad, que los
- * simuladores estan hechos para cada tema y que las actividades se corrigen
- * mirando su maquina.
+ * texto. Van en dos exportaciones y no en una, porque la portada los separa en
+ * dos franjas de fondo distinto; los paneles de dentro son los mismos.
+ *
+ * Esto SI es captacion: lo ve quien todavia no ha entrado, y su trabajo es que
+ * entienda que hay una terminal de verdad detras, que los simuladores estan
+ * hechos para cada tema y que las actividades se corrigen mirando su maquina.
+ * Cuando vivia en el panel del estudiante no lo era, y por eso el texto hablaba
+ * de otra forma.
  *
  * Se ilustra con los SVG que ya existen en `topic-illustrations.tsx` y no con
  * capturas, siguiendo lo que dice la cabecera de `lesson-illustrations.tsx`:
@@ -337,61 +341,85 @@ function FichaDeComprobaciones() {
   )
 }
 
-export function PlatformShowcase() {
+/** El envoltorio comun de los dos bloques. */
+function Bloque({
+  etiqueta,
+  children,
+}: {
+  etiqueta: string
+  children: React.ReactNode
+}) {
   return (
-    <section
-      className="mx-auto max-w-7xl px-6 py-16 sm:py-20"
-      aria-label="Qué ofrece la plataforma"
-    >
-      <div className="space-y-20 sm:space-y-28">
-        <Panel
-          titulo={
-            <>
-              {conMayuscula(enLetra(TEMAS))} temas.{" "}
-              {conMayuscula(enLetra(LECCIONES, "f"))} lecciones.
-            </>
-          }
-          figura={<RutaDeTemas />}
-        >
-          Teoría, video y práctica en una sola ruta, de la arquitectura del
-          Kernel a la gestión de permisos.
-        </Panel>
-
-        <Panel
-          invertido
-          titulo={
-            <>
-              No es un simulador de terminal.{" "}
-              <span className="text-primary">Es una terminal.</span>
-            </>
-          }
-          figura={<TerminalQueTeclea />}
-        >
-          Cada estudiante recibe una cuenta real en un contenedor Linux por SSH.
-          La sesión sigue viva mientras navegas, y la terminal te acompaña a
-          pantalla completa o flotando sobre la lección.
-        </Panel>
-
-        <Panel
-          titulo={<>Simuladores hechos a la medida de cada tema</>}
-          figura={<FilaDeSimuladores />}
-        >
-          Un escenario propio para cada cosa que hay que aprender. Recorrer un
-          árbol de directorios, sobrevivir a <Cmd>vi</Cmd>, arreglar permisos
-          contra reloj, preparar una entrega comprimida, reconstruir qué tumbó
-          el despliegue del viernes o rescatar un portátil que no da para más.
-        </Panel>
-
-        <Panel
-          invertido
-          titulo={<>Se califica tu máquina, no tu respuesta.</>}
-          figura={<FichaDeComprobaciones />}
-        >
-          Cada actividad trae sus propias comprobaciones, que se verifican por
-          SSH contra tu directorio personal real. No se entrega un archivo: se
-          deja el sistema como se pidió.
-        </Panel>
-      </div>
+    <section className="mx-auto max-w-7xl px-6 py-16 sm:py-20" aria-label={etiqueta}>
+      <div className="space-y-20 sm:space-y-28">{children}</div>
     </section>
+  )
+}
+
+/**
+ * Primer bloque: el tamaño del curso y la terminal.
+ *
+ * Primero cuanto hay, despues con que se practica. Quien acaba de llegar
+ * pregunta «¿cuanto es esto?» antes que «¿como se hace?», y el recorrido de
+ * temas contesta lo primero.
+ */
+export function ShowcaseTerminalYTemas() {
+  return (
+    <Bloque etiqueta="El tamaño del curso y la terminal">
+      <Panel
+        titulo={
+          <>
+            {conMayuscula(enLetra(TEMAS))} temas.{" "}
+            {conMayuscula(enLetra(LECCIONES, "f"))} lecciones.
+          </>
+        }
+        figura={<RutaDeTemas />}
+      >
+        Teoría, video y práctica en una sola ruta, de la arquitectura del Kernel
+        a la gestión de permisos.
+      </Panel>
+
+      <Panel
+        invertido
+        titulo={
+          <>
+            No es un simulador de terminal.{" "}
+            <span className="text-primary">Es una terminal.</span>
+          </>
+        }
+        figura={<TerminalQueTeclea />}
+      >
+        Cada estudiante recibe una cuenta real en un contenedor Linux por SSH.
+        La sesión sigue viva mientras navegas, y la terminal te acompaña a
+        pantalla completa o flotando sobre la lección.
+      </Panel>
+    </Bloque>
+  )
+}
+
+/** Segundo bloque: con qué se practica y cómo se corrige. */
+export function ShowcaseSimuladoresYPruebas() {
+  return (
+    <Bloque etiqueta="Simuladores y comprobaciones">
+      <Panel
+        titulo={<>Simuladores hechos a la medida de cada tema</>}
+        figura={<FilaDeSimuladores />}
+      >
+        Un escenario propio para cada cosa que hay que aprender. Recorrer un
+        árbol de directorios, sobrevivir a <Cmd>vi</Cmd>, arreglar permisos
+        contra reloj, preparar una entrega comprimida, reconstruir qué tumbó el
+        despliegue del viernes o rescatar un portátil que no da para más.
+      </Panel>
+
+      <Panel
+        invertido
+        titulo={<>Se califica tu máquina, no tu respuesta.</>}
+        figura={<FichaDeComprobaciones />}
+      >
+        Cada actividad trae sus propias comprobaciones, que se verifican por SSH
+        contra tu directorio personal real. No se entrega un archivo: se deja el
+        sistema como se pidió.
+      </Panel>
+    </Bloque>
   )
 }
