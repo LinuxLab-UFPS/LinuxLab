@@ -29,6 +29,8 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
           NEXT_PUBLIC_VIDEO_BASE_URL=${{ secrets.NEXT_PUBLIC_VIDEO_BASE_URL }}
+          NEXT_PUBLIC_FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
           EOF
 
       - name: Backend env
@@ -37,7 +39,7 @@ jobs:
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           PORT=3000
           NODE_ENV=production
-          FRONTEND_URL=http://frontend:3000
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
           CORS_ORIGIN=http://localhost:3001
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
