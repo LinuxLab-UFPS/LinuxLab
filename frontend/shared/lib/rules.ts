@@ -16,7 +16,6 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: "/contenidos", roles: ["student", "admin"], requiresEnrollment: true },
   { path: "/curso", roles: ["student", "teacher", "admin"], exact: true, requiresEnrollment: true },
   { path: "/estudiante/grupo", roles: ["student", "admin"], exact: true, requiresEnrollment: true },
-  { path: "/estudiante/calificaciones", roles: ["student", "admin"], exact: true, requiresEnrollment: true },
   { path: "/simuladores", roles: ["student", "admin"], requiresEnrollment: true },
   { path: "/actividades", roles: ["student", "admin"], requiresEnrollment: true },
 ]

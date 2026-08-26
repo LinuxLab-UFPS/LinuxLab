@@ -14,7 +14,6 @@ import {
   Stamp,
   FileArchive,
   Users,
-  BarChart3,
 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { notify } from "@shared/lib/toast"
@@ -110,6 +109,19 @@ export function SiteHeader({
             }))}
             pathname={pathname}
           />
+
+          <Link
+            href="/estudiante/grupo"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              pathname.startsWith("/estudiante/grupo")
+                ? NAV_ACTIVE
+                : NAV_IDLE,
+            )}
+          >
+            <Users className="h-4 w-4" />
+            Mi Grupo
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -145,21 +157,6 @@ export function SiteHeader({
                   {user?.email ?? "Sin sesión activa"}
                 </span>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {/* El grupo es del estudiante, no del temario: vive aquí y no en
-                  la barra, que es para el contenido del curso. */}
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/estudiante/grupo">
-                  <Users className="mr-2 h-4 w-4" />
-                  Mi Grupo
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link href="/estudiante/calificaciones">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Mis Calificaciones
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={async () => {

@@ -10,7 +10,6 @@ import type {
   AuditListResult,
   GroupProgressSummary,
   Gradebook,
-  StudentGroupDetail,
   StudentPerformance,
   Enrollment,
   ProvisioningJobSummary,
@@ -164,23 +163,8 @@ export async function listGroupAuditLog(groupId: string, limit = 10): Promise<Au
   return teacherApi.listGroupAuditLog(groupId, limit)
 }
 
-const EMPTY_SUMMARY: GroupProgressSummary = {
-  enrolledCount: 0,
-  averageProgress: 0,
-  completedToday: 0,
-  activeNow: 0,
-  rows: [],
-}
-
-export async function getGroupProgress(_groupId: string): Promise<GroupProgressSummary> {
-  return EMPTY_SUMMARY
-}
-
-export async function getStudentGroupDetail(
-  _groupId: string,
-  _studentId: string,
-): Promise<StudentGroupDetail | null> {
-  return null
+export async function getGroupProgress(groupId: string): Promise<GroupProgressSummary> {
+  return teacherApi.getGroupProgress(groupId)
 }
 
 export async function getGradebook(groupId: string): Promise<Gradebook> {

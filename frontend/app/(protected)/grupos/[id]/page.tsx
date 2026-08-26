@@ -38,7 +38,7 @@ import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-pane
 import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
-import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupStudents } from "@/lib/api/queries"
+import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
 import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
@@ -63,6 +63,7 @@ function GroupDetailContent() {
   const studentsQuery = useGroupStudents(id)
   const activitiesQuery = useGroupActivities(id)
   const gradebookQuery = useGradebook(id)
+  const progressQuery = useGroupProgress(id)
 
   // Hay algo exportable cuando existen actividades con al menos un promedio
   // calculado (algún estudiante con nota o vencida).
@@ -319,7 +320,7 @@ function GroupDetailContent() {
             </div>
           </SkeletonScreen>
         ) : (
-          <GroupStudents students={studentsQuery.data ?? []} query={query} />
+          <GroupStudents students={studentsQuery.data ?? []} rows={progressQuery.data?.rows ?? []} query={query} />
         )
       ) : tab === "actividades" ? (
         <div data-section="actividades">
