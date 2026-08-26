@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { TerminalFrame } from "@shared/components/terminal-frame"
 import { useReveal, claseRevelado } from "@shared/hooks/use-reveal"
 import { cn } from "@shared/lib/utils"
 import { syllabus, getTopic } from "@shared/lib/content/temario"
@@ -32,22 +30,12 @@ import {
  * una captura arrastra el escritorio, el tema y la distro de quien la tomo, y
  * ademas envejece con cada cambio de interfaz.
  *
- * Sobre las cifras: solo se afirma lo que no depende de quien use la
- * plataforma. Los temas y las lecciones se cuentan, pero SALEN DEL TEMARIO y no
- * de un numero escrito aqui: la primera version decia «nueve temas, treinta y
- * seis lecciones» y para cuando se subio ya eran diez y cuarenta. Las
- * actividades las trae cada asignatura, asi que ese panel va sin cifras a
- * proposito.
+ * Aqui no se afirman cifras: las actividades las trae cada asignatura, y un
+ * recuento de temas envejece en cuanto se toca el temario.
  */
 
-/** Lo que se teclea en el panel de la terminal. */
-const COMANDO = "ls -l /home/estudiante"
-/** Caracteres por segundo. Por encima de esto deja de leerse como alguien
- *  escribiendo y parece un volcado de texto. */
-const CPS = 14
-
-const TEMAS = syllabus.length
-const LECCIONES = syllabus.reduce((total, t) => total + t.subTopics.length, 0)
+export const TEMAS = syllabus.length
+export const LECCIONES = syllabus.reduce((total, t) => total + t.subTopics.length, 0)
 
 const UNIDADES = [
   "cero", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho",
@@ -69,7 +57,7 @@ const VEINTI = [
  * devuelve la cifra: el temario no va a llegar ahi, y una cadena rara se nota
  * menos que un numero mal escrito.
  */
-function enLetra(n: number, genero: "m" | "f" = "m"): string {
+export function enLetra(n: number, genero: "m" | "f" = "m"): string {
   const palabra =
     n <= 20
       ? UNIDADES[n]
@@ -86,7 +74,7 @@ function enLetra(n: number, genero: "m" | "f" = "m"): string {
   return palabra.endsWith("un") ? `${palabra}a` : palabra
 }
 
-const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1)
+export const conMayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1)
 
 const SIMULADORES = [
   { Ilustracion: SimulatorTreeIllustration, escenario: "cd y ls" },
@@ -133,83 +121,6 @@ function Panel({
   )
 }
 
-/** Un termino tecnico dentro del texto corrido. */
-function Cmd({ children }: { children: React.ReactNode }) {
-  return (
-    <code className="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.9em] text-foreground">
-      {children}
-    </code>
-  )
-}
-
-/**
- * La terminal que teclea.
- *
- * Es el unico elemento con movimiento continuo del bloque, y por eso es el que
- * retiene la mirada. El temporizador solo arranca cuando el panel esta visible
- * y se limpia al desmontar, para no dejarlo corriendo mientras el estudiante
- * usa el resto de la aplicacion.
- */
-function TerminalQueTeclea() {
-  const { ref, visible } = useReveal<HTMLDivElement>(0.4)
-  const [escrito, setEscrito] = useState("")
-  const terminado = escrito.length === COMANDO.length
-  const reducido = useRef(false)
-
-  useEffect(() => {
-    if (!visible) return
-
-    reducido.current =
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false
-
-    // Sin animacion, el comando aparece entero: el panel tiene que entenderse
-    // igual sin movimiento.
-    if (reducido.current) {
-      setEscrito(COMANDO)
-      return
-    }
-
-    let n = 0
-    const id = window.setInterval(() => {
-      n += 1
-      setEscrito(COMANDO.slice(0, n))
-      if (n >= COMANDO.length) window.clearInterval(id)
-    }, 1000 / CPS)
-
-    return () => window.clearInterval(id)
-  }, [visible])
-
-  return (
-    <div ref={ref} className="neon-glow rounded-xl">
-      <TerminalFrame title="estudiante@linuxlab: ~">
-        <div className="p-3 font-mono text-sm leading-relaxed">
-          <div className="flex flex-wrap items-center gap-x-2">
-            <span className="font-bold text-[#3fb950]">estudiante@linuxlab:~$</span>
-            <span className="text-white/90">{escrito}</span>
-            {!terminado && <span className="cursor-blink text-white/90">▊</span>}
-          </div>
-
-          {/* La salida solo aparece cuando el comando termino de escribirse. */}
-          <div
-            className={cn(
-              // El alto se reserva desde el principio para que la ventana no pegue
-              // un salto cuando aparece la salida.
-              "mt-2 min-h-[5.5rem] space-y-0.5 text-white/60 transition-opacity duration-500",
-              terminado ? "opacity-100" : "opacity-0",
-            )}
-            aria-hidden={!terminado}
-          >
-            <div>total 12</div>
-            <div>drwxr-xr-x estudiante Documentos</div>
-            <div>drwxr-xr-x estudiante practicas</div>
-            <div>-rw-r--r-- estudiante notas.txt</div>
-          </div>
-        </div>
-      </TerminalFrame>
-    </div>
-  )
-}
-
 /**
  * Los temas como un recorrido, no como una pila.
  *
@@ -218,7 +129,7 @@ function TerminalQueTeclea() {
  * de temas que viene justo debajo. Un recorrido numerado dice lo que el titular
  * promete (que hay una ruta, y de donde a donde va) sin repetir el catalogo.
  */
-function RutaDeTemas() {
+export function RutaDeTemas() {
   const { ref, visible } = useReveal<HTMLDivElement>()
 
   // Cuatro paradas repartidas por el temario, para que se vea de dónde a dónde
@@ -356,69 +267,28 @@ function Bloque({
   )
 }
 
-/**
- * Primer bloque: el tamaño del curso y la terminal.
- *
- * Primero cuanto hay, despues con que se practica. Quien acaba de llegar
- * pregunta «¿cuanto es esto?» antes que «¿como se hace?», y el recorrido de
- * temas contesta lo primero.
- */
-export function ShowcaseTerminalYTemas() {
-  return (
-    <Bloque etiqueta="El tamaño del curso y la terminal">
-      <Panel
-        titulo={
-          <>
-            {conMayuscula(enLetra(TEMAS))} temas.{" "}
-            {conMayuscula(enLetra(LECCIONES, "f"))} lecciones.
-          </>
-        }
-        figura={<RutaDeTemas />}
-      >
-        Teoría, video y práctica en una sola ruta, de la arquitectura del Kernel
-        a la gestión de permisos.
-      </Panel>
-
-      <Panel
-        invertido
-        titulo={
-          <>
-            No es un simulador de terminal.{" "}
-            <span className="text-primary">Es una terminal.</span>
-          </>
-        }
-        figura={<TerminalQueTeclea />}
-      >
-        Cada estudiante recibe una cuenta real en un contenedor Linux por SSH.
-        La sesión sigue viva mientras navegas, y la terminal te acompaña a
-        pantalla completa o flotando sobre la lección.
-      </Panel>
-    </Bloque>
-  )
-}
-
 /** Segundo bloque: con qué se practica y cómo se corrige. */
 export function ShowcaseSimuladoresYPruebas() {
   return (
     <Bloque etiqueta="Simuladores y comprobaciones">
       <Panel
-        titulo={<>Simuladores hechos a la medida de cada tema</>}
+        titulo={<>Simuladores que ponen los conceptos en contexto</>}
         figura={<FilaDeSimuladores />}
       >
-        Un escenario propio para cada cosa que hay que aprender. Recorrer un
-        árbol de directorios, sobrevivir a <Cmd>vi</Cmd>, arreglar permisos
-        contra reloj, preparar una entrega comprimida, reconstruir qué tumbó el
-        despliegue del viernes o rescatar un portátil que no da para más.
+        Cada simulador plantea una situación del día a día en la que manejar la
+        terminal es lo que la resuelve. En vez de repasar opciones sueltas, se
+        practica decidiendo qué comando hace falta y por qué, con el mismo
+        criterio que exige un sistema real.
       </Panel>
 
       <Panel
         invertido
-        titulo={<>Se califica tu máquina, no tu respuesta.</>}
+        titulo={<>Actividades que revisan el estado del entorno</>}
         figura={<FichaDeComprobaciones />}
       >
         Cada actividad trae sus propias comprobaciones, que se verifican por SSH
-        contra tu directorio personal real. No se entrega un archivo: se deja el
-        sistema como se pidió.
+        contra el directorio personal de los usuarios. Se verifica que el entorno
+        quede como se pidió.
       </Panel>
     </Bloque>
   )
