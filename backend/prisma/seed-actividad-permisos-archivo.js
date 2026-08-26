@@ -3,15 +3,6 @@ const prisma = require("./client")
 const SLUG = "cada-archivo-en-su-sitio"
 const RAIZ = "/home/$usuario/actividades/cada-archivo-en-su-sitio"
 
-/**
- * Los cuatro archivos llegan con los permisos que da el sistema por defecto
- * (664 bajo la umask del laboratorio). Ninguno coincide con lo que se pide, de
- * modo que no hay aserciones regaladas al abrir la actividad.
- *
- * El enunciado describe para que sirve cada archivo y no que numero ponerle:
- * traducir el proposito a permisos es el ejercicio. Cada descripcion admite un
- * unico modo, asi que no hay ambiguedad al corregir.
- */
 const SETUP = {
   files: [
     { path: "notas.txt", content: "Apuntes sueltos del laboratorio\n" },
@@ -28,6 +19,9 @@ const CHECKS = [
   { type: "permisos_son", params: { ruta: `${RAIZ}/plantilla.txt`, modo: "444" }, points: 25, position: 3 },
 ]
 
+const TOPIC_NUMBER = 5
+const SUBTOPIC_SLUG = "chmod"
+
 const DATOS = {
   title: "Cada archivo en su sitio",
   kind: "activity",
@@ -35,21 +29,29 @@ const DATOS = {
   instructions:
     "Cuatro archivos llegaron con los permisos que da el sistema. Deja cada uno " +
     "con los que pide su descripción.",
-  topic_number: 5,
-  max_score: 100,
   setup: SETUP,
 }
 
 async function main() {
-  const a = await prisma.activityDefinition.upsert({
-    where: { slug: SLUG },
-    update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },
-    create: { slug: SLUG, ...DATOS, source: "bank", active: true, checks: { create: CHECKS } },
-    include: { checks: true },
+  const topic = await prisma.topic.findUnique({ where: { order_number: TOPIC_NUMBER } })
+  if (!topic) throw new Error(`Topic ${TOPIC_NUMBER} no encontrado. Corre seed-temario primero.`)
+
+  const subtopic = await prisma.subtopic.findUnique({
+    where: { topic_id_slug: { topic_id: topic.id, slug: SUBTOPIC_SLUG } },
   })
-  console.log(`Actividad sembrada: ${a.slug} con ${a.checks.length} aserciones`)
+
+  const activity = await prisma.topicActivity.upsert({
+    where: { slug: SLUG },
+    update: { ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: subtopic?.id ?? null, checks: CHECKS },
+  })
+
+  console.log(`Actividad sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, subtopic ${SUBTOPIC_SLUG})`)
 }
 
 main()
-  .catch((err) => { console.error(err); process.exit(1) })
+  .catch((err) => {
+    console.error(err.message)
+    process.exit(1)
+  })
   .finally(() => prisma.$disconnect())

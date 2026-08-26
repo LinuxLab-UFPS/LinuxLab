@@ -1,18 +1,21 @@
 const { randomUUID } = require("crypto")
 const prisma = require("../../prisma/client")
 const logger = require("../lib/logger")
-const { AppError, NotFoundError, AuthorizationError } = require("../lib/errors")
+const { AppError, NotFoundError, AuthorizationError, ConflictError } = require("../lib/errors")
 const accessService = require("./accessService")
 const linuxAccountService = require("./linuxAccountService")
 const sshClient = require("./sshService")
 const bucket = require("../config/firebase-storage")
 const { audit } = require("./auditService")
 
-/**
- * Crea una entrega de una actividad manual: captura el estado del
- * directorio de trabajo del estudiante como un tarball, lo sube a
- * Firebase Storage y registra la submission en la BD.
- */
+async function getEnrollmentId(studentId, groupId) {
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student_id: studentId, group_id: groupId, status: "active" },
+    select: { id: true },
+  })
+  return enrollment?.id ?? null
+}
+
 async function createSubmission(studentUserId, groupActivityId) {
   const ga = await prisma.groupActivity.findUnique({
     where: { id: groupActivityId },
@@ -41,6 +44,8 @@ async function createSubmission(studentUserId, groupActivityId) {
 
   const account = await linuxAccountService.getStudentAccount(studentUserId)
   const submissionId = randomUUID()
+  const enrollmentId = await getEnrollmentId(studentUserId, ga.group_id)
+  if (!enrollmentId) throw new ConflictError("No hay matrícula activa")
 
   const SUBMISSION = "/usr/local/lib/linuxlab/submitter.py"
 
@@ -93,24 +98,26 @@ async function createSubmission(studentUserId, groupActivityId) {
 
   await sshClient.execCommand(`rm ${remoteTmp}`)
 
-  // Una sola entrega por estudiante: eliminar las anteriores.
-  await prisma.activitySubmission.deleteMany({
-    where: { group_activity_id: ga.id, student_id: studentUserId },
+  // Una sola entrega por estudiante: eliminar las anteriores (solo las manuales).
+  await prisma.groupSubmission.deleteMany({
+    where: { group_activity_id: ga.id, enrollment_id: enrollmentId, manualDetail: { isNot: null } },
   })
 
-  const submission = await prisma.activitySubmission.create({
+  const evidence = {
+    storagePath: zipPath,
+    tree,
+    files: tree.length,
+    totalBytes,
+    submittedAt: new Date().toISOString(),
+  }
+
+  const submission = await prisma.groupSubmission.create({
     data: {
+      enrollment_id: enrollmentId,
       group_activity_id: ga.id,
-      student_id: studentUserId,
       attempt_number: 1,
       status: "submitted",
-      evidence: {
-        storagePath: zipPath,
-        tree,
-        files: tree.length,
-        totalBytes,
-        submittedAt: new Date().toISOString(),
-      },
+      manualDetail: { create: { evidence } },
     },
   })
 
@@ -127,26 +134,25 @@ async function createSubmission(studentUserId, groupActivityId) {
     id: submission.id,
     status: submission.status,
     attemptNumber: submission.attempt_number,
-    evidence: submission.evidence,
-    submittedAt: submission.submitted_at.toISOString(),
+    evidence,
+    submittedAt: submission.created_at.toISOString(),
   }
 }
 
-/**
- * Detalle de una entrega para el docente o el estudiante dueño.
- */
 async function getSubmission(submissionId, userId, role) {
-  const submission = await prisma.activitySubmission.findUnique({
+  const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     include: {
       groupActivity: { select: { id: true, group_id: true, title: true, max_score: true } },
-      student: { select: { id: true, name: true, email: true, code: true } },
-      grader: { select: { name: true } },
+      enrollment: { include: { student: { include: { user: true } } } },
+      manualDetail: { include: { grader: { include: { user: true } } } },
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
 
-  if (role === "student" && submission.student_id !== userId) {
+  const studentId = submission.enrollment?.student_id
+
+  if (role === "student" && studentId !== userId) {
     throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
   }
   if (role === "teacher") {
@@ -157,22 +163,25 @@ async function getSubmission(submissionId, userId, role) {
     })
   }
 
+  const student = submission.enrollment?.student?.user
+  const detail = submission.manualDetail
+
   return {
     id: submission.id,
     status: submission.status,
     attemptNumber: submission.attempt_number,
-    evidence: submission.evidence,
+    evidence: detail?.evidence ?? null,
     score: submission.score,
-    feedback: submission.feedback,
-    gradedBy: submission.grader?.name ?? null,
-    gradedAt: submission.graded_at?.toISOString() ?? null,
-    submittedAt: submission.submitted_at.toISOString(),
-    student: {
-      id: submission.student.id,
-      name: submission.student.name,
-      email: submission.student.email,
-      code: submission.student.code,
-    },
+    feedback: detail?.feedback ?? null,
+    gradedBy: detail?.grader?.user?.name ?? null,
+    gradedAt: detail?.graded_at?.toISOString() ?? null,
+    submittedAt: submission.created_at.toISOString(),
+    student: student ? {
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      code: submission.enrollment?.student?.code ?? null,
+    } : null,
     activity: {
       id: submission.groupActivity.id,
       title: submission.groupActivity.title,
@@ -181,19 +190,12 @@ async function getSubmission(submissionId, userId, role) {
   }
 }
 
-/**
- * Contenido de un archivo específico de la entrega.
- *
- * Detecta el formato por la extensión del storagePath:
- * - .zip → yauzl
- * - .tar.gz → tar + gunzip (backward compat)
- */
 async function getFileContent(submissionId, filePath, userId, role) {
-  const submission = await prisma.activitySubmission.findUnique({
+  const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     select: {
       id: true,
-      evidence: true,
+      manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
     },
   })
@@ -206,7 +208,8 @@ async function getFileContent(submissionId, filePath, userId, role) {
     })
   }
 
-  const storagePath = submission.evidence.storagePath
+  const storagePath = submission.manualDetail?.evidence?.storagePath
+  if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
   const [buffer] = await bucket.file(storagePath).download()
 
   if (storagePath.endsWith(".zip")) {
@@ -275,15 +278,12 @@ function readFromTarGz(buffer, filePath) {
   })
 }
 
-/**
- * Buffer de un archivo individual de la entrega (para descarga directa).
- */
 async function getFileBuffer(submissionId, filePath, userId, role) {
-  const submission = await prisma.activitySubmission.findUnique({
+  const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     select: {
       id: true,
-      evidence: true,
+      manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
     },
   })
@@ -296,7 +296,8 @@ async function getFileBuffer(submissionId, filePath, userId, role) {
     })
   }
 
-  const storagePath = submission.evidence.storagePath
+  const storagePath = submission.manualDetail?.evidence?.storagePath
+  if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
   const [buffer] = await bucket.file(storagePath).download()
 
   if (storagePath.endsWith(".zip")) {
@@ -374,15 +375,12 @@ function extractFileFromTarGz(buffer, filePath) {
   })
 }
 
-/**
- * URL firmada para descargar la entrega completa.
- */
 async function getDownloadUrl(submissionId, userId, role) {
-  const submission = await prisma.activitySubmission.findUnique({
+  const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     select: {
       id: true,
-      evidence: true,
+      manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
     },
   })
@@ -395,7 +393,9 @@ async function getDownloadUrl(submissionId, userId, role) {
     })
   }
 
-  const [url] = await bucket.file(submission.evidence.storagePath).getSignedUrl({
+  const storagePath = submission.manualDetail?.evidence?.storagePath
+  if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
+  const [url] = await bucket.file(storagePath).getSignedUrl({
     action: "read",
     expires: Date.now() + 60 * 60 * 1000,
   })
@@ -403,14 +403,13 @@ async function getDownloadUrl(submissionId, userId, role) {
   return url
 }
 
-/**
- * Califica una entrega (RF-MAN-04, RF-MAN-05).
- */
 async function gradeSubmission(submissionId, teacherUserId, score, feedback) {
-  const submission = await prisma.activitySubmission.findUnique({
+  const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     include: {
       groupActivity: { select: { id: true, group_id: true, title: true, max_score: true } },
+      enrollment: { select: { student_id: true } },
+      manualDetail: true,
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
@@ -428,12 +427,20 @@ async function gradeSubmission(submissionId, teacherUserId, score, feedback) {
     )
   }
 
-  const updated = await prisma.activitySubmission.update({
+  const passed = score >= 60
+
+  const updated = await prisma.groupSubmission.update({
     where: { id: submissionId },
-    data: {
-      score,
+    data: { score, status: "graded", passed },
+  })
+
+  await prisma.submissionManualDetail.upsert({
+    where: { submission_id: submissionId },
+    update: { feedback: feedback || null, graded_by: teacherUserId, graded_at: new Date() },
+    create: {
+      submission_id: submissionId,
+      evidence: submission.manualDetail?.evidence ?? {},
       feedback: feedback || null,
-      status: "graded",
       graded_by: teacherUserId,
       graded_at: new Date(),
     },
@@ -446,7 +453,7 @@ async function gradeSubmission(submissionId, teacherUserId, score, feedback) {
     target: submission.groupActivity.title,
     metadata: {
       submissionId,
-      studentId: submission.student_id,
+      studentId: submission.enrollment?.student_id,
       score,
       previousStatus: submission.status,
     },
@@ -457,8 +464,8 @@ async function gradeSubmission(submissionId, teacherUserId, score, feedback) {
     id: updated.id,
     status: updated.status,
     score: updated.score,
-    feedback: updated.feedback,
-    gradedAt: updated.graded_at.toISOString(),
+    feedback: feedback || null,
+    gradedAt: new Date().toISOString(),
   }
 }
 

@@ -11,7 +11,7 @@ async function update(userId, body) {
   if (parsed.terminalFontFamily !== undefined) data.terminal_font_family = parsed.terminalFontFamily
   if (parsed.theme !== undefined) data.theme = parsed.theme
 
-  const prefs = await prisma.userPreference.upsert({
+  const prefs = await prisma.settings.upsert({
     where: { user_id: userId },
     update: data,
     create: {

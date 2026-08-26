@@ -1,9 +1,10 @@
-const { randomUUID } = require("crypto")
+const { randomUUID, randomBytes } = require("crypto")
 const prisma = require("../../prisma/client")
 const enrollmentService = require("./enrollmentService")
 const containerService = require("./containerService")
 const logger = require("../lib/logger")
 const { AppError, ConflictError } = require("../lib/errors")
+const config = require("../config/env")
 const { runInTransaction } = require("../lib/transaction")
 const accessService = require("./accessService")
 const { groupNameOf } = require("../utils/groupName")
@@ -12,18 +13,35 @@ const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 const { finalScore } = require("../utils/finalScore")
 const auditService = require("./auditService")
-const groupActivityService = require("./groupActivityService")
 
 function generateGroupDir(groupNumber) {
   return `G-${String(groupNumber).padStart(4, "0")}`
 }
 
-async function ensureTeacherRole(userId, tx = prisma) {
-  const teacher = await tx.user.findUnique({
-    where: { id: userId },
-    select: { id: true, role: true },
+function generateInviteToken() {
+  return randomBytes(32).toString("hex")
+}
+
+function buildInviteUrl(groupId, token) {
+  return `${config.frontendUrl}/inscripcion?token=${encodeURIComponent(token)}&group=${encodeURIComponent(groupId)}`
+}
+
+async function rotateInvite({ groupId, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+  const token = generateInviteToken()
+  await prisma.group.update({
+    where: { id: groupId },
+    data: { invite_token: token },
   })
-  if (!teacher || teacher.role !== "teacher") {
+  return { inviteUrl: buildInviteUrl(groupId, token) }
+}
+
+async function ensureTeacherRole(userId, tx = prisma) {
+  const teacher = await tx.teacher.findUnique({
+    where: { user_id: userId },
+    select: { user_id: true },
+  })
+  if (!teacher) {
     throw new AppError("El usuario autenticado no tiene perfil de docente", 403, "FORBIDDEN")
   }
   return teacher
@@ -62,6 +80,7 @@ async function createGroup(args) {
       description: parsed.description?.trim() || null,
       teacher_id: teacherUserId,
       group_dir: null,
+      invite_token: generateInviteToken(),
     },
   })
   const groupDir = generateGroupDir(createdGroup.group_number)
@@ -70,19 +89,18 @@ async function createGroup(args) {
     data: { group_dir: groupDir },
   })
 
-  await db.groupProvisioningJob.create({
+  await db.job.create({
     data: {
+      type: "group_provisioning",
+      priority: 5,
       group_id: group.id,
-      group_dir: groupDir,
-      group_name: groupName,
-      teacher_username: teacherAccount.linux_username,
+      payload: {
+        group_dir: groupDir,
+        group_name: groupName,
+        teacher_username: teacherAccount.linux_username,
+      },
     },
   })
-
-  // Las actividades del curso nacen publicadas en el grupo. Sin publicacion no
-  // tendrian nota ni saldrian en el libro de calificaciones, y para el
-  // estudiante no hay diferencia entre estas y las que arma el docente.
-  await groupActivityService.publishBankActivities(group.id, db)
 
   const enrollment = await enrollmentService.enrollMany({
     groupId: group.id,
@@ -96,7 +114,7 @@ async function createGroup(args) {
   const withCount = await db.group.findUnique({
     where: { id: group.id },
     include: {
-      teacher: { select: { name: true } },
+      teacher: { select: { user: { select: { name: true } } } },
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
@@ -123,7 +141,7 @@ async function listGroups({ teacherUserId, role }) {
   if (role === "admin") {
     const groups = await prisma.group.findMany({
       include: {
-        teacher: { select: { name: true } },
+        teacher: { select: { user: { select: { name: true } } } },
         _count: { select: { enrollments: true, groupActivities: true } },
       },
       orderBy: { created_at: "desc" },
@@ -143,7 +161,7 @@ async function getGroup({ groupId, teacherUserId, role }) {
   const withCount = await prisma.group.findUnique({
     where: { id: groupId },
     include: {
-      teacher: { select: { name: true } },
+      teacher: { select: { user: { select: { name: true } } } },
       _count: { select: { enrollments: true, groupActivities: true } },
     },
   })
@@ -151,7 +169,7 @@ async function getGroup({ groupId, teacherUserId, role }) {
   const activeNowRows = await prisma.$queryRaw`
     SELECT COUNT(*)::int AS cnt
     FROM "User" u
-    JOIN enrollments e ON e.student_id = u.id
+    JOIN "Enrollment" e ON e.student_id = u.id
     WHERE e.group_id = ${groupId}
       AND u.last_login IS NOT NULL
       AND u.last_login > NOW() - INTERVAL '5 minutes'
@@ -166,18 +184,17 @@ async function getGroup({ groupId, teacherUserId, role }) {
   let totalScore = 0
   let studentCount = 0
   for (const act of activities) {
-    const grouped = await prisma.activityAttempt.groupBy({
-      by: ["student_id"],
+    const submissions = await prisma.groupSubmission.findMany({
       where: { group_activity_id: act.id },
-      _count: { id: true },
+      select: { enrollment_id: true, passed: true, score: true },
     })
-    for (const g of grouped) {
-      const attempts = await prisma.activityAttempt.findMany({
-        where: { group_activity_id: act.id, student_id: g.student_id },
-        orderBy: { created_at: "desc" },
-        select: { score: true, created_at: true },
-      })
-      totalScore += finalScore(attempts)
+    const byStudent = new Map()
+    for (const s of submissions) {
+      if (!byStudent.has(s.enrollment_id)) byStudent.set(s.enrollment_id, [])
+      byStudent.get(s.enrollment_id).push({ score: s.score, passed: s.passed })
+    }
+    for (const [, scores] of byStudent) {
+      totalScore += finalScore(scores.map((s) => ({ score: s.score })))
       studentCount++
     }
   }
@@ -198,14 +215,14 @@ async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
 
   const enrollments = await prisma.enrollment.findMany({
     where: { group_id: groupId },
-    select: { student: { select: { id: true } } },
+    select: { student: { select: { user_id: true } } },
   })
-  const userIds = enrollments.map((enrollment) => enrollment.student.id)
-  const jobs = await prisma.userProvisioningJob.findMany({
-    where: { user_id: { in: userIds } },
+  const userIds = enrollments.map((enrollment) => enrollment.student.user_id)
+  const jobs = await prisma.job.findMany({
+    where: { type: "user_provisioning", user_id: { in: userIds } },
     include: {
       user: {
-        select: { name: true, email: true, code: true },
+        select: { name: true, email: true, student: { select: { code: true } } },
       },
     },
     orderBy: { created_at: "desc" },
@@ -221,9 +238,10 @@ async function listGroupProvisioningJobs({ groupId, teacherUserId, role }) {
  */
 async function teacherProvisioningSummary({ teacherUserId }) {
   const since = new Date(Date.now() - 60 * 60 * 1000)
-  const jobs = await prisma.userProvisioningJob.findMany({
+  const jobs = await prisma.job.findMany({
     where: {
-      group: { teacher_id: teacherUserId, archived: false },
+      type: "user_provisioning",
+      group: { teacher_id: teacherUserId, status: "active" },
       created_at: { gte: since },
     },
     select: { status: true },
@@ -261,25 +279,25 @@ async function archiveGroup(args) {
 
   const { groupId, role, teacherUserId, tx } = args
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
-  if (group.archived) {
+  if (group.status === "archived") {
     throw new AppError("El grupo ya está archivado", 409, "CONFLICT")
   }
 
   const [enrollments, teacherAccount] = await Promise.all([
     tx.enrollment.findMany({
       where: { group_id: groupId },
-      include: { student: { include: { linuxAccount: true } } },
+      include: { student: { include: { user: { include: { linuxAccount: true } } } } },
     }),
     tx.linuxAccount.findUnique({ where: { user_id: teacherUserId } }),
   ])
   const studentIds = enrollments.map((e) => e.student_id)
   const usernames = enrollments
-    .map((e) => e.student.linuxAccount?.linux_username)
+    .map((e) => e.student.user?.linuxAccount?.linux_username)
     .filter(Boolean)
 
   const updated = await tx.group.update({
     where: { id: groupId },
-    data: { archived: true },
+    data: { status: "archived" },
   })
 
   await tx.enrollment.updateMany({
@@ -293,17 +311,20 @@ async function archiveGroup(args) {
 
   // Sin esto, un job de aprovisionamiento pendiente re-crearia en el entorno
   // los usuarios que el teardown esta por eliminar.
-  await tx.userProvisioningJob.deleteMany({ where: { group_id: groupId } })
-  await tx.groupProvisioningJob.deleteMany({ where: { group_id: groupId } })
+  await tx.job.deleteMany({ where: { group_id: groupId, type: { in: ["user_provisioning", "group_provisioning"] } } })
 
   if (teacherAccount?.linux_username && group.group_dir) {
-    await tx.groupTeardownJob.create({
+    await tx.job.create({
       data: {
+        type: "group_teardown",
+        priority: 0,
         group_id: groupId,
-        group_dir: group.group_dir,
-        group_name: groupNameOf(groupId),
-        teacher_username: teacherAccount.linux_username,
-        usernames: JSON.stringify(usernames),
+        payload: {
+          group_dir: group.group_dir,
+          group_name: groupNameOf(groupId),
+          teacher_username: teacherAccount.linux_username,
+          usernames,
+        },
       },
     })
   } else {
@@ -335,7 +356,7 @@ async function archiveGroup(args) {
  */
 async function deleteGroup({ groupId, role, teacherUserId }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  if (!group.archived) {
+  if (group.status !== "archived") {
     throw new ConflictError("Primero debes desactivar el grupo")
   }
 
@@ -347,17 +368,17 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
   // Se anotan antes del teardown porque despues de borrar las matriculas ya no
   // hay forma de saber a quien se le elimino la cuenta. Los usernames pueden
   // venir vacios: al archivar ya se borraron las filas de linux_accounts y los
-  // usuarios los elimino el teardown job; este pasada de respaldo se queda con
+  // usuarios los elimino el teardown job; esta pasada de respaldo se queda con
   // el grupo Unix y la carpeta.
   const enrolled = await prisma.enrollment.findMany({
     where: { group_id: groupId },
     select: {
       student: {
-        select: { id: true, linuxAccount: { select: { linux_username: true } } },
+        select: { user_id: true, linuxAccount: { select: { linux_username: true } } },
       },
     },
   })
-  const studentIds = enrolled.map((e) => e.student.id)
+  const studentIds = enrolled.map((e) => e.student.user_id)
   const usernames = enrolled
     .map((e) => e.student.linuxAccount?.linux_username)
     .filter(Boolean)
@@ -388,14 +409,7 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
       data: { linux_provisioned: false },
     })
     await tx.enrollment.deleteMany({ where: { group_id: groupId } })
-    await tx.groupProvisioningJob.deleteMany({ where: { group_id: groupId } })
-    await tx.groupTeardownJob.deleteMany({ where: { group_id: groupId } })
-    // El group_id es opcional aqui: se desliga en vez de borrarse para no
-    // perder el rastro de las cuentas que si se llegaron a crear.
-    await tx.userProvisioningJob.updateMany({
-      where: { group_id: groupId },
-      data: { group_id: null },
-    })
+    await tx.job.deleteMany({ where: { group_id: groupId } })
     await tx.group.delete({ where: { id: groupId } })
   })
 
@@ -404,7 +418,7 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
     groupId,
     eventType: "group_deleted",
     target: group.name,
-    metadata: { groupId, teacherName: group.teacher?.name },
+    metadata: { groupId, teacherName: group.teacher?.user?.name },
   })
 
   logger.info({ groupId, teacherUserId }, "Group deleted")
@@ -418,4 +432,5 @@ module.exports = {
   teacherProvisioningSummary,
   archiveGroup,
   deleteGroup,
+  rotateInvite,
 }

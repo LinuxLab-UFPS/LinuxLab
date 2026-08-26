@@ -107,7 +107,7 @@ export function GroupActivities({
                 <TableRow key={activity.id} className="relative">
                 <TableCell>
                   <Link
-                    href={`/groups/${groupId}/activities/${activity.id}`}
+                    href={`/grupos/${groupId}/actividades/${activity.id}`}
                     className="absolute inset-0 z-10"
                     aria-label={`Ver actividad ${activity.title}`}
                   />

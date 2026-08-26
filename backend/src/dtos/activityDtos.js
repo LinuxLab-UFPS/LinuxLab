@@ -31,22 +31,14 @@ const activityInputSchema = z.object({
   checks: z.array(z.unknown()).optional(),
 })
 
-/**
- * La forma que espera el frontend para la tabla de actividades de un curso.
- *
- * `source` sale de la definicion y no de un literal: es lo que distingue una
- * actividad del curso de una que armo el docente, y de ello dependen la
- * etiqueta que se pinta (dificultad contra quiz/taller) y si se puede editar.
- */
-function serializeGroupActivity(ga, definition) {
-  const source = definition?.source === "bank" ? "bank" : "teacher"
+/** La forma que espera el frontend para la tabla de actividades de un curso. */
+function serializeGroupActivity(ga) {
   return {
     id: ga.id,
     title: ga.title,
-    slug: definition?.slug ?? null,
-    topicNumber: definition?.topic_number ?? 0,
-    source,
-    difficulty: definition?.difficulty ?? "basic",
+    topicNumber: ga.topic_number ?? 0,
+    source: "teacher",
+    difficulty: "basic",
     instructions: ga.instructions ?? "",
     maxScore: ga.max_score,
     dueDate: ga.due_at?.toISOString(),

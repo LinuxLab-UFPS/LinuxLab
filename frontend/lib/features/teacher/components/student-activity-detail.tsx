@@ -115,7 +115,7 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
           Volver
         </Link>
 
-        <div className="mt-4">
+        <div className="mt-4 mb-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
           {activity.instructions && (
             <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">{activity.instructions}</p>

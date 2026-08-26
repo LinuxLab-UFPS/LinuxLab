@@ -21,15 +21,7 @@ const getCatalog = asyncHandler(async (_req, res) => {
 })
 
 const getMyStatus = asyncHandler(async (req, res) => {
-  // `passed` marca la tarjeta como completada y `scores` pinta la nota. Van
-  // juntos en la misma llamada porque el catalogo los necesita a la vez para
-  // cada tarjeta, y pedir el detalle de cada actividad seria una llamada por
-  // tarjeta.
-  const [passed, scores] = await Promise.all([
-    lessonEvaluatorService.passedSlugs(req.user.id),
-    lessonEvaluatorService.scoresBySlug(req.user.id),
-  ])
-  res.json({ passed, scores })
+  res.json({ passed: await lessonEvaluatorService.passedSlugs(req.user.id) })
 })
 
 const resetActivity = asyncHandler(async (req, res) => {

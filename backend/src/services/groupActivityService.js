@@ -10,30 +10,15 @@ const { audit } = require("./auditService")
 const { runInTransaction } = require("../lib/transaction")
 const { finalScore } = require("../utils/finalScore")
 
-/** Normaliza la modalidad que manda el frontend ("atomic") a la de la base. */
 function normalizeEvaluationType(value) {
   return value === "atomic" ? "automatic" : value
 }
 
-/**
- * La carpeta de trabajo de una actividad: nace del titulo para que sea legible
- * y del id para que sea unica (dos actividades con el mismo titulo no chocan).
- * El docente nunca la escribe; sus aserciones usan rutas relativas a ella.
- */
 function generateWorkdir(activityType, activityNumber) {
   const prefix = activityType === "quiz" ? "Q" : "T"
   return `${prefix}-${String(activityNumber).padStart(4, "0")}`
 }
 
-/**
- * Valida las aserciones de una actividad automatica y devuelve su snapshot con
- * ids generados en el servidor (los del cliente no se aceptan). Las posiciones
- * salen del orden de llegada y el puntaje repartido no puede superar el maximo.
- *
- * Las rutas son SIEMPRE relativas a la carpeta de trabajo de la actividad:
- * ni absolutas ni con `..`. El backend las resuelve contra la carpeta al
- * evaluar; aqui solo se valida la forma.
- */
 function buildChecks(list, { evaluationType, maxScore }) {
   if (evaluationType === "manual") return []
 
@@ -83,23 +68,11 @@ function buildChecks(list, { evaluationType, maxScore }) {
   return checks
 }
 
-/**
- * Validacion comun de la configuracion de una actividad de grupo, usada por la
- * creacion y la edicion. Devuelve los valores ya validados y normalizados.
- *
- * La forma (titulo, instrucciones, tema) la valida zod en
- * activityInputSchema; las aserciones dependen del catalogo y el puntaje
- * repartido, y las valida buildChecks.
- */
 function validateActivityInput(body) {
   const parsed = parseOrThrow(activityInputSchema, body ?? {})
 
   const title = parsed.title
   const instructions = parsed.instructions || null
-
-  // Toda actividad vale 100 puntos (escala 0-100). No se lee del cuerpo: lo
-  // unico que se valida es que el puntaje repartido entre las aserciones no
-  // supere ese valor (ver buildChecks).
   const maxScore = 100
 
   const activityType = parsed.activityType
@@ -116,6 +89,8 @@ function validateActivityInput(body) {
     throw new AppError("La modalidad de evaluación no es válida", 400, "VALIDATION_ERROR")
   }
 
+  const topicNumber = parsed.topicNumber !== undefined ? Number(parsed.topicNumber) || null : null
+
   let dueAt = null
   if (parsed.dueDate) {
     dueAt = new Date(parsed.dueDate)
@@ -127,121 +102,22 @@ function validateActivityInput(body) {
     }
   }
 
-  const topicNumber = Number(parsed.topicNumber)
   const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
-  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks }
+  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber }
 }
 
-/**
- * Publica en un grupo las actividades que trae la plataforma.
- *
- * Una actividad del banco no puede tener nota mientras no exista como
- * publicacion: el libro de calificaciones busca los intentos por
- * `group_activity_id`, y sin publicacion quedan sueltos y no los ve nadie.
- * Publicarlas mete las del curso en el mismo circuito que las del docente sin
- * tocar el evaluador ni los enunciados.
- *
- * Es idempotente: se salta las que ya estan publicadas, asi que sirve igual al
- * crear un grupo que para rellenar los que ya existian.
- */
-async function publishBankActivities(groupId, tx = prisma) {
-  const definiciones = await tx.activityDefinition.findMany({
-    where: { source: "bank", kind: "activity", active: true, slug: { not: null } },
-    include: { checks: { orderBy: { position: "asc" } } },
-    orderBy: [{ topic_number: "asc" }, { slug: "asc" }],
-  })
-  if (definiciones.length === 0) return 0
-
-  const publicadas = await tx.groupActivity.findMany({
-    where: {
-      group_id: groupId,
-      activity_definition_id: { in: definiciones.map((d) => d.id) },
-    },
-    select: { activity_definition_id: true },
-  })
-  const yaEsta = new Set(publicadas.map((p) => p.activity_definition_id))
-
-  let creadas = 0
-  for (const def of definiciones) {
-    if (yaEsta.has(def.id)) continue
-    await tx.groupActivity.create({
-      data: {
-        group_id: groupId,
-        activity_definition_id: def.id,
-        title: def.title,
-        instructions: def.instructions ?? "",
-        activity_type: def.activity_type,
-        evaluation_type: def.evaluation_type,
-        max_score: def.max_score,
-        // El snapshot de aserciones es el mismo mecanismo que usa el docente.
-        // Las del banco llevan rutas absolutas (`/home/$usuario/...`), que
-        // `resolveRuta` respeta tal cual, asi que la carpeta de trabajo no se
-        // usa para resolver nada: se guarda el slug porque se lee mejor que un
-        // `T-0001` y porque es la carpeta real donde vive la actividad.
-        checks: def.checks.map((c) => ({
-          id: c.id,
-          type: c.type,
-          params: c.params,
-          points: c.points,
-          position: c.position,
-        })),
-        attempt_limit: null,
-        required: true,
-        enabled: true,
-        due_at: null,
-        workdir: def.slug,
-      },
-    })
-    creadas++
-  }
-  return creadas
-}
-
-/**
- * Crea una actividad propia del docente dentro de su grupo (RF-GRP-03).
- *
- * Nace con su definicion (source=teacher: es del docente, no aparece en el
- * banco) y su publicacion (GroupActivity con el snapshot de lo publicado:
- * titulo, instrucciones, modalidad, puntaje y aserciones. Si la definicion
- * cambiara, lo publicado no cambia: RF-GRP-11).
- *
- * La creacion es a la vez publicacion: queda habilitada al instante. La
- * modalidad de taller/quiz se agrega en una fase posterior; aqui queda su
- * valor por defecto (workshop).
- */
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
     validateActivityInput(input ?? {})
 
-  // La definicion y la publicacion nacen juntas: si una de las dos falla, la
-  // transaccion deshace la otra (no pueden quedar huerfanas).
-  const { activity, groupActivity } = await runInTransaction(async (tx) => {
-    const activity = await tx.activityDefinition.create({
-      data: {
-        title,
-        instructions,
-        topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
-        difficulty: "basic",
-        kind: "activity",
-        activity_type: activityType,
-        evaluation_type: evaluationType,
-        max_score: maxScore,
-        source: "teacher",
-        active: true,
-        created_by: teacherUserId,
-      },
-    })
-
-    // La carpeta de trabajo nace del id de la publicacion: se genera antes de
-    // crearla para poder guardarla en el mismo registro.
+  const groupActivity = await runInTransaction(async (tx) => {
     const groupActivityId = randomUUID()
-    const createdGroupActivity = await tx.groupActivity.create({
+    const created = await tx.groupActivity.create({
       data: {
         id: groupActivityId,
         group_id: group.id,
-        activity_definition_id: activity.id,
         title,
         instructions,
         activity_type: activityType,
@@ -249,17 +125,17 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         max_score: maxScore,
         checks,
         attempt_limit: attemptLimit,
+        topic_number: topicNumber,
         required: true,
         enabled: true,
         due_at: dueAt,
         workdir: "pending",
       },
     })
-    const groupActivity = await tx.groupActivity.update({
-      where: { id: createdGroupActivity.id },
-      data: { workdir: generateWorkdir(activityType, createdGroupActivity.activity_number) },
+    return tx.groupActivity.update({
+      where: { id: created.id },
+      data: { workdir: generateWorkdir(activityType, created.activity_number) },
     })
-    return { activity, groupActivity }
   })
 
   audit({
@@ -267,47 +143,23 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
     groupId: group.id,
     eventType: "activity_created",
     target: title,
-    metadata: { groupActivityId: groupActivity.id, definitionId: activity.id },
+    metadata: { groupActivityId: groupActivity.id },
   })
 
   logger.info({ groupId, teacherUserId, activityId: groupActivity.id }, "Group activity created")
-  return serializeGroupActivity(groupActivity, activity)
+  return serializeGroupActivity(groupActivity)
 }
 
-/**
- * Edita la configuracion publicada de una actividad de grupo.
- *
- * La carpeta de trabajo, la puntuacion (siempre 100) y la obligatoriedad
- * (siempre true) no se editan. Y la actividad con intentos o entregas no se
- * toca: cambiar las condiciones con historial seria cambiar las reglas a mitad
- * de partida (la politica queda congelada tras el primer intento).
- *
- * Las actividades que trae la plataforma tampoco se editan aqui. El docente
- * puede habilitarlas o no y ponerles fecha de entrega, pero su enunciado y sus
- * aserciones son material del curso: si cada grupo pudiera reescribirlas,
- * dejaria de haber una sola version del curso.
- */
 async function updateGroupActivity({ groupId, activityId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: group.id },
-    include: {
-      _count: { select: { attempts: true, submissions: true } },
-      definition: { select: { id: true, source: true } },
-    },
+    include: { _count: { select: { submissions: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
-  if (ga.definition?.source === "bank") {
-    throw new AppError(
-      "Las actividades del curso no se editan; puedes habilitarlas o ponerles fecha de entrega",
-      403,
-      "FORBIDDEN",
-    )
-  }
-
-  if (ga._count.attempts > 0 || ga._count.submissions > 0) {
+  if (ga._count.submissions > 0) {
     throw new AppError("La actividad ya tiene intentos o entregas; no se puede editar", 409, "CONFLICT")
   }
 
@@ -322,39 +174,21 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
   }
 
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, topicNumber, checks } =
+  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
     validateActivityInput(body)
 
-  // La definicion del docente es 1:1 con la publicacion: se mantiene en
-  // sincronia para que el listado y el detalle sigan mostrando lo mismo. Los
-  // dos updates son atomicos: si el segundo falla, el primero se deshace.
-  const updated = await runInTransaction(async (tx) => {
-    if (ga.definition) {
-      await tx.activityDefinition.update({
-        where: { id: ga.definition.id },
-        data: {
-          title,
-          instructions,
-          topic_number: Number.isInteger(topicNumber) ? topicNumber : null,
-          activity_type: activityType,
-          evaluation_type: evaluationType,
-        },
-      })
-    }
-
-    return tx.groupActivity.update({
-      where: { id: ga.id },
-      data: {
-        title,
-        instructions,
-        activity_type: activityType,
-        evaluation_type: evaluationType,
-        checks,
-        attempt_limit: attemptLimit,
-        due_at: dueAt,
-      },
-      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
-    })
+  const updated = await prisma.groupActivity.update({
+    where: { id: ga.id },
+    data: {
+      title,
+      instructions,
+      activity_type: activityType,
+      evaluation_type: evaluationType,
+      checks,
+      attempt_limit: attemptLimit,
+      topic_number: topicNumber,
+      due_at: dueAt,
+    },
   })
 
   audit({
@@ -366,60 +200,45 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
   })
 
   logger.info({ groupId, teacherUserId, activityId: ga.id }, "Group activity updated")
-  return serializeGroupActivity(updated, updated.definition)
+  return serializeGroupActivity(updated)
 }
 
-/** Las actividades publicadas en el grupo, para la pestaña de su curso. */
 async function listGroupActivities({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const rows = await prisma.groupActivity.findMany({
     where: { group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     orderBy: { created_at: "desc" },
   })
-  return rows.map((ga) => serializeGroupActivity(ga, ga.definition))
+  return rows.map(serializeGroupActivity)
 }
 
 async function getGroupActivity({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
-  return serializeGroupActivity(ga, ga.definition)
+  return serializeGroupActivity(ga)
 }
 
-/**
- * Habilita o deshabilita una actividad publicada (RF-GRP-10). Deshabilitar no
- * borra historial y no toca la politica: solo deja de aceptar intentos y
- * entregas al instante (el check del estudiante valida `enabled`). Idempotente.
- *
- * Deshabilitar con historial no se permite: si ya hay intentos o entregas, la
- * actividad queda habilitada para siempre (cambiar la regla a mitad de partida
- * seria injusto). La validacion bloquea la fila con FOR UPDATE para que un
- * check concurrente no pueda registrar el primer intento entre la revision y
- * la escritura.
- */
 async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, role, enabled }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
-  if (ga.enabled === enabled) return serializeGroupActivity(ga, ga.definition)
+  if (ga.enabled === enabled) return serializeGroupActivity(ga)
 
   const updated = await runInTransaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM group_activities WHERE id = ${ga.id} FOR UPDATE`
+    await tx.$queryRaw`SELECT id FROM "GroupActivity" WHERE id = ${ga.id} FOR UPDATE`
 
     const row = await tx.groupActivity.findFirst({
       where: { id: ga.id },
-      select: { _count: { select: { attempts: true, submissions: true } } },
+      select: { _count: { select: { submissions: true } } },
     })
     if (!row) throw new NotFoundError("Actividad no encontrada")
-    if (!enabled && row._count.attempts + row._count.submissions > 0) {
+    if (!enabled && row._count.submissions > 0) {
       throw new AppError(
         "La actividad ya tiene intentos o entregas; no se puede deshabilitar",
         409,
@@ -430,7 +249,6 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { enabled },
-      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     })
   })
 
@@ -443,27 +261,14 @@ async function setGroupActivityEnabled({ groupId, activityId, teacherUserId, rol
   })
 
   logger.info({ groupId, teacherUserId, activityId: ga.id, enabled }, "Group activity enabled state changed")
-  return serializeGroupActivity(updated, updated.definition)
+  return serializeGroupActivity(updated)
 }
 
-/**
- * Extiende la fecha de cierre de una actividad publicada.
- *
- * A diferencia de la edicion completa (que se bloquea con historial), extender
- * el cierre solo relaja la regla: no cambia condiciones a mitad de partida, asi
- * que se permite aunque ya haya intentos o entregas. Solo se permite mover la
- * fecha hacia adelante; acortarla o quitarla sigue pasando por la edicion
- * completa (que requiere no tener historial).
- *
- * La fila se bloquea con FOR UPDATE para que un check concurrente no pueda
- * registrar el primer intento entre la revision y la escritura.
- */
 async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, role, dueDate }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
-    include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
@@ -478,15 +283,14 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
     throw new AppError("La fecha de cierre debe ser posterior a la fecha actual", 400, "VALIDATION_ERROR")
   }
   if (ga.due_at && newDueAt.getTime() === ga.due_at.getTime()) {
-    return serializeGroupActivity(ga, ga.definition)
+    return serializeGroupActivity(ga)
   }
 
   const updated = await runInTransaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM group_activities WHERE id = ${ga.id} FOR UPDATE`
+    await tx.$queryRaw`SELECT id FROM "GroupActivity" WHERE id = ${ga.id} FOR UPDATE`
     return tx.groupActivity.update({
       where: { id: ga.id },
       data: { due_at: newDueAt },
-      include: { definition: { select: { topic_number: true, difficulty: true, source: true, slug: true } } },
     })
   })
 
@@ -499,13 +303,9 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
   })
 
   logger.info({ groupId, teacherUserId, activityId: ga.id }, "Group activity due date extended")
-  return serializeGroupActivity(updated, updated.definition)
+  return serializeGroupActivity(updated)
 }
 
-/**
- * Intentos por estudiante para una actividad de grupo: la tabla de entregas
- * que ve el docente en el detalle de la actividad.
- */
 async function getActivitySubmissions({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
@@ -515,8 +315,8 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
-  const grouped = await prisma.activityAttempt.groupBy({
-    by: ["student_id"],
+  const grouped = await prisma.groupSubmission.groupBy({
+    by: ["enrollment_id"],
     where: { group_activity_id: ga.id },
     _count: { id: true },
     _max: { created_at: true },
@@ -524,29 +324,31 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
 
   if (grouped.length === 0) return []
 
-  const studentIds = grouped.map((g) => g.student_id)
-  const students = await prisma.user.findMany({
-    where: { id: { in: studentIds } },
-    select: { id: true, name: true, email: true, code: true },
+  const enrollmentIds = grouped.map((g) => g.enrollment_id)
+  const enrollments = await prisma.enrollment.findMany({
+    where: { id: { in: enrollmentIds } },
+    include: { student: { include: { user: true } } },
   })
-  const studentMap = new Map(students.map((s) => [s.id, s]))
+  const enrollmentMap = new Map(enrollments.map((e) => [e.id, e]))
 
   const submissions = await Promise.all(
     grouped.map(async (g) => {
-      const attempts = await prisma.activityAttempt.findMany({
-        where: { group_activity_id: ga.id, student_id: g.student_id },
+      const submissions = await prisma.groupSubmission.findMany({
+        where: { group_activity_id: ga.id, enrollment_id: g.enrollment_id },
         orderBy: { created_at: "desc" },
-        select: { score: true, created_at: true },
+        include: { autoDetail: { select: { auto_results: true } } },
       })
-      const student = studentMap.get(g.student_id)
+      const attempts = submissions.filter((s) => s.autoDetail !== null)
+      const enrollment = enrollmentMap.get(g.enrollment_id)
+      const student = enrollment?.student?.user
       return {
-        studentId: g.student_id,
+        studentId: student?.id ?? null,
         studentName: student?.name ?? "—",
         studentEmail: student?.email ?? "—",
-        studentCode: student?.code ?? null,
+        studentCode: enrollment?.student?.code ?? null,
         attemptsCount: g._count.id,
         lastAttemptDate: g._max.created_at?.toISOString() ?? null,
-        finalScore: finalScore(attempts),
+        finalScore: finalScore(attempts.map((a) => ({ score: a.score, created_at: a.created_at }))),
         submissionId: null,
       }
     }),
@@ -555,9 +357,6 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
   return submissions
 }
 
-/**
- * Entregas manuales para una actividad: la tabla de submissions del docente.
- */
 async function getManualSubmissions({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
@@ -567,29 +366,29 @@ async function getManualSubmissions({ groupId, activityId, teacherUserId, role }
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
 
-  const subs = await prisma.activitySubmission.findMany({
+  const subs = await prisma.groupSubmission.findMany({
     where: { group_activity_id: ga.id },
-    orderBy: { submitted_at: "desc" },
+    orderBy: { created_at: "desc" },
     include: {
-      student: { select: { id: true, name: true, email: true, code: true } },
+      enrollment: { include: { student: { include: { user: true } } } },
+      manualDetail: { select: { evidence: true } },
     },
   })
 
   return subs.map((s) => ({
     submissionId: s.id,
-    studentId: s.student_id,
-    studentName: s.student.name,
-    studentEmail: s.student.email,
-    studentCode: s.student.code,
+    studentId: s.enrollment?.student?.user?.id ?? null,
+    studentName: s.enrollment?.student?.user?.name ?? "—",
+    studentEmail: s.enrollment?.student?.user?.email ?? "—",
+    studentCode: s.enrollment?.student?.code ?? null,
     status: s.status,
     score: s.score,
-    submittedAt: s.submitted_at.toISOString(),
-    files: Number(s.evidence?.files) || 0,
+    submittedAt: s.created_at.toISOString(),
+    files: Number(s.manualDetail?.evidence?.files) || 0,
   }))
 }
 
 module.exports = {
-  publishBankActivities,
   createGroupActivity,
   updateGroupActivity,
   listGroupActivities,

@@ -3,16 +3,6 @@ const prisma = require("./client")
 const SLUG = "cerrar-el-proyecto"
 const RAIZ = "/home/$usuario/actividades/cerrar-el-proyecto"
 
-/**
- * Sube el escalon sobre la actividad facil en dos sitios. El primero es el
- * directorio: `config` no se protege con el mismo criterio que un archivo, y
- * sus permisos no dicen nada de los del archivo que hay dentro. El segundo es
- * el borrado, que no depende del permiso del `.tmp` sino del de la carpeta que
- * lo contiene.
- *
- * `respaldo.tmp` existe al empezar, asi que la asercion de ausencia nace sin
- * cumplir en vez de aprobarse sola.
- */
 const SETUP = {
   dirs: ["config"],
   files: [
@@ -31,6 +21,8 @@ const CHECKS = [
   { type: "archivo_no_existe", params: { ruta: `${RAIZ}/respaldo.tmp` }, points: 20, position: 4 },
 ]
 
+const TOPIC_NUMBER = 5
+
 const DATOS = {
   title: "Cerrar el proyecto",
   kind: "activity",
@@ -38,21 +30,25 @@ const DATOS = {
   instructions:
     "Deja la carpeta del proyecto lista para entregar: cada archivo y cada " +
     "carpeta con los permisos que le corresponden, y sin sobras.",
-  topic_number: 5,
-  max_score: 100,
   setup: SETUP,
 }
 
 async function main() {
-  const a = await prisma.activityDefinition.upsert({
+  const topic = await prisma.topic.findUnique({ where: { order_number: TOPIC_NUMBER } })
+  if (!topic) throw new Error(`Topic ${TOPIC_NUMBER} no encontrado. Corre seed-temario primero.`)
+
+  const activity = await prisma.topicActivity.upsert({
     where: { slug: SLUG },
-    update: { ...DATOS, checks: { deleteMany: {}, create: CHECKS } },
-    create: { slug: SLUG, ...DATOS, source: "bank", active: true, checks: { create: CHECKS } },
-    include: { checks: true },
+    update: { ...DATOS, topic_id: topic.id, subtopic_id: null, checks: CHECKS },
+    create: { slug: SLUG, ...DATOS, topic_id: topic.id, subtopic_id: null, checks: CHECKS },
   })
-  console.log(`Actividad sembrada: ${a.slug} con ${a.checks.length} aserciones`)
+
+  console.log(`Actividad sembrada: ${activity.slug} (topic ${TOPIC_NUMBER}, kind=activity)`)
 }
 
 main()
-  .catch((err) => { console.error(err); process.exit(1) })
+  .catch((err) => {
+    console.error(err.message)
+    process.exit(1)
+  })
   .finally(() => prisma.$disconnect())

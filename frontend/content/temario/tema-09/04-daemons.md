@@ -99,6 +99,8 @@ Un daemon se termina como cualquier otro proceso, pero rara vez es lo que se qui
 
 Muchos daemons están escritos para responder a `HUP` recargándose en lugar de terminar, precisamente porque cortar un servicio para cambiarle una línea de configuración sería desproporcionado.
 
+<!-- SIMULATOR: monitor-del-sistema -->
+
 ## Resumen
 
 | Concepto | Qué es |

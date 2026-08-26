@@ -90,7 +90,7 @@ export function SearchDialog({
                 <CommandItem
                   value="go-simulators"
                   className={ITEM_HL}
-                  onSelect={() => go("/simulators")}
+                  onSelect={() => go("/simuladores")}
                 >
                   <MonitorPlay className="text-primary" />
                   Simuladores
@@ -98,7 +98,7 @@ export function SearchDialog({
                 <CommandItem
                   value="go-activities"
                   className={ITEM_HL}
-                  onSelect={() => go("/activities")}
+                  onSelect={() => go("/actividades")}
                 >
                   <Target className="text-primary" />
                   Actividades

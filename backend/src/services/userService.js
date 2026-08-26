@@ -13,6 +13,7 @@ const TEACHER_SELECT = {
   name: true,
   email: true,
   active: true,
+  teacher: { select: { code: true } },
   linuxAccount: {
     select: {
       linux_username: true,
@@ -22,7 +23,7 @@ const TEACHER_SELECT = {
 }
 
 async function findAll(filters = {}) {
-  const where = { role: Role.teacher }
+  const where = { teacher: { isNot: null } }
 
   if (filters.search) {
     where.OR = [
@@ -43,21 +44,77 @@ async function findAll(filters = {}) {
 }
 
 async function register(args) {
-  // La validacion de forma (nombre y email) ocurre antes de abrir la
+  // La validacion de forma (nombre, email, codigo) ocurre antes de abrir la
   // transaccion: es un error del cliente (400), no requiere conexion.
-  const parsed = parseOrThrow(registerTeacherSchema, { name: args.name, email: args.email })
+  const parsed = parseOrThrow(registerTeacherSchema, { name: args.name, email: args.email, code: args.code })
 
   if (!args.tx) {
-    return runInTransaction((tx) => register({ name: parsed.name, email: parsed.email, tx }))
+    return runInTransaction((tx) => register({ name: parsed.name, email: parsed.email, code: parsed.code, tx }))
   }
 
   const { tx } = args
   const db = tx
   const normalizedEmail = parsed.email
 
-  const existing = await db.user.findUnique({ where: { email: normalizedEmail } })
+  const existing = await db.user.findUnique({
+    where: { email: normalizedEmail },
+    include: { teacher: true, student: true, linuxAccount: true },
+  })
+
   if (existing) {
-    throw new AppError("El correo electrónico ya está registrado en la plataforma", 409)
+    // Ya es docente: registro idempotente.
+    if (existing.teacher) {
+      return serializeTeacher(existing)
+    }
+    // No se puede promover una cuenta de administrador.
+    if (existing.role === Role.admin) {
+      throw new AppError("Ese correo pertenece a un administrador", 409)
+    }
+    // Si ya tenía perfil de estudiante, solo se promueve si no tiene matrículas
+    // (borrar la fila Student rompería la FK de enrolamientos).
+    if (existing.student) {
+      const enrollCount = await db.enrollment.count({
+        where: { student_id: existing.student.user_id },
+      })
+      if (enrollCount > 0) {
+        throw new AppError(
+          "El correo ya tiene matrículas como estudiante; no se puede registrar como docente",
+          409,
+        )
+      }
+      await db.student.delete({ where: { user_id: existing.id } })
+    }
+
+    const linuxUsername = existing.linuxAccount?.linux_username ?? sanitizeUsername(normalizedEmail)
+
+    try {
+      const user = await db.user.update({
+        where: { id: existing.id },
+        data: {
+          role: Role.teacher,
+          name: parsed.name,
+          teacher: { create: { code: parsed.code } },
+          linuxAccount: existing.linuxAccount
+            ? undefined
+            : { create: { linux_username: linuxUsername, linux_provisioned: false } },
+        },
+        select: TEACHER_SELECT,
+      })
+      await db.job.create({
+        data: {
+          type: "user_provisioning",
+          priority: PRIORITIES.TEACHER,
+          user_id: user.id,
+          payload: { username: linuxUsername },
+        },
+      })
+      return serializeTeacher(user)
+    } catch (err) {
+      if (err?.code === "P2002") {
+        throw new AppError("El código de docente ya está en uso", 409)
+      }
+      throw err
+    }
   }
 
   const linuxUsername = sanitizeUsername(normalizedEmail)
@@ -68,6 +125,9 @@ async function register(args) {
       email: normalizedEmail,
       role: Role.teacher,
       active: true,
+      teacher: {
+        create: { code: parsed.code },
+      },
       linuxAccount: {
         create: {
           linux_username: linuxUsername,
@@ -78,11 +138,12 @@ async function register(args) {
     select: TEACHER_SELECT,
   })
 
-  await db.userProvisioningJob.create({
+  await db.job.create({
     data: {
-      user_id: user.id,
-      username: linuxUsername,
+      type: "user_provisioning",
       priority: PRIORITIES.TEACHER,
+      user_id: user.id,
+      payload: { username: linuxUsername },
     },
   })
   return serializeTeacher(user)
@@ -93,10 +154,10 @@ async function toggleActive(id, tx) {
 
   const user = await tx.user.findUnique({
     where: { id },
-    select: { id: true, role: true, active: true },
+    select: { id: true, teacher: { select: { user_id: true } }, active: true },
   })
 
-  if (!user || user.role !== Role.teacher) {
+  if (!user || !user.teacher) {
     throw new AppError("Docente no encontrado", 404)
   }
 
@@ -108,4 +169,15 @@ async function toggleActive(id, tx) {
   return serializeTeacher(updated)
 }
 
-module.exports = { findAll, register, toggleActive }
+async function findById(id) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, teacher: { select: { user_id: true } } },
+  })
+  if (!user || !user.teacher) {
+    throw new AppError("Docente no encontrado", 404)
+  }
+  return user
+}
+
+module.exports = { findAll, register, toggleActive, findById }

@@ -157,7 +157,13 @@ if $SKIP_SEEDS; then
   log "Omitiendo seeds (--skip-seeds)."
 else
   log "Sembrando actividades del temario..."
-  for seed in seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines seed-actividad-mensaje seed-actividad-permisos-archivo seed-actividad-cerrar-proyecto seed-comprobacion-ficha seed-comprobacion-logo seed-comprobacion-solo-lectura; do
+  for seed in seed-temario \
+    seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines \
+    seed-actividad-mensaje seed-actividad-permisos-archivo seed-actividad-cerrar-proyecto \
+    seed-comprobacion-ficha seed-comprobacion-logo seed-comprobacion-solo-lectura \
+    seed-actividad-guion-que-decide seed-actividad-ficha-identidad seed-actividad-carpeta-equipo \
+    seed-actividad-rastro-registros seed-actividad-primer-guion seed-actividad-paquete-entrega \
+    seed-actividad-turno-de-noche seed-actividad-foto-sistema seed-actividad-arbol-proyecto; do
     run "podman exec linuxlab-backend node prisma/$seed.js"
     log "  OK: $seed"
   done

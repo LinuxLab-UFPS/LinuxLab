@@ -41,12 +41,12 @@ export function GroupsTable() {
   const groupsQuery = useGroups()
   // Sin estado local: la tabla lee siempre la query, y las mutaciones
   // actualizan la cache con setQueryData + invalidacion. Asi cualquier
-  // invalidacion externa (p. ej. al crear un curso) se refleja al instante.
+  // invalidacion externa (p. ej. al crear un grupo) se refleja al instante.
   const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data])
   const [tab, setTab] = useState<Tab>("activos")
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
-  /** Curso y acción destructiva esperando confirmación. */
+  /** Grupo y acción destructiva esperando confirmación. */
   const [confirming, setConfirming] = useState<{ group: Group; action: CourseAction } | null>(
     null,
   )
@@ -54,15 +54,15 @@ export function GroupsTable() {
 
   const counts = useMemo(
     () => ({
-      activos: groups.filter((g) => !g.archived).length,
-      desactivados: groups.filter((g) => g.archived).length,
+      activos: groups.filter((g) => g.status === "active").length,
+      desactivados: groups.filter((g) => g.status === "archived").length,
     }),
     [groups],
   )
 
   const q = query.trim().toLowerCase()
   const visible = groups
-    .filter((g) => (tab === "activos" ? !g.archived : g.archived))
+    .filter((g) => (tab === "activos" ? g.status === "active" : g.status === "archived"))
     .filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -75,18 +75,18 @@ export function GroupsTable() {
     const done = await notifyPromise(
       action === "deactivate" ? deactivateGroup(group.id) : deleteGroup(group.id),
       {
-        loading: action === "deactivate" ? "Desactivando el curso…" : "Eliminando el curso…",
-        success: action === "deactivate" ? "Curso desactivado" : "Curso eliminado",
+        loading: action === "deactivate" ? "Desactivando el grupo…" : "Eliminando el grupo…",
+        success: action === "deactivate" ? "Grupo desactivado" : "Grupo eliminado",
         error:
           action === "deactivate"
-            ? "No se pudo desactivar el curso."
-            : "No se pudo eliminar el curso.",
+            ? "No se pudo desactivar el grupo."
+            : "No se pudo eliminar el grupo.",
       },
     )
     if (done.ok) {
       if (action === "deactivate") {
         queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
-          prev.map((g) => (g.id === group.id ? { ...g, archived: true } : g)),
+          prev.map((g) => (g.id === group.id ? { ...g, status: "archived" } : g)),
         )
         queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
       } else {
@@ -114,7 +114,7 @@ export function GroupsTable() {
             {
               value: "activos",
               label: "Activos",
-              statLabel: "Cursos activos",
+              statLabel: "Grupos activos",
               count: counts.activos,
               icon: BookOpen,
               tone: "primary",
@@ -122,7 +122,7 @@ export function GroupsTable() {
             {
               value: "desactivados",
               label: "Inactivos",
-              statLabel: "Cursos inactivos",
+              statLabel: "Grupos inactivos",
               count: counts.desactivados,
               icon: BookOpen,
               tone: "neutral",
@@ -133,7 +133,7 @@ export function GroupsTable() {
         <div className="relative w-full max-w-sm flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar curso por nombre..."
+            placeholder="Buscar grupo por nombre..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value)
@@ -143,9 +143,9 @@ export function GroupsTable() {
           />
         </div>
 
-        <ActionButton tone="primary" href="/create-group" className="ml-auto">
+        <ActionButton tone="primary" href="/grupos/crear" className="ml-auto">
           <Plus className="h-4 w-4" />
-          Crear nuevo curso
+          Crear nuevo grupo
         </ActionButton>
       </div>
 
@@ -162,18 +162,18 @@ export function GroupsTable() {
           </TableHeader>
           <TableBody>
             {pageRows.map((group) => (
-              // La fila entera lleva al curso. Un `<Link>` no puede envolver un
+              // La fila entera lleva al grupo. Un `<Link>` no puede envolver un
               // `<tr>`, asi que navega por `onClick`; el nombre sigue siendo un
               // enlace de verdad para que se pueda alcanzar con el tabulador,
               // que un `onClick` en la fila no da.
               <TableRow
                 key={group.id}
-                onClick={() => router.push(`/groups/${group.id}`)}
+                onClick={() => router.push(`/grupos/${group.id}`)}
                 className="group cursor-pointer"
               >
                 <TableCell>
                   <Link
-                    href={`/groups/${group.id}`}
+                    href={`/grupos/${group.id}`}
                     className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
                   >
                     {group.name}
@@ -197,11 +197,11 @@ export function GroupsTable() {
                     boton de ver desaparecio porque la fila ya hace eso. */}
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-1">
-                    {/* Un curso desactivado ya solo se consulta. El icono es un
+                    {/* Un grupo desactivado ya solo se consulta. El icono es un
                         archivador y no una equis: esto archiva, no borra. */}
-                    {!group.archived && (
+                    {group.status === "active" && (
                       <IconAction
-                        label="Archivar curso"
+                        label="Archivar grupo"
                         icon={Archive}
                         onClick={() => setConfirming({ group, action: "deactivate" })}
                       />
@@ -215,7 +215,7 @@ export function GroupsTable() {
 
         {visible.length === 0 && (
           <TableEmptyState>
-            No tienes cursos {tab === "activos" ? "activos" : "desactivados"}.
+            No tienes grupos {tab === "activos" ? "activos" : "desactivados"}.
           </TableEmptyState>
         )}
       </TablePanel>
@@ -227,7 +227,7 @@ export function GroupsTable() {
           onChange={setPage}
           total={visible.length}
           pageSize={PAGE_SIZE}
-          label="cursos"
+          label="grupos"
         />
       )}
 

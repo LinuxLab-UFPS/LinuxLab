@@ -1,4 +1,5 @@
 const prisma = require("../../prisma/client")
+const { randomUUID } = require("crypto")
 const sshClient = require("./sshService")
 const logger = require("../lib/logger")
 const { AppError, NotFoundError, AuthorizationError } = require("../lib/errors")
@@ -11,11 +12,6 @@ const { audit } = require("./auditService")
 
 const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
 
-/**
- * Resuelve las rutas de las aserciones contra la carpeta de trabajo: las
- * relativas se anteponen `actividades/<workdir>/`; las absolutas se respetan
- * (las comprobaciones del temario backfilled las usan).
- */
 function resolveRuta(params, workdir) {
   const output = {}
   for (const [key, value] of Object.entries(params ?? {})) {
@@ -27,16 +23,21 @@ function resolveRuta(params, workdir) {
   return output
 }
 
-/**
- * El grupo de laboratorio del estudiante (su matricula activa) y sus
- * actividades de curso, para la vista "Mi Grupo". El estudiante tiene un solo
- * grupo activo; si no tiene ninguno, `group` es null.
- */
+function withIds(checks) {
+  return (checks ?? []).map((c) => ({
+    id: c.id ?? randomUUID(),
+    type: c.type,
+    params: c.params,
+    points: c.points,
+    position: c.position ?? 0,
+  }))
+}
+
 async function listMine(studentUserId) {
   const enrollment = await prisma.enrollment.findFirst({
-    where: { student_id: studentUserId, status: "active", group: { archived: false } },
-    include: { group: { include: { teacher: { select: { name: true } } } } },
-    orderBy: { enrolled_at: "asc" },
+    where: { student_id: studentUserId, status: "active", group: { status: "active" } },
+    include: { group: { include: { teacher: { select: { user: { select: { name: true } } } } } } },
+    orderBy: { created_at: "asc" },
   })
   if (!enrollment) return { group: null, activities: [] }
 
@@ -52,17 +53,14 @@ async function listMine(studentUserId) {
       definition: { source: { not: "bank" } },
     },
     include: {
-      definition: { select: { topic_number: true } },
-      attempts: {
-        where: { student_id: studentUserId },
-        orderBy: { created_at: "desc" },
-        select: { passed: true, score: true, created_at: true },
-      },
       submissions: {
-        where: { student_id: studentUserId },
-        orderBy: { submitted_at: "desc" },
-        take: 1,
-        select: { id: true, status: true, score: true, feedback: true, submitted_at: true, evidence: true },
+        where: { enrollment_id: enrollment.id },
+        orderBy: { created_at: "desc" },
+        select: {
+          passed: true, score: true, created_at: true, status: true,
+          autoDetail: { select: { auto_results: true } },
+          manualDetail: { select: { evidence: true, feedback: true, graded_by: true, graded_at: true } },
+        },
       },
     },
     orderBy: { created_at: "desc" },
@@ -73,18 +71,20 @@ async function listMine(studentUserId) {
       id: enrollment.group.id,
       name: enrollment.group.name,
       description: enrollment.group.description ?? "",
-      teacherName: enrollment.group.teacher?.name ?? "",
+      teacherName: enrollment.group.teacher?.user?.name ?? "",
     },
     activities: rows.map((ga) => {
-      const attempts = ga.attempts ?? []
       const submissions = ga.submissions ?? []
-      const latestSubmission = submissions[0] ?? null
-      const hasSubmission = latestSubmission !== null
+      const autoSubs = submissions.filter((s) => s.autoDetail !== null)
+      const manualSubs = submissions.filter((s) => s.manualDetail !== null)
+      const latestManual = manualSubs[0] ?? null
+      const hasSubmission = latestManual !== null
+      const attempts = autoSubs
       return {
         id: ga.id,
         title: ga.title,
         description: ga.instructions ?? "",
-        topicNumber: ga.definition?.topic_number ?? 0,
+        topicNumber: 0,
         checksCount: (ga.checks ?? []).length,
         passed: attempts[0]?.passed ?? false,
         completed: attempts.length > 0 || hasSubmission,
@@ -92,26 +92,25 @@ async function listMine(studentUserId) {
         attemptsCount: attempts.length,
         attemptLimit: ga.attempt_limit,
         finalScore: ga.evaluation_type === "manual"
-          ? (latestSubmission?.score ?? 0)
-          : finalScore(attempts),
+          ? (latestManual?.score ?? 0)
+          : finalScore(attempts.map((a) => ({ score: a.score, created_at: a.created_at }))),
         dueAt: ga.due_at?.toISOString() ?? null,
         enabled: ga.enabled,
         evaluationType: ga.evaluation_type === "manual" ? "manual" : "atomic",
         activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
-        submission: latestSubmission ? {
-          id: latestSubmission.id,
-          status: latestSubmission.status,
-          score: latestSubmission.score,
-          feedback: latestSubmission.feedback,
-          submittedAt: latestSubmission.submitted_at.toISOString(),
-          files: latestSubmission.evidence?.files ?? 0,
+        submission: latestManual ? {
+          id: latestManual.id,
+          status: latestManual.status,
+          score: latestManual.score,
+          feedback: latestManual.manualDetail?.feedback ?? null,
+          submittedAt: latestManual.created_at.toISOString(),
+          files: latestManual.manualDetail?.evidence?.files ?? 0,
         } : null,
       }
     }),
   }
 }
 
-/** Detalle que ve el estudiante: sin los criterios (ocultos hasta aprobar). */
 async function getForStudent(studentUserId, groupActivityId) {
   const ga = await prisma.groupActivity.findFirst({
     where: { id: groupActivityId, enabled: true },
@@ -135,20 +134,27 @@ async function getForStudent(studentUserId, groupActivityId) {
     throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
   }
 
-  const attempts = await prisma.activityAttempt.findMany({
-    where: { group_activity_id: ga.id, student_id: studentUserId },
-    orderBy: { created_at: "desc" },
-    select: { attempt_number: true, passed: true, score: true, results: true, created_at: true },
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student_id: studentUserId, group_id: ga.group_id, status: "active" },
+    select: { id: true },
   })
+  const enrollmentId = enrollment?.id
 
-  const submissions = await prisma.activitySubmission.findMany({
-    where: { group_activity_id: ga.id, student_id: studentUserId },
-    orderBy: { submitted_at: "desc" },
-    take: 1,
-    select: { id: true, status: true, score: true, feedback: true, submitted_at: true, evidence: true },
-  })
-  const latestSubmission = submissions[0] ?? null
-  const hasSubmission = latestSubmission !== null
+  const submissions = enrollmentId
+    ? await prisma.groupSubmission.findMany({
+        where: { enrollment_id: enrollmentId, group_activity_id: ga.id },
+        orderBy: { created_at: "desc" },
+        include: {
+          autoDetail: { select: { auto_results: true } },
+          manualDetail: { select: { evidence: true, feedback: true, graded_by: true, graded_at: true } },
+        },
+      })
+    : []
+
+  const autoSubs = submissions.filter((s) => s.autoDetail !== null)
+  const manualSubs = submissions.filter((s) => s.manualDetail !== null)
+  const latestManual = manualSubs[0] ?? null
+  const hasSubmission = latestManual !== null
 
   return {
     id: ga.id,
@@ -162,39 +168,32 @@ async function getForStudent(studentUserId, groupActivityId) {
     maxScore: ga.max_score,
     checksCount: (ga.checks ?? []).length,
     attemptLimit: ga.attempt_limit,
-    attemptsCount: attempts.length,
+    attemptsCount: autoSubs.length,
     finalScore: ga.evaluation_type === "manual"
-      ? (latestSubmission?.score ?? 0)
-      : finalScore(attempts),
-    completed: attempts.length > 0 || hasSubmission,
+      ? (latestManual?.score ?? 0)
+      : finalScore(autoSubs.map((a) => ({ score: a.score, created_at: a.created_at }))),
+    completed: autoSubs.length > 0 || hasSubmission,
     enabled: true,
-    attempts: attempts.map((attempt) => ({
-      attemptNumber: attempt.attempt_number,
-      createdAt: attempt.created_at.toISOString(),
-      passed: attempt.passed,
-      score: attempt.score,
+    attempts: autoSubs.map((s) => ({
+      attemptNumber: s.attempt_number,
+      createdAt: s.created_at.toISOString(),
+      passed: s.passed,
+      score: s.score,
     })),
-    lastAttempt: attempts[0]
-      ? { passed: attempts[0].passed, score: attempts[0].score, results: attempts[0].results ?? [] }
+    lastAttempt: autoSubs[0]
+      ? { passed: autoSubs[0].passed, score: autoSubs[0].score, results: autoSubs[0].autoDetail?.auto_results ?? [] }
       : null,
-    submission: latestSubmission ? {
-      id: latestSubmission.id,
-      status: latestSubmission.status,
-      score: latestSubmission.score,
-      feedback: latestSubmission.feedback,
-      submittedAt: latestSubmission.submitted_at.toISOString(),
-      files: latestSubmission.evidence?.files ?? 0,
+    submission: latestManual ? {
+      id: latestManual.id,
+      status: latestManual.status,
+      score: latestManual.score,
+      feedback: latestManual.manualDetail?.feedback ?? null,
+      submittedAt: latestManual.created_at.toISOString(),
+      files: latestManual.manualDetail?.evidence?.files ?? 0,
     } : null,
   }
 }
 
-/**
- * Evalua la actividad de curso contra el entorno del estudiante (RF-AUTO-02).
- *
- * Misma maquinaria que la linea base: el checker corre CON LA IDENTIDAD del
- * estudiante, los parametros viajan por stdin y las rutas relativas se
- * resuelven contra la carpeta de trabajo antes de mandar el payload.
- */
 async function checkForStudent(studentUserId, groupActivityId) {
   const ga = await prisma.groupActivity.findUnique({
     where: { id: groupActivityId },
@@ -209,7 +208,6 @@ async function checkForStudent(studentUserId, groupActivityId) {
       max_score: true,
       enabled: true,
       due_at: true,
-      activity_definition_id: true,
       attempt_limit: true,
     },
   })
@@ -224,10 +222,7 @@ async function checkForStudent(studentUserId, groupActivityId) {
   if (ga.evaluation_type !== "automatic") {
     throw new AppError("Esta actividad se revisa manualmente", 409, "CONFLICT")
   }
-  if (!ga.activity_definition_id) {
-    throw new AppError("La actividad ya no está disponible", 409, "CONFLICT")
-  }
-  const checks = ga.checks ?? []
+  const checks = withIds(ga.checks)
   if (checks.length === 0) {
     throw new AppError("La actividad no tiene aserciones que evaluar", 409, "CONFLICT")
   }
@@ -236,14 +231,14 @@ async function checkForStudent(studentUserId, groupActivityId) {
 
   const student = await prisma.user.findUnique({
     where: { id: studentUserId },
-    select: { code: true, email: true },
+    select: { student: { select: { code: true } }, email: true },
   })
 
   const payload = JSON.stringify({
     checks: checks.map((c) => ({
       id: c.id,
       type: c.type,
-      params: personalize(resolveRuta(c.params, ga.workdir), student),
+      params: personalize(resolveRuta(c.params, ga.workdir), { code: student?.student?.code, email: student?.email }),
     })),
   })
 
@@ -274,23 +269,22 @@ async function checkForStudent(studentUserId, groupActivityId) {
   })
 
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
-  // La actividad se aprueba con una nota de 60 o mas (sobre max_score=100).
   const passed = score >= 60
 
-  await attemptService.recordAttempt({
-    activityDefinitionId: ga.activity_definition_id,
+  await attemptService.recordGroupAttempt({
+    studentId: studentUserId,
+    groupId: ga.group_id,
     groupActivityId: ga.id,
-    studentUserId,
-    passed,
     score,
+    passed,
     results,
     attemptLimit: ga.attempt_limit,
   })
 
-  const attempts = await prisma.activityAttempt.findMany({
-    where: { group_activity_id: ga.id, student_id: studentUserId },
+  const submissions = await prisma.groupSubmission.findMany({
+    where: { enrollment: { student_id: studentUserId }, group_activity_id: ga.id },
     orderBy: { created_at: "desc" },
-    select: { attempt_number: true, score: true, created_at: true },
+    select: { attempt_number: true, score: true, passed: true, created_at: true },
   })
 
   audit({
@@ -306,25 +300,19 @@ async function checkForStudent(studentUserId, groupActivityId) {
     passed,
     completed: true,
     score,
-    finalScore: finalScore(attempts),
-    attemptsCount: attempts.length,
-    attempts: attempts.map((attempt) => ({
-      attemptNumber: attempt.attempt_number,
-      createdAt: attempt.created_at.toISOString(),
-      passed: attempt.passed,
-      score: attempt.score,
+    finalScore: finalScore(submissions.map((s) => ({ score: s.score, created_at: s.created_at }))),
+    attemptsCount: submissions.length,
+    attempts: submissions.map((s) => ({
+      attemptNumber: s.attempt_number,
+      createdAt: s.created_at.toISOString(),
+      passed: s.passed,
+      score: s.score,
     })),
     maxScore: ga.max_score,
     results,
   }
 }
 
-/**
- * Detalle de la actividad de un estudiante específico (vista docente/estudiante).
- *
- * Para actividades manuales: retorna la submission con evidence (archivos).
- * Para actividades automáticas: retorna los intentos con results (aserciones).
- */
 async function getStudentActivityDetail(groupId, activityId, studentId, userId, role) {
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
@@ -347,11 +335,17 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
     throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
   }
 
-  const student = await prisma.user.findUnique({
+  const studentUser = await prisma.user.findUnique({
     where: { id: studentId },
-    select: { id: true, name: true, email: true, code: true },
+    select: { id: true, name: true, email: true, student: { select: { code: true } } },
   })
-  if (!student) throw new NotFoundError("Estudiante no encontrado")
+  if (!studentUser) throw new NotFoundError("Estudiante no encontrado")
+  const student = {
+    id: studentUser.id,
+    name: studentUser.name,
+    email: studentUser.email,
+    code: studentUser.student?.code ?? null,
+  }
 
   const activity = {
     id: ga.id,
@@ -363,12 +357,20 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
     maxScore: ga.max_score,
   }
 
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student_id: studentId, group_id: groupId, status: "active" },
+    select: { id: true },
+  })
+  const enrollmentId = enrollment?.id
+
   if (ga.evaluation_type === "manual") {
-    const submission = await prisma.activitySubmission.findFirst({
-      where: { group_activity_id: ga.id, student_id: studentId },
-      orderBy: { submitted_at: "desc" },
-      include: { grader: { select: { name: true } } },
-    })
+    const submission = enrollmentId
+      ? await prisma.groupSubmission.findFirst({
+          where: { enrollment_id: enrollmentId, group_activity_id: ga.id },
+          orderBy: { created_at: "desc" },
+          include: { manualDetail: { include: { grader: { select: { user: { select: { name: true } } } } } } },
+        })
+      : null
 
     return {
       type: "manual",
@@ -377,40 +379,36 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
       submission: submission ? {
         id: submission.id,
         status: submission.status,
-        evidence: submission.evidence,
+        evidence: submission.manualDetail?.evidence ?? null,
         score: submission.score,
-        feedback: submission.feedback,
-        gradedBy: submission.grader?.name ?? null,
-        gradedAt: submission.graded_at?.toISOString() ?? null,
-        submittedAt: submission.submitted_at.toISOString(),
+        feedback: submission.manualDetail?.feedback ?? null,
+        gradedBy: submission.manualDetail?.grader?.user?.name ?? null,
+        gradedAt: submission.manualDetail?.graded_at?.toISOString() ?? null,
+        submittedAt: submission.created_at.toISOString(),
       } : null,
     }
   }
 
-  const attempts = await prisma.activityAttempt.findMany({
-    where: { group_activity_id: ga.id, student_id: studentId },
-    orderBy: { created_at: "desc" },
-    select: {
-      attempt_number: true,
-      passed: true,
-      score: true,
-      results: true,
-      created_at: true,
-    },
-  })
+  const submissions = enrollmentId
+    ? await prisma.groupSubmission.findMany({
+        where: { enrollment_id: enrollmentId, group_activity_id: ga.id },
+        orderBy: { created_at: "desc" },
+        include: { autoDetail: { select: { auto_results: true } } },
+      })
+    : []
 
   return {
     type: "automatic",
     student,
     activity,
-    attempts: attempts.map((a) => ({
-      attemptNumber: a.attempt_number,
-      passed: a.passed,
-      score: a.score,
-      results: a.results,
-      createdAt: a.created_at.toISOString(),
+    attempts: submissions.map((s) => ({
+      attemptNumber: s.attempt_number,
+      passed: s.passed,
+      score: s.score,
+      results: s.autoDetail?.auto_results ?? [],
+      createdAt: s.created_at.toISOString(),
     })),
-    finalScore: finalScore(attempts),
+    finalScore: finalScore(submissions.map((s) => ({ score: s.score, created_at: s.created_at }))),
   }
 }
 

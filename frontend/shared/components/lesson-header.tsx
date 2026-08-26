@@ -32,12 +32,12 @@ export function LessonHeader({
         aria-label="Ruta"
         className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
       >
-        <Link href="/home" className="transition-colors hover:text-foreground">
+        <Link href="/inicio" className="transition-colors hover:text-foreground">
           LinuxLab
         </Link>
         <ChevronRight className="h-3 w-3 shrink-0 opacity-50" />
         <Link
-          href={`/group?tema=${topicSlug}`}
+          href={`/curso?tema=${topicSlug}`}
           className="transition-colors hover:text-foreground"
         >
           {topicTitle}
