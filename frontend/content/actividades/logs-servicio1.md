@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/logs-servicio1`:
-
-```bash
-cd ~/actividades/logs-servicio1
-```
-
 Cada semana que pasa te vas dando cuenta de que en LinuxLab TM los servicios y proyectos suelen tener muchos fallos en producción y tienden a caerse. Seguro por el abuso de IA sin ingeniería real detrás.
 
 Se te ha asignado la tarea de revisar los últimos tres logs del servicio1, que están en `registros`, y buscar en ellos los siguientes datos.

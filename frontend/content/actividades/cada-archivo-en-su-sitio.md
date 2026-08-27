@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/cada-archivo-en-su-sitio`:
-
-```bash
-cd ~/actividades/cada-archivo-en-su-sitio
-```
-
 El empleado anterior que tenía tus mismas responsabilidades dejó unos archivos con los permisos incorrectos.
 
 **Objetivo:**

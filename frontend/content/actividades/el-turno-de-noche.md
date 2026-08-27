@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/el-turno-de-noche`:
-
-```bash
-cd ~/actividades/el-turno-de-noche
-```
-
 Turno de noche en LinuxLab TM: se dejan varias tareas largas corriendo en segundo plano, se apunta qué quedó abierto y se cierra lo que ya no hace falta.
 
 **Objetivos:**

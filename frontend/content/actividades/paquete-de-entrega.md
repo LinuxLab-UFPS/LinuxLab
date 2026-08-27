@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/paquete-de-entrega`:
-
-```bash
-cd ~/actividades/paquete-de-entrega
-```
-
 Terminaste el informe y hay que mandarlo en un solo archivo. Dentro de la carpeta tienes:
 
 ```

@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/permisos-por-escrito`:
-
-```bash
-cd ~/actividades/permisos-por-escrito
-```
-
 Cada día que pasa te das cuenta de que tus compañeros de trabajo en LinuxLab TM no son muy competentes.
 
 El colega Mauricio necesita cambiar los permisos de unos archivos a los que solo él tiene acceso, pero no sabe nada del tema y está convencido de que los permisos solo se pueden escribir de forma simbólica. Para salir del paso armó un script con ChatJP que lee `permisos.txt` de tu directorio y aplica lo que encuentre ahí.

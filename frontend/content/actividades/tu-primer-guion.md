@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/tu-primer-guion`:
-
-```bash
-cd ~/actividades/tu-primer-guion
-```
-
 Un script no es más que un archivo con comandos dentro, que el sistema ejecuta de arriba abajo. Este es el más corto que hace algo comprobable.
 
 **Objetivos:**

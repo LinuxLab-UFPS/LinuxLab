@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/el-guion-que-decide`:
-
-```bash
-cd ~/actividades/el-guion-que-decide
-```
-
 Dentro de `datos/` hay tres bitácoras y un archivo suelto. Hace falta un script que las recorra, cuente sus líneas y decida por sí solo si el total merece revisión.
 
 **Objetivos:**

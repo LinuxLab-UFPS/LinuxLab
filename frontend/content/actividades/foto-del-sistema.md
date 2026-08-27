@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/foto-del-sistema`:
-
-```bash
-cd ~/actividades/foto-del-sistema
-```
-
 Un servicio se cayó y el equipo pide la foto del momento: qué había corriendo y con qué señal se cerró. Vas a dejar esos datos en tres archivos, dentro de este directorio.
 
 **Objetivos:**

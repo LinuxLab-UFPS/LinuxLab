@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/tu-ficha-de-identidad`:
-
-```bash
-cd ~/actividades/tu-ficha-de-identidad
-```
-
 El sistema no te conoce por tu nombre sino por un número y por los grupos a los que perteneces. Vas a dejar esos datos en tres archivos, dentro de este directorio.
 
 **Objetivos:**

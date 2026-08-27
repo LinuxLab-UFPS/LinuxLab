@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/mensaje-oculto`:
-
-```bash
-cd ~/actividades/mensaje-oculto
-```
-
 Aburrido en tu trabajo nuevo en LL TM, te acuerdas de tu época universitaria y de los juegos que te inventabas para pasar el rato entre clases. Uno de esos era «armar el logo», donde se partía en cuatro piezas el logo de la UFPS y se escondía en cuatro archivos distintos.
 
 El logo en cuestión:

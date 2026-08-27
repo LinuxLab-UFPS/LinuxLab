@@ -1,9 +1,3 @@
-Antes de empezar, muévete al directorio `~/actividades/el-arbol-del-proyecto`:
-
-```bash
-cd ~/actividades/el-arbol-del-proyecto
-```
-
 El equipo de desarrollo de LinuxLab TM va a hacerse cargo de un proyecto ajeno y necesita saber qué tiene dentro antes de tocarlo. Dentro de `proyecto/` hay carpetas anidadas con configuraciones y bitácoras, y en `metricas/errores.csv` un recuento de fallos por servicio.
 
 Vas a dejar tres datos en tres archivos, aquí mismo.
