@@ -1,25 +1,11 @@
 "use client"
 
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-} from "recharts"
-import { CheckCircle2, Clock3, Users, TrendingUp, CalendarX } from "lucide-react"
+import { BarChart3, CalendarX, CheckCircle2, Clock3, ListChecks, Radar, TrendingUp, Users } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
-import { MetricCard } from "@shared/components/metric-card"
 import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
+import { GraficaNotas, GraficaTemas } from "@shared/components/charts/grade-charts"
+import type { LucideIcon } from "lucide-react"
 import type { GradebookCellStatus, GradeSeriesPoint, MyGrades } from "@/lib/models/groups"
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
@@ -35,8 +21,70 @@ const STATUS_META: Record<GradebookCellStatus, { label: string; text: string; do
   "not-started": { label: "Sin iniciar", text: "text-muted-foreground", dot: "bg-muted-foreground" },
 }
 
-function tooltipValue(value: number | string) {
-  return value == null ? "—" : `${value}`
+/* El resto de la pagina son tarjetas redondeadas que se levantan al pasar por
+   encima. Este panel era el unico bloque con esquinas cuadradas y sin sombra,
+   metido en una vista cuyo titulo va en degradado rojo: por eso desentonaba. */
+const PANEL =
+  "rounded-2xl border border-border bg-card p-5 transition-all duration-300 " +
+  "hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)]"
+
+/** Cabecera de un bloque: icono en caja roja y titulo, como las demas tarjetas. */
+function Cabecera({ icon: Icon, title, hint }: { icon: LucideIcon; title: string; hint?: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-4.5 w-4.5" />
+      </span>
+      <div className="min-w-0">
+        <h3 className="text-lg font-bold tracking-tight text-foreground">{title}</h3>
+        {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Una cifra suelta. Sustituye al `MetricCard` viejo, que era cuadrado y sin
+ * relieve; este panel era su unico consumidor.
+ */
+function Cifra({
+  title,
+  value,
+  icon: Icon,
+  tone = "neutral",
+}: {
+  title: string
+  value: string | number
+  icon: LucideIcon
+  tone?: "neutral" | "primary" | "warning" | "danger"
+}) {
+  const color = {
+    neutral: "text-foreground",
+    primary: "text-primary",
+    warning: "text-warning",
+    danger: "text-danger",
+  }[tone]
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-4 rounded-2xl border border-border bg-card p-4",
+        "transition-all duration-300 hover:border-primary/50",
+      )}
+    >
+      <span
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+          tone === "primary" ? "bg-primary/10 text-primary" : "bg-secondary/60 text-muted-foreground",
+        )}
+      >
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">{title}</p>
+        <p className={cn("font-mono text-2xl font-semibold", color)}>{value}</p>
+      </div>
+    </div>
+  )
 }
 
 export function MyGradesPanel({ grades }: { grades: MyGrades }) {
@@ -48,33 +96,31 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
         </div>
         <h2 className="mb-1 text-base font-medium text-foreground">Sin grupo activo</h2>
         <p className="text-sm text-muted-foreground">
-          No estás inscrito en ningún grupo para ver calificaciones.
+          Cuando estés inscrito en un curso, aquí verás tus calificaciones.
         </p>
       </div>
     )
   }
 
   const { series, topics, summary } = grades
+  const pending = summary.underReview
 
-  /* El eje X de la grafica. Las del docente traen un codigo corto (T-0001);
-     las del temario traen su slug, que es una frase entera y no cabe, asi que
-     se recorta. El titulo completo sigue en el tooltip y en la tabla. */
+  /* El eje X. Las del docente traen un codigo corto (T-0001); las del temario
+     traen su slug, que es una frase entera y no cabe, asi que se recorta. El
+     titulo completo sigue en la tabla. */
   const etiqueta = (s: GradeSeriesPoint) =>
     s.source === "bank" && s.workdir.length > 12 ? `${s.workdir.slice(0, 11)}…` : s.workdir
 
   const lineData = series.map((s) => ({
     name: etiqueta(s),
-    estudiante: s.score,
+    propio: s.score,
     grupo: s.groupAverage,
   }))
 
   const radarData = topics.map((t) => ({
     topic: topicTitleOf(t.topicNumber),
     promedio: t.avgScore ?? 0,
-    fullMark: 100,
   }))
-
-  const pending = summary.underReview
 
   return (
     <div className="space-y-6">
@@ -82,62 +128,35 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
         Curso: <span className="font-medium text-foreground">{grades.group.name}</span>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
+        <Cifra
           title="Promedio general"
           value={summary.average != null ? `${summary.average}/100` : "—"}
           icon={TrendingUp}
+          tone="primary"
         />
-        <MetricCard title="Completadas" value={summary.completed} icon={CheckCircle2} />
-        <MetricCard title="En revisión" value={pending} icon={Clock3} />
-        <MetricCard title="Vencidas" value={summary.overdue} icon={CalendarX} />
+        <Cifra
+          title="Completadas"
+          value={`${summary.completed}/${summary.total}`}
+          icon={CheckCircle2}
+        />
+        <Cifra title="En revisión" value={pending} icon={Clock3} tone={pending > 0 ? "warning" : "neutral"} />
+        <Cifra
+          title="Vencidas"
+          value={summary.overdue}
+          icon={CalendarX}
+          tone={summary.overdue > 0 ? "danger" : "neutral"}
+        />
       </div>
 
-      {/* Línea: mis notas vs promedio del grupo */}
-      <div className="border border-border bg-card p-5">
-        <h3 className="mb-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-          Calificación por actividad
-        </h3>
-        <p className="mb-4 text-xs text-muted-foreground">
-          Tus notas frente al promedio del curso.
-        </p>
+      <div className={PANEL}>
+        <Cabecera
+          icon={BarChart3}
+          title="Calificación por actividad"
+          hint="Tus notas frente al promedio del curso."
+        />
         {lineData.length > 0 ? (
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={lineData} margin={{ top: 8, right: 16, bottom: 4, left: -12 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--table-line)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  stroke="var(--muted-foreground)"
-                  minTickGap={8}
-                />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                <Tooltip formatter={tooltipValue} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="estudiante"
-                  name="Mi calificación"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  connectNulls={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="grupo"
-                  name="Promedio del grupo"
-                  stroke="var(--muted-foreground)"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  dot={false}
-                  connectNulls={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <GraficaNotas datos={lineData} />
         ) : (
           <p className="py-12 text-center text-sm text-muted-foreground">
             Aún no hay actividades en tu curso.
@@ -145,53 +164,25 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
         )}
       </div>
 
-      {/* Radar por tema + tabla de calificaciones */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="border border-border bg-card p-5 lg:col-span-2">
-          <h3 className="mb-1 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Rendimiento por tema
-          </h3>
+        <div className={cn(PANEL, "lg:col-span-2")}>
+          <Cabecera icon={Radar} title="Por tema" hint="Dónde vas mejor y dónde flojeas." />
           {radarData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData} outerRadius="70%">
-                  <PolarGrid stroke="var(--table-line)" />
-                  <PolarAngleAxis
-                    dataKey="topic"
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                  />
-                  <PolarRadiusAxis
-                    domain={[0, 100]}
-                    tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                  />
-                  <Radar
-                    name="Promedio por tema"
-                    dataKey="promedio"
-                    stroke="var(--primary)"
-                    fill="var(--primary)"
-                    fillOpacity={0.35}
-                  />
-                  <Tooltip formatter={tooltipValue} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
+            <GraficaTemas datos={radarData} />
           ) : (
             <p className="py-12 text-center text-sm text-muted-foreground">Sin datos por tema.</p>
           )}
         </div>
 
-        {/* Tabla vertical de calificaciones por actividad */}
-        <div className="overflow-hidden border border-border bg-card lg:col-span-3">
-          <div className="border-b border-border px-5 py-4">
-            <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-              Mis calificaciones
-            </h3>
+        <div className={cn(PANEL, "lg:col-span-3 p-0")}>
+          <div className="p-5 pb-0">
+            <Cabecera icon={ListChecks} title="Mis calificaciones" />
           </div>
           <div className="max-h-[22rem] overflow-y-auto">
             <table className="w-full">
               <thead className="sticky top-0 bg-card">
                 <tr className="border-b border-border">
-                  <th className="px-5 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Actividad
                   </th>
                   <th className="w-28 px-3 py-3 text-center text-xs font-medium uppercase tracking-wide text-muted-foreground">

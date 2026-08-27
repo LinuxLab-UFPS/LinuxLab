@@ -2,21 +2,13 @@
 
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   PieChart,
   Pie,
   Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
   BarChart,
   Bar,
 } from "recharts"
@@ -30,6 +22,7 @@ import {
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
+import { GraficaNotas, GraficaTemas } from "@shared/components/charts/grade-charts"
 import { useStudentPerformance } from "@/lib/api/queries"
 import type { GradebookCellStatus, GradeSummary } from "@/lib/models/groups"
 
@@ -101,9 +94,10 @@ export function StudentPerformanceDrawer({
 
   const lineData =
     data?.series.map((s) => ({
-      name: s.workdir,
-      student: s.score,
-      group: s.groupAverage,
+      // Las del temario traen su slug entero, que no cabe en el eje.
+      name: s.source === "bank" && s.workdir.length > 12 ? `${s.workdir.slice(0, 11)}…` : s.workdir,
+      propio: s.score,
+      grupo: s.groupAverage,
     })) ?? []
 
   const donutData =
@@ -220,29 +214,7 @@ export function StudentPerformanceDrawer({
               <div className="rounded-lg border border-border bg-card p-4">
                 <ChartHeader>Rendimiento por tema</ChartHeader>
                 {radarData.length > 0 ? (
-                  <div className="h-56">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadarChart data={radarData} outerRadius="72%">
-                        <PolarGrid stroke="var(--table-line)" />
-                        <PolarAngleAxis
-                          dataKey="topic"
-                          tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-                        />
-                        <PolarRadiusAxis
-                          domain={[0, 100]}
-                          tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                        />
-                        <Radar
-                          name="Promedio por tema"
-                          dataKey="promedio"
-                          stroke="var(--primary)"
-                          fill="var(--primary)"
-                          fillOpacity={0.35}
-                        />
-                        <Tooltip formatter={tooltipValue} />
-                      </RadarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <GraficaTemas datos={radarData} className="h-56" />
                 ) : (
                   <p className="py-12 text-center text-sm text-muted-foreground">
                     Sin datos por tema.
@@ -254,41 +226,7 @@ export function StudentPerformanceDrawer({
             {/* Línea: score por actividad vs. promedio del grupo */}
             <div className="rounded-lg border border-border bg-card p-4">
               <ChartHeader>Calificación por actividad</ChartHeader>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={lineData} margin={{ top: 8, right: 16, bottom: 4, left: -12 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--table-line)" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 10 }}
-                      stroke="var(--muted-foreground)"
-                      minTickGap={8}
-                    />
-                    <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                    <Tooltip formatter={tooltipValue} />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="student"
-                      name={firstName}
-                      stroke="var(--primary)"
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls={false}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="group"
-                      name="Promedio del grupo"
-                      stroke="var(--muted-foreground)"
-                      strokeWidth={2}
-                      strokeDasharray="4 4"
-                      dot={false}
-                      connectNulls={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              <GraficaNotas datos={lineData} etiquetaPropia={firstName} />
             </div>
 
             {/* Barras: intentos por actividad */}
