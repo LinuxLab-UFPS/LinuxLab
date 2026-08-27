@@ -102,7 +102,12 @@ export function TeacherHeader() {
                 onClick={async () => {
                   await signOut()
                   notify.info("Sesión cerrada")
-                  router.push("/")
+                  // Carga completa y no `router.push`: la barra superior la
+                  // elige el layout de servidor segun el rol, y una navegacion
+                  // de cliente reutiliza el layout ya renderizado. Quien entrara
+                  // despues con otro rol se encontraba con la barra del
+                  // anterior hasta recargar a mano.
+                  window.location.href = "/"
                 }}
                 className="cursor-pointer"
               >

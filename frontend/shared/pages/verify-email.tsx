@@ -51,7 +51,9 @@ export function VerifyEmailPage({ email, next }: { email: string; next?: string 
           const idToken = await u.getIdToken()
           const { apiFetch } = await import("@/lib/api/client")
           await apiFetch("/api/auth/firebase", { method: "POST", body: JSON.stringify({ idToken }) })
-          router.push(next || "/inicio")
+          // Carga completa: acaba de nacer la sesion y la barra superior la
+          // elige el layout de servidor segun el rol (ver site-header).
+          window.location.href = next || "/inicio"
           return
         }
       }

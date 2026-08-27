@@ -36,16 +36,19 @@ export default function LoginPage() {
     // `//otro.sitio` tambien empieza por barra, y el navegador lo lee como otro
     // dominio, asi que colaba una salida fuera del sitio justo despues de que
     // alguien acabara de confiar sus credenciales a esta pantalla.
+    //
+    // Carga completa y no `router.replace`: la barra superior la elige el
+    // layout de servidor segun el rol, y una navegacion de cliente reutiliza el
+    // layout ya renderizado. Quien entraba con otro rol se encontraba con la
+    // barra del anterior hasta recargar a mano.
+    if (typeof window === "undefined") return
     if (user.role === "admin") {
-      router.replace("/admin/docentes")
+      window.location.href = "/admin/docentes"
       return
     }
-    const next =
-      typeof window !== "undefined"
-        ? new URLSearchParams(window.location.search).get("next")
-        : null
-    router.replace(destinoSeguro(next))
-  }, [user, router])
+    const next = new URLSearchParams(window.location.search).get("next")
+    window.location.href = destinoSeguro(next)
+  }, [user])
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true)
