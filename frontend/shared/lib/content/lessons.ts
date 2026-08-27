@@ -3,6 +3,7 @@ import { join } from "node:path"
 import type { TopicContentMeta } from "@/lib/models/content"
 import { env } from "@/lib/config/env"
 import { syllabus } from "./temario"
+import { bienvenida } from "./bienvenida"
 import { getSimulators } from "./simulators"
 import { getActivities, getActivitiesForTopic } from "./activities"
 
@@ -29,6 +30,20 @@ export function getTopicContentMeta(topicNumber: number): TopicContentMeta | nul
   try {
     const raw = readFileSync(join(CONTENT_ROOT, topicDir(topicNumber), "meta.json"), "utf8")
     return JSON.parse(raw) as TopicContentMeta
+  } catch {
+    return null
+  }
+}
+
+/**
+ * El markdown de la seccion de bienvenida.
+ *
+ * Carpeta aparte de `temario/`: la bienvenida no es un tema y no tiene numero
+ * con el que construir `tema-NN` (ver shared/lib/content/bienvenida.ts).
+ */
+export function getBienvenidaMarkdown(file: string): string | null {
+  try {
+    return readFileSync(join(process.cwd(), "content", "bienvenida", file), "utf8")
   } catch {
     return null
   }
@@ -240,6 +255,18 @@ export interface SearchItem {
  *  registries — adding one there puts it in the search with no further work. */
 export function getSearchIndex(): SearchItem[] {
   const items: SearchItem[] = []
+
+  // La bienvenida tambien se busca: es la unica seccion fuera del temario y sin
+  // esto seria la unica pagina del curso imposible de encontrar.
+  for (const pagina of bienvenida.pages) {
+    items.push({
+      title: pagina.title,
+      kind: "subtema",
+      context: bienvenida.title,
+      href: `/curso?tema=${bienvenida.slug}&sub=${pagina.id}`,
+    })
+  }
+
   for (const topic of syllabus) {
     // The lesson (module) itself.
     items.push({
