@@ -28,18 +28,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return
-    // Redirección hacia un destino pedido por el flujo (p.ej. /inscripcion).
-    // Solo se aceptan paths del mismo origen que empiecen con "/".
+    /* Entrar es una carga completa y no `router.replace`. La barra superior la
+       elige el layout de servidor segun el rol, y una navegacion de cliente
+       reutiliza el layout que ya estuviera renderizado: quien cerraba sesion
+       como estudiante y entraba como docente se encontraba con la barra del
+       estudiante hasta recargar a mano. */
     if (typeof window !== "undefined") {
+      // Destino pedido por el flujo (p.ej. /inscripcion). Solo se aceptan
+      // paths del mismo origen que empiecen con "/".
       const next = new URLSearchParams(window.location.search).get("next")
       if (next && next.startsWith("/")) {
-        router.replace(next)
+        window.location.href = next
         return
       }
+      window.location.href = user.role === "admin" ? "/admin/docentes" : "/inicio"
     }
-    const target = user.role === "admin" ? "/admin/docentes" : "/inicio"
-    router.replace(target)
-  }, [user, router])
+  }, [user])
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true)
