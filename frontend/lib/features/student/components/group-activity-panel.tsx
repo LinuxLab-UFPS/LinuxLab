@@ -7,6 +7,7 @@ import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { useEnLaCarpeta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
   submitGroupActivity,
@@ -41,12 +42,16 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
   const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
   const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
-  /* Comprobar no exige haber pulsado antes "ir a la carpeta". Lo exigia, y era
-     estado de React: al recargar la pagina el boton volvia a salir gris y le
-     decia "primero abre la carpeta" a quien ya habia resuelto la actividad
-     ayer. El evaluador mira los archivos en el disco, no donde esta la shell. */
+  /* Comprobar exige estar parado en la carpeta de trabajo. La ruta la dice la
+     propia shell en cada prompt, asi que vale tanto si se llego con el boton
+     como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
+     se sepa la ruta el boton queda activo: la version que guardaba en React si
+     se habia pulsado "ir a la carpeta" sacaba el boton gris tras cada recarga a
+     quien ya estaba en el sitio correcto. */
+  const enLaCarpeta = useEnLaCarpeta(detail.workdir)
   const canCheck =
-    detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached
+    detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
+    enLaCarpeta
 
   const goToWorkdir = () => {
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
@@ -211,7 +216,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
         {detail.evaluationType === "atomic" && !canCheck && (
           <p className="text-xs text-muted-foreground">
-              {!detail.enabled
+              {!enLaCarpeta
+               ? "Entra en la carpeta de la actividad para poder comprobarla."
+               : !detail.enabled
                ? "La actividad está deshabilitada."
               : closed
                 ? "La actividad venció."

@@ -1,12 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Markdown } from "@shared/components/markdown"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
+import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { useEnLaCarpeta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -45,6 +48,13 @@ export function ActivityPanel({
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
+  /* Comprobar exige estar parado en la carpeta de la actividad. La ruta la dice
+     la propia shell en cada prompt, asi que vale tanto si se llego con el boton
+     como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
+     se sepa la ruta el boton queda activo: bloquear en esa espera seria repetir
+     el falso negativo que tenia la version anterior. */
+  const enLaCarpeta = useEnLaCarpeta(data?.workdir)
+
   const goToWorkdir = () => {
     if (!data?.workdir) return
     sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
@@ -53,14 +63,7 @@ export function ActivityPanel({
   /* Reiniciar borra la carpeta de la actividad y la vuelve a montar. Se
      pregunta antes porque el boton vive al lado del de ir a la carpeta, y
      confundirlos costaria el trabajo hecho. */
-  const confirmReset = () => {
-    const ok = window.confirm(
-      "Se van a rehacer los archivos de esta actividad.\n\n" +
-        "Lo que hayas escrito dentro de su carpeta se pierde. El resto de tu " +
-        "entorno no se toca.\n\n¿Continuar?",
-    )
-    if (ok) reset()
-  }
+  const [confirmando, setConfirmando] = useState(false)
 
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
@@ -145,7 +148,7 @@ export function ActivityPanel({
           <ActionButton
             tone={passed ? "emerald" : "amber"}
             onClick={check}
-            disabled={checking || loading}
+            disabled={checking || loading || !enLaCarpeta}
           >
             {checking ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -169,12 +172,29 @@ export function ActivityPanel({
             <IconAction
               label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
               icon={resetting ? Loader2 : RotateCcw}
-              onClick={confirmReset}
+              onClick={() => setConfirmando(true)}
               disabled={resetting || loading}
             />
           )}
         </div>
+
+        {/* Un boton gris sin explicacion es peor que uno que no esta. */}
+        {!enLaCarpeta && !loading && (
+          <p className="text-xs text-muted-foreground">
+            Entra en la carpeta de la actividad para poder comprobarla.
+          </p>
+        )}
       </footer>
+
+      <ConfirmDialog
+        open={confirmando}
+        onOpenChange={setConfirmando}
+        title="¿Rehacer los archivos de la actividad?"
+        description="Lo que hayas escrito dentro de su carpeta se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
+        confirmLabel="Rehacer los archivos"
+        confirmVariant="destructive"
+        onConfirm={reset}
+      />
     </div>
   )
 }

@@ -58,10 +58,54 @@ function cerrarEspera(err?: Error) {
 }
 
 /**
+ * La ruta que la shell dice ocupar, o null si todavia no lo ha dicho.
+ *
+ * Vive en el modulo y no en un componente a proposito: sobrevive a cambiar de
+ * pagina, igual que la propia sesion. Un intento anterior de saber esto guardaba
+ * en React si se habia pulsado "ir a la carpeta", y al recargar volvia a cero y
+ * bloqueaba el boton a quien ya estaba en el sitio correcto.
+ *
+ * Null significa "no se sabe", que no es lo mismo que "esta fuera": hasta el
+ * primer prompt no hay dato, y quien lo consuma no debe castigar esa espera.
+ */
+let cwd: string | null = null
+const oyentesCwd = new Set<(ruta: string | null) => void>()
+
+/** La secuencia con la que la shell anuncia su directorio (OSC 7). */
+const OSC7 = /\x1b\]7;file:\/\/([^\x1b\x07]*)(?:\x1b\\|\x07)/g
+
+/** El directorio actual conocido, o null si la shell aun no lo ha dicho. */
+export function directorioActual(): string | null {
+  return cwd
+}
+
+/** Avisa cuando la shell cambia de directorio. Devuelve la baja. */
+export function alCambiarDirectorio(oyente: (ruta: string | null) => void) {
+  oyentesCwd.add(oyente)
+  oyente(cwd)
+  return () => oyentesCwd.delete(oyente)
+}
+
+function olvidarCwd() {
+  if (cwd === null) return
+  cwd = null
+  for (const oyente of oyentesCwd) oyente(null)
+}
+
+function leerCwd(texto: string) {
+  let ultima: string | null = null
+  for (const m of texto.matchAll(OSC7)) ultima = m[1]
+  if (ultima === null || ultima === cwd) return
+  cwd = ultima
+  for (const oyente of oyentesCwd) oyente(cwd)
+}
+
+/**
  * Todo lo que se pinta pasa por aqui: la salida de la PTY y los avisos de
  * conexion. Asi un emulador que se monta despues los ve tambien, en su sitio.
  */
 function emitir(texto: string) {
+  leerCwd(texto)
   historial += texto
   if (historial.length > MAX_HISTORIAL) {
     historial = historial.slice(historial.length - MAX_HISTORIAL)
@@ -102,6 +146,9 @@ function conectar() {
     cerrarEspera(new Error("La conexión se cerró durante el reinicio"))
     if (ws !== socket) return
     ws = null
+    // La shell de la que veniamos ya no existe: su directorio deja de valer.
+    // Vuelve a "no se sabe" y no a "esta fuera", que bloquearia por error.
+    olvidarCwd()
 
     // Nunca llego a abrirse y quedan intentos.
     if (!abierta && intento < ESPERAS.length) {
@@ -182,6 +229,7 @@ export async function reiniciarSesion(reinicioHttp: () => Promise<void>): Promis
   }
 
   historial = ""
+  olvidarCwd()
   for (const oyente of oyentes) oyente("\x1bc")
   emitir("\x1b[90mReiniciando la terminal…\x1b[0m\r\n")
   ws.send(JSON.stringify({ type: "reset" }))
