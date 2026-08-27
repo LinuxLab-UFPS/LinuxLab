@@ -41,8 +41,14 @@ async function listMine(studentUserId) {
   })
   if (!enrollment) return { group: null, activities: [] }
 
+  // Aqui solo van las del docente. Las del curso viven en `TopicActivity` y
+  // se listan por su lado; antes se publicaban tambien como `GroupActivity` y
+  // habia que excluirlas por su origen, pero esa publicacion ya no existe.
   const rows = await prisma.groupActivity.findMany({
-    where: { group_id: enrollment.group_id, enabled: true },
+    where: {
+      group_id: enrollment.group_id,
+      enabled: true,
+    },
     include: {
       submissions: {
         where: { enrollment_id: enrollment.id },
@@ -247,12 +253,16 @@ async function checkForStudent(studentUserId, groupActivityId) {
   }
 
   const byId = new Map(parsed.results.map((r) => [r.id, r]))
+  // `params` se queda en el servidor. Lleva el valor esperado (el contenido
+  // exacto de un archivo, el modo octal, la ultima linea), asi que mandarlo al
+  // navegador entrega la respuesta a quien abra las herramientas de desarrollo.
+  // El estudiante recibe el tipo, los puntos y el `detail`, que dice que esta
+  // mal sin decir cual era la respuesta.
   const results = checks.map((check) => {
     const outcome = byId.get(check.id)
     return {
       id: check.id,
       type: check.type,
-      params: check.params,
       points: check.points,
       passed: outcome?.passed ?? false,
       detail: outcome?.detail ?? "No se pudo evaluar",

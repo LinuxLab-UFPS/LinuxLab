@@ -37,9 +37,46 @@ function fileBasename(ruta: string): string {
 }
 
 /**
+ * Lo que se le enseña al estudiante de una comprobación.
+ *
+ * Solo el tipo. `describeCheck` escribe el valor esperado dentro de la frase
+ * («contenga el texto 'catalogo'», «sea '/bin/bash'», «permisos 755»), asi que
+ * mostrarsela al estudiante le entrega la respuesta antes de intentar nada. El
+ * servidor ya no manda los `params` a la vista del estudiante; esta funcion es
+ * la que decide qué se puede decir sin ellos.
+ */
+export function describeCheckForStudent(type: string): string {
+  switch (type) {
+    case "directorio_existe":
+      return "Existe el directorio que pide el enunciado"
+    case "archivo_existe":
+      return "Existe el archivo que pide el enunciado"
+    case "archivo_no_existe":
+      return "Ya no existe el archivo que había que borrar"
+    case "permisos_son":
+      return "Los permisos son los que pide el enunciado"
+    case "propietario_es":
+      return "El propietario es el que pide el enunciado"
+    case "archivo_contiene":
+      return "El archivo contiene lo que pide el enunciado"
+    case "minimo_lineas":
+      return "El archivo tiene suficientes líneas con contenido"
+    case "archivo_es":
+      return "El contenido del archivo es exactamente el esperado"
+    case "ultima_linea_es":
+      return "La última línea del archivo es la que pide el enunciado"
+    default:
+      return "Comprobación del enunciado"
+  }
+}
+
+/**
  * Describe qué verifica una aserción del catálogo, en lenguaje natural, a
  * partir de sus parámetros esperados (sin evaluar nada). Es la lectura legible
  * que reemplaza al `type` + JSON para el docente.
+ *
+ * Solo para vistas de docente: incluye los valores esperados. Para el
+ * estudiante, `describeCheckForStudent`.
  */
 export function describeCheck(type: string, params: Record<string, unknown>): string {
   const base = (key: string) => String(params[key] ?? "")

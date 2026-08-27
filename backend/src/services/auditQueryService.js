@@ -103,9 +103,13 @@ async function listAuditEvents({ role, userId, filters = {} }) {
     if (groupId && myGroupIds.includes(groupId)) {
       where.group_id = groupId
     } else {
+      // `event_type` es un enum, y sobre un enum Prisma no acepta `startsWith`:
+      // la consulta entera reventaba en cuanto un docente abria la bitacora sin
+      // filtrar por curso. Se enumeran los eventos de sesion, que ya estan
+      // listados como categoria.
       where.OR = [
         { group_id: { in: myGroupIds } },
-        { AND: [{ user_id: userId }, { event_type: { startsWith: "auth_" } }] },
+        { AND: [{ user_id: userId }, { event_type: { in: EVENT_CATEGORIES.sesiones } }] },
       ]
     }
   } else if (groupId) {

@@ -5,6 +5,8 @@ const logger = require("../lib/logger")
 const { AppError, NotFoundError } = require("../lib/errors")
 const linuxAccountService = require("./linuxAccountService")
 const attemptService = require("./attemptService")
+const { audit } = require("./auditService")
+const { workdirOf } = require("../dtos/activityDtos")
 
 const CHECKER = "/usr/local/lib/linuxlab/checker.py"
 const SETUP = "/usr/local/lib/linuxlab/setup.py"
@@ -28,10 +30,17 @@ function personalize(params, student) {
 
 const NEEDS_CODE = /\$codigo\b/
 
+/**
+ * La comprobacion tal como puede verla el estudiante.
+ *
+ * Sin `params`: ahi viven el contenido exacto que debe tener un archivo, el
+ * modo octal o la ultima linea esperada, o sea la respuesta del ejercicio.
+ * Viajaba al navegador junto al enunciado, de modo que se leia entera sin
+ * intentar la actividad. Fuera del servidor solo salen el tipo y los puntos.
+ */
 const publicCheck = (check) => ({
   id: check.id,
   type: check.type,
-  params: check.params,
   points: check.points,
 })
 
@@ -53,6 +62,9 @@ const serialize = (activity) => ({
   topicNumber: activity.topic_id,
   maxScore: 100,
   hasSetup: Boolean(activity.setup),
+  // La carpeta donde se trabaja, para poder volver a ella desde el enunciado.
+  // Null en la que monta su arbol en la carpeta personal (ver activityDtos).
+  workdir: workdirOf(activity.slug),
   checks: withIds(activity.checks).map(publicCheck),
 })
 
@@ -116,7 +128,6 @@ async function evaluate({ slug, studentUserId }) {
     return {
       id: check.id,
       type: check.type,
-      params: check.params,
       points: check.points,
       passed: outcome?.passed ?? false,
       detail: outcome?.detail ?? "No se pudo evaluar",
@@ -126,12 +137,27 @@ async function evaluate({ slug, studentUserId }) {
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
   const passed = score >= 60
 
-  await attemptService.recordTopicAttempt({
+  const submission = await attemptService.recordTopicAttempt({
     studentId: studentUserId,
     topicActivityId: activity.id,
     score,
     passed,
     results,
+  })
+
+  /* Las del temario tambien dejan rastro. Antes solo se auditaban las del
+     docente, asi que un estudiante podia resolver el curso entero sin que
+     apareciera una linea en la bitacora.
+
+     El `groupId` no es opcional: el docente ve la bitacora filtrada por sus
+     grupos, de modo que un evento sin grupo no lo veria nadie. Sale de la
+     matricula con la que se registro el intento. */
+  audit({
+    userId: studentUserId,
+    groupId: submission.group_id,
+    eventType: "activity_checked",
+    target: activity.title,
+    metadata: { topicActivityId: activity.id, slug, passed, score },
   })
 
   logger.info({ slug, username: account.linux_username, passed, score }, "Activity evaluated")

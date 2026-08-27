@@ -31,6 +31,79 @@ const activityInputSchema = z.object({
   checks: z.array(z.unknown()).optional(),
 })
 
+/**
+ * Prefijo del id de una actividad del temario cuando viaja por rutas pensadas
+ * para las del docente.
+ *
+ * Las del docente se resuelven por uuid y las del temario por slug, pero ambas
+ * pasan por el mismo `:activityId`. El prefijo dice de que tabla sale sin tener
+ * que consultar las dos. Doble guion y no dos puntos: un `:` dentro de un
+ * segmento de ruta es terreno resbaladizo.
+ */
+const BANK_PREFIX = "bank--"
+
+/** El id compuesto con el que una actividad del temario viaja al frontend. */
+function bankActivityId(slug) {
+  return `${BANK_PREFIX}${slug}`
+}
+
+/** El slug si el id es de una del temario; null si es de una del docente. */
+function bankSlugOf(activityId) {
+  if (typeof activityId !== "string" || !activityId.startsWith(BANK_PREFIX)) return null
+  return activityId.slice(BANK_PREFIX.length) || null
+}
+
+/**
+ * La unica actividad del temario cuyo trabajo NO vive en `~/actividades/<slug>`.
+ *
+ * Monta su arbol en la carpeta personal a proposito, y sus comprobaciones
+ * apuntan alli. Sin `workdir` la interfaz no ofrece ni "ir a la carpeta" (seria
+ * una carpeta vacia) ni reiniciar (borraria algo que no es suyo).
+ */
+const SIN_CARPETA_PROPIA = new Set(["universidad-facultades"])
+
+/** La carpeta de trabajo de una actividad del temario, o null si no tiene. */
+function workdirOf(slug) {
+  return SIN_CARPETA_PROPIA.has(slug) ? null : slug
+}
+
+/**
+ * Una actividad del temario con la misma forma que una del docente.
+ *
+ * Las del temario no tienen fecha de entrega, ni limite de intentos, ni se
+ * pueden deshabilitar: son el curso, iguales en todos los grupos. Los campos que
+ * no existen se rellenan con el valor que las describe, no con un hueco, para
+ * que las vistas del docente no tengan que preguntar de donde salio cada fila.
+ */
+function serializeTopicActivity(ta) {
+  return {
+    id: bankActivityId(ta.slug),
+    slug: ta.slug,
+    title: ta.title,
+    topicNumber: ta.topic?.order_number ?? 0,
+    source: "bank",
+    difficulty: ta.difficulty,
+    instructions: ta.instructions ?? "",
+    maxScore: 100,
+    dueDate: null,
+    required: true,
+    evaluationType: "atomic",
+    // Ni taller ni quiz: esa division es de las del docente. Las del temario se
+    // clasifican por dificultad, y la interfaz pinta una u otra segun `source`.
+    activityType: null,
+    attemptLimit: null,
+    workdir: workdirOf(ta.slug),
+    enabled: true,
+    checks: (ta.checks ?? []).map((c) => ({
+      id: c.id,
+      type: c.type,
+      params: c.params,
+      points: c.points,
+    })),
+    uses: 0,
+  }
+}
+
 /** La forma que espera el frontend para la tabla de actividades de un curso. */
 function serializeGroupActivity(ga) {
   return {
@@ -58,4 +131,11 @@ function serializeGroupActivity(ga) {
   }
 }
 
-module.exports = { activityInputSchema, serializeGroupActivity }
+module.exports = {
+  activityInputSchema,
+  serializeGroupActivity,
+  serializeTopicActivity,
+  bankActivityId,
+  bankSlugOf,
+  workdirOf,
+}

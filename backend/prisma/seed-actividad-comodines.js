@@ -1,7 +1,7 @@
 const prisma = require("./client")
 
-const SLUG = "limpieza-con-comodines"
-const RAIZ = "/home/$usuario/actividades/limpieza-con-comodines"
+const SLUG = "limpieza"
+const RAIZ = "/home/$usuario/actividades/limpieza"
 
 const SETUP = {
   dirs: ["documentos", "imagenes"],

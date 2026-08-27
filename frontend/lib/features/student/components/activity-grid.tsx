@@ -6,7 +6,7 @@ import type { ActivityListing } from "@/lib/models/activities"
 
 /** The catalog grid: four per row, each card knowing whether it is done. */
 export function ActivityGrid({ activities }: { activities: ActivityListing[] }) {
-  const { passed } = usePassedActivities()
+  const { passed, scores } = usePassedActivities()
 
   if (activities.length === 0) {
     return <p className="text-muted-foreground">Aún no hay actividades disponibles.</p>
@@ -19,6 +19,7 @@ export function ActivityGrid({ activities }: { activities: ActivityListing[] }) 
           key={activity.slug}
           activity={activity}
           completed={activity.completed ?? passed.has(activity.slug)}
+          score={scores[activity.slug] ?? null}
         />
       ))}
     </div>

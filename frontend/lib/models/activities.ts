@@ -33,7 +33,11 @@ export interface ActivityCheck {
 export interface ActivityCheckResult {
   id: string
   type: string
-  params: Record<string, string>
+  /**
+   * Los valores esperados. El servidor NO los manda al estudiante: llevan la
+   * respuesta del ejercicio. Solo llegan en las vistas de docente.
+   */
+  params?: Record<string, string>
   points: number
   passed: boolean
   detail: string
@@ -48,6 +52,11 @@ export interface LessonActivity {
   slug: string
   /** La actividad prepara archivos y por tanto se pueden rehacer. */
   hasSetup: boolean
+  /**
+   * Carpeta de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
+   * no trabaja ahi y por tanto no se ofrece ni abrirla ni reiniciarla.
+   */
+  workdir: string | null
   title: string
   instructions: string | null
   maxScore: number
@@ -91,6 +100,8 @@ export interface ManualSubmission {
 export interface Activity {
   id: string
   title: string
+  /** Solo las del curso lo traen; las del docente nacen sin slug. */
+  slug?: string | null
   topicNumber: number
   source: ActivitySource
   difficulty?: Difficulty
@@ -99,13 +110,18 @@ export interface Activity {
   dueDate?: string
   required: boolean
   evaluationType: EvaluationType
-  activityType: ActivityType
+  /** Null en las del curso: esas se clasifican por dificultad, no por taller/quiz. */
+  activityType: ActivityType | null
   /** Límite de intentos; null o ausente = ilimitado. */
   attemptLimit?: number | null
   /** Habilita/deshabilita la actividad (publicar/deshabilitar). */
   enabled?: boolean
-  /** Carpeta de trabajo autogenerada (`~/actividades/<workdir>/`). */
-  workdir?: string
+  /**
+   * Carpeta de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
+   * no trabaja ahi: `universidad-facultades` monta su arbol en la carpeta
+   * personal, y sin carpeta propia no se le ofrece ni abrirla ni reiniciarla.
+   */
+  workdir?: string | null
   checks: ActivityCheck[]
   uses?: number
   submissions?: ActivitySubmissionStudent[]
@@ -157,7 +173,8 @@ export interface GroupActivitySummary {
   dueAt?: string | null
   enabled: boolean
   evaluationType: EvaluationType
-  activityType: ActivityType
+  /** Null en las del curso: esas se clasifican por dificultad, no por taller/quiz. */
+  activityType: ActivityType | null
 }
 
 export interface MyGroupOverview {
@@ -174,7 +191,8 @@ export interface GroupActivityDetail {
   workdir: string
   dueAt: string | null
   evaluationType: EvaluationType
-  activityType: ActivityType
+  /** Null en las del curso: esas se clasifican por dificultad, no por taller/quiz. */
+  activityType: ActivityType | null
   maxScore: number
   checksCount: number
   attemptLimit: number | null

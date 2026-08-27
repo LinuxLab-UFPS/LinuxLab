@@ -29,25 +29,26 @@ export function GroupActivities({
   activities,
   query,
   groupId,
-  activityTypeFilter,
-  evalFilter,
+  sourceFilter = "all",
 }: {
   activities: Activity[]
   query: string
   groupId: string
-  activityTypeFilter: "all" | Activity["activityType"]
-  evalFilter: "all" | "automatic" | "manual"
+  /** Que mostrar: todo, solo las del curso, o solo las que armo el docente. */
+  sourceFilter?: "all" | "bank" | "teacher"
 }) {
   const [page, setPage] = useState(1)
   const [toggling, setToggling] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const q = query.trim().toLowerCase()
+  // Filtrar por quiz o taller solo puede devolver actividades del docente: las
+  // del curso no se clasifican asi, y colarlas en el resultado seria decir que
+  // son talleres cuando nadie lo decidio.
   const filtered = activities.filter(
     (a) =>
       (!q || a.title.toLowerCase().includes(q)) &&
-      (activityTypeFilter === "all" || a.activityType === activityTypeFilter) &&
-      (evalFilter === "all" || (a.evaluationType === "atomic" ? "automatic" : a.evaluationType) === evalFilter),
+      (sourceFilter === "all" || a.source === sourceFilter),
   )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -90,7 +91,6 @@ export function GroupActivities({
               <TableHead>Titulo</TableHead>
               <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
-              <TableHead className="w-36">Tipo</TableHead>
               <TableHead className="w-40">Evaluación</TableHead>
               <TableHead className="w-44">Fecha de entrega</TableHead>
               <TableHead className="w-24 text-center">Habilitada</TableHead>
@@ -120,9 +120,6 @@ export function GroupActivities({
                     (activity.topicNumber ? `Tema ${activity.topicNumber}` : "—")}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {activity.activityType === "quiz" ? "Quiz" : "Taller"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
                   {activity.evaluationType === "manual" ? "Manual" : "Automática"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
@@ -131,14 +128,22 @@ export function GroupActivities({
                     : "Sin fecha"}
                 </TableCell>
                 <TableCell className="text-center">
-                  <span className="relative z-20 inline-flex">
-                    <Switch
-                      checked={activity.enabled ?? false}
-                      onCheckedChange={() => {}}
-                      disabled={toggling === activity.id}
-                      onClick={(e: React.MouseEvent) => toggle(activity, e)}
-                    />
-                  </span>
+                  {/* Las del curso van siempre habilitadas: son el temario, y
+                      apagarlas en un grupo lo dejaria a medias. Un interruptor
+                      que no se puede mover solo confunde, asi que en esas filas
+                      la celda queda vacia. */}
+                  {activity.source === "bank" ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <span className="relative z-20 inline-flex">
+                      <Switch
+                        checked={activity.enabled ?? false}
+                        onCheckedChange={() => {}}
+                        disabled={toggling === activity.id}
+                        onClick={(e: React.MouseEvent) => toggle(activity, e)}
+                      />
+                    </span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

@@ -2,6 +2,7 @@ const prisma = require("../../prisma/client")
 const accessService = require("./accessService")
 const { NotFoundError } = require("../lib/errors")
 const { finalScore } = require("../utils/finalScore")
+const attemptService = require("./attemptService")
 
 function key(studentId, groupActivityId) {
   return `${studentId}::${groupActivityId}`
@@ -71,6 +72,12 @@ function averageValueOf(cell) {
 
 /**
  * Carga en pocas consultas todo lo que alimenta el cuaderno.
+ *
+ * Las columnas son solo las actividades del docente. Las del temario no entran
+ * como catorce columnas mas: esta tabla ya crece a lo ancho con cada actividad
+ * que el docente publica, y su calculo recorre a todos los estudiantes por cada
+ * casilla. Entran como un unico recuento por estudiante, "N de M", que ademas es
+ * lo que de verdad se quiere saber de ellas.
  */
 async function loadGroupData(groupId) {
   const activities = await prisma.groupActivity.findMany({
@@ -83,6 +90,45 @@ async function loadGroupData(groupId) {
     include: { student: { include: { user: true } } },
     orderBy: { created_at: "asc" },
   })
+
+  const enrollmentIds = enrollments.map((e) => e.id)
+
+  const [topicDone, topicTotal, topicActivities, topicSubmissions] = await Promise.all([
+    attemptService.passedTopicCountByEnrollment(enrollmentIds),
+    attemptService.topicActivitiesTotal(),
+    /* Las del temario, para poder puntuarlas y no solo contarlas. Solo
+       `kind: "activity"`: las de tipo `check` son ejercicios dentro de una
+       leccion y no tienen entrada propia en las calificaciones. */
+    prisma.topicActivity.findMany({
+      where: { kind: "activity" },
+      include: { topic: { select: { order_number: true } } },
+    }),
+    enrollmentIds.length > 0
+      ? prisma.topicSubmission.findMany({
+          where: { enrollment_id: { in: enrollmentIds } },
+          select: {
+            enrollment_id: true,
+            topic_activity_id: true,
+            score: true,
+            created_at: true,
+          },
+          orderBy: { created_at: "asc" },
+        })
+      : [],
+  ])
+
+  /* Los intentos del temario, en el mismo formato que los del docente
+     (`estudianteId::actividadId` -> [{score, created_at}]) para que `buildCell`
+     y `finalScore` no tengan que saber de que tabla salio cada nota. */
+  const userIdByEnrollment = new Map(enrollments.map((e) => [e.id, e.student.user.id]))
+  const topicAttemptMap = new Map()
+  for (const ts of topicSubmissions) {
+    const studentId = userIdByEnrollment.get(ts.enrollment_id)
+    if (!studentId) continue
+    const k = key(studentId, ts.topic_activity_id)
+    if (!topicAttemptMap.has(k)) topicAttemptMap.set(k, [])
+    topicAttemptMap.get(k).push({ score: ts.score, created_at: ts.created_at })
+  }
 
   const activityIds = activities.map((a) => a.id)
   const submissions = activityIds.length > 0
@@ -121,12 +167,41 @@ async function loadGroupData(groupId) {
     list.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime())
   }
 
-  return { activities, enrollments, attemptMap, submissionMap }
+  /* Las del temario con la forma de una del docente, para que el resto del
+     cuaderno no tenga que distinguirlas: siempre automaticas, sin fecha de
+     cierre y sin limite de intentos. `source` es lo que luego decide si se
+     etiquetan por dificultad o por taller/quiz. */
+  const delTemario = topicActivities.map((ta) => ({
+    id: ta.id,
+    activity_number: null,
+    workdir: ta.slug,
+    title: ta.title,
+    topic_number: ta.topic?.order_number ?? null,
+    evaluation_type: "automatic",
+    activity_type: null,
+    due_at: null,
+    enabled: true,
+    max_score: 100,
+    source: "bank",
+    difficulty: ta.difficulty,
+  }))
+
+  return {
+    activities,
+    enrollments,
+    attemptMap,
+    submissionMap,
+    topicDone,
+    topicTotal,
+    delTemario,
+    topicAttemptMap,
+  }
 }
 
 async function getGroupGradebook({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
+  const { activities, enrollments, attemptMap, submissionMap, topicDone, topicTotal } =
+    await loadGroupData(groupId)
 
   const students = enrollments.map((e) => ({
     id: e.student.user.id,
@@ -177,9 +252,13 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       activityNumber: ga.activity_number,
       workdir: ga.workdir,
       title: ga.title,
-      topicNumber: null,
+      topicNumber: ga.topic_number ?? null,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
       activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+      // Las columnas del cuaderno son solo del docente; el campo viaja igual
+      // porque el contrato lo declara y la vista lo consume.
+      source: "teacher",
+      difficulty: null,
       dueAt: ga.due_at?.toISOString() ?? null,
       enabled: ga.enabled,
       maxScore: ga.max_score,
@@ -187,6 +266,15 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
     cells,
     activityAverages,
     studentAverages,
+    /* Las del temario, como recuento y no como nota: son catorce iguales para
+       todos y lo que interesa del cuaderno es cuantas lleva cada quien. Al no
+       ser una nota, no entra en `studentAverages`. */
+    topicActivities: {
+      total: topicTotal,
+      done: Object.fromEntries(
+        enrollments.map((e) => [e.student.user.id, topicDone.get(e.id) ?? 0]),
+      ),
+    },
   }
 }
 
@@ -219,19 +307,41 @@ function summarizeSeries(series) {
   return summary
 }
 
-function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMap, submissionMap) {
+/**
+ * La serie de calificaciones de un estudiante: una entrada por actividad.
+ *
+ * Aqui SI entran las del temario junto a las del docente, al reves que en el
+ * cuaderno. Alli son columnas de una tabla que crece a lo ancho con cada
+ * estudiante; aqui son filas de la tabla de una sola persona, que crece hacia
+ * abajo y aguanta las catorce sin estorbar. Y el estudiante si quiere ver la
+ * nota de cada una, no solo cuantas lleva.
+ */
+function buildSeriesForStudent(
+  studentId,
+  activities,
+  groupStudentIds,
+  attemptMap,
+  submissionMap,
+  delTemario = [],
+  topicAttemptMap = new Map(),
+) {
   const now = new Date()
   const series = []
   const topicsMap = new Map()
 
-  for (const ga of activities) {
+  const todas = [
+    ...delTemario.map((ta) => ({ ga: ta, intentos: topicAttemptMap, entregas: new Map() })),
+    ...activities.map((ga) => ({ ga, intentos: attemptMap, entregas: submissionMap })),
+  ]
+
+  for (const { ga, intentos, entregas } of todas) {
     const gaId = ga.id
-    const cell = buildCell(ga, attemptMap.get(key(studentId, gaId)) ?? [], submissionMap.get(key(studentId, gaId)) ?? [], now)
+    const cell = buildCell(ga, intentos.get(key(studentId, gaId)) ?? [], entregas.get(key(studentId, gaId)) ?? [], now)
 
     let sum = 0
     let count = 0
     for (const sid of groupStudentIds) {
-      const other = buildCell(ga, attemptMap.get(key(sid, gaId)) ?? [], submissionMap.get(key(sid, gaId)) ?? [], now)
+      const other = buildCell(ga, intentos.get(key(sid, gaId)) ?? [], entregas.get(key(sid, gaId)) ?? [], now)
       if (contributesToAverage(other)) {
         sum += averageValueOf(other)
         count += 1
@@ -239,7 +349,10 @@ function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMa
     }
     const groupAverage = count > 0 ? round1(sum / count) : null
 
-    const topicNumber = 0
+    /* El tema real de cada actividad. Estaba fijo en 0, asi que el radar de
+       "rendimiento por tema" era una sola espiga llamada "Sin tema". Las del
+       docente pueden seguir sin tema, y esas caen juntas en el 0. */
+    const topicNumber = ga.topic_number ?? 0
     if (!topicsMap.has(topicNumber)) {
       topicsMap.set(topicNumber, { topicNumber, completed: 0, total: 0, sum: 0 })
     }
@@ -257,7 +370,10 @@ function buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMa
       title: ga.title,
       topicNumber,
       evaluationType: ga.evaluation_type === "manual" ? "manual" : "automatic",
-      activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
+      // Null en las del temario: esas se clasifican por dificultad.
+      activityType: ga.activity_type === "quiz" ? "quiz" : ga.activity_type === null ? null : "workshop",
+      source: ga.source ?? "teacher",
+      difficulty: ga.difficulty ?? null,
       score: cell.score,
       status: cell.status,
       attempts: cell.attempts,
@@ -291,9 +407,18 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
   })
   if (!enrollment) throw new NotFoundError("El estudiante no está inscrito en este grupo")
 
-  const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(groupId)
+  const { activities, enrollments, attemptMap, submissionMap, delTemario, topicAttemptMap } =
+    await loadGroupData(groupId)
   const groupStudentIds = enrollments.map((e) => e.student.user.id)
-  const { series, topics } = buildSeriesForStudent(studentId, activities, groupStudentIds, attemptMap, submissionMap)
+  const { series, topics } = buildSeriesForStudent(
+    studentId,
+    activities,
+    groupStudentIds,
+    attemptMap,
+    submissionMap,
+    delTemario,
+    topicAttemptMap,
+  )
 
   return {
     student: { id: student.id, name: student.name, email: student.email, code: student.student?.code ?? null },
@@ -318,9 +443,18 @@ async function getMyGrades(studentUserId) {
   }
   if (!enrollment) return empty
 
-  const { activities, enrollments, attemptMap, submissionMap } = await loadGroupData(enrollment.group_id)
+  const { activities, enrollments, attemptMap, submissionMap, delTemario, topicAttemptMap } =
+    await loadGroupData(enrollment.group_id)
   const groupStudentIds = enrollments.map((e) => e.student.user.id)
-  const { series, topics } = buildSeriesForStudent(studentUserId, activities, groupStudentIds, attemptMap, submissionMap)
+  const { series, topics } = buildSeriesForStudent(
+    studentUserId,
+    activities,
+    groupStudentIds,
+    attemptMap,
+    submissionMap,
+    delTemario,
+    topicAttemptMap,
+  )
 
   return {
     group: { id: enrollment.group.id, name: enrollment.group.name },

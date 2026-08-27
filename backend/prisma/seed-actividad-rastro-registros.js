@@ -1,6 +1,6 @@
 const prisma = require("./client")
 
-const SLUG = "rastro-en-los-registros"
+const SLUG = "logs-servicio1"
 const RAIZ = `/home/$usuario/actividades/${SLUG}`
 
 const ERROR = "ERROR fallo critico en el modulo de pagos"

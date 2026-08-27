@@ -20,6 +20,11 @@ const DATOS = {
   instructions:
     "Deja constancia de lo que está corriendo en tu cuenta y averigua cómo se " +
     "llaman las dos señales que más se usan para cerrar un proceso.",
+  /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
+     la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
+     encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de
+     rehacer archivos funciona igual que en las demas. */
+  setup: {},
 }
 
 async function main() {

@@ -1,6 +1,7 @@
 import { CheckCircle2, CircleDashed, XCircle } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { describeCheck, type CheckResult } from "@/lib/features/student/use-activity-check"
+import { type CheckResult } from "@/lib/features/student/use-activity-check"
+import { describeCheckForStudent } from "@shared/lib/describe-check"
 
 /** The assertions of an activity, with their verdict once it has been checked. */
 export function CheckList({
@@ -30,7 +31,7 @@ export function CheckList({
             />
             <span className="min-w-0">
               <span className="block text-foreground">
-                {describeCheck(row.type, row.params)}
+                {describeCheckForStudent(row.type)}
               </span>
               {evaluated && row.detail && (
                 <span

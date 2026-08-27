@@ -1,6 +1,7 @@
 const prisma = require("../../prisma/client")
 const { NotFoundError, ConflictError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
+const { recomputeTopicProgress } = require("./progressService")
 
 /**
  * Registra un intento de actividad de grupo. El numero de intento sale de contar
@@ -56,6 +57,15 @@ async function recordGroupAttempt({ studentId, groupId, groupActivityId, score, 
  * Registra un intento de comprobacion del temario. No requiere grupo especifico:
  * se usa la matricula activa del estudiante (cualquier grupo). No tiene limite de
  * intentos (el estudiante puede reintentar cuantas veces necesite).
+ *
+ * Al terminar recalcula el progreso del tema. Antes no lo hacia, y la regla que
+ * decide si un tema esta completo (progressService, que ya exige tener las
+ * actividades aprobadas) solo se evaluaba al abrir una leccion: aprobar una
+ * actividad no movia la barra hasta que el estudiante volvia a leer algo. El
+ * sintoma era que leer subia el progreso y trabajar no.
+ *
+ * Devuelve tambien el grupo de la matricula, que quien llama necesita para dejar
+ * el rastro en la bitacora: un evento sin `group_id` no lo ve ningun docente.
  */
 async function recordTopicAttempt({ studentId, topicActivityId, score, passed, results }) {
   return runInTransaction(async (tx) => {
@@ -71,7 +81,7 @@ async function recordTopicAttempt({ studentId, topicActivityId, score, passed, r
       where: { enrollment_id: enrollment.id, topic_activity_id: topicActivityId },
     })
 
-    return tx.topicSubmission.create({
+    const submission = await tx.topicSubmission.create({
       data: {
         enrollment_id: enrollment.id,
         topic_activity_id: topicActivityId,
@@ -81,17 +91,70 @@ async function recordTopicAttempt({ studentId, topicActivityId, score, passed, r
         auto_results: results,
       },
     })
+
+    const activity = await tx.topicActivity.findUnique({
+      where: { id: topicActivityId },
+      select: { topic_id: true },
+    })
+    if (activity) {
+      await recomputeTopicProgress(tx, enrollment.id, activity.topic_id)
+    }
+
+    return { ...submission, group_id: enrollment.group_id }
   })
 }
 
-/** Los slugs de comprobaciones del temario que el estudiante ya aprobo (nota >= 60). */
+/**
+ * Los slugs del temario que el estudiante ya aprobo, comprobaciones y
+ * actividades por igual.
+ *
+ * Se filtra por `passed` y no por `score >= 60`. Son lo mismo hoy (quien evalua
+ * calcula uno a partir del otro), pero tener dos criterios para "aprobada"
+ * repartidos por el codigo es como acaban dos pantallas mostrando numeros
+ * distintos del mismo estudiante. El progreso ya usa `passed`.
+ */
 async function passedSlugs(studentId) {
   const submissions = await prisma.topicSubmission.findMany({
-    where: { enrollment: { student_id: studentId }, score: { gte: 60 } },
+    where: { enrollment: { student_id: studentId }, passed: true },
     select: { topicActivity: { select: { slug: true } } },
     distinct: ["topic_activity_id"],
   })
   return submissions.map((s) => s.topicActivity.slug).filter(Boolean)
+}
+
+/**
+ * Cuantas actividades del temario lleva aprobadas cada matricula de una lista.
+ *
+ * Solo `kind: "activity"`: las de tipo `check` son ejercicios dentro de una
+ * leccion, no actividades con tarjeta propia, y contarlas daria un total que no
+ * coincide con lo que el estudiante ve.
+ *
+ * Devuelve un Map enrollmentId -> numero. Lo usan el cuaderno y la lista de
+ * estudiantes, que tienen que decir lo mismo.
+ */
+async function passedTopicCountByEnrollment(enrollmentIds) {
+  if (enrollmentIds.length === 0) return new Map()
+
+  const rows = await prisma.topicSubmission.findMany({
+    where: {
+      enrollment_id: { in: enrollmentIds },
+      passed: true,
+      topicActivity: { kind: "activity" },
+    },
+    select: { enrollment_id: true, topic_activity_id: true },
+    distinct: ["enrollment_id", "topic_activity_id"],
+  })
+
+  const counts = new Map()
+  for (const row of rows) {
+    counts.set(row.enrollment_id, (counts.get(row.enrollment_id) ?? 0) + 1)
+  }
+  return counts
+}
+
+/** Cuantas actividades trae el temario. Es el denominador del "N de M". */
+async function topicActivitiesTotal() {
+  return prisma.topicActivity.count({ where: { kind: "activity" } })
 }
 
 /** El ultimo intento del estudiante en una comprobacion del temario, para que la
@@ -143,4 +206,12 @@ async function listAttempts({ slug, studentId }) {
   }))
 }
 
-module.exports = { recordGroupAttempt, recordTopicAttempt, passedSlugs, lastAttempt, listAttempts }
+module.exports = {
+  recordGroupAttempt,
+  recordTopicAttempt,
+  passedSlugs,
+  passedTopicCountByEnrollment,
+  topicActivitiesTotal,
+  lastAttempt,
+  listAttempts,
+}

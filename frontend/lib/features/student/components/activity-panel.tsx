@@ -1,10 +1,15 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { ArrowLeft, ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Markdown } from "@shared/components/markdown"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
+import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
+import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { useEnLaCarpeta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -43,6 +48,23 @@ export function ActivityPanel({
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
+  /* Comprobar exige estar parado en la carpeta de la actividad. La ruta la dice
+     la propia shell en cada prompt, asi que vale tanto si se llego con el boton
+     como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
+     se sepa la ruta el boton queda activo: bloquear en esa espera seria repetir
+     el falso negativo que tenia la version anterior. */
+  const enLaCarpeta = useEnLaCarpeta(data?.workdir)
+
+  const goToWorkdir = () => {
+    if (!data?.workdir) return
+    sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
+  }
+
+  /* Reiniciar borra la carpeta de la actividad y la vuelve a montar. Se
+     pregunta antes porque el boton vive al lado del de ir a la carpeta, y
+     confundirlos costaria el trabajo hecho. */
+  const [confirmando, setConfirmando] = useState(false)
+
   return (
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
       <header className="shrink-0">
@@ -67,12 +89,22 @@ export function ActivityPanel({
           )}
         </div>
 
+        {/* El mismo orden que en la tarjeta: primero si esta completada,
+            despues la nota del ultimo intento y al final la dificultad. */}
         <div className="mt-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Tag tone={activity.difficulty ? DIFFICULTY_TONE[activity.difficulty] : "neutral"}>
-              {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
-            </Tag>
+            {passed && <Tag tone="sky">Completada</Tag>}
+            {data?.lastAttempt && (
+              <Tag tone={data.lastAttempt.score >= 60 ? "emerald" : "amber"}>
+                {data.lastAttempt.score}/{data.maxScore}
+              </Tag>
+            )}
+            {activity.difficulty && (
+              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
+                {DIFFICULTY_LABEL[activity.difficulty]}
+              </Tag>
+            )}
           </div>
         </div>
       </header>
@@ -116,7 +148,7 @@ export function ActivityPanel({
           <ActionButton
             tone={passed ? "emerald" : "amber"}
             onClick={check}
-            disabled={checking || loading}
+            disabled={checking || loading || !enLaCarpeta}
           >
             {checking ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -126,20 +158,43 @@ export function ActivityPanel({
             {checking ? "Comprobando..." : "Comprobar actividad"}
           </ActionButton>
 
-          {/* Sólo las actividades que preparan archivos se pueden rehacer, y es
-              lo que permite plantear ejercicios donde haya que borrar cosas. */}
-          {data?.hasSetup && (
-            <ActionButton tone="neutral" onClick={reset} disabled={resetting || loading}>
-              {resetting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RotateCcw className="h-4 w-4" />
-              )}
-              {resetting ? "Preparando..." : "Reiniciar archivos"}
+          {/* Volver a la carpeta es lo que se hace muchas veces por sesion, asi
+              que va como boton; rehacer los archivos se hace una vez y borra
+              trabajo, asi que va como icono y pregunta antes. */}
+          {data?.workdir && (
+            <ActionButton tone="neutral" onClick={goToWorkdir}>
+              <FolderOpen className="h-4 w-4" />
+              Ir a la carpeta
             </ActionButton>
           )}
+
+          {data?.hasSetup && data?.workdir && (
+            <IconAction
+              label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
+              icon={resetting ? Loader2 : RotateCcw}
+              onClick={() => setConfirmando(true)}
+              disabled={resetting || loading}
+            />
+          )}
         </div>
+
+        {/* Un boton gris sin explicacion es peor que uno que no esta. */}
+        {!enLaCarpeta && !loading && (
+          <p className="text-xs text-muted-foreground">
+            Entra en la carpeta de la actividad para poder comprobarla.
+          </p>
+        )}
       </footer>
+
+      <ConfirmDialog
+        open={confirmando}
+        onOpenChange={setConfirmando}
+        title="¿Rehacer los archivos de la actividad?"
+        description="Lo que hayas escrito dentro de su carpeta se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
+        confirmLabel="Rehacer los archivos"
+        confirmVariant="destructive"
+        onConfirm={reset}
+      />
     </div>
   )
 }

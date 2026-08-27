@@ -9,14 +9,16 @@ const SETUP = {
     { path: "informe.txt", content: "Informe de la practica\n" },
     { path: "arranque.sh", content: "#!/bin/bash\necho \"laboratorio listo\"\n" },
     { path: "plantilla.txt", content: "Plantilla oficial, no modificar\n" },
+    { path: "TUBO.exe", content: "binario de la casa, no preguntes\n" },
   ],
 }
 
 const CHECKS = [
-  { type: "permisos_son", params: { ruta: `${RAIZ}/notas.txt`, modo: "600" }, points: 25, position: 0 },
-  { type: "permisos_son", params: { ruta: `${RAIZ}/informe.txt`, modo: "644" }, points: 25, position: 1 },
-  { type: "permisos_son", params: { ruta: `${RAIZ}/arranque.sh`, modo: "755" }, points: 25, position: 2 },
-  { type: "permisos_son", params: { ruta: `${RAIZ}/plantilla.txt`, modo: "444" }, points: 25, position: 3 },
+  { type: "permisos_son", params: { ruta: `${RAIZ}/notas.txt`, modo: "600" }, points: 20, position: 0 },
+  { type: "permisos_son", params: { ruta: `${RAIZ}/informe.txt`, modo: "644" }, points: 20, position: 1 },
+  { type: "permisos_son", params: { ruta: `${RAIZ}/arranque.sh`, modo: "755" }, points: 20, position: 2 },
+  { type: "permisos_son", params: { ruta: `${RAIZ}/plantilla.txt`, modo: "444" }, points: 20, position: 3 },
+  { type: "permisos_son", params: { ruta: `${RAIZ}/TUBO.exe`, modo: "700" }, points: 20, position: 4 },
 ]
 
 const TOPIC_NUMBER = 5
@@ -27,8 +29,8 @@ const DATOS = {
   kind: "activity",
   difficulty: "basic",
   instructions:
-    "Cuatro archivos llegaron con los permisos que da el sistema. Deja cada uno " +
-    "con los que pide su descripción.",
+    "El empleado anterior dejó unos archivos con los permisos incorrectos. " +
+    "Deja cada uno con los que pide su función.",
   setup: SETUP,
 }
 

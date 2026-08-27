@@ -1,20 +1,13 @@
-Un script no es más que un archivo con comandos dentro. Este es el más corto que hace algo comprobable.
+Un script no es más que un archivo con comandos dentro, que el sistema ejecuta de arriba abajo. Este es el más corto que hace algo comprobable.
 
-```bash
-mkdir -p ~/actividades/tu-primer-guion
-cd ~/actividades/tu-primer-guion
-```
+**Objetivos:**
 
-## Lo que hay que hacer
+1. Crea un archivo llamado `saludo.sh` cuya primera línea declare con qué se interpreta el archivo, y que debajo escriba tu código estudiantil dentro de un archivo `salida.txt`.
+2. Dale permisos de lectura y ejecución para todos, y de escritura solo para ti.
+3. Ejecútalo, de modo que sea el script el que cree `salida.txt`. La última línea de ese archivo tiene que ser tu código estudiantil.
 
-Escribe un script llamado `saludo.sh` que al ejecutarse deje un archivo `salida.txt` cuya **última línea** sea tu código estudiantil.
+**Hint:**
 
-Para que cuente, el script necesita tres cosas:
+El punto 3 es el que suele fallar: crear `salida.txt` a mano deja el script sin probar, y escribir el script sin ejecutarlo no crea nada. Hacen falta los dos pasos.
 
-| | |
-|---|---|
-| Cabecera | La primera línea tiene que declarar con qué se interpreta el archivo |
-| Permisos | Lectura y ejecución para todos, escritura solo para ti |
-| Que se ejecute | `salida.txt` lo tiene que crear el script al correr, no tú a mano |
-
-Esa última fila es la que importa: crear el archivo por tu cuenta deja el script sin probar, y escribir el script sin ejecutarlo no crea nada. Hacen falta los dos.
+Para que el script pueda ejecutarse desde el directorio actual hay que llamarlo anteponiendo `./` a su nombre, porque el directorio actual no está en la lista de rutas donde el sistema busca programas.

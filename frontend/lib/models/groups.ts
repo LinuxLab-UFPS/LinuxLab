@@ -121,7 +121,11 @@ export interface GradebookActivity {
   title: string
   topicNumber: number | null
   evaluationType: "manual" | "automatic"
-  activityType: "workshop" | "quiz"
+  activityType: "workshop" | "quiz" | null
+  /** De donde sale: "bank" son las del curso, "teacher" las que arma el docente. */
+  source: "bank" | "teacher"
+  /** Solo las del curso la traen; clasifica en lugar de quiz/taller. */
+  difficulty: "basic" | "intermediate" | "advanced" | null
   dueAt: string | null
   enabled: boolean
   maxScore: number
@@ -140,17 +144,35 @@ export interface Gradebook {
   cells: Record<string, Record<string, GradebookCell>>
   activityAverages: Record<string, number | null>
   studentAverages: Record<string, number | null>
+  /**
+   * Las del curso, como recuento y no como columnas.
+   *
+   * Son las mismas catorce para todos, asi que lo que interesa es cuantas lleva
+   * cada estudiante. Como columnas ensancharian una tabla que ya crece con cada
+   * actividad que publica el docente. Al no ser una nota, no entran en
+   * `studentAverages`.
+   */
+  topicActivities: {
+    total: number
+    /** studentId -> cuantas aprobo. */
+    done: Record<string, number>
+  }
 }
 
 export interface GradeSeriesPoint {
   activityId: string
-  activityNumber: number
+  /** Null en las del temario: ese contador es de las del docente. */
+  activityNumber: number | null
   /** Código del directorio de trabajo (ej. T-0001): etiqueta corta en gráficas. */
   workdir: string
   title: string
   topicNumber: number
   evaluationType: "manual" | "automatic"
-  activityType: "workshop" | "quiz"
+  activityType: "workshop" | "quiz" | null
+  /** De donde sale: "bank" son las del curso, "teacher" las que arma el docente. */
+  source: "bank" | "teacher"
+  /** Solo las del curso la traen; clasifica en lugar de quiz/taller. */
+  difficulty: "basic" | "intermediate" | "advanced" | null
   score: number | null
   status: GradebookCellStatus
   attempts: number

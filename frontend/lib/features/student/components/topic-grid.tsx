@@ -20,13 +20,18 @@ interface TopicGridProps {
  * cuatro y quedaban demasiado apretadas.
  */
 export function TopicGrid({ topicLessons, previews }: TopicGridProps) {
-  const { doneCount, lessonTotal } = useCourseProgress(topicLessons)
+  const { doneCount, lessonTotal, activityTotal, activitiesDone } =
+    useCourseProgress(topicLessons)
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {syllabus.map((topic) => {
-        const total = lessonTotal(topic.number)
-        const done = doneCount(topic.number)
+        /* Las actividades cuentan igual que las lecciones. Antes el porcentaje
+           salia solo de lo leido, asi que un tema con todo leido y ninguna
+           actividad resuelta marcaba 100%: la tarjeta decia que estaba
+           terminado mientras el tema seguia sin tocarse de verdad. */
+        const total = lessonTotal(topic.number) + activityTotal(topic.number)
+        const done = doneCount(topic.number) + activitiesDone(topic.number)
         const pct = total > 0 ? Math.round((done / total) * 100) : 0
         const preview = previews[topic.number]
         return (

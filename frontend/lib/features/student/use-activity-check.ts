@@ -78,9 +78,15 @@ export function useActivityCheck(slug: string) {
       // Reiniciar borra la carpeta y crea otra en su lugar. Una shell que
       // estuviera dentro se queda en el directorio viejo, que ya no figura en
       // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo
-      // que se escriba ahí no llega a la carpeta nueva. El Ctrl+C limpia la
-      // línea a medias que hubiera antes de mandar el `cd`.
-      sendToTerminal("\x03cd ~\n")
+      // que se escriba ahí no llega a la carpeta nueva.
+      //
+      // El `\x15` (Ctrl+U) borra lo que el estudiante tuviera escrito a medias.
+      // Antes se usaba `\x03` (Ctrl+C) y ensuciaba la terminal por partida
+      // doble: bash hace eco de un `^C`, y como la señal viaja pegada al
+      // comando en el mismo envío, se come parte del buffer y del `cd ~` solo
+      // sobrevivia `d ~`, que salia como `-bash: d: command not found`.
+      // Ctrl+U no es una señal: la consume la disciplina de linea sin eco.
+      sendToTerminal("\x15cd ~\n")
       notify.success("Archivos reiniciados")
     },
   })

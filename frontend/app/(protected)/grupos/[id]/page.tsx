@@ -39,7 +39,6 @@ import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
-import type { ActivityType } from "@/lib/features/teacher/types"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
@@ -56,8 +55,7 @@ function GroupDetailContent() {
   const [query, setQuery] = useState("")
   const [adding, setAdding] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const [activityTypeFilter, setActivityTypeFilter] = useState<"all" | ActivityType>("all")
-  const [evalFilter, setEvalFilter] = useState<"all" | "automatic" | "manual">("all")
+  const [sourceFilter, setSourceFilter] = useState<"all" | "bank" | "teacher">("all")
 
   const groupQuery = useGroup(id)
   const studentsQuery = useGroupStudents(id)
@@ -249,30 +247,16 @@ function GroupDetailContent() {
           {tab === "actividades" && (
             <>
               <Select
-                value={activityTypeFilter}
-                onValueChange={(v) => setActivityTypeFilter(v as "all" | ActivityType)}
+                value={sourceFilter}
+                onValueChange={(v) => setSourceFilter(v as "all" | "bank" | "teacher")}
               >
                 <SelectTrigger className="w-auto border-table-line">
-                  <SelectValue placeholder="Tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value="quiz">Quiz</SelectItem>
-                  <SelectItem value="workshop">Taller</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={evalFilter}
-                onValueChange={(v) => setEvalFilter(v as "all" | "automatic" | "manual")}
-              >
-                <SelectTrigger className="w-auto border-table-line">
-                  <SelectValue placeholder="Evaluación" />
+                  <SelectValue placeholder="Origen" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="automatic">Automática</SelectItem>
-                  <SelectItem value="manual">Manual</SelectItem>
+                  <SelectItem value="bank">Del curso</SelectItem>
+                  <SelectItem value="teacher">Creadas por mí</SelectItem>
                 </SelectContent>
               </Select>
             </>
@@ -324,6 +308,10 @@ function GroupDetailContent() {
         )
       ) : tab === "actividades" ? (
         <div data-section="actividades">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Las actividades del curso vienen con el temario y son las mismas en todos los
+            grupos: no se editan ni se deshabilitan. Aquí solo puedes modificar las que crees tú.
+          </p>
           {activitiesQuery.isLoading ? (
             <SkeletonScreen>
               <div className="space-y-3">
@@ -337,8 +325,7 @@ function GroupDetailContent() {
               activities={activitiesQuery.data ?? []}
               query={query}
               groupId={id}
-              activityTypeFilter={activityTypeFilter}
-              evalFilter={evalFilter}
+              sourceFilter={sourceFilter}
             />
           )}
         </div>
