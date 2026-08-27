@@ -58,6 +58,19 @@ run() {
   }
 }
 
+# Como `run`, pero devuelve el codigo en vez de abortar: para los pasos que el
+# despliegue puede sobrevivir. `run` hace `exit 1`, asi que dentro de un `if`
+# nunca cedia el control a la rama del else y tumbaba el script entero.
+intentar() {
+  if $DRY_RUN; then log "DRY-RUN: $*"; return 0; fi
+  local out
+  if out="$(eval "$*" 2>&1)"; then
+    return 0
+  fi
+  echo "$out" >&2
+  return 1
+}
+
 # ---- 0. Pre-checks ---------------------------------------------------------
 command -v podman >/dev/null 2>&1 || die "Podman no esta instalado."
 command -v podman-compose >/dev/null 2>&1 || die "podman-compose no esta instalado."
@@ -159,20 +172,19 @@ else
   if [ "$migrado" -ne 1 ]; then
     warn "No se pudo confirmar que las migraciones terminaran; se omiten las seeds."
   else
+  # Se delega en `backend/prisma/seed.js`, que es el indice que se mantiene
+  # junto al codigo y corre las semillas en orden. Tener la lista escrita a mano
+  # aqui ya costo un despliegue: seguia nombrando
+  # `seed-actividad-cerrar-proyecto`, borrado hace tiempo, y como el bucle usaba
+  # `run` —que aborta— el fallo mataba el script sin llegar a decir por que.
+  #
+  # Las semillas son `upsert`: repetirlas no duplica nada y repone lo borrado.
   log "Sembrando las actividades del temario..."
-  for seed in seed-temario \
-    seed-actividad-directorios seed-actividad-universidad seed-actividad-comodines \
-    seed-actividad-mensaje seed-actividad-permisos-archivo seed-actividad-cerrar-proyecto \
-    seed-comprobacion-ficha seed-comprobacion-logo seed-comprobacion-solo-lectura \
-    seed-actividad-guion-que-decide seed-actividad-ficha-identidad seed-actividad-carpeta-equipo \
-    seed-actividad-rastro-registros seed-actividad-primer-guion seed-actividad-paquete-entrega \
-    seed-actividad-turno-de-noche seed-actividad-foto-sistema seed-actividad-arbol-proyecto; do
-    if run "podman exec linuxlab-backend node prisma/$seed.js"; then
-      log "  OK: $seed"
-    else
-      warn "  fallo: $seed (se continua)"
-    fi
-  done
+  if intentar "podman exec linuxlab-backend node prisma/seed.js"; then
+    log "  Semillas aplicadas."
+  else
+    warn "  Fallo el sembrado (arriba esta el detalle); el resto del despliegue sigue."
+  fi
   fi
 fi
 
