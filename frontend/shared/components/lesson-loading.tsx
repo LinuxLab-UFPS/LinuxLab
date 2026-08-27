@@ -41,7 +41,7 @@ const TOPE_MS = 10000
 
 /**
  * La direccion en una forma comparable: mismo orden de parametros y sin origen,
- * para que `/group?sub=x&tema=y` y `/group?tema=y&sub=x` cuenten como la misma.
+ * para que `/curso?sub=x&tema=y` y `/curso?tema=y&sub=x` cuenten como la misma.
  */
 function clave(href: string): string {
   try {

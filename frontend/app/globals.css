@@ -445,3 +445,28 @@
 .pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+/* La deriva de los comandos del fondo de la portada. Solo desplazamiento
+   horizontal: mover tambien en vertical hacia que se leyeran como burbujas y
+   no como texto flotando. Cada ranura le pone su duracion y su desfase. */
+@keyframes deriva {
+  from {
+    transform: translateX(-18px);
+  }
+  to {
+    transform: translateX(18px);
+  }
+}
+
+.animate-deriva {
+  animation-name: deriva;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/* Sin movimiento pedido, el fondo se queda quieto. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-deriva {
+    animation: none;
+  }
+}

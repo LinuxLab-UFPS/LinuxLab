@@ -4,28 +4,10 @@ import { useEffect, useRef } from "react"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import { useSetReadingProgress } from "@shared/components/reading-progress"
 import { LessonLoadingOverlay } from "@shared/components/lesson-loading"
+import { scrollerDe } from "@shared/lib/scroller"
 
 /** Below this the lesson counts as read. Reaching an exact 100% is fiddly. */
 const READ_AT = 95
-
-/**
- * El ancestro que hace scroll, o `null` si el que scrollea es la ventana.
- *
- * Se busca en vez de recibirse para que este componente valga en las dos
- * disposiciones: la pagina del curso mete la leccion dentro de un `<main>` con
- * scroll propio (para que la barra del navegador no corra por al lado de la
- * cabecera), pero el mismo componente tiene que seguir midiendo bien si algun
- * dia cuelga directamente del documento.
- */
-function scrollerDe(nodo: HTMLElement | null): HTMLElement | null {
-  let padre = nodo?.parentElement ?? null
-  while (padre) {
-    const desborde = getComputedStyle(padre).overflowY
-    if (desborde === "auto" || desborde === "scroll") return padre
-    padre = padre.parentElement
-  }
-  return null
-}
 
 /**
  * Mide el avance de lectura de la leccion.
