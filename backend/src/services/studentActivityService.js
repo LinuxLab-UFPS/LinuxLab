@@ -8,6 +8,7 @@ const accessService = require("./accessService")
 const lessonEvaluatorService = require("./lessonEvaluatorService")
 const attemptService = require("./attemptService")
 const { finalScore } = require("../utils/finalScore")
+const { bankSlugOf, bankActivityId, workdirOf } = require("../dtos/activityDtos")
 const { audit } = require("./auditService")
 
 const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
@@ -314,7 +315,76 @@ async function checkForStudent(studentUserId, groupActivityId) {
   }
 }
 
+/**
+ * El detalle de un estudiante en una actividad del temario, con la misma forma
+ * que el de una del docente: la vista no distingue de donde salio la actividad.
+ *
+ * Los intentos viven en `TopicSubmission` y son todos automaticos; la
+ * matricula tiene que ser del grupo que pide la vista y estar activa, igual
+ * que en la via del docente.
+ */
+async function getStudentTemarioDetail(groupId, slug, studentId, userId, role) {
+  const ta = await prisma.topicActivity.findFirst({
+    where: { slug, kind: "activity" },
+  })
+  if (!ta) throw new NotFoundError("Actividad no encontrada")
+
+  if (role === "teacher") {
+    await accessService.ensureGroupAccess({ groupId, teacherUserId: userId, role })
+  } else if (role === "student" && studentId !== userId) {
+    throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
+  }
+
+  const studentUser = await prisma.user.findUnique({
+    where: { id: studentId },
+    select: { id: true, name: true, email: true, student: { select: { code: true } } },
+  })
+  if (!studentUser) throw new NotFoundError("Estudiante no encontrado")
+
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student_id: studentId, group_id: groupId, status: "active" },
+    select: { id: true },
+  })
+
+  const submissions = enrollment
+    ? await prisma.topicSubmission.findMany({
+        where: { enrollment_id: enrollment.id, topic_activity_id: ta.id },
+        orderBy: { created_at: "desc" },
+      })
+    : []
+
+  return {
+    type: "automatic",
+    student: {
+      id: studentUser.id,
+      name: studentUser.name,
+      email: studentUser.email,
+      code: studentUser.student?.code ?? null,
+    },
+    activity: {
+      id: bankActivityId(ta.slug),
+      title: ta.title,
+      instructions: ta.instructions ?? "",
+      workdir: workdirOf(ta.slug),
+      evaluationType: "atomic",
+      activityType: null,
+      maxScore: 100,
+    },
+    attempts: submissions.map((s) => ({
+      attemptNumber: s.attempt_number,
+      passed: s.passed,
+      score: s.score,
+      results: s.auto_results ?? [],
+      createdAt: s.created_at.toISOString(),
+    })),
+    finalScore: finalScore(submissions.map((s) => ({ score: s.score, created_at: s.created_at }))),
+  }
+}
+
 async function getStudentActivityDetail(groupId, activityId, studentId, userId, role) {
+  const slug = bankSlugOf(activityId)
+  if (slug) return getStudentTemarioDetail(groupId, slug, studentId, userId, role)
+
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
     select: {
