@@ -43,11 +43,14 @@ Este es el mismo botón de la esquina, y hace lo mismo:
 
 <!-- TERMINAL-DEMO -->
 
-La terminal también tiene su propia pestaña en la barra de arriba. Ahí sale más
-grande, con las actividades recomendadas a un lado y los comandos esenciales
-debajo: cuatro tarjetas con un comando y su explicación, a elegir entre los que
-ya aparecieron en el curso. La lista crece a medida que avanzas. Al escoger uno
-con las cuatro llenas, sale el primero que habías puesto.
+La terminal también tiene su propia pestaña en la barra de arriba. Ahí hay una
+sección con actividades recomendadas para realizar, y abajo los comandos
+esenciales: tu lista de referencia para los comandos que consideres importantes.
+Puedes seleccionar hasta cuatro. La lista contiene todos los que verás en el
+laboratorio, pero solo podrás seleccionar los que ya hayas visto. Puedes
+descargar el listado entero en esa sección.
+
+<!-- IMAGE: terminal.png | La pestaña de la terminal, con las actividades recomendadas y los comandos esenciales -->
 
 ## Las comprobaciones
 
@@ -58,9 +61,13 @@ que dejar hecho, y **Comprobar** revisa tu carpeta y marca cada condición.
 Se puede reintentar cuantas veces haga falta. Cuando algo no está, el mensaje
 dice qué falta, no cuál era la respuesta.
 
+Esta es una, para probar. Abre la terminal con el botón de arriba y resuélvela:
+
+<!-- EJERCICIO: primer-paso -->
+
 ## Las actividades
 
-Las actividades son trabajo aparte de las comprobaciones: viven fuera de las
+Las actividades son trabajo aparte de las comprobaciones. Se encuentran fuera de las
 lecciones, tienen su propia carpeta y **cuentan para la nota**. Están en la
 pestaña **Actividades** y también al final del tema al que pertenecen.
 
@@ -73,17 +80,20 @@ botones:
 - El icono de recargar rehace los archivos y los deja como al principio. Lo que
   hubiera dentro de esa carpeta se pierde, así que pregunta antes.
 
+<!-- IMAGE: actividades.png | Una actividad abierta junto a la terminal, con el enunciado a un lado -->
+
 ## Los simuladores
 
 Los simuladores son retos cerrados para practicar un comando concreto, sin tocar
 tus archivos. Están en la pestaña **Simuladores** y dentro del tema
 correspondiente.
 
-Todos tienen la misma forma: la terminal a un lado, el estado al otro y el
-objetivo arriba. El signo de interrogación junto al título despliega la ayuda con
+El signo de interrogación junto al título despliega la ayuda con
 los modos del reto, y dentro de la terminal el comando `help` lista los comandos
 disponibles. **Reiniciar** devuelve el reto a su estado inicial y **Salir**
 cierra.
+
+<!-- IMAGE: simulador.png | El simulador de vi, con el objetivo arriba y las teclas del reto a un lado -->
 
 ## Los recursos
 
