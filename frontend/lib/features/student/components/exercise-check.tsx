@@ -33,7 +33,7 @@ export function ExerciseCheck({ slug }: { slug: string }) {
     <section className={cn("my-8 rounded-xl border transition-colors", edge)}>
       <header className={cn("flex items-center gap-2.5 border-b px-5 py-3.5", edge)}>
         <ShieldCheck className={cn("h-4 w-4", passed ? "text-success" : "text-amber-500")} />
-        <h3 className="text-sm font-semibold text-foreground">{activity.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground">Comprobación: {activity.title}</h3>
         {passed && (
           <span className="ml-auto rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
             Completada

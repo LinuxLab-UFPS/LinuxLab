@@ -191,8 +191,6 @@ Cada parte cumple una función:
 
 Sin el `%` la sustitución afecta únicamente a la línea actual. Con una `c` al final, `vi` se detiene a pedir confirmación antes de cada cambio.
 
-## Práctica
-
 Escribe con `vi` una ficha personal en tu carpeta personal. El archivo se llama como tu código estudiantil, con extensión `.txt`, y lleva tres cosas dentro:
 
 1. Tu nombre completo en la primera línea.

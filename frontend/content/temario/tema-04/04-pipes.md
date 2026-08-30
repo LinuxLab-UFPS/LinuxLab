@@ -188,8 +188,6 @@ ls existe noexiste > todo.txt 2>&1
 
 El orden importa. `2>&1` significa "manda el canal 2 adonde ya va el 1", así que tiene que ir después de haber decidido adónde va el 1.
 
-## Práctica
-
 Guarda en `logo.txt`, dentro de tu carpeta personal, el texto que copia este botón.
 
 <!-- COPIAR: logo-ufps -->
