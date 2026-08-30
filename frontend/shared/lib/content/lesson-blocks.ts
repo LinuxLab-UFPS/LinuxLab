@@ -40,6 +40,7 @@ export type LessonBlock =
   | { kind: "simulator"; src: string }
   | { kind: "simulator-card"; id: string }
   | { kind: "fs-tree" }
+  | { kind: "terminal-demo" }
   | { kind: "illustration"; id: string }
   | { kind: "exercise"; slug: string }
   | { kind: "activity"; slugs: string[] }
@@ -56,7 +57,7 @@ type Token =
   | { kind: "directive"; directive: Directive }
 
 const DIRECTIVE_RE =
-  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION|EJERCICIO|ACTIVIDAD|COPIAR)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
+  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION|EJERCICIO|ACTIVIDAD|COPIAR|TERMINAL-DEMO)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
 
 const FENCE_RE = /```([a-zA-Z0-9]*)[ \t]*\r?\n([\s\S]*?)```/g
 
@@ -271,6 +272,12 @@ export function parseLessonBlocks(
 
     if (type === "FS-TREE") {
       blocks.push({ kind: "fs-tree" })
+      continue
+    }
+
+    // El boton de la terminal incrustado en el texto (solo la guia).
+    if (type === "TERMINAL-DEMO") {
+      blocks.push({ kind: "terminal-demo" })
       continue
     }
 

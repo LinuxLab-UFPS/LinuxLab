@@ -33,11 +33,11 @@ export interface SeccionBienvenida {
 export const bienvenida: SeccionBienvenida = {
   slug: "bienvenida",
   title: "Bienvenida",
-  description: "Qué vas a aprender y con qué cuentas para lograrlo.",
+  description: "Cómo funciona el laboratorio y qué trae cada tema.",
   pages: [
     {
       id: "introduccion",
-      title: "Introducción al curso",
+      title: "Guía del laboratorio",
       file: "01-introduccion.md",
     },
     {

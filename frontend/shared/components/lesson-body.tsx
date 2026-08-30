@@ -2,6 +2,7 @@ import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@shared/components/markdown"
 import { ShellCommand } from "@shared/components/shell-command"
 import { SimulatorCard } from "@/lib/features/student/components/simulator-card"
+import { TerminalDemoButton } from "@/lib/features/student/components/terminal-demo-button"
 import { FilesystemHierarchy } from "@shared/components/filesystem-hierarchy"
 import { ExerciseCheck } from "@/lib/features/student/components/exercise-check"
 import { LessonActivity } from "@/lib/features/student/components/lesson-activity"
@@ -112,6 +113,9 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
 
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
+
+          case "terminal-demo":
+            return <TerminalDemoButton key={i} />
 
           case "exercise":
             return <ExerciseCheck key={i} slug={block.slug} />
