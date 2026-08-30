@@ -1,25 +1,25 @@
 const prisma = require("./client")
 
-const SLUG = "archivo-solo-lectura"
-const RUTA = "/home/$usuario/solo-lectura.txt"
+const SLUG = "permisos-del-informe"
+const RUTA = "/home/$usuario/informe.txt"
 
 const CHECKS = [
   { type: "archivo_existe", params: { ruta: RUTA }, points: 34, position: 0 },
-  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "2" }, points: 33, position: 1 },
-  { type: "permisos_son", params: { ruta: RUTA, modo: "444" }, points: 33, position: 2 },
+  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "1" }, points: 33, position: 1 },
+  { type: "permisos_son", params: { ruta: RUTA, modo: "640" }, points: 33, position: 2 },
 ]
 
 const TOPIC_NUMBER = 5
-const SUBTOPIC_SLUG = "dueno-y-permisos"
+const SUBTOPIC_SLUG = "chmod"
 
 const DATOS = {
-  title: "Un archivo de solo lectura",
+  title: "El informe del grupo",
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea solo-lectura.txt en tu carpeta personal con al " +
-    "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
-    "a los tres bloques, de forma que solo quede lectura para todos.",
+    "Abre la terminal y crea informe.txt en tu carpeta personal con al menos " +
+    "una línea escrita. Déjalo de forma que puedas leerlo y escribirlo tú, que " +
+    "tu grupo solo pueda leerlo, y que los demás no puedan hacer nada con él.",
 }
 
 async function main() {

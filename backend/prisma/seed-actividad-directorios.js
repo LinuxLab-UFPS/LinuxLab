@@ -15,7 +15,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
+    "Abre la terminal y crea un directorio llamado practicas dentro de tu carpeta personal y, dentro de él, otro llamado tema-03.",
 }
 
 async function main() {

@@ -1,25 +1,26 @@
 const prisma = require("./client")
 
-const SLUG = "archivo-solo-lectura"
-const RUTA = "/home/$usuario/solo-lectura.txt"
+const SLUG = "saludo-ejecutable"
+const RUTA = "/home/$usuario/saludo.sh"
 
 const CHECKS = [
   { type: "archivo_existe", params: { ruta: RUTA }, points: 34, position: 0 },
-  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "2" }, points: 33, position: 1 },
-  { type: "permisos_son", params: { ruta: RUTA, modo: "444" }, points: 33, position: 2 },
+  { type: "archivo_contiene", params: { ruta: RUTA, patron: "#!/bin/bash" }, points: 33, position: 1 },
+  { type: "permisos_son", params: { ruta: RUTA, modo: "755" }, points: 33, position: 2 },
 ]
 
-const TOPIC_NUMBER = 5
-const SUBTOPIC_SLUG = "dueno-y-permisos"
+const TOPIC_NUMBER = 10
+const SUBTOPIC_SLUG = "primer-script"
 
 const DATOS = {
-  title: "Un archivo de solo lectura",
+  title: "Un script que saluda",
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea solo-lectura.txt en tu carpeta personal con al " +
-    "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
-    "a los tres bloques, de forma que solo quede lectura para todos.",
+    "Abre la terminal y escribe un script llamado saludo.sh en tu carpeta " +
+    "personal. La primera línea tiene que ser el shebang de bash y la segunda " +
+    "un echo con el saludo que quieras. Déjalo con permisos 755 para poder " +
+    "ejecutarlo con ./saludo.sh.",
 }
 
 async function main() {
