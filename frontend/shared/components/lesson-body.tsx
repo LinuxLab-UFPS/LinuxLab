@@ -118,7 +118,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
             return <TerminalDemoButton key={i} />
 
           case "exercise":
-            return <ExerciseCheck key={i} slug={block.slug} />
+            return <ExerciseCheck key={i} slug={block.slug} snippet={block.snippet} />
 
           case "activity":
             return <LessonActivity key={i} slugs={block.slugs} />

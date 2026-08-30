@@ -10,6 +10,7 @@ import { lessonAssetExists, lessonAssetUrl, lessonVideoExists, lessonVideoUrl } 
  *   <!-- VIDEO: id-del-video | título -->
  *   <!-- ILLUSTRATION: gui-cli -->                (ver lesson-illustrations.tsx)
  *   <!-- EJERCICIO: slug -->                      (comprobacion evaluada en el entorno)
+ *   <!-- EJERCICIO: slug | snippet -->            (la misma, con boton de copiar dentro)
  *   <!-- ACTIVIDAD: slug -->                      (tarjeta que lleva a la terminal)
  *   <!-- COPIAR: id -->                           (boton que copia sin mostrar)
  *
@@ -42,7 +43,7 @@ export type LessonBlock =
   | { kind: "fs-tree" }
   | { kind: "terminal-demo" }
   | { kind: "illustration"; id: string }
-  | { kind: "exercise"; slug: string }
+  | { kind: "exercise"; slug: string; snippet?: string }
   | { kind: "activity"; slugs: string[] }
   | { kind: "snippet"; id: string }
 
@@ -281,8 +282,11 @@ export function parseLessonBlocks(
       continue
     }
 
+    // El `label` es el snippet que la comprobacion reparte, si lo lleva:
+    // `<!-- EJERCICIO: slug | snippet -->`. Va dentro de la tarjeta, no suelto
+    // en la leccion, porque el boton es parte del enunciado.
     if (type === "EJERCICIO") {
-      blocks.push({ kind: "exercise", slug: value })
+      blocks.push({ kind: "exercise", slug: value, snippet: label || undefined })
       continue
     }
 

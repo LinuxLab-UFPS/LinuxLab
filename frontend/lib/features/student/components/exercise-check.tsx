@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { CheckList } from "@/lib/features/student/components/check-list"
+import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 
 /**
@@ -11,7 +12,7 @@ import { useActivityCheck } from "@/lib/features/student/use-activity-check"
  * through the course. It is not an activity — activities live outside the
  * syllabus and are solved next to the terminal.
  */
-export function ExerciseCheck({ slug }: { slug: string }) {
+export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: string }) {
   const { activity, rows, evaluated, passed, loading, checking, check } =
     useActivityCheck(slug)
 
@@ -45,6 +46,11 @@ export function ExerciseCheck({ slug }: { slug: string }) {
         {activity.instructions && (
           <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
         )}
+
+        {/* El texto que reparte la comprobacion, si lo lleva. Va aqui dentro
+            porque es parte del enunciado: fuera quedaba suelto en la leccion,
+            lejos de lo que pide usarlo. */}
+        {snippet && <CopySnippet id={snippet} className="" />}
 
         <CheckList rows={rows} evaluated={evaluated} />
 
