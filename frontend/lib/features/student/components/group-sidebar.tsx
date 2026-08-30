@@ -63,7 +63,10 @@ export function GroupSidebar({
 
         {/* El progreso, arriba del todo: es lo primero que se quiere saber al
             abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
-        <div className="shrink-0 border-b border-border px-4 py-3">
+        <LessonLink
+          href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
+          className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
+        >
           <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Tu progreso</span>
             <span className="font-mono tabular-nums text-foreground">
@@ -71,7 +74,7 @@ export function GroupSidebar({
             </span>
           </div>
           <NeonProgress value={overallPct} className="h-1" />
-        </div>
+        </LessonLink>
 
         {/* Module list */}
         <nav className="no-scrollbar min-h-0 overflow-y-auto p-2">

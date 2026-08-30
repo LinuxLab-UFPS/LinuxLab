@@ -147,6 +147,8 @@ export interface TopicLessons {
   ids: string[]
   /** Subtopic id -> slug of the check it carries, only for the ones with one. */
   checks: Record<string, string>
+  /** Subtopic id -> su titulo, para poder nombrarlas fuera de la leccion. */
+  titles: Record<string, string>
 }
 
 const EJERCICIO_DIRECTIVE = /<!--\s*EJERCICIO\s*:\s*([a-z0-9-]+)\s*-->/i
@@ -170,7 +172,10 @@ export function getTopicLessons(): Record<number, TopicLessons> {
       if (match) checks[sub.id] = match[1]
     }
 
-    lessons[topic.number] = { ids: meta.subtopics.map((sub) => sub.id), checks }
+    const titles: Record<string, string> = {}
+    for (const sub of meta.subtopics) titles[sub.id] = sub.title
+
+    lessons[topic.number] = { ids: meta.subtopics.map((sub) => sub.id), checks, titles }
   }
   return lessons
 }
