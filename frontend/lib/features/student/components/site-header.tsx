@@ -156,6 +156,13 @@ export function SiteHeader({
                 <span className="block truncate text-xs font-normal text-muted-foreground">
                   {user?.email ?? "Sin sesión activa"}
                 </span>
+                {/* El codigo, a la vista: es lo que el estudiante da al
+                    inscribirse y lo que aparece en las notas del docente. */}
+                {user?.code && (
+                  <span className="block truncate font-mono text-xs font-normal text-muted-foreground">
+                    {user.code}
+                  </span>
+                )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
