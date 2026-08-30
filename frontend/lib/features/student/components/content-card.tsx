@@ -59,10 +59,10 @@ export function ContentCard({
       </div>
 
       {/* Content stays steady while the card and image grow. */}
-      <div className="flex flex-1 flex-col p-5">
+      <div className="flex flex-1 flex-col p-4">
         <h3
           className={cn(
-            "text-lg font-bold tracking-tight text-foreground transition-colors",
+            "text-base font-bold tracking-tight text-foreground transition-colors",
             HOVER_TITLE,
           )}
         >
@@ -74,14 +74,17 @@ export function ContentCard({
             HOVER_UNDERLINE,
           )}
         />
+        {/* Dos lineas exactas y ni una mas: con la descripcion suelta, cada
+            tarjeta media distinto y las filas quedaban desniveladas. Recortar
+            aqui es lo que hace que todas las de una fila midan igual. */}
         {description && (
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}
 
         {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <Tag key={tag.label} icon={tag.icon} tone={tag.tone}>
                 {tag.label}
@@ -91,7 +94,7 @@ export function ContentCard({
         )}
 
         {progress !== undefined && (
-          <div className="mt-auto pt-5">
+          <div className="mt-auto pt-4">
             <div className="flex items-center gap-2">
               <NeonProgress value={progress} />
               <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">

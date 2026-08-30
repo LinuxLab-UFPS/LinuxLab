@@ -108,8 +108,6 @@ services:
       SSH_HOST: entorno
       SSH_USER: labadmin
       SSH_KEY_PATH: /ssh/ssh_key
-      JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
     depends_on:
       - postgres
       - migrate
@@ -126,14 +124,14 @@ services:
     networks: [external]
     mem_limit: 96m
     cpu_shares: 256
+    # JWT_SECRET y FRONTEND_URL vienen de backend/.env (env_file): el middleware
+    # edge verifica las sesiones con el MISMO secreto que firma el backend.
+    env_file: ../backend/.env
     environment:
       # La URL publica del backend se incrusta en el build (NEXT_PUBLIC_*):
       # se fija en local con deploy/build-local.sh --url ANTES de compilar.
       # Este BACKEND_URL es para las llamadas server-side de Next dentro de la red.
       BACKEND_URL: http://backend:3000
-      # Debe coincidir con el JWT_SECRET del backend: el middleware edge
-      # verifica las sesiones que firma el backend.
-      JWT_SECRET: ${JWT_SECRET:-linuxlab-jwt-secret-2026}
       HOSTNAME: "0.0.0.0"
     depends_on:
       - backend

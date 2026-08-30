@@ -6,6 +6,7 @@ import Image from "next/image"
 import { Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
+import { destinoSeguro } from "@shared/lib/next-url"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Button } from "@shared/components/ui/button"
@@ -28,21 +29,25 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!user) return
-    /* Entrar es una carga completa y no `router.replace`. La barra superior la
-       elige el layout de servidor segun el rol, y una navegacion de cliente
-       reutiliza el layout que ya estuviera renderizado: quien cerraba sesion
-       como estudiante y entraba como docente se encontraba con la barra del
-       estudiante hasta recargar a mano. */
-    if (typeof window !== "undefined") {
-      // Destino pedido por el flujo (p.ej. /inscripcion). Solo se aceptan
-      // paths del mismo origen que empiecen con "/".
-      const next = new URLSearchParams(window.location.search).get("next")
-      if (next && next.startsWith("/")) {
-        window.location.href = next
-        return
-      }
-      window.location.href = user.role === "admin" ? "/admin/docentes" : "/inicio"
+    // El admin no tiene curso al que volver: su sitio es siempre el panel. Para
+    // el resto manda el destino que venia en `?next=`, ya validado.
+    //
+    // La validacion la hace `destinoSeguro` y no un `startsWith("/")` a secas:
+    // `//otro.sitio` tambien empieza por barra, y el navegador lo lee como otro
+    // dominio, asi que colaba una salida fuera del sitio justo despues de que
+    // alguien acabara de confiar sus credenciales a esta pantalla.
+    //
+    // Carga completa y no `router.replace`: la barra superior la elige el
+    // layout de servidor segun el rol, y una navegacion de cliente reutiliza el
+    // layout ya renderizado. Quien entraba con otro rol se encontraba con la
+    // barra del anterior hasta recargar a mano.
+    if (typeof window === "undefined") return
+    if (user.role === "admin") {
+      window.location.href = "/admin/docentes"
+      return
     }
+    const next = new URLSearchParams(window.location.search).get("next")
+    window.location.href = destinoSeguro(next)
   }, [user])
 
   const handleGoogleSignIn = async () => {

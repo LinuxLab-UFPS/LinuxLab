@@ -374,8 +374,66 @@ async function extendGroupActivityDueDate({ groupId, activityId, teacherUserId, 
   return serializeGroupActivity(updated)
 }
 
+/**
+ * Los intentos de una actividad del temario en un grupo, con la misma forma que
+ * los de una del docente, para que la tabla del detalle no pregunte de donde
+ * salio cada fila.
+ *
+ * La actividad es del curso (igual en todos los grupos), pero cada grupo solo
+ * ve lo de sus matriculas: de ahi el filtro por `enrollment.group_id`. Todo
+ * intento es automatico, no hay entregas manuales que separar.
+ */
+async function temarioSubmissions({ groupId, slug }) {
+  const ta = await prisma.topicActivity.findFirst({
+    where: { slug, kind: "activity" },
+    select: { id: true },
+  })
+  if (!ta) throw new NotFoundError("Actividad no encontrada")
+
+  const grouped = await prisma.topicSubmission.groupBy({
+    by: ["enrollment_id"],
+    where: { topic_activity_id: ta.id, enrollment: { group_id: groupId } },
+    _count: { id: true },
+    _max: { created_at: true },
+  })
+
+  if (grouped.length === 0) return []
+
+  const enrollmentIds = grouped.map((g) => g.enrollment_id)
+  const enrollments = await prisma.enrollment.findMany({
+    where: { id: { in: enrollmentIds } },
+    include: { student: { include: { user: true } } },
+  })
+  const enrollmentMap = new Map(enrollments.map((e) => [e.id, e]))
+
+  return Promise.all(
+    grouped.map(async (g) => {
+      const attempts = await prisma.topicSubmission.findMany({
+        where: { topic_activity_id: ta.id, enrollment_id: g.enrollment_id },
+        orderBy: { created_at: "desc" },
+        select: { score: true, created_at: true },
+      })
+      const enrollment = enrollmentMap.get(g.enrollment_id)
+      const student = enrollment?.student?.user
+      return {
+        studentId: student?.id ?? null,
+        studentName: student?.name ?? "—",
+        studentEmail: student?.email ?? "—",
+        studentCode: enrollment?.student?.code ?? null,
+        attemptsCount: g._count.id,
+        lastAttemptDate: g._max.created_at?.toISOString() ?? null,
+        finalScore: finalScore(attempts),
+        submissionId: null,
+      }
+    }),
+  )
+}
+
 async function getActivitySubmissions({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const slug = bankSlugOf(activityId)
+  if (slug) return temarioSubmissions({ groupId, slug })
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },
@@ -427,6 +485,9 @@ async function getActivitySubmissions({ groupId, activityId, teacherUserId, role
 
 async function getManualSubmissions({ groupId, activityId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  // Las del temario se autoevaluan: no hay entregas manuales que calificar.
+  if (bankSlugOf(activityId)) return []
 
   const ga = await prisma.groupActivity.findFirst({
     where: { id: activityId, group_id: groupId },

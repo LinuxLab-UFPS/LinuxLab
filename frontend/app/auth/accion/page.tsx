@@ -9,6 +9,7 @@ import { Button } from "@shared/components/ui/button"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { notify } from "@shared/lib/toast"
+import { destinoSeguro } from "@shared/lib/next-url"
 import { mapFirebaseError, errorCodeOf } from "@/lib/features/auth/errors"
 
 type Mode = "verifyEmail" | "resetPassword" | "recoverEmail" | "unknown"
@@ -20,7 +21,10 @@ function AuthAccionInner() {
   const oobCode = sp.get("oobCode") ?? sp.get("oob_code") ?? sp.get("code") ?? ""
   const mode: Mode = rawMode ?? (oobCode ? "unknown" : "unknown")
   const rawNext = sp.get("next")
-  const safeNext = rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : ""
+  // Una sola validacion en todo el proyecto (ver shared/lib/next-url.ts). La de
+  // aqui dejaba pasar las barras invertidas, que algunos navegadores normalizan
+  // a barras y convierten `/\\otro.sitio` en una salida fuera del sitio.
+  const safeNext = rawNext && destinoSeguro(rawNext) === rawNext ? rawNext : ""
 
   const goLogin = () => router.replace(safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login")
 
