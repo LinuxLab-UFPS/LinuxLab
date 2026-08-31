@@ -20,7 +20,10 @@ export function StudentDashboard() {
         {/* Entrar por el mapa y no por una tarjeta suelta: las tarjetas llevan
             directo a un tema y se saltan la guia, que es donde se explica como
             funciona el laboratorio. */}
-        <div className="mb-8 flex justify-center">
+        {/* A medio camino entre la cabecera y la rejilla. La cabecera ya trae su
+            propio `pb`, asi que el hueco de abajo se iguala a mano; con el `mb-8`
+            de antes el boton quedaba mas cerca de las tarjetas que del texto. */}
+        <div className="mb-14 flex justify-center sm:mb-12">
           <LessonLink
             href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
             className="neon-glow hover:neon-glow-strong group inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-all duration-300 hover:bg-primary/90"

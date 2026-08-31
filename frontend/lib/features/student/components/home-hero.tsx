@@ -17,26 +17,29 @@ export function HomeHero({
   pie?: React.ReactNode
 }) {
   return (
-    <section className="relative overflow-hidden px-6 pt-20 pb-14 text-center sm:pt-28">
+    <section className="relative overflow-hidden px-6 pt-20 pb-16 text-center sm:pt-28 sm:pb-14">
       {fondo}
       <div className="relative mx-auto max-w-3xl">
-        <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-6xl">
+        {/* `leading-[1.05]` es interlineado de titular y a 60px esta bien, pero a
+            36px, con el titulo partido en varias lineas, dejaba las lineas casi
+            pegadas. En pantalla estrecha se afloja. */}
+        <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-6xl sm:leading-[1.05]">
           Bienvenido al{" "}
           <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text text-transparent">
             Linux
           </span>
           <span className="text-foreground">Lab</span>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg">
           La forma moderna de aprender Linux: teoría al grano, una{" "}
           <span className="font-semibold text-foreground">terminal real</span> en el
           navegador con{" "}
           <span className="font-semibold text-foreground">actividades y simuladores</span>{" "}
           interactivos para practicar de verdad.
         </p>
-        {accion && <div className="mt-8 flex justify-center">{accion}</div>}
+        {accion && <div className="mt-10 flex justify-center">{accion}</div>}
       </div>
-      {pie && <div className="relative mt-24 flex justify-center sm:mt-32">{pie}</div>}
+      {pie && <div className="relative mt-16 flex justify-center sm:mt-32">{pie}</div>}
     </section>
   )
 }
