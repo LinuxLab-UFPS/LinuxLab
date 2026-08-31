@@ -14,7 +14,10 @@ export function GroupBody({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "mx-auto flex w-full flex-1 items-start gap-6 px-4 transition-[max-width] duration-300 ease-out sm:px-6",
+        // En movil solo queda la leccion: el panel de contenidos se pliega a su
+        // barra y la terminal no se monta, asi que la fila no tiene que repartir
+        // nada y el texto se lleva el ancho entero.
+        "mx-auto flex w-full flex-1 items-start gap-0 px-4 transition-[max-width] duration-300 ease-out sm:px-6 md:gap-6",
         open ? "max-w-[120rem]" : "max-w-7xl",
       )}
     >

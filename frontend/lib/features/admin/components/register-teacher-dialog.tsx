@@ -78,7 +78,7 @@ export function RegisterTeacherDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="border border-violet-500/40 bg-violet-500/15 text-violet-400 shadow-none hover:bg-violet-500/25">
+        <Button className="border border-primary/40 bg-primary/15 text-primary shadow-none hover:bg-primary/25">
           <Plus className="w-4 h-4 mr-2" />
           Registrar Docente
         </Button>
@@ -142,7 +142,7 @@ export function RegisterTeacherDialog({
             <Button
               type="submit"
               disabled={submitting}
-              className="border border-violet-500/40 bg-violet-500/15 text-violet-400 shadow-none hover:bg-violet-500/25"
+              className="border border-primary/40 bg-primary/15 text-primary shadow-none hover:bg-primary/25"
             >
               {submitting ? "Registrando…" : "Registrar"}
             </Button>

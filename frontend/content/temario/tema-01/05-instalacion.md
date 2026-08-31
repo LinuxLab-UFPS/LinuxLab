@@ -12,7 +12,7 @@ Del Kernel que Torvalds anunció en 1991 no queda casi nada en líneas de códig
 
 Instalar Linux en un computador sigue siempre la misma lógica, sin importar la distribución que elijas (Tuxnauta, 2025).
 
-<!-- IMAGE: instalacion-linux-portada.png | Proceso de instalación de Linux -->
+<!-- IMAGE: instalacion-linux-portada.webp | Proceso de instalación de Linux -->
 
 ### 1. Elegir la distribución
 

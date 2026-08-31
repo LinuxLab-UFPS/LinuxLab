@@ -8,6 +8,7 @@ import { ExerciseCheck } from "@/lib/features/student/components/exercise-check"
 import { ExampleCheck } from "@/lib/features/student/components/example-check"
 import { LessonActivity } from "@/lib/features/student/components/lesson-activity"
 import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
+import { SoloEnEscritorio } from "@/lib/features/student/components/solo-en-escritorio"
 import { LESSON_ILLUSTRATIONS } from "@shared/components/lesson-illustrations"
 import { getSimulator } from "@shared/lib/content/simulators"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -41,8 +42,17 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
 
           case "image":
             return block.exists ? (
+              // `lazy` porque una leccion larga puede traer varias imagenes y
+              // las de mas abajo no tienen por que retrasar lo que ya se ve.
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={block.src} alt={block.alt} className={IMG_CLASS} />
+              <img
+                key={i}
+                src={block.src}
+                alt={block.alt}
+                loading="lazy"
+                decoding="async"
+                className={IMG_CLASS}
+              />
             ) : (
               <Pending
                 key={i}
@@ -85,6 +95,14 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 key={i}
                 src={block.src}
                 controls
+                /* `playsInline` es el que importa: sin el, iOS lanza el video a
+                   pantalla completa con solo darle al play, y ahi la vista se
+                   descuadra. `controlsList` esconde ademas el boton en
+                   Chromium; Safari lo ignora, pero ya no salta solo. Quien
+                   quiera verlo grande gira el telefono. */
+                playsInline
+                controlsList="nofullscreen noremoteplayback"
+                disablePictureInPicture
                 preload="metadata"
                 // El fondo va en el color de la tarjeta, no en negro: los videos
                 // se renderizan sobre el fondo claro del sitio, y un contenedor
@@ -115,20 +133,50 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
 
+          /* Lo que necesita la terminal se retira en movil y deja un aviso en
+             su sitio. Se hace con clases y no con un `useMediaQuery` porque
+             esto se pinta en el servidor: con JS, el telefono llegaria a pintar
+             la version de escritorio antes de corregirse. */
           case "terminal-demo":
-            return <TerminalDemoButton key={i} />
+            return (
+              <div key={i} className="hidden md:block">
+                <TerminalDemoButton />
+              </div>
+            )
 
           case "exercise":
-            return <ExerciseCheck key={i} slug={block.slug} snippet={block.snippet} />
+            return (
+              <div key={i}>
+                <div className="hidden md:block">
+                  <ExerciseCheck slug={block.slug} snippet={block.snippet} />
+                </div>
+                <SoloEnEscritorio que="Esta comprobación" />
+              </div>
+            )
 
           case "example-check":
-            return <ExampleCheck key={i} />
+            return (
+              <div key={i} className="hidden md:block">
+                <ExampleCheck />
+              </div>
+            )
 
           case "activity":
-            return <LessonActivity key={i} slugs={block.slugs} />
+            return (
+              <div key={i}>
+                <div className="hidden md:block">
+                  <LessonActivity slugs={block.slugs} />
+                </div>
+                <SoloEnEscritorio que="La actividad de este tema" />
+              </div>
+            )
 
           case "snippet":
-            return <CopySnippet key={i} id={block.id} />
+            return (
+              <div key={i} className="hidden md:block">
+                <CopySnippet id={block.id} />
+              </div>
+            )
 
           case "illustration": {
             // Una directiva con un id que no existe se ve, igual que una imagen
@@ -150,7 +198,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "simulator-card": {
             const sim = getSimulator(block.id)
             return sim ? (
-              <div key={i} className="my-10 max-w-md">
+              <div key={i} className="my-10 max-w-md hidden md:block">
                 <h2 className="mb-4 text-left text-2xl font-bold text-foreground">
                   Prueba tus conocimientos con un{" "}
                   <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text font-extrabold text-transparent">

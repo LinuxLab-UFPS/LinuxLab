@@ -49,7 +49,9 @@ const components: Components = {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="text-primary hover:underline"
+      // Una URL larga es una sola palabra sin espacios: sin `break-words` se
+      // sale por la derecha y arrastra la pagina entera de lado.
+      className="break-words text-primary hover:underline"
     >
       {children}
     </a>
@@ -70,7 +72,7 @@ const components: Components = {
     const isInline = !className && !text.includes("\n")
     if (isInline) {
       return (
-        <code className="bg-secondary px-1.5 py-0.5 rounded text-primary font-mono text-[0.85em]">
+        <code className="bg-secondary px-1.5 py-0.5 rounded text-primary font-mono text-[0.85em] break-all">
           {children}
         </code>
       )

@@ -12,11 +12,12 @@ import { irA } from "@/lib/features/student/components/landing-header"
  */
 export function FlechaSiguiente({ hacia }: { hacia: string }) {
   return (
+    // 44px de lado es el minimo comodo para tocar con el dedo; con 40 se falla.
     <button
       type="button"
       onClick={() => irA(hacia)}
       aria-label="Ver qué es LinuxLab"
-      className="neon-glow hover:neon-glow-strong flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"
+      className="neon-glow hover:neon-glow-strong flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all duration-300 hover:bg-primary/90"
     >
       <ArrowDown className="h-4 w-4" />
     </button>

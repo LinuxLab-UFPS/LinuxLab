@@ -46,52 +46,57 @@ export default async function LandingPage() {
   const irAlTemario = irAlCurso
   const portada = syllabus.slice(0, TEMAS_EN_PORTADA)
   return (
-    <div className="min-h-screen bg-background">
-      <LandingHeader />
-      <div className={`${BLOQUE} relative overflow-hidden`}>
-        <HomeHero
-          fondo={<ComandosDeFondo />}
-          accion={
-            <Link href={irAlCurso} className={BOTON}>
-              <Play className="h-4 w-4" />
-              {session ? "Ir al curso" : "Comenzar"}
-            </Link>
-          }
-          pie={<FlechaSiguiente hacia="acerca-de" />}
-        />
-      </div>
-      <div id="acerca-de" className={`${BLOQUE} bg-card`}>
-        <AcercaDe />
-      </div>
-      <div className={BLOQUE}>
-        <ShowcaseSimuladoresYPruebas />
-      </div>
-      <div id="temario" className={`${BLOQUE} bg-card`}>
-        <section className="mx-auto w-full max-w-7xl px-6 py-16">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Lo que vas a aprender
-          </h2>
-          {/* Tres fijas por fila para que las dos filas queden parejas, y sin
-              barra de progreso: aqui no hay sesion de la que leerlo. */}
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {portada.map((topic) => (
-              <ContentCard
-                key={topic.slug}
-                href={session ? `/curso?tema=${topic.slug}` : conNext(`/curso?tema=${topic.slug}`)}
-                title={`${topic.number}. ${topic.title}`}
-                description={topic.description}
-                illustration={topicIllustration(topic.number)}
-                tags={previews[topic.number] ? previewTags(previews[topic.number]) : []}
-              />
-            ))}
-          </div>
-          <div className="mt-10 flex justify-center">
-            <Link href={irAlTemario} className={BOTON}>
-              Ver Temario
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </section>
+    // El color del pie va en el envoltorio para que el rebote del scroll, al
+    // pasarse por abajo, vea negro y no el `--background` claro del tema por
+    // defecto, que asomaba como una franja blanca bajo el pie.
+    <div className="min-h-screen bg-[#0d1117]">
+      <div className="bg-background">
+        <LandingHeader />
+        <div className={`${BLOQUE} relative overflow-hidden`}>
+          <HomeHero
+            fondo={<ComandosDeFondo />}
+            accion={
+              <Link href={irAlCurso} className={BOTON}>
+                <Play className="h-4 w-4" />
+                {session ? "Ir al curso" : "Comenzar"}
+              </Link>
+            }
+            pie={<FlechaSiguiente hacia="acerca-de" />}
+          />
+        </div>
+        <div id="acerca-de" className={`${BLOQUE} bg-card`}>
+          <AcercaDe />
+        </div>
+        <div className={BLOQUE}>
+          <ShowcaseSimuladoresYPruebas />
+        </div>
+        <div id="temario" className={`${BLOQUE} bg-card`}>
+          <section className="mx-auto w-full max-w-7xl px-6 py-16">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Lo que vas a aprender
+            </h2>
+            {/* Tres fijas por fila para que las dos filas queden parejas, y sin
+                barra de progreso: aqui no hay sesion de la que leerlo. */}
+            <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {portada.map((topic) => (
+                <ContentCard
+                  key={topic.slug}
+                  href={session ? `/curso?tema=${topic.slug}` : conNext(`/curso?tema=${topic.slug}`)}
+                  title={`${topic.number}. ${topic.title}`}
+                  description={topic.description}
+                  illustration={topicIllustration(topic.number)}
+                  tags={previews[topic.number] ? previewTags(previews[topic.number]) : []}
+                />
+              ))}
+            </div>
+            <div className="mt-10 flex justify-center">
+              <Link href={irAlTemario} className={BOTON}>
+                Ver Temario
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </section>
+        </div>
       </div>
       <SiteFooter />
     </div>

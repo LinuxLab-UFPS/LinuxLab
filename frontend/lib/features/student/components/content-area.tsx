@@ -6,10 +6,11 @@ import { SimulatorLesson } from "@shared/components/simulator-lesson"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
 import { LessonContainer } from "@shared/components/terminal-ui"
 import { LessonHeader } from "@shared/components/lesson-header"
+import { SidebarMovil } from "@/lib/features/student/components/sidebar-movil"
 import type { Topic } from "@/lib/features/student/types"
 import type { LessonResource, LessonSubtopic, TopicContentMeta } from "@/lib/models/content"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
-import type { LessonRef } from "@shared/lib/content/lessons"
+import type { LessonRef, TopicLessons } from "@shared/lib/content/lessons"
 
 interface ContentAreaProps {
   topic: Topic
@@ -18,6 +19,8 @@ interface ContentAreaProps {
   blocks: LessonBlock[] | null
   prev: LessonRef | null
   next: LessonRef | null
+  /** Para el panel de contenidos plegado, que en movil vive aqui dentro. */
+  topicLessons: Record<number, TopicLessons>
 }
 
 /**
@@ -35,6 +38,7 @@ export function ContentArea({
   blocks,
   prev,
   next,
+  topicLessons,
 }: ContentAreaProps) {
   // The bibliography is rendered after the nav, not inline with the lesson.
   const sources = blocks?.find(
@@ -57,6 +61,19 @@ export function ContentArea({
         />
       ) : (
         <LessonContainer>
+          {/* El panel de contenidos, plegado. Solo en movil: en escritorio esta
+              en su columna y aqui estorbaria. */}
+          <div className="mb-6">
+            <SidebarMovil
+              activeTopicSlug={topic.slug}
+              activeSubtopicId={activeSubtopic?.id}
+              contentSubtopics={meta?.subtopics}
+              topicLessons={topicLessons}
+              topicTitle={`${topic.number}. ${topic.title}`}
+              lessonTitle={activeSubtopic?.title}
+            />
+          </div>
+
           {/* La rama de simulador no pasa por aqui: monta su propia portada con
               su titulo, y dos cabeceras seguidas sobraban. */}
           <LessonHeader
@@ -115,7 +132,7 @@ function ResourceCard({ resource }: { resource: LessonResource }) {
       href={resource.url}
       target="_blank"
       rel="noreferrer"
-      className="group flex items-center gap-3 rounded-lg border border-black/15 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)] dark:border-border"
+      className="group flex w-full min-w-0 items-center gap-3 rounded-lg border border-black/15 p-3.5 transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)] dark:border-border"
     >
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors group-hover:border-primary/40 group-hover:text-primary">
         <Icon className="h-4 w-4" />

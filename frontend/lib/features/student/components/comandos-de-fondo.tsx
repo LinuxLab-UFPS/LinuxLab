@@ -68,37 +68,46 @@ const COMANDOS = [
  * vive en un `max-w-3xl` centrado, asi que el pasillo prohibido es mas o menos
  * del 22% al 66% del ancho. Con posiciones al azar unas se pisaban y otras
  * dejaban medio bloque vacio.
+ *
+ * Ese pasillo solo existe con sitio de sobra. `max-w-3xl` son 768px FIJOS, asi
+ * que en un escritorio de 1440px el texto ocupa el 23%-77% y los costados
+ * quedan libres; en un movil de 375px ocupa el 6%-94% y no queda costado
+ * ninguno. Por eso cada ranura dice en que zona vive: las de `lado` se esconden
+ * en pantalla estrecha (`hidden sm:block`) y quedan solo las `franja`, que van
+ * por encima y por debajo del texto y ahi no estorban a ningun ancho.
  */
 const RANURAS = [
   // Columna izquierda
-  { top: "5%", left: "4%" },
-  { top: "13%", left: "14%" },
-  { top: "22%", left: "3%" },
-  { top: "30%", left: "16%" },
-  { top: "39%", left: "5%" },
-  { top: "48%", left: "17%" },
-  { top: "57%", left: "3%" },
-  { top: "66%", left: "15%" },
-  { top: "75%", left: "6%" },
-  { top: "84%", left: "18%" },
-  { top: "92%", left: "8%" },
+  { top: "5%", left: "4%", zona: "lado" },
+  { top: "13%", left: "14%", zona: "lado" },
+  { top: "22%", left: "3%", zona: "lado" },
+  { top: "30%", left: "16%", zona: "lado" },
+  { top: "39%", left: "5%", zona: "lado" },
+  { top: "48%", left: "17%", zona: "lado" },
+  { top: "57%", left: "3%", zona: "lado" },
+  { top: "66%", left: "15%", zona: "lado" },
+  { top: "75%", left: "6%", zona: "lado" },
+  { top: "84%", left: "18%", zona: "lado" },
+  { top: "92%", left: "8%", zona: "lado" },
   // Columna derecha
-  { top: "6%", left: "70%" },
-  { top: "15%", left: "82%" },
-  { top: "24%", left: "68%" },
-  { top: "32%", left: "84%" },
-  { top: "41%", left: "71%" },
-  { top: "50%", left: "86%" },
-  { top: "59%", left: "69%" },
-  { top: "68%", left: "83%" },
-  { top: "77%", left: "72%" },
-  { top: "86%", left: "88%" },
-  { top: "94%", left: "74%" },
-  // Franjas de arriba y de abajo, por encima y por debajo del texto
-  { top: "4%", left: "38%" },
-  { top: "8%", left: "56%" },
-  { top: "90%", left: "36%" },
-  { top: "95%", left: "58%" },
+  { top: "6%", left: "70%", zona: "lado" },
+  { top: "15%", left: "82%", zona: "lado" },
+  { top: "24%", left: "68%", zona: "lado" },
+  { top: "32%", left: "84%", zona: "lado" },
+  { top: "41%", left: "71%", zona: "lado" },
+  { top: "50%", left: "86%", zona: "lado" },
+  { top: "59%", left: "69%", zona: "lado" },
+  { top: "68%", left: "83%", zona: "lado" },
+  { top: "77%", left: "72%", zona: "lado" },
+  { top: "86%", left: "88%", zona: "lado" },
+  { top: "94%", left: "74%", zona: "lado" },
+  // Franjas de arriba y de abajo, por encima y por debajo del texto. Son las
+  // unicas que quedan en movil, donde el texto se estira hasta ocupar del 12%
+  // al 61% del alto, asi que se pegan a los extremos para no rozarlo.
+  { top: "2%", left: "38%", zona: "franja" },
+  { top: "6%", left: "56%", zona: "franja" },
+  { top: "88%", left: "36%", zona: "franja" },
+  { top: "94%", left: "58%", zona: "franja" },
 ]
 
 /** Milisegundos por caracter al teclear. Despacio: es fondo, no un titular. */
@@ -136,7 +145,7 @@ const APAGADA: Estado = { texto: "", visible: false, escribiendo: false }
  * render, el servidor y el navegador pintarian cosas distintas y React se
  * quejaria de que el HTML no coincide.
  */
-function Ranura({ top, left }: { top: string; left: string }) {
+function Ranura({ top, left, zona }: { top: string; left: string; zona: string }) {
   const [estado, setEstado] = useState<Estado>(APAGADA)
   const [quieto, setQuieto] = useState(false)
   // Cero hasta que monte, por lo mismo que el resto del azar.
@@ -222,10 +231,17 @@ function Ranura({ top, left }: { top: string; left: string }) {
     <span
       className={[
         "animate-deriva absolute whitespace-nowrap font-mono text-sm font-bold text-primary sm:text-base",
+        // `neon-text` es la clase que ya usa el resto del sitio: en tema oscuro
+        // pinta el halo rojo y en el claro vale `none`, asi que el brillo sale
+        // donde hace falta y no ensucia el fondo blanco.
+        "neon-text",
+        // En pantalla estrecha el texto ocupa casi todo el ancho y los costados
+        // dejan de existir, asi que las de los lados se retiran.
+        zona === "lado" ? "hidden sm:block" : "",
         // El fundido es largo a proposito: lo que se quiere es que las cosas
         // cambien sin que se note el momento exacto en que cambian.
         "transition-opacity ease-in-out",
-        estado.visible ? "opacity-25" : "opacity-0",
+        estado.visible ? "opacity-40" : "opacity-0",
       ].join(" ")}
       style={{
         top,

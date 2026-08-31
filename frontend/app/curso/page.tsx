@@ -48,7 +48,7 @@ export default async function GroupPage({
               <div className="z-40 shrink-0 bg-background">
                 <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
               </div>
-              <main className="flex-1 overflow-auto">
+              <main className="flex-1 overflow-y-auto">
                 <GroupBody>
                   <GroupSidebar
                     activeTopicSlug={bienvenida.slug}
@@ -108,7 +108,7 @@ export default async function GroupPage({
               <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
               <ReadingProgressBar />
             </div>
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1 overflow-y-auto">
             <GroupBody>
               <GroupSidebar
                 activeTopicSlug={topic.slug}
@@ -123,6 +123,7 @@ export default async function GroupPage({
                 blocks={blocks}
                 prev={prev}
                 next={next}
+                topicLessons={getTopicLessons()}
               />
               <GroupTerminal />
             </GroupBody>
