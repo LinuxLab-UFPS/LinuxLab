@@ -95,6 +95,14 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                 key={i}
                 src={block.src}
                 controls
+                /* `playsInline` es el que importa: sin el, iOS lanza el video a
+                   pantalla completa con solo darle al play, y ahi la vista se
+                   descuadra. `controlsList` esconde ademas el boton en
+                   Chromium; Safari lo ignora, pero ya no salta solo. Quien
+                   quiera verlo grande gira el telefono. */
+                playsInline
+                controlsList="nofullscreen noremoteplayback"
+                disablePictureInPicture
                 preload="metadata"
                 // El fondo va en el color de la tarjeta, no en negro: los videos
                 // se renderizan sobre el fondo claro del sitio, y un contenedor
