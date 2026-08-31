@@ -123,6 +123,7 @@ export default async function GroupPage({
                 blocks={blocks}
                 prev={prev}
                 next={next}
+                topicLessons={getTopicLessons()}
               />
               <GroupTerminal />
             </GroupBody>
