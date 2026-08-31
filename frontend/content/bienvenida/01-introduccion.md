@@ -77,9 +77,8 @@ botones:
 
 - **Comprobar actividad** califica el trabajo. Se habilita al estar dentro de la
   carpeta de la actividad.
-- **Ir a la carpeta** lleva ahí con un `cd`.
-- El icono de recargar rehace los archivos y los deja como al principio. Lo que
-  hubiera dentro de esa carpeta se pierde, así que pregunta antes.
+- **Ir a la carpeta** lleva a la ubicacion de la actividad con un `cd`.
+- El icono de recargar rehace los archivos de la actividad y los deja como al principio.
 
 <!-- IMAGE: actividades.png | Una actividad abierta junto a la terminal, con el enunciado a un lado -->
 
@@ -89,8 +88,8 @@ Los simuladores son retos cerrados para practicar un comando concreto, sin tocar
 tus archivos. Están en la pestaña **Simuladores** y dentro del tema
 correspondiente.
 
-El signo de interrogación junto al título despliega la ayuda con
-los modos del reto, y dentro de la terminal el comando `help` lista los comandos
+El signo de interrogación junto al título muestra hints y/o
+los modos de "juego" reto. Dentro de la terminal el comando `help` lista los comandos
 disponibles. **Reiniciar** devuelve el reto a su estado inicial y **Salir**
 cierra.
 

@@ -153,6 +153,8 @@ Total: 5 líneas
 
 Dos detalles del cuerpo que merecen atención. El `[ -e "$f" ] || continue` está ahí porque un comodín que no encuentra nada se queda tal cual, así que sin esa línea el ciclo intentaría contar un archivo llamado literalmente `*.txt`. Y `$((total + n))` es aritmética: los dobles paréntesis hacen la suma, porque sin ellos el shell pegaría los dos números como si fueran texto.
 
+<!-- ACTIVIDAD: el-guion-que-decide -->
+
 ## Resumen
 
 | Forma | Efecto |

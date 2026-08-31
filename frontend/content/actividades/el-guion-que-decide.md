@@ -23,3 +23,5 @@ REVISAR
 Los números del ejemplo son los de este árbol, así que sirven para comprobar que vas bien, pero tienen que salir de contar los archivos y no de copiarlos: si el contenido cambia, el script debe seguir acertando.
 
 El `leeme.txt` no cuenta, y el patrón que recorre los `.log` ya lo deja fuera solo. Para que en la línea salga `alfa.log` y no `datos/alfa.log` hay un comando que se queda con el último tramo de una ruta. Y ojo con el archivo de salida: si el script se ejecuta dos veces y las líneas se van añadiendo, quedará repetido.
+
+El total no hace falta releerlo del archivo al final: se puede ir sumando dentro del mismo ciclo, con una variable que empiece en cero y crezca en cada vuelta. La lección de funciones tiene un ejemplo que hace justo eso.
