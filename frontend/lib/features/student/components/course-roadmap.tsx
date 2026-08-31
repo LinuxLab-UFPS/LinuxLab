@@ -126,7 +126,10 @@ export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, T
                   {activities
                     .filter((a) => a.topicNumber === topic.number)
                     .map((a) => (
-                      <li key={a.slug}>
+                      // Las actividades se resuelven en la terminal, que en
+                      // movil no existe: el enlace llevaria a una pantalla que
+                      // no se puede usar.
+                      <li key={a.slug} className="hidden md:list-item">
                         <LessonLink
                           href={a.href}
                           className="flex items-center gap-2 rounded px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
