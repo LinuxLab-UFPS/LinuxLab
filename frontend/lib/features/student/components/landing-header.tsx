@@ -1,6 +1,13 @@
 "use client"
 
+import { Menu } from "lucide-react"
 import { ThemeToggle } from "@shared/components/theme-toggle"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@shared/components/ui/dropdown-menu"
 
 /**
  * La barra de la portada publica.
@@ -39,17 +46,40 @@ export function LandingHeader() {
         </span>
 
         <div className="ml-auto flex items-center gap-1">
-          {ENLACES.map((enlace) => (
-            <button
-              key={enlace.id}
-              type="button"
-              onClick={() => irA(enlace.id)}
-              className="rounded-md px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
-            >
-              {enlace.texto}
-            </button>
-          ))}
+          {/* En pantalla estrecha los tres enlaces no caben: el logo y ellos
+              suman mas ancho que el telefono, y "Autores y Direccion" partia en
+              dos lineas dentro de una barra de alto fijo. Se pliegan al menu,
+              igual que hace la barra del area de estudiante. */}
+          <nav className="hidden items-center gap-1 md:flex">
+            {ENLACES.map((enlace) => (
+              <button
+                key={enlace.id}
+                type="button"
+                onClick={() => irA(enlace.id)}
+                className="rounded-md px-3 py-1.5 text-sm font-medium text-white/70 transition-colors hover:text-white"
+              >
+                {enlace.texto}
+              </button>
+            ))}
+          </nav>
+
           <ThemeToggle className="ml-2 text-white/70 hover:text-white" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label="Abrir el menú"
+              className="ml-1 flex h-10 w-10 items-center justify-center rounded-md text-white/70 outline-none transition-colors hover:bg-white/10 hover:text-white md:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              {ENLACES.map((enlace) => (
+                <DropdownMenuItem key={enlace.id} onClick={() => irA(enlace.id)}>
+                  {enlace.texto}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
     </header>
