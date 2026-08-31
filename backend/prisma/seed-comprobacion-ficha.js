@@ -18,12 +18,12 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea, en tu carpeta personal, un archivo llamado con tu " +
-    "código estudiantil y terminado en .txt. Para un código 1152186 sería " +
-    "vi 1152186.txt. Escribe cinco líneas: tu nombre en la primera, tres " +
-    "comandos que hayas aprendido en las tres siguientes, y tu correo " +
-    "institucional en la última. El recorrido es el de la lección: i para " +
-    "insertar, Esc para salir del modo inserción y :wq para guardar y cerrar.",
+    "Abre la terminal y crea, en tu directorio personal, un archivo que tenga " +
+    "como nombre tu código estudiantil con la extensión .txt. Escribe adentro " +
+    "cinco líneas: en la primera tu nombre, en las siguientes 3, 3 comandos que " +
+    "hayas aprendido y en la última tu correo institucional. Recuerda que para " +
+    "insertar texto en el editor debes presionar i, y luego Esc + escribir :wq " +
+    "para guardar los cambios y salir.",
 }
 
 async function main() {

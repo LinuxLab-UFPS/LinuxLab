@@ -33,8 +33,8 @@ const PLANTILLA = [
   linea("leeme.txt", "Escribe aqui"),
   linea("config", "Escribe aqui"),
   "",
-  "Mi script solo admite permisos simbolicos xd, de los que son asi: -r-xr-x-wx",
-  "~ Mauricio :3",
+  "Mi script solo admite permisos simbolicos, de los que son asi: -r-xr-x-wx",
+  "~ Mauricio",
   "",
 ].join("\n")
 
