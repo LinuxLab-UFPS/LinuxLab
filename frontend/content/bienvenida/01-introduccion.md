@@ -50,7 +50,7 @@ Puedes seleccionar hasta cuatro. La lista contiene todos los que verás en el
 laboratorio, pero solo podrás seleccionar los que ya hayas visto. Puedes
 descargar el listado entero en esa sección.
 
-<!-- IMAGE: terminal.png | La pestaña de la terminal, con las actividades recomendadas y los comandos esenciales -->
+<!-- IMAGE: terminal.webp | La pestaña de la terminal, con las actividades recomendadas y los comandos esenciales -->
 
 ## Las comprobaciones
 
@@ -82,7 +82,7 @@ botones:
 
 P.d puedes revisar tu progeso en Mi Grupo/Mis Calificaciones
 
-<!-- IMAGE: actividades.png | Una actividad abierta junto a la terminal, con el enunciado a un lado -->
+<!-- IMAGE: actividades.webp | Una actividad abierta junto a la terminal, con el enunciado a un lado -->
 
 ## Los simuladores
 
@@ -95,7 +95,7 @@ los modos de "juego" reto. Dentro de la terminal el comando `help` lista los com
 disponibles. **Reiniciar** devuelve el reto a su estado inicial y **Salir**
 cierra.
 
-<!-- IMAGE: simulador.png | El simulador de vi, con el objetivo arriba y las teclas del reto a un lado -->
+<!-- IMAGE: simulador.webp | El simulador de vi, con el objetivo arriba y las teclas del reto a un lado -->
 
 ## Los recursos
 

@@ -11,7 +11,7 @@ import {
 } from "@/lib/features/student/components/platform-showcase"
 
 /** Donde va la captura. Mientras el archivo no exista, sale el marco vacio. */
-const CAPTURA = "/landing/plataforma.png"
+const CAPTURA = "/landing/plataforma.webp"
 
 /**
  * Qué es el laboratorio, en la portada pública.

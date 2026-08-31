@@ -42,7 +42,16 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "image":
             return block.exists ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={block.src} alt={block.alt} className={IMG_CLASS} />
+              // `lazy` porque una leccion larga puede traer varias imagenes y
+              // las de mas abajo no tienen por que retrasar lo que ya se ve.
+              <img
+                key={i}
+                src={block.src}
+                alt={block.alt}
+                loading="lazy"
+                decoding="async"
+                className={IMG_CLASS}
+              />
             ) : (
               <Pending
                 key={i}
