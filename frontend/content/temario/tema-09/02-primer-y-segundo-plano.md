@@ -56,6 +56,32 @@ ps
 
 `jobs` es cosa del shell y solo conoce lo que se lanzó desde esa terminal. `ps` pregunta al sistema. Por eso `jobs` en una terminal recién abierta no devuelve nada aunque haya cientos de procesos corriendo.
 
+Hay un detalle que se nota al cerrar trabajos: uno que acaba de terminar todavía
+aparece una última vez, con su estado en `Terminated`.
+
+```bash
+jobs
+```
+
+```
+[1]-  Terminated              sleep 300
+[2]+  Running                 sleep 300 &
+```
+
+Ese `[1]` ya no existe, solo se está informando de que murió; a la siguiente
+llamada desaparece. Cuando lo que interesa es lo que sigue vivo, `-r`
+(*running*) deja fuera todo lo demás:
+
+```bash
+jobs -r
+```
+
+```
+[2]+  Running                 sleep 300 &
+```
+
+La diferencia importa al contar: `jobs` solo incluiría el que ya terminó.
+
 ## Detener un proceso con Ctrl+Z
 
 Si el programa ya está corriendo en primer plano y no se puso el `&`, no hace falta terminarlo y volver a empezar. <kbd>Ctrl</kbd> + <kbd>Z</kbd> lo detiene y devuelve el prompt:
@@ -123,6 +149,7 @@ comando-largo > salida.txt 2>&1 &
 | <kbd>Ctrl</kbd> + <kbd>Z</kbd> | Detiene el proceso en primer plano |
 | <kbd>Ctrl</kbd> + <kbd>C</kbd> | Interrumpe el proceso en primer plano |
 | `jobs` | Lista los trabajos de esta terminal |
+| `jobs -r` | Solo los que siguen corriendo |
 | `bg` | Continúa en segundo plano el trabajo detenido |
 | `fg` | Trae un trabajo al primer plano |
 | `fg %2` | Elige el trabajo número 2 |
