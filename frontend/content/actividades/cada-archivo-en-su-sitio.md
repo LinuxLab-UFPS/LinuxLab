@@ -6,7 +6,7 @@ Dejar cada archivo con los permisos que pide su función:
 
 | Archivo | Modificación |
 |---|---|
-| `notas.txt` | Que solo el usuario (tú) puedas leerlo. |
+| `notas.txt` | Que solo tú puedas leerlo y modificarlo. Nadie más. |
 | `informe.txt` | Cualquiera debe poder leerlo, pero solo tú debes poder modificarlo. |
 | `arranque.sh` | Cualquiera debería poder leerlo y ejecutarlo, solo tú modificarlo. |
 | `plantilla.txt` | Cualquiera debe poder leerlo y nadie modificarlo. Tú tampoco. |

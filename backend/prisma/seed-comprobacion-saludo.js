@@ -19,8 +19,8 @@ const DATOS = {
   instructions:
     "Abre la terminal y escribe un script llamado saludo.sh en tu carpeta " +
     "personal. La primera línea tiene que ser el shebang de bash y la segunda " +
-    "un echo con el saludo que quieras. Déjalo con permisos 755 para poder " +
-    "ejecutarlo con ./saludo.sh.",
+    "un echo con el saludo que quieras. Déjalo con permisos 755, puestos con el " +
+    "número y no con +x, para poder ejecutarlo con ./saludo.sh.",
 }
 
 async function main() {

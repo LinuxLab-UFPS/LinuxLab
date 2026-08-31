@@ -2,7 +2,7 @@ Dentro de `datos/` hay tres bitácoras y un archivo suelto. Hace falta un script
 
 **Objetivos:**
 
-1. Crea un archivo llamado `reporte.sh`, con su primera línea declarando el intérprete, y dale permisos de lectura y ejecución para todos y de escritura solo para ti.
+1. Crea un archivo llamado `reporte.sh`, con su primera línea declarando el intérprete, y déjalo con permisos `755`: lectura y ejecución para todos, escritura solo para ti. Ponlos con el número, no con `+x`.
 2. Dentro del script, recorre con un ciclo las bitácoras `.log` de `datos/` y, por cada una, escribe en `reporte.txt` una línea con su nombre, dos puntos y cuántas líneas tiene.
 3. Debajo de esas líneas, escribe el total sumado con el formato `TOTAL: <número>`.
 4. Cierra con un condicional que escriba `REVISAR` si el total pasa de 40, y `OK` si no llega.
