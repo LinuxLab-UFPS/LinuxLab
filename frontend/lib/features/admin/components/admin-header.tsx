@@ -24,8 +24,8 @@ const NAV = [
     label: "Gestión de Docentes",
     href: "/admin/docentes",
     icon: Users,
-    hover: "hover:bg-violet-500/15 hover:text-violet-400",
-    active: "bg-violet-500/15 text-violet-400",
+    hover: "hover:bg-primary/15 hover:text-primary",
+    active: "bg-primary/15 text-primary",
   },
   {
     label: "Entorno",

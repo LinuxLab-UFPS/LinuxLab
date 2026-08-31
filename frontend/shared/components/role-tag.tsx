@@ -2,7 +2,7 @@ import { cn } from "@shared/lib/utils"
 
 const VARIANT: Record<"docente" | "admin", string> = {
   docente: "border-amber-500/40 bg-amber-500/10 text-amber-500",
-  admin: "border-violet-500/40 bg-violet-500/10 text-violet-400",
+  admin: "border-primary/40 bg-primary/10 text-primary",
 }
 
 /** Small role badge shown next to the logo in the teacher/admin headers. */

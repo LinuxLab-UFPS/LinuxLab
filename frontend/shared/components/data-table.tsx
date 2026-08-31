@@ -74,7 +74,6 @@ export function TableEmptyState({ children }: { children: React.ReactNode }) {
 const PAGE_TONE = {
   primary: "border-primary/50 bg-primary/10 text-primary",
   amber: "border-amber-500/50 bg-amber-500/10 text-amber-500",
-  violet: "border-violet-500/50 bg-violet-500/10 text-violet-400",
   sky: "border-sky-500/50 bg-sky-500/10 text-sky-500",
   emerald: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
 }

@@ -246,7 +246,8 @@
 }
 
 [data-section='admin'] {
-  --section: #8b5cf6;
+  /* El area de admin usa el rojo de la marca, como el resto del sitio. */
+  --section: var(--primary);
 }
 
 [data-section='entorno'] {

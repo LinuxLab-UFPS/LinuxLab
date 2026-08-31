@@ -13,11 +13,11 @@ export default function DocentesPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             <span className="text-foreground">Bienvenido, </span>
-            <span className="bg-gradient-to-r from-violet-400 via-violet-500 to-violet-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text text-transparent">
               {user?.name ?? "Admin"}
             </span>
           </h1>
-          <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-violet-400 to-violet-600" />
+          <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-[#ff5470] to-[#C41E3A]" />
           <p className="mt-4 max-w-xl text-muted-foreground">
             Administra los docentes registrados en la plataforma.
           </p>

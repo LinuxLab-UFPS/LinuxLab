@@ -41,7 +41,7 @@ const PAGE_SIZE = 8
 
 /** El item resaltado del dropdown sigue el morado del admin. Va explícito
  *  porque Radix monta el menú en un portal, fuera de `data-section`. */
-const SELECT_ITEM = "focus:bg-violet-500/10 focus:text-violet-400"
+const SELECT_ITEM = "focus:bg-primary/10 focus:text-primary"
 
 export function TeachersTable() {
   const [searchInput, setSearchInput] = useState("")
@@ -108,7 +108,7 @@ export function TeachersTable() {
             statLabel: "Docentes totales",
             count: teachers.length,
             icon: Users,
-            tone: "violet",
+            tone: "primary",
           },
         ]}
       />
@@ -273,7 +273,7 @@ export function TeachersTable() {
           </TablePanel>
 
           {teachers.length > 0 && (
-            <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="violet" />
+            <TablePagination page={page_} totalPages={totalPages} onChange={setPage} tone="primary" />
           )}
         </>
       )}
