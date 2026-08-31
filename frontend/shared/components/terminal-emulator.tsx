@@ -65,6 +65,25 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       return !isPaste
     })
 
+    /* `vi` y compañía preguntan de qué color son el texto y el fondo con OSC 10
+       y OSC 11, para decidir su paleta. Sin nadie que las atienda, xterm no las
+       consume y la respuesta del propio terminal acaba escrita en el prompt como
+       basura del tipo `rgb:ffff/ffff/ffff11`, que bash intenta ejecutar.
+
+       Se responden con los colores del tema de arriba, en el formato que espera
+       quien pregunta. Devolver true dice "ya está atendida", que es lo que evita
+       que se cuele como texto. */
+    const RESPUESTAS: Record<number, string> = {
+      10: "rgb:ffff/ffff/ffff", // foreground #ffffff
+      11: "rgb:1a1a/1d1d/2424", // background #1a1d24
+    }
+    for (const [codigo, color] of Object.entries(RESPUESTAS)) {
+      term.parser.registerOscHandler(Number(codigo), (datos) => {
+        if (datos === "?") enviarEntrada(`\x1b]${codigo};${color}\x1b\\`)
+        return true
+      })
+    }
+
     const fitAddon = new FitAddon()
     term.loadAddon(fitAddon)
     term.open(containerRef.current)

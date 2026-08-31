@@ -7,7 +7,7 @@ import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { useEnLaCarpeta } from "@/lib/features/student/use-cwd"
+import { useEnLaCarpeta, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
   submitGroupActivity,
@@ -53,7 +53,13 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
     enLaCarpeta
 
+  /* Con `vi` abierto, lo que se manda a la terminal no se ejecuta: se teclea
+     dentro del archivo, y en modo normal `c`, `d` y `~` son ordenes de edicion
+     que lo estropean. Asi que el boton se apaga mientras dure. */
+  const aPantallaCompleta = useProgramaAPantallaCompleta()
+
   const goToWorkdir = () => {
+    if (aPantallaCompleta) return
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
   }
 
@@ -208,13 +214,17 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           )}
           </div>
 
-          <ActionButton tone="neutral" onClick={goToWorkdir}>
+          <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
             <FolderOpen className="h-4 w-4" />
             Ir a la carpeta
           </ActionButton>
         </div>
 
-        {detail.evaluationType === "atomic" && !canCheck && (
+        {aPantallaCompleta ? (
+          <p className="text-xs text-muted-foreground">
+            Cierra el editor en la terminal para volver a usar estos botones.
+          </p>
+        ) : detail.evaluationType === "atomic" && !canCheck ? (
           <p className="text-xs text-muted-foreground">
               {!enLaCarpeta
                ? "Entra en la carpeta de la actividad para poder comprobarla."
@@ -226,7 +236,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
                   ? "Alcanzaste el límite de intentos de esta actividad."
                   : null}
           </p>
-        )}
+        ) : null}
       </footer>
     </div>
   )

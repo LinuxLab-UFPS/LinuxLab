@@ -9,7 +9,7 @@ import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { useEnLaCarpeta } from "@/lib/features/student/use-cwd"
+import { useEnLaCarpeta, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -55,8 +55,13 @@ export function ActivityPanel({
      el falso negativo que tenia la version anterior. */
   const enLaCarpeta = useEnLaCarpeta(data?.workdir)
 
+  /* Con `vi` abierto, lo que se manda a la terminal no se ejecuta: se teclea
+     dentro del archivo, y en modo normal `c`, `d` y `~` son ordenes de edicion
+     que lo estropean. Asi que el boton se apaga mientras dure. */
+  const aPantallaCompleta = useProgramaAPantallaCompleta()
+
   const goToWorkdir = () => {
-    if (!data?.workdir) return
+    if (!data?.workdir || aPantallaCompleta) return
     sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
   }
 
@@ -162,7 +167,7 @@ export function ActivityPanel({
               que va como boton; rehacer los archivos se hace una vez y borra
               trabajo, asi que va como icono y pregunta antes. */}
           {data?.workdir && (
-            <ActionButton tone="neutral" onClick={goToWorkdir}>
+            <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
               <FolderOpen className="h-4 w-4" />
               Ir a la carpeta
             </ActionButton>
@@ -173,16 +178,23 @@ export function ActivityPanel({
               label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
               icon={resetting ? Loader2 : RotateCcw}
               onClick={() => setConfirmando(true)}
-              disabled={resetting || loading}
+              disabled={resetting || loading || aPantallaCompleta}
             />
           )}
         </div>
 
         {/* Un boton gris sin explicacion es peor que uno que no esta. */}
-        {!enLaCarpeta && !loading && (
+        {aPantallaCompleta ? (
           <p className="text-xs text-muted-foreground">
-            Entra en la carpeta de la actividad para poder comprobarla.
+            Cierra el editor en la terminal para volver a usar estos botones.
           </p>
+        ) : (
+          !enLaCarpeta &&
+          !loading && (
+            <p className="text-xs text-muted-foreground">
+              Entra en la carpeta de la actividad para poder comprobarla.
+            </p>
+          )
         )}
       </footer>
 

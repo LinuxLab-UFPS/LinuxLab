@@ -1,7 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { alCambiarDirectorio, directorioActual } from "@shared/lib/terminal-session"
+import {
+  alCambiarDirectorio,
+  alCambiarPantallaAlterna,
+  directorioActual,
+  pantallaAlterna,
+} from "@shared/lib/terminal-session"
 
 /**
  * Donde esta parada la shell del estudiante, segun ella misma.
@@ -20,6 +25,23 @@ export function useCwd(): string | null {
     }
   }, [])
   return ruta
+}
+
+/**
+ * Si hay un programa de pantalla completa abierto, como `vi` o `top`.
+ *
+ * Mientras lo haya no se le puede escribir a la terminal desde fuera: lo que se
+ * mande no se ejecuta, se teclea dentro del programa.
+ */
+export function useProgramaAPantallaCompleta(): boolean {
+  const [activa, setActiva] = useState<boolean>(() => pantallaAlterna())
+  useEffect(() => {
+    const baja = alCambiarPantallaAlterna(setActiva)
+    return () => {
+      baja()
+    }
+  }, [])
+  return activa
 }
 
 /**
