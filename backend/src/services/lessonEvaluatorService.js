@@ -135,7 +135,15 @@ async function evaluate({ slug, studentUserId }) {
   })
 
   const score = results.reduce((total, r) => total + (r.passed ? r.points : 0), 0)
-  const passed = score >= 60
+
+  /* Una comprobacion de leccion o esta hecha o no lo esta: exige las cuatro
+     condiciones. Con el 60 de las actividades, unos puntos 34/33/33 dejaban
+     pasar dos de tres, asi que la tarjeta decia "Completada" con una condicion
+     en rojo y el tema se daba por cerrado sin cumplirlo entero.
+
+     Las actividades se quedan en el 60 porque ahi si hay nota parcial: valen
+     para la bitacora y un 90 no puede ser un cero. */
+  const passed = activity.kind === "check" ? results.every((r) => r.passed) : score >= 60
 
   const submission = await attemptService.recordTopicAttempt({
     studentId: studentUserId,

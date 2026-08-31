@@ -151,7 +151,10 @@ export interface TopicLessons {
   titles: Record<string, string>
 }
 
-const EJERCICIO_DIRECTIVE = /<!--\s*EJERCICIO\s*:\s*([a-z0-9-]+)\s*-->/i
+/* El `| snippet` opcional tiene que caber aqui tambien, no solo en el
+   renderizador (ver DIRECTIVE_RE en lesson-blocks.ts). Sin el, la leccion que lo
+   usa se queda sin comprobacion registrada y se marca hecha con solo leerla. */
+const EJERCICIO_DIRECTIVE = /<!--\s*EJERCICIO\s*:\s*([a-z0-9-]+)\s*(?:\|[^>]*?)?-->/i
 
 /**
  * The lessons of each topic and which of them carry a check.
