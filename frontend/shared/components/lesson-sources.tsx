@@ -16,7 +16,9 @@ export function LessonSources({ content }: { content: string }) {
         <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-open:rotate-90" />
         Fuentes
       </summary>
-      <div className="mt-2 pl-6 [&_ul]:my-2 [&_li]:text-xs [&_p]:text-xs">
+      {/* Sin `pl-6` aqui: la lista de dentro ya trae el suyo, y los dos juntos
+          robaban 48px de ancho a las URLs, que son lo mas largo de la pagina. */}
+      <div className="mt-2 [&_ul]:my-2 [&_li]:text-xs [&_p]:text-xs">
         <Markdown>{content}</Markdown>
       </div>
     </details>

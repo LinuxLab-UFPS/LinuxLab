@@ -53,8 +53,12 @@ const LINE = "bg-muted-foreground/50"
  */
 export function FilesystemHierarchy() {
   return (
-    <div className="my-8 px-2 py-6">
-      <div className="flex flex-col items-center">
+    /* Las cinco columnas suman mas que un telefono y su barra superior se
+       posiciona en porcentajes de la rejilla, asi que no puede pasar a menos
+       columnas sin romper el dibujo. Se le da su propio scroll horizontal con
+       un ancho minimo, y la pagina deja de moverse de lado. */
+    <div className="no-scrollbar my-8 overflow-x-auto px-2 py-6">
+      <div className="flex min-w-[30rem] flex-col items-center">
         <Box name="/" className="border-primary text-primary" />
         <p className="mt-1.5 text-xs text-muted-foreground">raíz del sistema</p>
 

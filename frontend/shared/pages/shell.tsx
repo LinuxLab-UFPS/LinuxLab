@@ -27,7 +27,7 @@ export function Shell({ role, children }: { role: Role; children: ReactNode }) {
       ) : (
         <AdminHeader />
       )}
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
       <ProvisioningIndicator />
     </div>
   )
