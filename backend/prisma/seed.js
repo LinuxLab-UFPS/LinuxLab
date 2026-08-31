@@ -6,6 +6,10 @@ const seeds = [
   "seed-comprobacion-solo-lectura.js",
   "seed-comprobacion-ficha.js",
   "seed-comprobacion-logo.js",
+  "seed-comprobacion-permisos-informe.js",
+  "seed-comprobacion-comprimir.js",
+  "seed-comprobacion-procesos.js",
+  "seed-comprobacion-saludo.js",
   "seed-actividad-directorios.js",
   "seed-actividad-permisos-archivo.js",
   "seed-actividad-mensaje.js",
@@ -20,7 +24,6 @@ const seeds = [
   "seed-actividad-paquete-entrega.js",
   "seed-actividad-turno-de-noche.js",
   "seed-actividad-foto-sistema.js",
-  "seed-actividad-arbol-proyecto.js",
   "seed-actividades-retiradas.js",
 ]
 

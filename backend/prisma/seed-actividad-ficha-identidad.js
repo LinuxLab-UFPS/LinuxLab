@@ -3,11 +3,13 @@ const prisma = require("./client")
 const SLUG = "tu-ficha-de-identidad"
 const RAIZ = `/home/$usuario/actividades/${SLUG}`
 
+/* Hubo un tercer objetivo (`shell.txt` con el septimo campo recortado) que se
+   retiro: la unica forma limpia de sacarlo es `cut`, que no se enseña en
+   ninguna leccion del temario. */
 const CHECKS = [
-  { type: "archivo_contiene", params: { ruta: `${RAIZ}/identidad.txt`, patron: "uid=" }, points: 25, position: 0 },
-  { type: "archivo_contiene", params: { ruta: `${RAIZ}/identidad.txt`, patron: "grp_" }, points: 25, position: 1 },
-  { type: "archivo_contiene", params: { ruta: `${RAIZ}/cuenta.txt`, patron: "/bin/bash" }, points: 25, position: 2 },
-  { type: "archivo_es", params: { ruta: `${RAIZ}/shell.txt`, valor: "/bin/bash" }, points: 25, position: 3 },
+  { type: "archivo_contiene", params: { ruta: `${RAIZ}/identidad.txt`, patron: "uid=" }, points: 34, position: 0 },
+  { type: "archivo_contiene", params: { ruta: `${RAIZ}/identidad.txt`, patron: "grp_" }, points: 33, position: 1 },
+  { type: "archivo_contiene", params: { ruta: `${RAIZ}/cuenta.txt`, patron: "/bin/bash" }, points: 33, position: 2 },
 ]
 
 const TOPIC_NUMBER = 8
@@ -18,8 +20,8 @@ const DATOS = {
   kind: "activity",
   difficulty: "basic",
   instructions:
-    "Deja por escrito quién eres para el sistema: tu identidad completa, tu " +
-    "línea de /etc/passwd y, recortado de ella, el shell con el que entras.",
+    "Deja por escrito quién eres para el sistema: tu identidad completa y tu " +
+    "línea entera de la base de cuentas.",
   /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
      la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
      encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de

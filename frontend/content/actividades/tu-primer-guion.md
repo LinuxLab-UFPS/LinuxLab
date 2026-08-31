@@ -3,7 +3,7 @@ Un script no es más que un archivo con comandos dentro, que el sistema ejecuta 
 **Objetivos:**
 
 1. Crea un archivo llamado `saludo.sh` cuya primera línea declare con qué se interpreta el archivo, y que debajo escriba tu código estudiantil dentro de un archivo `salida.txt`.
-2. Dale permisos de lectura y ejecución para todos, y de escritura solo para ti.
+2. Déjalo con permisos `755`: lectura y ejecución para todos, y escritura solo para ti. Ponlos con el número, no con `+x`, porque `+x` añade la ejecución a lo que ya hubiera y el resultado depende de cómo se creara el archivo.
 3. Ejecútalo, de modo que sea el script el que cree `salida.txt`. La última línea de ese archivo tiene que ser tu código estudiantil.
 
 **Hint:**

@@ -2,8 +2,10 @@ import { Image as ImageIcon, Film } from "lucide-react"
 import { Markdown } from "@shared/components/markdown"
 import { ShellCommand } from "@shared/components/shell-command"
 import { SimulatorCard } from "@/lib/features/student/components/simulator-card"
+import { TerminalDemoButton } from "@/lib/features/student/components/terminal-demo-button"
 import { FilesystemHierarchy } from "@shared/components/filesystem-hierarchy"
 import { ExerciseCheck } from "@/lib/features/student/components/exercise-check"
+import { ExampleCheck } from "@/lib/features/student/components/example-check"
 import { LessonActivity } from "@/lib/features/student/components/lesson-activity"
 import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
 import { LESSON_ILLUSTRATIONS } from "@shared/components/lesson-illustrations"
@@ -113,8 +115,14 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
 
+          case "terminal-demo":
+            return <TerminalDemoButton key={i} />
+
           case "exercise":
-            return <ExerciseCheck key={i} slug={block.slug} />
+            return <ExerciseCheck key={i} slug={block.slug} snippet={block.snippet} />
+
+          case "example-check":
+            return <ExampleCheck key={i} />
 
           case "activity":
             return <LessonActivity key={i} slugs={block.slugs} />

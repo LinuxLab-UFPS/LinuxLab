@@ -89,11 +89,14 @@ export function EssentialCommands({ className }: { className?: string }) {
   const toggleCommand = useCallback((name: string) => {
     setPicked((prev) => {
       const current = prev ?? []
+      /* Con la hoja llena, elegir uno mas empuja al primero fuera en vez de no
+         hacer nada. Antes se devolvia la lista intacta y el clic se perdia sin
+         decir por que: parecia que la plataforma estuviera rota, sobre todo
+         cuando aun se han visto pocos comandos y no es evidente que el tope ya
+         esta alcanzado. */
       const next = current.includes(name)
         ? current.filter((n) => n !== name)
-        : current.length >= CHEAT_SHEET_SIZE
-          ? current
-          : [...current, name]
+        : [...current, name].slice(-CHEAT_SHEET_SIZE)
       write(PICK_KEY, next)
       return next
     })

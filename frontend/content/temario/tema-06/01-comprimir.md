@@ -110,6 +110,8 @@ La diferencia está en el algoritmo. `gzip` usa Lempel-Ziv, `bzip2` usa la orden
 
 La elección entre uno y otro es un intercambio: `gzip` cuando importa la rapidez, `bzip2` cuando importa el tamaño final. Existen otros compresores con el mismo esquema de uso, como `xz`, que no está instalado en este laboratorio.
 
+<!-- EJERCICIO: comprimir-el-informe -->
+
 ## Resumen
 
 | Comando | Efecto |

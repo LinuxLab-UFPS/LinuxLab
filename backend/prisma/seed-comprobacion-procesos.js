@@ -1,25 +1,29 @@
 const prisma = require("./client")
 
-const SLUG = "archivo-solo-lectura"
-const RUTA = "/home/$usuario/solo-lectura.txt"
+const SLUG = "lista-de-procesos"
+const RUTA = "/home/$usuario/procesos.txt"
 
+/* El checker solo mira el sistema de archivos, nunca procesos vivos, asi que lo
+   que se comprueba es la salida guardada. "USER" es la cabecera de `ps aux`:
+   prueba que hubo una redireccion de verdad y no un archivo escrito a mano. */
 const CHECKS = [
   { type: "archivo_existe", params: { ruta: RUTA }, points: 34, position: 0 },
-  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "2" }, points: 33, position: 1 },
-  { type: "permisos_son", params: { ruta: RUTA, modo: "444" }, points: 33, position: 2 },
+  { type: "archivo_contiene", params: { ruta: RUTA, patron: "USER" }, points: 33, position: 1 },
+  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "5" }, points: 33, position: 2 },
 ]
 
-const TOPIC_NUMBER = 5
-const SUBTOPIC_SLUG = "dueno-y-permisos"
+const TOPIC_NUMBER = 9
+const SUBTOPIC_SLUG = "ver-procesos"
 
 const DATOS = {
-  title: "Un archivo de solo lectura",
+  title: "La foto de los procesos",
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea solo-lectura.txt en tu carpeta personal con al " +
-    "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
-    "a los tres bloques, de forma que solo quede lectura para todos.",
+    "Abre la terminal y guarda en un archivo llamado procesos.txt, en tu " +
+    "carpeta personal, la lista de los procesos de todas las cuentas con su " +
+    "consumo de CPU y memoria. Usa una redirección: el archivo tiene que " +
+    "quedar con la salida del comando, cabecera incluida.",
 }
 
 async function main() {

@@ -121,6 +121,8 @@ Arriba muestra un resumen del sistema y debajo la lista de procesos, encabezada 
 
 La tecla que más falta hace es la primera. `top` toma la terminal entera y no se sale con <kbd>Ctrl</kbd> + <kbd>C</kbd> como otros comandos, se sale con `q`.
 
+<!-- EJERCICIO: lista-de-procesos -->
+
 ## Resumen
 
 | Comando | Efecto |

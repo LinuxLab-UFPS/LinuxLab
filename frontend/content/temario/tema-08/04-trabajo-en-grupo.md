@@ -102,8 +102,6 @@ drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:09 apuntes
 
 Esa `s` estaba ahí desde el principio. Y allí se dijo que en este laboratorio todos los archivos creados llevan el grupo del laboratorio sin necesidad de hacer nada. Ahora se puede decir por qué: el directorio personal tiene setgid con ese grupo, así que cada archivo nuevo lo hereda. No es magia del entorno, es este bit.
 
-## Práctica
-
 La cuenta de este laboratorio pertenece a dos grupos: el primario, que se llama igual que la cuenta, y el del curso. Eso es justo lo que hace falta, porque la herencia solo se ve cuando el directorio pertenece a un grupo **distinto** del primario. El nombre del grupo del curso lo dice `id`:
 
 ```bash

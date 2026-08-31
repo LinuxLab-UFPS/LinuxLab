@@ -123,8 +123,6 @@ Conviene saber además que el laboratorio pone un techo. Cada sesión está limi
 
 Y lo que ya se sabe del tema cinco sigue valiendo: un script no tiene más alcance que la cuenta que lo ejecuta, así que no puede tocar lo que la cuenta no puede tocar.
 
-<!-- ACTIVIDAD: el-guion-que-decide -->
-
 ## Resumen
 
 | Forma | Efecto |

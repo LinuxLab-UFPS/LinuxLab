@@ -18,9 +18,12 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Crea un archivo con tu código estudiantil como nombre y edítalo con vi: " +
-    "tu nombre en la primera línea, tres comandos aprendidos en las siguientes " +
-    "y tu correo institucional al final.",
+    "Abre la terminal y crea, en tu carpeta personal, un archivo llamado con tu " +
+    "código estudiantil y terminado en .txt. Para un código 1152186 sería " +
+    "vi 1152186.txt. Escribe cinco líneas: tu nombre en la primera, tres " +
+    "comandos que hayas aprendido en las tres siguientes, y tu correo " +
+    "institucional en la última. El recorrido es el de la lección: i para " +
+    "insertar, Esc para salir del modo inserción y :wq para guardar y cerrar.",
 }
 
 async function main() {

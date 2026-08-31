@@ -102,10 +102,6 @@ rm -r proyectos
 
 La combinación `-rf` añade `-f` (*force*), que suprime toda confirmación y no informa de errores. Es habitual en scripts, donde nadie está mirando la pantalla para responder, y es también la orden que más destrozos ha causado en la historia de Unix.
 
-## Práctica
-
-Crea en tu carpeta personal un directorio `practicas` y, dentro de él, otro llamado `tema-03`. Con `-p` salen los dos de una sola vez.
-
 <!-- EJERCICIO: crear-directorio-practicas -->
 
 ## Resumen

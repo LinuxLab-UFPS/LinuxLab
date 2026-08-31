@@ -1,25 +1,28 @@
 const prisma = require("./client")
 
-const SLUG = "archivo-solo-lectura"
-const RUTA = "/home/$usuario/solo-lectura.txt"
+const SLUG = "comprimir-el-informe"
+const ORIGINAL = "/home/$usuario/notas.txt"
+const COMPRIMIDO = "/home/$usuario/notas.txt.gz"
 
+/* Un .gz no se puede leer con archivo_contiene (el checker lee texto plano), y
+   no hace falta: gzip SUSTITUYE el original, asi que comprobar que el paquete
+   esta y el original ya no es exactamente lo que enseña la leccion. */
 const CHECKS = [
-  { type: "archivo_existe", params: { ruta: RUTA }, points: 34, position: 0 },
-  { type: "minimo_lineas", params: { ruta: RUTA, cantidad: "2" }, points: 33, position: 1 },
-  { type: "permisos_son", params: { ruta: RUTA, modo: "444" }, points: 33, position: 2 },
+  { type: "archivo_existe", params: { ruta: COMPRIMIDO }, points: 50, position: 0 },
+  { type: "archivo_no_existe", params: { ruta: ORIGINAL }, points: 50, position: 1 },
 ]
 
-const TOPIC_NUMBER = 5
-const SUBTOPIC_SLUG = "dueno-y-permisos"
+const TOPIC_NUMBER = 6
+const SUBTOPIC_SLUG = "comprimir"
 
 const DATOS = {
-  title: "Un archivo de solo lectura",
+  title: "Guarda las notas comprimidas",
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea solo-lectura.txt en tu carpeta personal con al " +
-    "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
-    "a los tres bloques, de forma que solo quede lectura para todos.",
+    "Abre la terminal y crea notas.txt en tu carpeta personal con al menos una " +
+    "línea escrita. Comprímelo con gzip y deja solo el archivo comprimido: el " +
+    "original no debe quedar.",
 }
 
 async function main() {

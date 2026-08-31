@@ -89,6 +89,8 @@ Hola desde un script
 
 Es cómoda para probar mientras se escribe, pero un script terminado se deja ejecutable y se llama con `./`.
 
+<!-- EJERCICIO: saludo-ejecutable -->
+
 <!-- ACTIVIDAD: tu-primer-guion -->
 
 ## Resumen

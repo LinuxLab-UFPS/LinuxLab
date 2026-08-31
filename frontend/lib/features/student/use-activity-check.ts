@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
+import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
 import { notify } from "@shared/lib/toast"
 import { describeCheck } from "@shared/lib/describe-check"
 import type { ActivityCheckResult, LessonActivity } from "@/lib/models/activities"
@@ -62,6 +63,10 @@ export function useActivityCheck(slug: string) {
             }
           : prev,
       )
+      // Y el estado global, que es de donde sacan el verde la barra lateral, el
+      // mapa del curso y las tarjetas. Sin esto la tarjeta se ponia verde y el
+      // resto de la pagina seguia diciendo que faltaba.
+      queryClient.invalidateQueries({ queryKey: ESTADO_ACTIVIDADES_KEY })
     },
   })
 
@@ -75,6 +80,7 @@ export function useActivityCheck(slug: string) {
       queryClient.setQueryData<LessonActivity>(queryKey, (prev) =>
         prev ? { ...prev, lastAttempt: null } : prev,
       )
+      queryClient.invalidateQueries({ queryKey: ESTADO_ACTIVIDADES_KEY })
       // Reiniciar borra la carpeta y crea otra en su lugar. Una shell que
       // estuviera dentro se queda en el directorio viejo, que ya no figura en
       // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo

@@ -12,7 +12,7 @@ Escribir los permisos de los siguientes archivos, en forma simbólica, dentro de
 |---|---|
 | `desplegar.sh` | Tiene que poder ejecutarse: cualquiera lo lee y lo ejecuta, solo tú lo modificas. |
 | `leeme.txt` | Cualquiera puede leerlo, solo tú modificarlo. |
-| `config` | Nadie más entra ni ve qué contiene; tú sí trabajas dentro. |
+| `config` | Es un **directorio**: nadie más entra ni ve qué contiene; tú sí trabajas dentro. |
 
 **Hint:**
 

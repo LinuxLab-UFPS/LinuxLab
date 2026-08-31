@@ -4,6 +4,9 @@ import { GroupBody } from "@/lib/features/student/components/group-body"
 import { ContentArea } from "@/lib/features/student/components/content-area"
 import { GroupTerminal } from "@shared/components/group-terminal"
 import { syllabus, getTopicBySlug } from "@shared/lib/content/temario"
+import { bienvenida, esBienvenida, paginaBienvenida } from "@shared/lib/content/bienvenida"
+import { WelcomeArea } from "@/lib/features/student/components/welcome-area"
+import { getBienvenidaMarkdown } from "@shared/lib/content/lessons"
 import {
   getTopicContentMeta,
   getSubtopicMarkdown,
@@ -29,6 +32,40 @@ export default async function GroupPage({
 }) {
   await requireServerRole(["student", "teacher", "admin"])
   const { tema, sub } = await searchParams
+
+  /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo
+     lo que viene despues (carpeta `tema-NN`, assets, vecinos) se construye a
+     partir de ese numero. */
+  if (esBienvenida(tema)) {
+    const pagina = paginaBienvenida(sub)
+    const markdown = pagina?.file ? getBienvenidaMarkdown(pagina.file) : null
+    const blocks = markdown ? parseLessonBlocks(markdown, 0, pagina?.title) : null
+    return (
+      <LessonProgressProvider>
+        <TerminalUIProvider>
+          <LessonLoadingProvider>
+            <div className="flex h-screen flex-col overflow-hidden bg-background">
+              <div className="z-40 shrink-0 bg-background">
+                <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+              </div>
+              <main className="flex-1 overflow-auto">
+                <GroupBody>
+                  <GroupSidebar
+                    activeTopicSlug={bienvenida.slug}
+                    activeSubtopicId={pagina?.id}
+                    topicLessons={getTopicLessons()}
+                  />
+                  <WelcomeArea page={pagina} blocks={blocks} topicLessons={getTopicLessons()} />
+                  <GroupTerminal />
+                </GroupBody>
+              </main>
+            </div>
+          </LessonLoadingProvider>
+        </TerminalUIProvider>
+      </LessonProgressProvider>
+    )
+  }
+
   const topic = (tema ? getTopicBySlug(tema) : undefined) ?? syllabus[0]
 
   const meta = getTopicContentMeta(topic.number)

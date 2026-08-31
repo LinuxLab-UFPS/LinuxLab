@@ -15,7 +15,7 @@ export function CheckList({
 }) {
   return (
     <ul className={cn("space-y-2", className)}>
-      {rows.map((row) => {
+      {rows.map((row, i) => {
         const Icon = !evaluated ? CircleDashed : row.passed ? CheckCircle2 : XCircle
         return (
           <li key={row.id} className="flex items-start gap-2.5 text-sm">
@@ -31,6 +31,12 @@ export function CheckList({
             />
             <span className="min-w-0">
               <span className="block text-foreground">
+                {/* Numeradas: sin `params` dos condiciones del mismo tipo dan el
+                    mismo texto, y la lista salia repetida palabra por palabra.
+                    Los valores esperados no bajan al navegador a proposito
+                    (serian la respuesta), asi que el orden es lo que las
+                    distingue. */}
+                {rows.length > 1 ? `${i + 1}. ` : ""}
                 {describeCheckForStudent(row.type)}
               </span>
               {evaluated && row.detail && (

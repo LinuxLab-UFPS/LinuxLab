@@ -4,6 +4,7 @@ import { Loader2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { CheckList } from "@/lib/features/student/components/check-list"
+import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 
 /**
@@ -11,7 +12,7 @@ import { useActivityCheck } from "@/lib/features/student/use-activity-check"
  * through the course. It is not an activity — activities live outside the
  * syllabus and are solved next to the terminal.
  */
-export function ExerciseCheck({ slug }: { slug: string }) {
+export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: string }) {
   const { activity, rows, evaluated, passed, loading, checking, check } =
     useActivityCheck(slug)
 
@@ -33,7 +34,7 @@ export function ExerciseCheck({ slug }: { slug: string }) {
     <section className={cn("my-8 rounded-xl border transition-colors", edge)}>
       <header className={cn("flex items-center gap-2.5 border-b px-5 py-3.5", edge)}>
         <ShieldCheck className={cn("h-4 w-4", passed ? "text-success" : "text-amber-500")} />
-        <h3 className="text-sm font-semibold text-foreground">{activity.title}</h3>
+        <h3 className="text-sm font-semibold text-foreground">Comprobación: {activity.title}</h3>
         {passed && (
           <span className="ml-auto rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
             Completada
@@ -45,6 +46,11 @@ export function ExerciseCheck({ slug }: { slug: string }) {
         {activity.instructions && (
           <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
         )}
+
+        {/* El texto que reparte la comprobacion, si lo lleva. Va aqui dentro
+            porque es parte del enunciado: fuera quedaba suelto en la leccion,
+            lejos de lo que pide usarlo. */}
+        {snippet && <CopySnippet id={snippet} className="" />}
 
         <CheckList rows={rows} evaluated={evaluated} />
 

@@ -101,11 +101,52 @@ function leerCwd(texto: string) {
 }
 
 /**
+ * Si hay un programa ocupando la pantalla entera, como `vi` o `top`.
+ *
+ * Se sabe por la pantalla alternativa: al arrancar, esos programas piden el
+ * bufer de repuesto con `?1049h` y al salir lo devuelven con `?1049l`. Importa
+ * porque escribir en la terminal desde fuera (el boton de "ir a la carpeta")
+ * mientras `vi` esta abierto no ejecuta nada: teclea dentro del archivo, y en
+ * modo normal `c`, `d` y `~` son ordenes de edicion que lo estropean.
+ */
+let alterna = false
+const oyentesAlterna = new Set<(activa: boolean) => void>()
+const PANTALLA_ALTERNA = /\x1b\[\?1049([hl])/g
+
+export function pantallaAlterna(): boolean {
+  return alterna
+}
+
+/** Avisa cuando entra o sale un programa de pantalla completa. */
+export function alCambiarPantallaAlterna(oyente: (activa: boolean) => void) {
+  oyentesAlterna.add(oyente)
+  oyente(alterna)
+  return () => {
+    oyentesAlterna.delete(oyente)
+  }
+}
+
+function leerPantallaAlterna(texto: string) {
+  let ultima: boolean | null = null
+  for (const m of texto.matchAll(PANTALLA_ALTERNA)) ultima = m[1] === "h"
+  if (ultima === null || ultima === alterna) return
+  alterna = ultima
+  for (const oyente of oyentesAlterna) oyente(alterna)
+}
+
+function olvidarPantallaAlterna() {
+  if (!alterna) return
+  alterna = false
+  for (const oyente of oyentesAlterna) oyente(false)
+}
+
+/**
  * Todo lo que se pinta pasa por aqui: la salida de la PTY y los avisos de
  * conexion. Asi un emulador que se monta despues los ve tambien, en su sitio.
  */
 function emitir(texto: string) {
   leerCwd(texto)
+  leerPantallaAlterna(texto)
   historial += texto
   if (historial.length > MAX_HISTORIAL) {
     historial = historial.slice(historial.length - MAX_HISTORIAL)
@@ -149,6 +190,8 @@ function conectar() {
     // La shell de la que veniamos ya no existe: su directorio deja de valer.
     // Vuelve a "no se sabe" y no a "esta fuera", que bloquearia por error.
     olvidarCwd()
+    // Y con la sesion se fue cualquier `vi` que estuviera abierto.
+    olvidarPantallaAlterna()
 
     // Nunca llego a abrirse y quedan intentos.
     if (!abierta && intento < ESPERAS.length) {
@@ -230,6 +273,7 @@ export async function reiniciarSesion(reinicioHttp: () => Promise<void>): Promis
 
   historial = ""
   olvidarCwd()
+  olvidarPantallaAlterna()
   for (const oyente of oyentes) oyente("\x1bc")
   emitir("\x1b[90mReiniciando la terminal…\x1b[0m\r\n")
   ws.send(JSON.stringify({ type: "reset" }))

@@ -10,6 +10,8 @@ import { lessonAssetExists, lessonAssetUrl, lessonVideoExists, lessonVideoUrl } 
  *   <!-- VIDEO: id-del-video | título -->
  *   <!-- ILLUSTRATION: gui-cli -->                (ver lesson-illustrations.tsx)
  *   <!-- EJERCICIO: slug -->                      (comprobacion evaluada en el entorno)
+ *   <!-- EJERCICIO: slug | snippet -->            (la misma, con boton de copiar dentro)
+ *   <!-- EJEMPLO-COMPROBACION -->                 (una de mentira, solo la forma)
  *   <!-- ACTIVIDAD: slug -->                      (tarjeta que lleva a la terminal)
  *   <!-- COPIAR: id -->                           (boton que copia sin mostrar)
  *
@@ -40,8 +42,10 @@ export type LessonBlock =
   | { kind: "simulator"; src: string }
   | { kind: "simulator-card"; id: string }
   | { kind: "fs-tree" }
+  | { kind: "terminal-demo" }
   | { kind: "illustration"; id: string }
-  | { kind: "exercise"; slug: string }
+  | { kind: "exercise"; slug: string; snippet?: string }
+  | { kind: "example-check" }
   | { kind: "activity"; slugs: string[] }
   | { kind: "snippet"; id: string }
 
@@ -56,7 +60,7 @@ type Token =
   | { kind: "directive"; directive: Directive }
 
 const DIRECTIVE_RE =
-  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION|EJERCICIO|ACTIVIDAD|COPIAR)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
+  /<!--\s*(IMAGE-DARK|IMAGE-LIGHT|IMAGE|VIDEO|SIMULATOR|FS-TREE|ILLUSTRATION|EJEMPLO-COMPROBACION|EJERCICIO|ACTIVIDAD|COPIAR|TERMINAL-DEMO)\s*(?::\s*([^|\s][^|]*?)\s*(?:\|\s*(.*?)\s*)?)?-->/g
 
 const FENCE_RE = /```([a-zA-Z0-9]*)[ \t]*\r?\n([\s\S]*?)```/g
 
@@ -274,8 +278,23 @@ export function parseLessonBlocks(
       continue
     }
 
+    // El boton de la terminal incrustado en el texto (solo la guia).
+    if (type === "TERMINAL-DEMO") {
+      blocks.push({ kind: "terminal-demo" })
+      continue
+    }
+
+    // Una comprobacion de mentira, solo para enseñar la forma (ver la guia).
+    if (type === "EJEMPLO-COMPROBACION") {
+      blocks.push({ kind: "example-check" })
+      continue
+    }
+
+    // El `label` es el snippet que la comprobacion reparte, si lo lleva:
+    // `<!-- EJERCICIO: slug | snippet -->`. Va dentro de la tarjeta, no suelto
+    // en la leccion, porque el boton es parte del enunciado.
     if (type === "EJERCICIO") {
-      blocks.push({ kind: "exercise", slug: value })
+      blocks.push({ kind: "exercise", slug: value, snippet: label || undefined })
       continue
     }
 

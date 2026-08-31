@@ -188,21 +188,7 @@ ls existe noexiste > todo.txt 2>&1
 
 El orden importa. `2>&1` significa "manda el canal 2 adonde ya va el 1", así que tiene que ir después de haber decidido adónde va el 1.
 
-## Práctica
-
-Guarda en `logo.txt`, dentro de tu carpeta personal, el texto que copia este botón.
-
-<!-- COPIAR: logo-ufps -->
-
-Con `cat` y una redirección son dos pasos:
-
-```bash
-cat > logo.txt
-```
-
-Sin archivo como argumento, `cat` lee lo que le escriban y `>` manda eso a `logo.txt`, así que la terminal se queda esperando. Pega con <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>V</kbd>, pulsa <kbd>Enter</kbd> para cerrar la última línea y termina con <kbd>Ctrl</kbd> + <kbd>D</kbd>.
-
-<!-- EJERCICIO: logo-ufps -->
+<!-- EJERCICIO: logo-ufps | logo-ufps -->
 
 <!-- ACTIVIDAD: mensaje-oculto -->
 

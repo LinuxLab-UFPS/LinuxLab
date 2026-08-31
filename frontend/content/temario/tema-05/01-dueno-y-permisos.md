@@ -128,8 +128,6 @@ stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
 
 Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido de los dos temas siguientes.
 
-## Práctica
-
 Crea en tu carpeta personal un archivo `solo-lectura.txt` con al menos dos líneas y déjalo sin permiso de escritura para nadie. Los permisos se entienden mejor estorbando.
 
 Se escribe con `vi`, igual que en el tema anterior:

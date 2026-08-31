@@ -2,9 +2,10 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Circle, Home } from "lucide-react"
+import { CheckCircle2, ChevronRight, Circle, Hand, Home, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { syllabus } from "@shared/lib/content/temario"
+import { bienvenida } from "@shared/lib/content/bienvenida"
 import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
 import type { LessonSubtopic } from "@/lib/models/content"
@@ -60,9 +61,65 @@ export function GroupSidebar({
           </h2>
         </div>
 
+        {/* El progreso, arriba del todo: es lo primero que se quiere saber al
+            abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
+        <LessonLink
+          href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
+          className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
+        >
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Tu progreso</span>
+            <span className="font-mono tabular-nums text-foreground">
+              {doneCount}/{syllabus.length}
+            </span>
+          </div>
+          <NeonProgress value={overallPct} className="h-1" />
+        </LessonLink>
+
         {/* Module list */}
         <nav className="no-scrollbar min-h-0 overflow-y-auto p-2">
           <ul className="space-y-0.5">
+            {/* La bienvenida va aparte y sin numero: es lo que hay antes de
+                empezar, no el tema 1. Sus paginas no puntuan. */}
+            {bienvenida.pages.map((pagina) => {
+              const activa =
+                activeTopicSlug === bienvenida.slug && activeSubtopicId === pagina.id
+              return (
+                <li key={pagina.id}>
+                  <Link
+                    href={`/curso?tema=${bienvenida.slug}&sub=${pagina.id}`}
+                    className={cn(
+                      "flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+                      activa ? "bg-primary/10" : "hover:bg-secondary",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                        activa ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+                      )}
+                    >
+                      {pagina.kind === "roadmap" ? (
+                        <Map className="h-3.5 w-3.5" />
+                      ) : (
+                        <Hand className="h-3.5 w-3.5" />
+                      )}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex-1 truncate text-sm",
+                        activa ? "font-medium text-foreground" : "text-foreground",
+                      )}
+                    >
+                      {pagina.title}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+
+            <li aria-hidden className="my-1.5 border-t border-border" />
+
             {syllabus.map((topic) => {
               const isActive = topic.slug === activeTopicSlug
               const done = isTopicDone(topic.number)
@@ -153,16 +210,6 @@ export function GroupSidebar({
           </ul>
         </nav>
 
-        {/* Overall progress */}
-        <div className="shrink-0 border-t border-border px-4 py-3">
-          <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Tu progreso</span>
-            <span className="font-mono tabular-nums text-foreground">
-              {doneCount}/{syllabus.length}
-            </span>
-          </div>
-          <NeonProgress value={overallPct} className="h-1" />
-        </div>
       </div>
     </aside>
   )
