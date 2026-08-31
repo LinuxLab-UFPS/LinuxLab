@@ -61,9 +61,10 @@ que dejar hecho, y **Comprobar** revisa tu carpeta y marca cada condición.
 Se puede reintentar cuantas veces haga falta. Cuando algo no está, el mensaje
 dice qué falta, no cuál era la respuesta.
 
-Esta es una, para probar. Abre la terminal con el botón de arriba y resuélvela:
+Así se ven. **Esto es un ejemplo**: no evalúa nada, solo enseña la forma. La
+primera de verdad aparece en el tema 3.
 
-<!-- EJERCICIO: primer-paso -->
+<!-- EJEMPLO-COMPROBACION -->
 
 ## Las actividades
 

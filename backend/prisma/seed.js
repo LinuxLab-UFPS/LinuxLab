@@ -3,7 +3,6 @@ const path = require("path")
 
 const seeds = [
   "seed-temario.js",
-  "seed-comprobacion-primer-paso.js",
   "seed-comprobacion-solo-lectura.js",
   "seed-comprobacion-ficha.js",
   "seed-comprobacion-logo.js",
@@ -25,7 +24,6 @@ const seeds = [
   "seed-actividad-paquete-entrega.js",
   "seed-actividad-turno-de-noche.js",
   "seed-actividad-foto-sistema.js",
-  "seed-actividad-arbol-proyecto.js",
   "seed-actividades-retiradas.js",
 ]
 
