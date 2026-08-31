@@ -144,7 +144,7 @@ function GroupDetailContent() {
   }
 
   return (
-    <div data-section="cursos" className="mx-auto max-w-6xl px-6 py-8">
+    <div data-section="cursos" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <ActionButton tone="neutral" href="/inicio">
         <ArrowLeft className="h-4 w-4" />
         Volver

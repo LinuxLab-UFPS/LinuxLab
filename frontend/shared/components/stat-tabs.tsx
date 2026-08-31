@@ -2,7 +2,7 @@
 
 import { cn } from "@shared/lib/utils"
 
-export type StatTabTone = "primary" | "amber" | "violet" | "sky" | "emerald" | "neutral"
+export type StatTabTone = "primary" | "amber" | "sky" | "emerald" | "neutral"
 
 export interface StatTabItem {
   value: string
@@ -19,7 +19,6 @@ export interface StatTabItem {
 const SOLID: Record<StatTabTone, string> = {
   primary: "bg-primary text-primary-foreground",
   amber: "bg-amber-500 text-amber-950",
-  violet: "bg-violet-500 text-white",
   sky: "bg-sky-500 text-white",
   emerald: "bg-emerald-500 text-emerald-950",
   neutral: "bg-foreground/25 text-foreground",
@@ -36,11 +35,6 @@ const CARD: Record<StatTabTone, { card: string; box: string; value: string }> = 
     card: "border-amber-500/60 bg-amber-500/10",
     box: "bg-amber-500/20 text-amber-500",
     value: "text-amber-500",
-  },
-  violet: {
-    card: "border-violet-500/60 bg-violet-500/10",
-    box: "bg-violet-500/20 text-violet-400",
-    value: "text-violet-400",
   },
   sky: {
     card: "border-sky-500/60 bg-sky-500/10",
@@ -151,10 +145,14 @@ export function StatTabs({
   return (
     // Un solo riel para todas: al cambiar de pestaña el bloque de color se
     // recoge de un lado y se abre del otro, asi que se lee como si se moviera.
+    //
+    // `max-w-full` y el scroll propio son para el telefono: las cuatro etiquetas
+    // del grupo no caben, y sin esto se salian de la pantalla en vez de poder
+    // deslizarse.
     <div
       role="tablist"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-xl bg-foreground/[0.08] p-1.5",
+        "no-scrollbar inline-flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl bg-foreground/[0.08] p-1.5",
         className,
       )}
     >
@@ -169,7 +167,9 @@ export function StatTabs({
             aria-selected={active}
             onClick={() => onChange?.(tab.value)}
             className={cn(
-              "flex h-10 items-center rounded-lg text-sm font-medium transition-all duration-300 ease-out",
+              // `shrink-0` para que en un riel estrecho se deslicen en vez de
+              // apretarse unas contra otras hasta cortar sus nombres.
+              "flex h-10 shrink-0 items-center rounded-lg text-sm font-medium transition-all duration-300 ease-out",
               active
                 ? cn("pl-2 pr-3.5", SOLID[tab.tone ?? "primary"])
                 : "px-3 text-muted-foreground hover:text-foreground",

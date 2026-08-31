@@ -103,7 +103,10 @@ export function GroupsTable() {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
+      {/* En movil cada cosa en su linea. Antes iban las tres en fila con
+          `flex-wrap`: el control segmentado no encoge y el boton es `shrink-0`,
+          asi que el buscador se quedaba reducido a "Bu...". */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <StatTabs
           value={tab}
           onChange={(v) => {
@@ -130,7 +133,7 @@ export function GroupsTable() {
           ]}
         />
 
-        <div className="relative w-full max-w-sm flex-1">
+        <div className="relative w-full flex-1 sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar grupo por nombre..."
@@ -143,7 +146,7 @@ export function GroupsTable() {
           />
         </div>
 
-        <ActionButton tone="primary" href="/grupos/crear" className="ml-auto">
+        <ActionButton tone="primary" href="/grupos/crear" className="sm:ml-auto">
           <Plus className="h-4 w-4" />
           Crear nuevo grupo
         </ActionButton>
