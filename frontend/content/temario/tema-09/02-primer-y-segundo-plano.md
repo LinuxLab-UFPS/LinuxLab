@@ -80,7 +80,7 @@ jobs -r
 [2]+  Running                 sleep 300 &
 ```
 
-La diferencia importa al contar: `jobs` a secas incluiría el que ya terminó.
+La diferencia importa al contar: `jobs` solo incluiría el que ya terminó.
 
 ## Detener un proceso con Ctrl+Z
 
