@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@shared/lib/utils"
 
 export type StatTabTone = "primary" | "amber" | "sky" | "emerald" | "neutral"
@@ -78,6 +79,30 @@ export function StatTabs({
 }) {
   const mode = variant ?? (tabs.length === 1 ? "card" : "compact")
 
+  /* Si las pestañas no caben en su riel, el borde derecho se desvanece para que
+     se vea que hay mas. Los hooks van antes del primer `return`, que es donde
+     React los exige, aunque solo los use la variante compacta. */
+  const riel = useRef<HTMLDivElement>(null)
+  const [desborda, setDesborda] = useState(false)
+
+  useEffect(() => {
+    const el = riel.current
+    if (!el) return
+    // Hay mas a la derecha mientras no se haya llegado al final: asi el
+    // degradado se apaga al terminar de deslizar y no queda una pestaña a
+    // medio pintar cuando ya se ve entera.
+    const medir = () =>
+      setDesborda(el.scrollWidth - el.clientWidth - el.scrollLeft > 1)
+    medir()
+    const ro = new ResizeObserver(medir)
+    ro.observe(el)
+    el.addEventListener("scroll", medir, { passive: true })
+    return () => {
+      ro.disconnect()
+      el.removeEventListener("scroll", medir)
+    }
+  }, [tabs.length])
+
   if (mode === "card") {
     return (
       <div role="tablist" className={cn("flex flex-wrap items-end gap-3", className)}>
@@ -150,9 +175,11 @@ export function StatTabs({
     // del grupo no caben, y sin esto se salian de la pantalla en vez de poder
     // deslizarse.
     <div
+      ref={riel}
       role="tablist"
       className={cn(
-        "no-scrollbar inline-flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl bg-foreground/[0.08] p-1.5",
+        "no-scrollbar inline-flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl bg-foreground/[0.06] p-1.5",
+        desborda && "riel-pestanas-corta",
         className,
       )}
     >

@@ -409,6 +409,19 @@
 }
 
 /* Hidden scrollbar (content still scrolls) */
+/* El riel de pestañas cuando no caben todas.
+ *
+ * El degradado del borde derecho dice que hay mas: sin el, el riel se corta a
+ * ras y no hay forma de saber que faltan pestañas. Va con `mask-image` y no con
+ * un elemento encima para que no tape los clics.
+ *
+ * Se aplica solo cuando el contenido no cabe: `scroll-timeline` no tiene
+ * soporte suficiente, asi que la pista la pone el componente por JS cuando
+ * detecta desbordamiento (ver `stat-tabs.tsx`). */
+.riel-pestanas-corta {
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+
 .no-scrollbar {
   scrollbar-width: none;
 }

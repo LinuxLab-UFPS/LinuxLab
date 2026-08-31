@@ -40,7 +40,11 @@ export function ActionButton({
   children: React.ReactNode
 }) {
   const style = cn(
-    "inline-flex shrink-0 items-center gap-2 rounded-md border font-medium transition-colors disabled:opacity-60",
+    // `justify-center` no cambia nada cuando el boton se ajusta a su contenido,
+    // que es lo normal; solo importa cuando algo lo estira (una columna en
+    // movil), y ahi evita que el icono y el texto se queden pegados a la
+    // izquierda con todo el hueco a la derecha.
+    "inline-flex shrink-0 items-center justify-center gap-2 rounded-md border font-medium transition-colors disabled:opacity-60",
     size === "md"
       ? "px-3.5 py-2 text-sm"
       : "px-2.5 py-1 text-xs",
