@@ -113,22 +113,13 @@ const RAW = [
     checks: 2,
   },
   {
-    slug: "el-arbol-del-proyecto",
-    title: "El árbol del proyecto",
-    description:
-      "Qué configuraciones hay, cuánto ocupan las bitácoras y qué servicio falla más.",
-    difficulty: "intermediate" as Difficulty,
-    topicNumber: 7,
-    checks: 4,
-  },
-  {
     slug: "tu-ficha-de-identidad",
     title: "Tu ficha de identidad",
     description:
-      "Deja por escrito quién eres para el sistema, de qué archivo sale y con qué shell entras.",
+      "Deja por escrito quién eres para el sistema y de qué archivo sale.",
     difficulty: "basic" as Difficulty,
     topicNumber: 8,
-    checks: 4,
+    checks: 3,
   },
   {
     slug: "la-carpeta-del-equipo",

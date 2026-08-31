@@ -135,8 +135,6 @@ La opción `-o` de `grep` imprime cada coincidencia en su propia línea, en luga
 
 <!-- SIMULATOR: despliegue-del-viernes -->
 
-<!-- ACTIVIDAD: el-arbol-del-proyecto -->
-
 ## Resumen
 
 | Comando | Efecto |

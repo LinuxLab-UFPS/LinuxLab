@@ -18,6 +18,10 @@ const RETIRADAS = [
   "cerrar-el-proyecto",
   "limpieza-con-comodines",
   "rastro-en-los-registros",
+  // Pedia `cut`, que no se enseña en ninguna parte del temario.
+  "el-arbol-del-proyecto",
+  // La comprobacion de la guia: ahora es un ejemplo pintado, sin nada detras.
+  "primer-paso",
 ]
 
 async function main() {
