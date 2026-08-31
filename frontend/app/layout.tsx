@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Onest, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@shared/components/theme-provider'
@@ -11,6 +11,18 @@ import './globals.css'
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
 const onest = Onest({ subsets: ["latin"], variable: "--font-onest", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+
+/* Sin esto el telefono simula una pantalla ancha y encoge la pagina entera, que
+   es justo lo contrario de lo que hacen las vistas de movil. `width=device-width`
+   le dice que use su ancho real.
+
+   Ojo: no impide el "solicitar sitio de escritorio" del navegador, que reporta
+   un ancho falso de ~1024px. Eso es del navegador y ninguna pagina lo puede
+   desactivar. */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+}
 
 export const metadata: Metadata = {
   title: 'LinuxLab UFPS - Plataforma de Aprendizaje',
