@@ -69,7 +69,7 @@ primera de verdad aparece en el tema 3.
 ## Las actividades
 
 Las actividades son trabajo aparte de las comprobaciones. Se encuentran fuera de las
-lecciones, tienen su propia carpeta y **cuentan para la nota**. Están en la
+lecciones, tienen su propia carpeta y **cuentan para la nota final**. Están en la
 pestaña **Actividades** y también al final del tema al que pertenecen.
 
 Cada una se abre junto a la terminal, con el enunciado a un lado. Debajo hay tres
@@ -79,6 +79,8 @@ botones:
   carpeta de la actividad.
 - **Ir a la carpeta** lleva a la ubicacion de la actividad con un `cd`.
 - El icono de recargar rehace los archivos de la actividad y los deja como al principio.
+
+P.d puedes revisar tu progeso en Mi Grupo/Mis Calificaciones
 
 <!-- IMAGE: actividades.png | Una actividad abierta junto a la terminal, con el enunciado a un lado -->
 
