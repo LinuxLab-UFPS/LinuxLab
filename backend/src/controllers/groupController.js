@@ -3,6 +3,7 @@ const enrollmentService = require("../services/enrollmentService")
 const reconcileService = require("../services/reconcileService")
 const gradebookService = require("../services/gradebookService")
 const groupProgressService = require("../services/groupProgressService")
+const finalizationService = require("../services/finalizationService")
 const accessService = require("../services/accessService")
 const asyncHandler = require("../utils/asyncHandler")
 
@@ -154,6 +155,16 @@ const getGroupProgress = asyncHandler(async (req, res) => {
   )
 })
 
+const finalizePreview = asyncHandler(async (req, res) => {
+  res.json(
+    await finalizationService.finalizationSummary({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
 module.exports = {
   createGroup,
   listGroups,
@@ -170,4 +181,5 @@ module.exports = {
   getGradebook,
   getStudentPerformance,
   getGroupProgress,
+  finalizePreview,
 }
