@@ -192,6 +192,8 @@ function conectar() {
     olvidarCwd()
     // Y con la sesion se fue cualquier `vi` que estuviera abierto.
     olvidarPantallaAlterna()
+    // Lo tecleado que no llego a salir era para esa shell, no para la siguiente.
+    olvidarEntrada()
 
     // Nunca llego a abrirse y quedan intentos.
     if (!abierta && intento < ESPERAS.length) {
@@ -240,9 +242,54 @@ export function historialSesion(): string {
   return historial
 }
 
-export function enviarEntrada(data: string): void {
+/**
+ * Lo tecleado que aun no ha salido, y el temporizador que lo sacara.
+ *
+ * El gateway corta la sesion a los 30 mensajes por segundo, y antes se mandaba
+ * uno por pulsacion: dejar pulsada una tecla basta para tirar la terminal,
+ * porque el autorepeat del sistema va a 30-40 por segundo. Arreglar un error
+ * dejando pulsado el borrado era justo ese caso.
+ *
+ * Se junta lo tecleado en ventanas de 50ms, con lo que salen como mucho 20
+ * mensajes por segundo, holgado por debajo del limite. Y 50ms no se notan al
+ * escribir: el eco tarda mas en volver del contenedor que eso.
+ *
+ * Agrupar por frame (`requestAnimationFrame`) no vale: a 60fps el techo son 60
+ * mensajes por segundo, el doble del limite.
+ */
+const MS_AGRUPADO = 50
+let porEnviar = ""
+let temporizadorEnvio: ReturnType<typeof setTimeout> | null = null
+
+function vaciarEntrada(): void {
+  temporizadorEnvio = null
+  if (!porEnviar) return
+  const data = porEnviar
+  porEnviar = ""
   if (ws && ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify({ type: "input", data }))
+  }
+  /* La ventana se vuelve a abrir tras enviar, no al llegar la tecla siguiente:
+     si se reiniciara con cada pulsacion, el autorepeat —que llega mas rapido de
+     lo que dura la ventana— la estaria reabriendo siempre y saldria un mensaje
+     por tecla, que es justo lo que se queria evitar. */
+  temporizadorEnvio = setTimeout(vaciarEntrada, MS_AGRUPADO)
+}
+
+export function enviarEntrada(data: string): void {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return
+  porEnviar += data
+  // Sin ventana abierta, la tecla sale ya: escribir suelto no arrastra retraso.
+  // Con una abierta, se acumula y sale cuando venza.
+  if (temporizadorEnvio === null) vaciarEntrada()
+}
+
+/** Lo que estuviera esperando deja de tener sentido: es de otra sesion. */
+function olvidarEntrada(): void {
+  porEnviar = ""
+  if (temporizadorEnvio !== null) {
+    clearTimeout(temporizadorEnvio)
+    temporizadorEnvio = null
   }
 }
 
