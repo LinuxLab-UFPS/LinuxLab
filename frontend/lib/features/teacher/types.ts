@@ -35,6 +35,12 @@ export type {
   StudentPerformance,
   StudentProgress,
   TopicProgress,
+  FinalizeStudentRow,
+  FinalizePreview,
+  FinalizeResponse,
+  CertificateItem,
+  InstructorCertificateItem,
+  GroupCertificates,
 } from "@/lib/models/groups"
 export type {
   ProvisioningJobSummary,

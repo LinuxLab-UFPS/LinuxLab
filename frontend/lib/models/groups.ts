@@ -6,7 +6,7 @@ export interface Group {
   name: string
   description: string
   createdAt: string
-  status: "active" | "archived"
+  status: "active" | "finished" | "archived"
   enabledTopics: number[]
   studentCount: number
   activityCount: number
@@ -15,6 +15,82 @@ export interface Group {
   inviteToken?: string | null
   activeNow: number
   averageScore: number | null
+}
+
+/* ---------------------------------------------------------------- *
+ * Finalización del curso y certificados
+ * ---------------------------------------------------------------- */
+
+/** Fila de un estudiante en la vista previa de finalización. */
+export interface FinalizeStudentRow {
+  enrollmentId: string
+  studentId: string
+  name: string
+  email: string
+  code: string | null
+  topicsCompleted: number
+  topicsTotal: number
+  /** Porcentaje de temas completados. */
+  progress: number
+  /** Promedio de los últimos intentos, 0-100; null cuando no hay actividades. */
+  definitive: number | null
+  /** La regla decidió: 12/12 temas y definitiva >= 60. */
+  eligible: boolean
+  /** Por qué no es elegible, para mostrarlo en la tabla. */
+  motivo: string | null
+  /** Revisiones manuales pendientes de calificar. */
+  pendingManual: string[]
+}
+
+export interface FinalizePreview {
+  group: { id: string; name: string; status: Group["status"] }
+  students: FinalizeStudentRow[]
+  summary: { eligibleCount: number; total: number }
+}
+
+export interface FinalizeResponse {
+  group: Group
+  summary: {
+    certificatesIssued: number
+    eligibleCount: number
+    total: number
+    instructorCode: string
+  }
+}
+
+/** Certificado de un estudiante; los datos vienen congelados al emitirse. */
+export interface CertificateItem {
+  id: string
+  code: string
+  studentId: string | null
+  holderName: string
+  holderCode: string | null
+  groupName: string
+  groupNumber: number
+  teacherName: string
+  courseStartedAt: string
+  topicsCompleted: number
+  topicsTotal: number
+  definitive: number
+  issuedAt: string
+}
+
+/** Certificado de instructor: uno por grupo, con el resultado del curso. */
+export interface InstructorCertificateItem {
+  id: string
+  code: string
+  holderName: string
+  groupName: string
+  groupNumber: number
+  courseStartedAt: string
+  studentsCertified: number
+  studentsTotal: number
+  issuedAt: string
+}
+
+export interface GroupCertificates {
+  certificates: CertificateItem[]
+  instructorCertificate: InstructorCertificateItem | null
 }
 
 export interface Enrollment {
