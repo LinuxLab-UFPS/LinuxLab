@@ -43,7 +43,7 @@ async function computeGroupSummary(group, tx = prisma) {
     tx.topicActivity.findMany({ where: { kind: "activity" }, select: { id: true } }),
     tx.enrollment.findMany({
       where: { group_id: groupId },
-      include: { student: { select: { code: true, user: { select: { id: true, name: true } } } } },
+      include: { student: { select: { code: true, user: { select: { id: true, name: true, email: true } } } } },
       orderBy: { created_at: "asc" },
     }),
     tx.groupActivity.findMany({
@@ -135,6 +135,7 @@ async function computeGroupSummary(group, tx = prisma) {
       enrollmentId: enrollment.id,
       studentId: enrollment.student.user.id,
       name: enrollment.student.user.name,
+      email: enrollment.student.user.email,
       code: enrollment.student.code ?? null,
       topicsCompleted,
       topicsTotal,

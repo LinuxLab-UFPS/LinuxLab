@@ -19,6 +19,7 @@ const ACTION_LABELS = {
   teacher_registered: "Docente registrado",
   teacher_toggled: "Estado de docente",
   group_created: "Curso creado",
+  group_finished: "Curso finalizado",
   group_archived: "Curso archivado",
   group_deleted: "Curso eliminado",
   student_registered: "Matrícula de estudiante",

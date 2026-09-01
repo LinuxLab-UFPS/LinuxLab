@@ -14,6 +14,7 @@ router.get("/", groupController.listGroups)
 router.get("/provisioning/status", groupController.teacherProvisioningStatus)
 router.get("/:id", groupController.getGroup)
 router.patch("/:id/archive", groupController.archiveGroup)
+router.post("/:id/finalize", groupController.finalizeGroup)
 router.post("/:id/invite/rotate", groupController.rotateInvite)
 router.delete("/:id", groupController.deleteGroup)
 

@@ -46,6 +46,15 @@ const archiveGroup = asyncHandler(async (req, res) => {
   res.json(group)
 })
 
+const finalizeGroup = asyncHandler(async (req, res) => {
+  const outcome = await groupService.finalizeGroup({
+    groupId: req.params.id,
+    role: req.user.role,
+    teacherUserId: req.user.id,
+  })
+  res.json(outcome)
+})
+
 const rotateInvite = asyncHandler(async (req, res) => {
   res.json(
     await groupService.rotateInvite({
@@ -203,6 +212,7 @@ module.exports = {
   getStudentPerformance,
   getGroupProgress,
   finalizePreview,
+  finalizeGroup,
   listCertificates,
   actaPdf,
 }
