@@ -1,8 +1,10 @@
 const crypto = require("crypto")
 const prisma = require("../../prisma/client")
 const config = require("../config/env")
+const logger = require("../lib/logger")
 const { NotFoundError } = require("../lib/errors")
 const accessService = require("./accessService")
+const emailService = require("./emailService")
 const { computeGroupSummary } = require("./finalizationService")
 const {
   renderStudentCertificate,
@@ -177,18 +179,13 @@ async function pdfByCode(code) {
  * Acta del grupo. Tras finalizar los datos academicos quedan congelados (no
  * hay mas intentos), asi que recalcular el summary reproduce las cifras que
  * fundaron la emision; los certificados aportan nombre/codigo congelados.
+ * No verifica acceso: la usa el endpoint del docente y el job de correo.
  */
-async function actaPdf({ groupId, teacherUserId, role }) {
-  const owned = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    include: { teacher: { select: { user: { select: { name: true } } } } },
-  })
-
+async function buildActa(group) {
   const [summary, certificates, instructorCertificate] = await Promise.all([
     computeGroupSummary(group),
-    prisma.certificate.findMany({ where: { enrollment: { group_id: groupId } } }),
-    prisma.instructorCertificate.findUnique({ where: { group_id: groupId } }),
+    prisma.certificate.findMany({ where: { enrollment: { group_id: group.id } } }),
+    prisma.instructorCertificate.findUnique({ where: { group_id: group.id } }),
   ])
   const byEnrollment = new Map(certificates.map((c) => [c.enrollment_id, c]))
 
@@ -212,7 +209,95 @@ async function actaPdf({ groupId, teacherUserId, role }) {
     finishedAt: instructorCertificate?.issued_at ?? group.updated_at,
     rows,
   })
+  return { buffer, instructorCertificate }
+}
+
+async function actaPdf({ groupId, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
+    include: { teacher: { select: { user: { select: { name: true } } } } },
+  })
+  const { buffer } = await buildActa(group)
   return { buffer, filename: `acta-${group.name.replace(/[^\w-]+/g, "-")}.pdf` }
 }
 
-module.exports = { issueForGroup, listByGroup, listMine, resolveByCode, pdfByCode, actaPdf }
+/**
+ * Entrega por correo de un job certificate_email. Dos formas de payload:
+ *   { kind: "student", code, email }  -> certificado del estudiante adjunto
+ *   { kind: "teacher", groupId }      -> acta + certificado de instructor
+ * El PDF se genera al vuelo desde las columnas congeladas: el correo puede
+ * reintentarse sin que el documento cambie.
+ */
+async function deliverJob(payload) {
+  if (payload?.kind === "student") {
+    const resolved = await resolveByCode(payload.code)
+    if (resolved.role !== "student") {
+      throw new NotFoundError("El código no corresponde a un certificado de estudiante")
+    }
+    const data = withVerificationUrl(resolved.certificate)
+    const buffer = await renderStudentCertificate(data)
+    const { subject, html, text } = emailService.renderStudentCertificateEmail({
+      holderName: data.holderName,
+      groupName: data.groupName,
+      verificationUrl: data.verificationUrl,
+      loginUrl: `${config.frontendUrl}/login`,
+    })
+    await emailService.sendMail({
+      to: payload.email,
+      subject,
+      html,
+      text,
+      category: "certificate",
+      attachments: [{ filename: `certificado-${data.code}.pdf`, content: buffer }],
+    })
+    return
+  }
+
+  if (payload?.kind === "teacher") {
+    const group = await prisma.group.findUnique({
+      where: { id: payload.groupId },
+      include: { teacher: { include: { user: { select: { id: true, email: true, name: true } } } } },
+    })
+    if (!group) throw new NotFoundError("Grupo no encontrado para el acta")
+    const { buffer: actaBuffer, instructorCertificate } = await buildActa(group)
+    const instructorData = instructorCertificate
+      ? withVerificationUrl(serializeInstructorCertificate(instructorCertificate))
+      : null
+    const instructorBuffer = instructorData
+      ? await renderInstructorCertificate(instructorData)
+      : null
+    const { subject, html, text } = emailService.renderTeacherFinalizationEmail({
+      teacherName: group.teacher.user.name,
+      groupName: group.name,
+      studentsCertified: instructorCertificate?.students_certified ?? 0,
+      studentsTotal: instructorCertificate?.students_total ?? 0,
+      verificationUrl: instructorData?.verificationUrl ?? `${config.frontendUrl}`,
+    })
+    const attachments = [{ filename: `acta-${group.name.replace(/[^\w-]+/g, "-")}.pdf`, content: actaBuffer }]
+    if (instructorBuffer) {
+      attachments.push({ filename: `certificado-instructor-${instructorData.code}.pdf`, content: instructorBuffer })
+    }
+    await emailService.sendMail({
+      to: group.teacher.user.email,
+      subject,
+      html,
+      text,
+      category: "certificate",
+      attachments,
+    })
+    return
+  }
+
+  throw new Error(`Payload de certificate_email no reconocido: ${JSON.stringify(payload).slice(0, 120)}`)
+}
+
+module.exports = {
+  issueForGroup,
+  listByGroup,
+  listMine,
+  resolveByCode,
+  pdfByCode,
+  actaPdf,
+  deliverJob,
+}

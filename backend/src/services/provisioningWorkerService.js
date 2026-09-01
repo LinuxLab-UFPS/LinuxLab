@@ -1,6 +1,7 @@
 const prisma = require("../../prisma/client")
 const { Prisma } = require("@prisma/client")
 const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./containerService")
+const certificateService = require("./certificateService")
 const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
@@ -11,7 +12,7 @@ const CYCLE_TIMEOUT = 90000
 let intervalHandle = null
 let isRunning = false
 
-const JOB_TYPES = ["group_provisioning", "user_provisioning", "group_teardown"]
+const JOB_TYPES = ["group_provisioning", "user_provisioning", "group_teardown", "certificate_email"]
 
 async function claimJobs(type) {
   return prisma.$queryRaw(
@@ -117,6 +118,21 @@ async function processTeardownJobs() {
   })
 }
 
+async function processCertificateJobs() {
+  const jobs = await claimJobs("certificate_email")
+
+  await runPool(jobs, async (job) => {
+    try {
+      await certificateService.deliverJob(job.payload)
+      await markCompleted(job.id)
+      logger.info({ jobId: job.id, kind: job.payload?.kind }, "Certificate email sent")
+    } catch (err) {
+      const retries = await markFailed(job, err)
+      logger.error({ err, jobId: job.id, retries }, "Certificate email failed")
+    }
+  })
+}
+
 async function processPendingJobs() {
   if (isRunning) return
   isRunning = true
@@ -128,6 +144,7 @@ async function processPendingJobs() {
     await processGroupJobs()
     await processUserJobs()
     await processTeardownJobs()
+    await processCertificateJobs()
   } catch (err) {
     logger.error({ err }, "Provisioning worker error")
   } finally {

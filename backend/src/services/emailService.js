@@ -7,6 +7,8 @@ const { renderResetPasswordEmail } = require("../templates/resetPassword")
 const { renderVerificationEmail } = require("../templates/verification")
 const { renderSetupAccountEmail } = require("../templates/setupAccount")
 const { renderStudentEnrollmentEmail } = require("../templates/studentEnrollment")
+const { renderStudentCertificateEmail } = require("../templates/studentCertificate")
+const { renderTeacherFinalizationEmail } = require("../templates/teacherFinalization")
 
 let transport = null
 
@@ -30,13 +32,13 @@ function fromAddress() {
   return { address: config.email.fromAddress, name: config.email.fromName }
 }
 
-async function sendMail({ to, subject, html, text, category }) {
+async function sendMail({ to, subject, html, text, category, attachments = [] }) {
   const t = getTransport()
-  const attachments = []
+  const allAttachments = [...attachments]
   try {
     const logoPath = path.join(__dirname, "../templates/assets/logo.png")
     if (html && html.includes("cid:logo") && fs.existsSync(logoPath)) {
-      attachments.push({ filename: "logo.png", path: logoPath, cid: "logo" })
+      allAttachments.push({ filename: "logo.png", path: logoPath, cid: "logo" })
     }
   } catch {}
   const info = await t.sendMail({
@@ -45,11 +47,20 @@ async function sendMail({ to, subject, html, text, category }) {
     subject,
     text: text || html?.replace(/<[^>]+>/g, "") || "",
     html,
-    attachments: attachments.length ? attachments : undefined,
+    attachments: allAttachments.length ? allAttachments : undefined,
     category: category || "auth",
   })
   logger.info({ to, subject, messageId: info?.messageId }, "Email enviado")
   return info
 }
 
-module.exports = { sendMail, renderResetPasswordEmail, renderVerificationEmail, renderSetupAccountEmail, renderStudentEnrollmentEmail, getTransport }
+module.exports = {
+  sendMail,
+  renderResetPasswordEmail,
+  renderVerificationEmail,
+  renderSetupAccountEmail,
+  renderStudentEnrollmentEmail,
+  renderStudentCertificateEmail,
+  renderTeacherFinalizationEmail,
+  getTransport,
+}
