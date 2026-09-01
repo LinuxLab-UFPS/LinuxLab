@@ -30,7 +30,7 @@ export default async function GroupPage({
 }: {
   searchParams: Promise<{ tema?: string; sub?: string }>
 }) {
-  await requireServerRole(["student", "teacher", "admin"])
+  await requireServerRole(["student"])
   const { tema, sub } = await searchParams
 
   /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo

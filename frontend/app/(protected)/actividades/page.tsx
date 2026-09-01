@@ -5,7 +5,7 @@ import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 
 export default async function ActivitiesPage() {
-  await requireServerRole(["student", "admin"])
+  await requireServerRole(["student"])
 
   // Sin grupo (o con el backend caído) la página sigue siendo el catálogo: las
   // del temario no dependen de estar matriculado.

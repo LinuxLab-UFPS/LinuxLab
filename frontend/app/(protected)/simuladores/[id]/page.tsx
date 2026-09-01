@@ -8,7 +8,7 @@ export default async function SimulatorPlayPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await requireServerRole(["student", "admin"])
+  await requireServerRole(["student"])
   const { id } = await params
   const sim = getSimulator(id)
   if (!sim) notFound()

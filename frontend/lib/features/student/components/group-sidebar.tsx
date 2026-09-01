@@ -43,7 +43,10 @@ export function PanelContenidos({
   const overallPct = Math.round((doneCount / syllabus.length) * 100)
 
   return (
-    <div className="flex max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
+    /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
+       lleva dentro. Sin esto el panel cambiaba de ancho segun el tema abierto,
+       porque una leccion de nombre largo lo estiraba. */
+    <div className="flex w-full min-w-0 max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
       {/* Nav: home + title */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
         <Link
@@ -195,7 +198,9 @@ export function PanelContenidos({
                             ) : (
                               <Circle className="h-3.5 w-3.5 shrink-0" />
                             )}
-                            <span className="truncate">{sub.title}</span>
+                            {/* `min-w-0` para que el nombre largo se corte en
+                                vez de estirar el panel. */}
+                            <span className="min-w-0 truncate">{sub.title}</span>
                           </LessonLink>
                         </li>
                       )
