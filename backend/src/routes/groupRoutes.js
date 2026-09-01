@@ -24,6 +24,8 @@ router.get("/:id/gradebook", groupController.getGradebook)
 router.get("/:id/gradebook/students/:studentId", groupController.getStudentPerformance)
 router.get("/:id/progress", groupController.getGroupProgress)
 router.get("/:id/finalize/preview", groupController.finalizePreview)
+router.get("/:id/certificates", groupController.listCertificates)
+router.get("/:id/certificates/acta", groupController.actaPdf)
 router.get("/:id/provisioning-jobs", groupController.listProvisioningJobs)
 router.post("/:id/reconcile", groupController.reconcileGroup)
 

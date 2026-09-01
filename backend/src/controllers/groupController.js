@@ -4,8 +4,10 @@ const reconcileService = require("../services/reconcileService")
 const gradebookService = require("../services/gradebookService")
 const groupProgressService = require("../services/groupProgressService")
 const finalizationService = require("../services/finalizationService")
+const certificateService = require("../services/certificateService")
 const accessService = require("../services/accessService")
 const asyncHandler = require("../utils/asyncHandler")
+const { sendPdf } = require("../utils/pdfResponse")
 
 const createGroup = asyncHandler(async (req, res) => {
   const { name, description, students } = req.body
@@ -165,6 +167,25 @@ const finalizePreview = asyncHandler(async (req, res) => {
   )
 })
 
+const listCertificates = asyncHandler(async (req, res) => {
+  res.json(
+    await certificateService.listByGroup({
+      groupId: req.params.id,
+      teacherUserId: req.user.id,
+      role: req.user.role,
+    }),
+  )
+})
+
+const actaPdf = asyncHandler(async (req, res) => {
+  const { buffer, filename } = await certificateService.actaPdf({
+    groupId: req.params.id,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  sendPdf(res, buffer, filename)
+})
+
 module.exports = {
   createGroup,
   listGroups,
@@ -182,4 +203,6 @@ module.exports = {
   getStudentPerformance,
   getGroupProgress,
   finalizePreview,
+  listCertificates,
+  actaPdf,
 }

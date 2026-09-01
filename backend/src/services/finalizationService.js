@@ -28,6 +28,15 @@ async function finalizationSummary({ groupId, teacherUserId, role, tx = prisma }
   if (group.status !== "active") {
     throw new AppError("El grupo ya no está activo", 409, "CONFLICT")
   }
+  return computeGroupSummary(group, tx)
+}
+
+/**
+ * El calculo puro, sin guard de acceso ni de estado: tambien lo usa el acta de
+ * un grupo ya finalizado, cuyos datos quedaron congelados al emitir.
+ */
+async function computeGroupSummary(group, tx = prisma) {
+  const groupId = group.id
 
   const [topics, bankActivities, enrollments, groupActivities] = await Promise.all([
     tx.topic.findMany({ select: { id: true } }),
@@ -144,4 +153,4 @@ async function finalizationSummary({ groupId, teacherUserId, role, tx = prisma }
   }
 }
 
-module.exports = { finalizationSummary, PASSING_SCORE }
+module.exports = { finalizationSummary, computeGroupSummary, PASSING_SCORE }
