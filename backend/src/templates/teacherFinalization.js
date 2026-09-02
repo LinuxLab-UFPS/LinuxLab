@@ -15,6 +15,7 @@ function renderTeacherFinalizationEmail({ teacherName, groupName, studentsCertif
     ctaHref: verificationUrl,
     footerNote:
       "Los certificados de tus estudiantes les llegaron a su propio correo con su enlace de verificación.",
+    expires: false,
   })
   return {
     subject: `Curso finalizado: ${groupName || "grupo"} — acta y certificado`,

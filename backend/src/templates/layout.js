@@ -2,7 +2,13 @@ function escapeHtml(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 }
 
-function wrap({ preheader, heading, intro, ctaText, ctaHref, footerNote }) {
+/**
+ * `expires`: la nota de caducidad solo vale para los enlaces de un solo uso
+ * (verificar el correo, restablecer la clave). Un certificado no caduca, y
+ * decirle a alguien que su enlace expira en una hora lo manda a pedir otro que
+ * nadie le va a enviar.
+ */
+function wrap({ preheader, heading, intro, ctaText, ctaHref, footerNote, expires = true }) {
   const safeHref = escapeHtml(ctaHref)
   const safeCta = escapeHtml(ctaText)
   const safeHeading = escapeHtml(heading)
@@ -33,7 +39,7 @@ Si el botón no funciona, copia y pega este enlace:<br>
 <a href="${safeHref}" target="_blank" rel="noopener" style="color:#C41E3A;text-decoration:underline;word-break:break-all;">${safeHref}</a>
 </td></tr>
 <tr><td style="padding:14px 24px 20px;border-top:1px solid #eceef1;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:1.6;color:#8b949e;text-align:center;">
-${safeFooter}<br>Este enlace expira en 1 hora por seguridad.
+${safeFooter}${expires ? "<br>Este enlace expira en 1 hora por seguridad." : ""}
 </td></tr>
 </table>
 <div style="margin-top:16px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8b949e;text-align:center;">Enviado por LinuxLab · UFPS</div>

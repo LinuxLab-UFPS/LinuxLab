@@ -19,6 +19,7 @@ function renderStudentCertificateEmail({ holderName, groupName, verificationUrl,
         ? `<p style="margin:0 0 10px;">También puedes consultarlo desde la plataforma con tu cuenta: <a href="${loginUrl}" style="color:#c41e3a;">${loginUrl}</a></p>`
         : "") +
       "Si no esperabas este correo, puedes ignorarlo.",
+    expires: false,
   })
   return {
     subject: `Tu certificado de finalización — ${groupName || "LinuxLab UFPS"}`,
