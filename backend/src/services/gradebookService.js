@@ -431,7 +431,18 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
 async function getMyGrades(studentUserId) {
   const enrollment = await prisma.enrollment.findFirst({
     where: { student_id: studentUserId, status: "active", group: { status: "active" } },
-    include: { group: { select: { id: true, name: true } } },
+    /* La vista "Mi Grupo" arma su encabezado con esto: nombre, descripción y
+       docente salen de aquí y no de otra consulta a listMine. */
+    include: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          teacher: { select: { user: { select: { name: true } } } },
+        },
+      },
+    },
     orderBy: { created_at: "asc" },
   })
 
@@ -457,7 +468,12 @@ async function getMyGrades(studentUserId) {
   )
 
   return {
-    group: { id: enrollment.group.id, name: enrollment.group.name },
+    group: {
+      id: enrollment.group.id,
+      name: enrollment.group.name,
+      description: enrollment.group.description ?? "",
+      teacherName: enrollment.group.teacher?.user?.name ?? "",
+    },
     series,
     topics,
     summary: summarizeSeries(series),

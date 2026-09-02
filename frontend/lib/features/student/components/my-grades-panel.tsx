@@ -124,9 +124,8 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
 
   return (
     <div className="space-y-6">
-      <div className="text-sm text-muted-foreground">
-        Curso: <span className="font-medium text-foreground">{grades.group.name}</span>
-      </div>
+      {/* El nombre del curso no se repite aquí: es el título de la vista que
+          contiene este panel. */}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Cifra

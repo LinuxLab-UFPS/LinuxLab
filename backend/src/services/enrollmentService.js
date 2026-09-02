@@ -161,11 +161,18 @@ async function registerSelfStudentInner({ name, email, code, tx }) {
 }
 
 async function setSelfStudentCode(args) {
-  const { code } = parseOrThrow(setStudentCodeSchema, { code: args.code })
-  return runInTransaction((tx) => setSelfStudentCodeInner({ code: code.trim(), userId: args.userId, tx }))
+  const parsed = parseOrThrow(setStudentCodeSchema, { code: args.code, name: args.name })
+  return runInTransaction((tx) =>
+    setSelfStudentCodeInner({
+      code: parsed.code.trim(),
+      name: parsed.name ?? null,
+      userId: args.userId,
+      tx,
+    }),
+  )
 }
 
-async function setSelfStudentCodeInner({ userId, code, tx }) {
+async function setSelfStudentCodeInner({ userId, code, name, tx }) {
   const user = await tx.user.findUnique({
     where: { id: userId },
     include: { student: true, linuxAccount: true },
@@ -177,15 +184,22 @@ async function setSelfStudentCodeInner({ userId, code, tx }) {
     throw new AppError("Solo los estudiantes pueden definir su código.", 403, "FORBIDDEN")
   }
 
+  if (name && name !== user.name) {
+    await tx.user.update({ where: { id: userId }, data: { name } })
+    user.name = name
+  }
+
   if (user.student) {
     if (user.student.code) return user
     await tx.student.update({ where: { user_id: userId }, data: { code } })
+    user.student.code = code
     return user
   }
 
   await tx.student.create({
     data: { user: { connect: { id: userId } }, code },
   })
+  user.student = { user_id: userId, code, created_at: new Date(), updated_at: new Date() }
   return user
 }
 
