@@ -1,36 +1,81 @@
+/**
+ * Los tres documentos de la certificacion: el certificado del estudiante, el
+ * del instructor y el acta del curso.
+ *
+ * Salen en tinta sobre papel a proposito, igual que la hoja de comandos del
+ * frontend: un PDF acaba impreso en blanco o en un visor que no sabe nada de
+ * los fondos oscuros de la plataforma. De la marca se toman el icono y el
+ * rojo, y el rojo solo se gasta en lo que importa —el logo, la definitiva, el
+ * "Si" del acta—; el resto es tinta, gris y filetes.
+ *
+ * Sin marcos: un doble borde rojo alrededor de la hoja se lee como plantilla
+ * de Word y le quita el sitio a lo unico que de verdad importa aqui, que es el
+ * nombre de quien recibe el certificado.
+ */
+
 const fs = require("fs")
 const path = require("path")
 const PDFDocument = require("pdfkit")
 
-// IBM Plex Sans via paquete npm (@ibm/plex v5, que trae TTF estaticos).
-// Si la dependencia no estuviera, pdfkit cae a las fuentes estandar, que
-// tambien cubren los acentos del espanol.
-const FONT_DIR = path.join(__dirname, "../../node_modules/@ibm/plex/IBM-Plex-Sans/fonts/complete/ttf")
-const HAS_PLEX = fs.existsSync(path.join(FONT_DIR, "IBMPlexSans-Regular.ttf"))
+// Las mismas fuentes que usa la plataforma, embebidas en el PDF. Viven junto
+// al logo de los correos, que ya viaja en la imagen.
+const FONT_DIR = path.join(__dirname, "../templates/assets/fonts")
 
-const FONTS = HAS_PLEX
-  ? {
-      regular: path.join(FONT_DIR, "IBMPlexSans-Regular.ttf"),
-      semibold: path.join(FONT_DIR, "IBMPlexSans-SemiBold.ttf"),
-      bold: path.join(FONT_DIR, "IBMPlexSans-Bold.ttf"),
-    }
-  : { regular: "Helvetica", semibold: "Helvetica-Bold", bold: "Helvetica-Bold" }
+// Los cinco ficheros de Onest declaran el mismo nombre interno de familia
+// ("Onest-Regular") aunque son pesos distintos de verdad. No colisionan porque
+// pdfkit indexa por la clave con la que se registran aqui, no por su metadata.
+const FACES = {
+  regular: { file: "onest/Onest-Regular.ttf", fallback: "Helvetica" },
+  medium: { file: "onest/Onest-Medium.ttf", fallback: "Helvetica" },
+  semibold: { file: "onest/Onest-SemiBold.ttf", fallback: "Helvetica-Bold" },
+  bold: { file: "onest/Onest-Bold.ttf", fallback: "Helvetica-Bold" },
+  mono: { file: "geist-mono/GeistMono-Regular.ttf", fallback: "Courier" },
+}
 
-const RED = "#c41e3a"
-const INK = "#18181b"
-const MUTED = "#71717a"
-const HAIR = "#e4e4e7"
+// Se resuelve una vez por proceso: comprobar la existencia en cada documento
+// seria I/O para nada. Si falta un fichero se cae a la fuente estandar, que
+// tambien cubre los acentos del espanol.
+const RESOLVED = Object.fromEntries(
+  Object.entries(FACES).map(([key, face]) => {
+    const full = path.join(FONT_DIR, face.file)
+    return [key, fs.existsSync(full) ? full : face.fallback]
+  }),
+)
+
+const isEmbedded = (source) => source.endsWith(".ttf")
+
+// Los tokens del sitio (globals.css), no los de Tailwind.
+const RED = "#C41E3A" // --primary
+const INK = "#1c2128" // --foreground
+const MUTED = "#5b626b" // --muted-foreground
+const HAIR = "#e2e5ea" // --border
 
 const dateFmt = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long", year: "numeric" })
 const formatDate = (value) => dateFmt.format(new Date(value))
 
+// Version corta para las celdas de datos, donde la fecha larga no cabe en una
+// linea. es-CO deja las preposiciones incluso en formato corto ("3 de mar de
+// 2026"), asi que se arma a mano: "3 mar 2026".
+const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+function formatShort(value) {
+  // Hora local, igual que `formatDate`: en UTC la misma fecha cae un dia
+  // despues y la celda no cuadraria con la del parrafo.
+  const d = new Date(value)
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}
+
 function newDocument({ layout, title }) {
-  return new PDFDocument({
+  const doc = new PDFDocument({
     size: "A4",
     layout,
     margin: 0,
-    info: { Title: title, Author: "LinuxLab" },
+    info: { Title: title, Author: "LinuxLab UFPS" },
   })
+  // pdfkit registra las fuentes por documento, no por proceso.
+  for (const [key, source] of Object.entries(RESOLVED)) {
+    if (isEmbedded(source)) doc.registerFont(key, source)
+  }
+  return doc
 }
 
 function toBuffer(doc) {
@@ -44,47 +89,144 @@ function toBuffer(doc) {
 }
 
 function setFont(doc, variant, size, color = INK) {
-  doc.font(FONTS[variant]).fontSize(size).fillColor(color)
+  const source = RESOLVED[variant]
+  doc.font(isEmbedded(source) ? variant : source).fontSize(size).fillColor(color)
 }
 
-/** Doble marco rojo del certificado. */
-function drawFrame(doc, width, height) {
+/**
+ * Recorta un texto al ancho dado anadiendo puntos suspensivos.
+ *
+ * pdfkit ignora `ellipsis` cuando el bloque no lleva `height`, y con `height`
+ * puesto deja de respetar `lineBreak: false`: en una tabla de alto fijo, un
+ * nombre largo se parte en dos renglones y se come la fila siguiente. Medir y
+ * cortar a mano es lo unico que se comporta igual siempre.
+ */
+function truncate(doc, text, width) {
+  if (doc.widthOfString(text) <= width) return text
+  let cut = text
+  while (cut.length > 1 && doc.widthOfString(`${cut}…`) > width) {
+    cut = cut.slice(0, -1)
+  }
+  return `${cut.trimEnd()}…`
+}
+
+/** Filete horizontal. Fino a proposito: 0.8 para dividir, 0.4 entre renglones. */
+function rule(doc, x1, y, x2, weight = 0.8, color = HAIR) {
   doc.save()
-  doc.lineWidth(3).strokeColor(RED).rect(26, 26, width - 52, height - 52).stroke()
-  doc.lineWidth(1).strokeOpacity(0.55).rect(34, 34, width - 68, height - 68).stroke()
+  doc.lineWidth(weight).strokeColor(color).moveTo(x1, y).lineTo(x2, y).stroke()
   doc.restore()
 }
 
-/** Encabezado comun: marca, titulo y ornamento. Devuelve la Y donde sigue. */
-function drawHeader(doc, width, title) {
-  setFont(doc, "semibold", 10, RED)
-  doc.text("LINUXLAB", 0, 76, { width, align: "center", characterSpacing: 6 })
+/**
+ * El icono de la marca (frontend/public/icon.svg) redibujado con primitivas,
+ * escalando desde su caja de 64. Se redibuja en vez de incrustar el PNG porque
+ * a este tamano el mapa de bits se ve blando al imprimir.
+ *
+ * La barra de titulo del SVG es un path con beziers, pero sus puntos de control
+ * (57.732 y 6.268) son exactamente desplazamientos de 14 x 0.5523: es un rect
+ * de 64x14 con las esquinas de arriba redondeadas a 14. Recortar con la misma
+ * caja redondeada del cuerpo da esa forma sin transcribir la curva.
+ */
+function drawLogo(doc, x, y, size) {
+  const k = size / 64
+  doc.save()
+  doc.translate(x, y).scale(k)
 
-  setFont(doc, "bold", 26, RED)
-  doc.text(title, 0, 98, { width, align: "center", characterSpacing: 2 })
+  doc.roundedRect(0, 0, 64, 64, 14).fill("#0A0A0A")
 
   doc.save()
-  doc.lineWidth(1.5).strokeColor(RED)
-  doc.moveTo(width / 2 - 32, 142).lineTo(width / 2 + 32, 142).stroke()
+  doc.roundedRect(0, 0, 64, 64, 14).clip()
+  doc.rect(0, 0, 64, 14).fill("#16181D")
   doc.restore()
-  return 168
+
+  doc.circle(9, 7, 2).fill(RED)
+  doc.circle(16, 7, 2).fill("#2E323B")
+  doc.circle(23, 7, 2).fill("#2E323B")
+
+  // Las dos eles: rectas y sin redondeos, como en el icono.
+  doc.moveTo(15, 22).lineTo(23, 22).lineTo(23, 42).lineTo(29, 42).lineTo(29, 50).lineTo(15, 50).closePath().fill(RED)
+  doc.moveTo(35, 22).lineTo(43, 22).lineTo(43, 42).lineTo(49, 42).lineTo(49, 50).lineTo(35, 50).closePath().fill("#FFFFFF")
+
+  doc.restore()
 }
 
-/** Pie de certificado: codigo de verificacion a la izquierda, fecha a la derecha. */
-function drawFooter(doc, width, height, code, verificationUrl, issuedAt) {
-  const y = height - 84
+/** Marca de agua del encabezado: icono, nombre y linea de apoyo. */
+function drawBrand(doc, x, y, subtitle) {
+  drawLogo(doc, x, y, 28)
+  setFont(doc, "semibold", 9.5, INK)
+  doc.text("LINUXLAB UFPS", x + 40, y + 3, { characterSpacing: 1.2, lineBreak: false })
   setFont(doc, "regular", 8.5, MUTED)
-  doc.text("Código de verificación", 64, y)
-  setFont(doc, "semibold", 10.5, INK)
-  doc.text(code, 64, y + 14)
-  setFont(doc, "regular", 8.5, MUTED)
-  doc.text(verificationUrl, 64, y + 32)
+  doc.text(subtitle, x + 40, y + 17, { lineBreak: false })
+}
 
-  setFont(doc, "regular", 8.5, MUTED)
-  doc.text(`Emitido el ${formatDate(issuedAt)}`, width - 64 - 220, y, {
-    width: 220,
-    align: "right",
+/**
+ * Tira de datos del certificado: etiqueta pequena en versalitas sobre el valor.
+ * Sirve para dos o tres celdas; `accent` pinta el valor en rojo.
+ */
+function drawStatStrip(doc, x, y, width, cells) {
+  rule(doc, x, y, x + width, 0.4)
+  const cellWidth = width / cells.length
+  cells.forEach((cell, i) => {
+    const cx = x + i * cellWidth
+    setFont(doc, "semibold", 8, MUTED)
+    doc.text(cell.label.toUpperCase(), cx, y + 14, { width: cellWidth - 16, characterSpacing: 0.8 })
+    setFont(doc, "semibold", 16, cell.accent ? RED : INK)
+    doc.text(cell.value, cx, y + 28, { width: cellWidth - 16, lineBreak: false, ellipsis: true })
   })
+}
+
+/**
+ * El esqueleto que comparten los dos certificados. Tenerlo en un solo sitio es
+ * lo que hace que sean la misma familia y no dos ficheros que se separan.
+ */
+async function renderCertificate({ title, name, subline, body, cells, code, issuedAt }) {
+  const width = 841.89
+  const height = 595.28
+  const margin = 64
+  const right = width - margin
+  const doc = newDocument({ layout: "landscape", title: `${title} — ${name}` })
+
+  drawBrand(doc, margin, 52, "Laboratorio Virtual de Linux")
+  rule(doc, margin, 100, right)
+
+  setFont(doc, "semibold", 18, MUTED)
+  doc.text(title, margin, 146, { width: right - margin })
+
+  setFont(doc, "regular", 11, MUTED)
+  doc.text("Se certifica que", margin, 182, { width: right - margin })
+
+  // El nombre es lo mas grande de la hoja, y va en tinta: el rojo aqui le
+  // quitaria fuerza en vez de darsela.
+  setFont(doc, "bold", 38, INK)
+  doc.text(name, margin, 204, { width: right - margin, lineBreak: false, ellipsis: true })
+
+  let y = 252
+  if (subline) {
+    setFont(doc, "mono", 10.5, MUTED)
+    doc.text(subline, margin, y, { width: right - margin, lineBreak: false })
+    y += 22
+  }
+
+  setFont(doc, "regular", 13, INK)
+  doc.text(body, margin, y + 14, { width: 560, lineGap: 5 })
+
+  // La tira va anclada: un nombre de curso largo empuja el parrafo, pero el
+  // bloque de datos no se mueve de su sitio. Se ancla a la altura del pie y no
+  // a la del parrafo para que las dos variantes del certificado —con y sin
+  // subtitulo, con parrafos de distinto alto— caigan en la misma retícula.
+  drawStatStrip(doc, margin, 386, right - margin, cells)
+
+  const footerY = height - 76
+  rule(doc, margin, footerY - 16, right, 0.4)
+  setFont(doc, "regular", 8, MUTED)
+  doc.text("Código de verificación", margin, footerY)
+  setFont(doc, "mono", 11, INK)
+  doc.text(code, margin, footerY + 13, { lineBreak: false })
+
+  setFont(doc, "regular", 8.5, MUTED)
+  doc.text("LinuxLab UFPS", right - 220, footerY + 13, { width: 220, align: "right" })
+
+  return toBuffer(doc)
 }
 
 /**
@@ -92,83 +234,45 @@ function drawFooter(doc, width, height, code, verificationUrl, issuedAt) {
  * la fila Certificate: re-renderizar nunca cambia lo que se emitio.
  */
 async function renderStudentCertificate(cert) {
-  const width = 841.89
-  const height = 595.28
-  const doc = newDocument({ layout: "landscape", title: `Certificado de finalización — ${cert.holderName}` })
-  const bodyWidth = 620
-  const x = (width - bodyWidth) / 2
-
-  drawFrame(doc, width, height)
-  let y = drawHeader(doc, width, "CERTIFICADO DE FINALIZACIÓN")
-
-  setFont(doc, "regular", 13, MUTED)
-  doc.text("Se certifica que", 0, y, { width, align: "center" })
-  y += 24
-
-  setFont(doc, "semibold", 30)
-  doc.text(cert.holderName, 0, y, { width, align: "center" })
-  y += 42
-
-  if (cert.holderCode) {
-    setFont(doc, "regular", 10.5, MUTED)
-    doc.text(`Código estudiantil ${cert.holderCode}`, 0, y, { width, align: "center" })
-    y += 20
-  }
-
-  setFont(doc, "regular", 12.5)
-  const body =
-    `por completar satisfactoriamente el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}), ` +
-    `dirigido por el docente ${cert.teacherName}, entre el ${formatDate(cert.courseStartedAt)} y el ${formatDate(cert.issuedAt)}.`
-  doc.text(body, x, y + 8, { width: bodyWidth, align: "center", lineGap: 4 })
-  y += doc.heightOfString(body, { width: bodyWidth, align: "center", lineGap: 4 }) + 30
-
-  setFont(doc, "semibold", 12.5)
-  doc.text(
-    `Temas completados: ${cert.topicsCompleted}/${cert.topicsTotal}      ·      Definitiva: ${cert.definitive ?? "—"}`,
-    0,
-    y,
-    { width, align: "center" },
-  )
-
-  drawFooter(doc, width, height, cert.code, cert.verificationUrl, cert.issuedAt)
-  return toBuffer(doc)
+  return renderCertificate({
+    title: "Certificado de finalización",
+    name: cert.holderName,
+    subline: cert.holderCode ? `Código estudiantil ${cert.holderCode}` : null,
+    body:
+      `completó satisfactoriamente el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}), ` +
+      `dirigido por el docente ${cert.teacherName}, entre el ${formatDate(cert.courseStartedAt)} ` +
+      `y el ${formatDate(cert.issuedAt)}.`,
+    cells: [
+      { label: "Temas completados", value: `${cert.topicsCompleted}/${cert.topicsTotal}` },
+      { label: "Definitiva", value: cert.definitive == null ? "—" : String(cert.definitive), accent: true },
+      { label: "Emitido", value: formatShort(cert.issuedAt) },
+    ],
+    code: cert.code,
+    issuedAt: cert.issuedAt,
+  })
 }
 
-/** Certificado del docente por dirigir el curso, con el resultado del grupo. */
+/**
+ * Certificado del docente por dirigir el curso. Es su credencial, asi que
+ * habla de su trabajo: cuantos de sus estudiantes se certificaron es una
+ * metrica del grupo y no pinta nada en un documento personal.
+ */
 async function renderInstructorCertificate(cert) {
-  const width = 841.89
-  const height = 595.28
-  const doc = newDocument({ layout: "landscape", title: `Certificado de instructor — ${cert.holderName}` })
-  const bodyWidth = 620
-  const x = (width - bodyWidth) / 2
-
-  drawFrame(doc, width, height)
-  let y = drawHeader(doc, width, "CERTIFICADO DE INSTRUCTOR")
-
-  setFont(doc, "regular", 13, MUTED)
-  doc.text("Se certifica que", 0, y, { width, align: "center" })
-  y += 24
-
-  setFont(doc, "semibold", 30)
-  doc.text(cert.holderName, 0, y, { width, align: "center" })
-  y += 42
-
-  setFont(doc, "regular", 12.5)
-  const body =
-    `por dirigir el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}) en la plataforma LinuxLab, ` +
-    `finalizado el ${formatDate(cert.issuedAt)}, con ${cert.studentsCertified} de ${cert.studentsTotal} estudiantes ` +
-    `que completaron satisfactoriamente el temario.`
-  doc.text(body, x, y + 8, { width: bodyWidth, align: "center", lineGap: 4 })
-  y += doc.heightOfString(body, { width: bodyWidth, align: "center", lineGap: 4 }) + 30
-
-  setFont(doc, "semibold", 12.5)
-  doc.text(`Estudiantes certificados: ${cert.studentsCertified}/${cert.studentsTotal}`, 0, y, {
-    width,
-    align: "center",
+  return renderCertificate({
+    title: "Certificado de instructor",
+    name: cert.holderName,
+    subline: null,
+    body:
+      `dirigió el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}) en la plataforma LinuxLab, ` +
+      `desde el ${formatDate(cert.courseStartedAt)} hasta el ${formatDate(cert.issuedAt)}.`,
+    cells: [
+      { label: "Grupo", value: `N° ${cert.groupNumber}` },
+      { label: "Inicio", value: formatShort(cert.courseStartedAt) },
+      { label: "Finalizado", value: formatShort(cert.issuedAt), accent: true },
+    ],
+    code: cert.code,
+    issuedAt: cert.issuedAt,
   })
-
-  drawFooter(doc, width, height, cert.code, cert.verificationUrl, cert.issuedAt)
-  return toBuffer(doc)
 }
 
 /**
@@ -180,55 +284,59 @@ async function renderActa(acta) {
   const width = 595.28
   const height = 841.89
   const margin = 56
+  const right = width - margin
   const doc = newDocument({ layout: "portrait", title: `Acta de finalización — ${acta.groupName}` })
 
   // Las columnas suman 482pt: el ancho util de A4 vertical con margen 56.
-  // La de verificacion se ensancha para que un codigo completo (24 caracteres
-  // a 8pt) entre sin truncar.
+  // Las numericas van en mono para que alineen en vertical de un vistazo. El
+  // codigo de verificacion baja a 7.5: a 8pt sus 24 caracteres no caben en los
+  // 112 de la columna y se truncarian en silencio.
   const columns = [
-    { key: "index", label: "#", width: 20, align: "left", size: 9 },
-    { key: "name", label: "Estudiante", width: 124, align: "left", size: 9 },
-    { key: "code", label: "Código", width: 66, align: "left", size: 9 },
-    { key: "topics", label: "Temas", width: 46, align: "center", size: 9 },
-    { key: "definitive", label: "Definitiva", width: 56, align: "center", size: 9 },
-    { key: "certified", label: "Certificado", width: 58, align: "center", size: 9 },
-    { key: "verification", label: "Verificación", width: 112, align: "left", size: 8 },
+    { key: "index", label: "#", width: 20, align: "left", size: 9, face: "regular" },
+    { key: "name", label: "Estudiante", width: 124, align: "left", size: 9, face: "regular" },
+    { key: "code", label: "Código", width: 66, align: "left", size: 8.5, face: "mono" },
+    { key: "topics", label: "Temas", width: 46, align: "center", size: 8.5, face: "mono" },
+    { key: "definitive", label: "Definitiva", width: 56, align: "center", size: 8.5, face: "mono" },
+    { key: "certified", label: "Cert.", width: 40, align: "center", size: 9, face: "regular" },
+    { key: "verification", label: "Verificación", width: 130, align: "left", size: 7.5, face: "mono" },
   ]
   const rowHeight = 24
   // pdfkit no expone el total de paginas: lo llevamos con el evento pageAdded.
   let pageCount = 1
   doc.on("pageAdded", () => { pageCount += 1 })
   const topOfPage = () => {
-    let y = 152
+    let y = 150
     if (pageCount > 1) {
       setFont(doc, "regular", 9, MUTED)
-      doc.text(`${acta.groupName} — continuación`, margin, 44, { width: width - margin * 2 })
+      doc.text(`${acta.groupName} — continuación`, margin, 44, { width: right - margin })
       y = 76
     }
     let x = margin
     for (const col of columns) {
-      setFont(doc, "semibold", col.size, MUTED)
-      doc.text(col.label, x, y + 4, { width: col.width, align: col.align })
+      setFont(doc, "semibold", 8, MUTED)
+      doc.text(col.label.toUpperCase(), x, y + 6, {
+        width: col.width,
+        align: col.align,
+        characterSpacing: 0.6,
+        lineBreak: false,
+      })
       x += col.width
     }
-    doc.save()
-    doc.lineWidth(1).strokeColor(RED).moveTo(margin, y + 20).lineTo(width - margin, y + 20).stroke()
-    doc.restore()
+    rule(doc, margin, y + 20, right)
     return y + rowHeight
   }
 
-  setFont(doc, "bold", 16)
-  doc.text("ACTA DE FINALIZACIÓN DEL CURSO", margin, 56, { width: width - margin * 2 })
-  setFont(doc, "regular", 10.5, MUTED)
+  drawBrand(doc, margin, 48, "Acta de finalización")
+
+  setFont(doc, "bold", 19, INK)
+  doc.text(acta.groupName, margin, 92, { width: right - margin })
+  setFont(doc, "regular", 9.5, MUTED)
   doc.text(
-    `«${acta.groupName}» · Grupo N° ${acta.groupNumber} · Docente: ${acta.teacherName} · Finalizado el ${formatDate(acta.finishedAt)}`,
+    `Grupo N° ${acta.groupNumber} · Docente: ${acta.teacherName} · Finalizado el ${formatDate(acta.finishedAt)}`,
     margin,
-    80,
-    { width: width - margin * 2 },
+    116,
+    { width: right - margin },
   )
-  doc.save()
-  doc.lineWidth(2).strokeColor(RED).moveTo(margin, 108).lineTo(width - margin, 108).stroke()
-  doc.restore()
 
   let y = topOfPage()
   acta.rows.forEach((row, i) => {
@@ -242,33 +350,41 @@ async function renderActa(acta) {
       code: row.code ?? "—",
       topics: `${row.topicsCompleted}/${row.topicsTotal}`,
       definitive: row.definitive === null ? "—" : String(row.definitive),
-      certified: row.certified ? "Sí" : "No",
+      // El negativo se retira en vez de afirmarse: el acta la lee el docente.
+      certified: row.certified ? "Sí" : "—",
       verification: row.verificationCode ?? "—",
     }
     let x = margin
     for (const col of columns) {
       const isCert = col.key === "certified"
-      setFont(doc, isCert && row.certified ? "semibold" : "regular", col.size, isCert ? (row.certified ? RED : MUTED) : INK)
-      doc.text(values[col.key], x, y, { width: col.width, align: col.align, ellipsis: true, height: rowHeight, lineBreak: false })
+      const face = isCert && row.certified ? "semibold" : col.face
+      const color = isCert ? (row.certified ? RED : MUTED) : INK
+      setFont(doc, face, col.size, color)
+      // El recorte se hace a mano (ver `truncate`) y por eso el bloque va sin
+      // `ellipsis`: la fila tiene alto fijo y nada puede pasar a dos renglones.
+      doc.text(truncate(doc, values[col.key], col.width - 4), x, y, {
+        width: col.width,
+        align: col.align,
+        lineBreak: false,
+      })
       x += col.width
     }
-    doc.save()
-    doc.lineWidth(0.5).strokeColor(HAIR)
-    doc.moveTo(margin, y + rowHeight - 6).lineTo(width - margin, y + rowHeight - 6).stroke()
-    doc.restore()
+    rule(doc, margin, y + rowHeight - 6, right, 0.4)
     y += rowHeight
   })
 
-  setFont(doc, "semibold", 10.5)
+  setFont(doc, "regular", 9, MUTED)
+  doc.text("Certificados emitidos", margin, height - 68, { width: right - margin })
+  setFont(doc, "semibold", 12, INK)
   doc.text(
-    `Certificados emitidos: ${acta.rows.filter((r) => r.certified).length} de ${acta.rows.length}`,
+    `${acta.rows.filter((r) => r.certified).length} de ${acta.rows.length}`,
     margin,
-    height - 64,
-    { width: width - margin * 2 },
+    height - 55,
+    { width: right - margin },
   )
-  setFont(doc, "regular", 8.5, MUTED)
-  doc.text(`Acta generada el ${formatDate(new Date())} por la plataforma LinuxLab.`, margin, height - 46, {
-    width: width - margin * 2,
+  setFont(doc, "regular", 8, MUTED)
+  doc.text(`Acta generada el ${formatDate(new Date())} por la plataforma LinuxLab.`, margin, height - 34, {
+    width: right - margin,
   })
 
   return toBuffer(doc)
