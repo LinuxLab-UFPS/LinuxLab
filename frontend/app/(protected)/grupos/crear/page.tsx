@@ -6,10 +6,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Send } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
-import { Input } from "@shared/components/ui/input"
-import { Label } from "@shared/components/ui/label"
-import { Textarea } from "@shared/components/ui/textarea"
 import { createGroup } from "@/lib/features/teacher/data"
+import { GroupFormFields } from "@/lib/features/teacher/components/group-form-fields"
 import { RoleGuard } from "@shared/components/role-guard"
 import { queryKeys } from "@/lib/api/queries"
 import { notify, notifyPromise } from "@shared/lib/toast"
@@ -59,33 +57,13 @@ function CreateGroupContent() {
             después, compartiendo el enlace de inscripción o matriculándolos uno a uno.
           </p>
 
-          <div className="mt-8 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="groupName" className="text-muted-foreground">
-                Nombre del grupo
-              </Label>
-              <Input
-                id="groupName"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Ej: Sistemas Operativos - 2026-I"
-                className="border-table-line"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-muted-foreground">
-                Descripción
-              </Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                placeholder="Breve descripción del grupo…"
-                className="resize-none border-table-line"
-              />
-            </div>
+          <div className="mt-8">
+            <GroupFormFields
+              name={groupName}
+              onNameChange={setGroupName}
+              description={description}
+              onDescriptionChange={setDescription}
+            />
           </div>
 
           <div className="mt-10">

@@ -3,6 +3,7 @@ import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
+import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
 import { describeCheck } from "@shared/lib/describe-check"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
@@ -94,6 +95,9 @@ function ActivityDetail({
             </DetailRow>
             <DetailRow label="Tipo de actividad">
               {activity.activityType === "quiz" ? "Quiz" : "Taller"}
+            </DetailRow>
+            <DetailRow label="Dificultad">
+              {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
             </DetailRow>
             <DetailRow label="Puntuacion">{activity.maxScore} pts</DetailRow>
             <DetailRow label="Fecha de cierre">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Terminal, UserCheck, UserX, Users } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { formatBogotaDate } from "@/lib/utils/dates"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
 import { useTeachers } from "@/lib/features/admin/hooks"
@@ -223,9 +224,7 @@ export function TeachersTable() {
                         )}
                       </TableCell>
                       <TableCell className="font-mono text-sm text-muted-foreground">
-                        {teacher.createdAt
-                          ? new Date(teacher.createdAt).toLocaleDateString("es-CO")
-                          : "—"}
+                        {teacher.createdAt ? formatBogotaDate(teacher.createdAt) : "—"}
                       </TableCell>
                       <TableCell>
                         <span

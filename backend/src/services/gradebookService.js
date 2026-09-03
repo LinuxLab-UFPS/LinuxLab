@@ -258,7 +258,7 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       // Las columnas del cuaderno son solo del docente; el campo viaja igual
       // porque el contrato lo declara y la vista lo consume.
       source: "teacher",
-      difficulty: null,
+      difficulty: ga.difficulty ?? "basic",
       dueAt: ga.due_at?.toISOString() ?? null,
       enabled: ga.enabled,
       maxScore: ga.max_score,

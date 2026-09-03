@@ -48,25 +48,101 @@ function fileBasename(ruta: string): string {
 export function describeCheckForStudent(type: string): string {
   switch (type) {
     case "directorio_existe":
-      return "Existe el directorio que pide el enunciado"
+      return "Crea el directorio que pide el enunciado en tu carpeta de trabajo"
     case "archivo_existe":
-      return "Existe el archivo que pide el enunciado"
+      return "Crea el archivo que pide el enunciado en tu carpeta de trabajo"
     case "archivo_no_existe":
-      return "Ya no existe el archivo que había que borrar"
+      return "Elimina de tu carpeta el archivo que pide el enunciado"
     case "permisos_son":
-      return "Los permisos son los que pide el enunciado"
+      return "Deja los permisos del archivo tal como los pide el enunciado"
     case "propietario_es":
-      return "El propietario es el que pide el enunciado"
+      return "Deja el archivo a nombre del dueño que pide el enunciado"
     case "archivo_contiene":
-      return "El archivo contiene lo que pide el enunciado"
+      return "Escribe dentro del archivo el texto que pide el enunciado"
     case "minimo_lineas":
-      return "El archivo tiene suficientes líneas con contenido"
+      return "Escribe en el archivo las líneas mínimas que pide el enunciado"
     case "archivo_es":
-      return "El contenido del archivo es exactamente el esperado"
+      return "Deja el contenido del archivo exactamente como lo pide el enunciado"
     case "ultima_linea_es":
-      return "La última línea del archivo es la que pide el enunciado"
+      return "Termina el archivo con la última línea que pide el enunciado"
     default:
-      return "Comprobación del enunciado"
+      return "Completa la comprobación del enunciado"
+  }
+}
+
+/**
+ * Resumen compacto de los parametros de una asercion, para la fila colapsada
+ * del constructor: 'informe.txt', 'informe.txt • "hola"', 'ficha.txt • ≥ 20
+ * lineas'. Es vista de docente, asi que si mostrar el valor esperado.
+ */
+export function checkParamsSummary(type: string, params: Record<string, unknown>): string {
+  const base = (key: string) => String(params[key] ?? "").trim()
+  const name = fileBasename(base("ruta"))
+  const quote = (v: string) => `"${v.length > 24 ? `${v.slice(0, 24)}…` : v}"`
+
+  switch (type) {
+    case "permisos_son":
+      return base("modo") ? `${name} • ${base("modo")}` : name
+    case "propietario_es":
+      return base("usuario") ? `${name} • ${base("usuario")}` : name
+    case "archivo_contiene":
+      return base("patron") ? `${name} • ${quote(base("patron"))}` : name
+    case "minimo_lineas":
+      return base("cantidad") ? `${name} • ≥ ${base("cantidad")} líneas` : name
+    case "ultima_linea_es":
+      return base("valor") ? `${name} • ${quote(base("valor"))}` : name
+    case "archivo_es":
+      return base("valor") ? `${name} • contenido exacto` : name
+    default:
+      return name
+  }
+}
+
+/**
+ * Frase breve de qué hace una asercion, para listados de solo lectura (el
+ * resumen del asistente). Entre `checkParamsSummary` (solo parametros) y
+ * `describeCheck` (la frase completa del docente): dice la accion y el
+ * objetivo sin la parte larga de "del directorio de trabajo", y los valores
+ * largos se recortan.
+ */
+export function describeCheckShort(type: string, params: Record<string, unknown>): string {
+  const base = (key: string) => String(params[key] ?? "").trim()
+  const name = fileBasename(base("ruta"))
+  const quote = (v: string) => `"${v.length > 24 ? `${v.slice(0, 24)}…` : v}"`
+
+  switch (type) {
+    case "directorio_existe":
+      return `Verifica que exista el directorio '${name}'`
+    case "archivo_existe":
+      return `Verifica que exista el archivo '${name}'`
+    case "archivo_no_existe":
+      return `Verifica que '${name}' ya no exista`
+    case "permisos_son":
+      return base("modo")
+        ? `Verifica que '${name}' tenga permisos ${base("modo")}`
+        : `Verifica los permisos de '${name}'`
+    case "propietario_es":
+      return base("usuario") === "$usuario"
+        ? `Verifica que '${name}' sea del estudiante`
+        : base("usuario")
+          ? `Verifica que '${name}' sea de '${base("usuario")}'`
+          : `Verifica el propietario de '${name}'`
+    case "archivo_contiene":
+      return base("patron")
+        ? `Verifica que '${name}' contenga ${quote(base("patron"))}`
+        : `Verifica el contenido de '${name}'`
+    case "minimo_lineas":
+      return base("cantidad")
+        ? `Verifica que '${name}' tenga al menos ${base("cantidad")} líneas`
+        : `Verifica el mínimo de líneas de '${name}'`
+    case "archivo_es":
+      return `Verifica que '${name}' tenga el contenido exacto esperado`
+    case "ultima_linea_es":
+      return base("valor")
+        ? `Verifica que la última línea de '${name}' sea ${quote(base("valor"))}`
+        : `Verifica la última línea de '${name}'`
+    default:
+      return checkParamsSummary(type, params)
   }
 }
 

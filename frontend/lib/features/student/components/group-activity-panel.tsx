@@ -15,6 +15,7 @@ import {
   type GroupCheckResult,
 } from "@/lib/features/student/group-activities"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
+import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import { notify } from "@shared/lib/toast"
 import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 
@@ -121,6 +122,11 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             <Tag tone="brand">
               {detail.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
             </Tag>
+            {/* Misma escala del temario: el docente clasificó la actividad y
+                viaja desde el backend para convivir con las del curso. */}
+            <Tag tone={DIFFICULTY_TONE[detail.difficulty]}>
+              {DIFFICULTY_LABEL[detail.difficulty]}
+            </Tag>
           </div>
         </div>
         <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
@@ -223,13 +229,13 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         ) : detail.evaluationType === "atomic" && !canCheck ? (
           <p className="text-xs text-muted-foreground">
               {!enLaCarpeta
-               ? "Entra en la carpeta de la actividad para poder comprobarla."
+               ? "Entra en la carpeta de la actividad para poder comprobarla: la revisión corre dentro de ella."
                : !detail.enabled
-               ? "La actividad está deshabilitada."
+               ? "Esta actividad está deshabilitada por ahora. Habla con tu docente si crees que es un error."
               : closed
-                ? "La actividad venció."
+                ? "El plazo de esta actividad ya venció y no admite más comprobaciones. Habla con tu docente si necesitas una extensión."
                 : limitReached
-                  ? "Alcanzaste el límite de intentos de esta actividad."
+                  ? "Ya usaste todos los intentos que permitía esta actividad. Si crees que mereces una oportunidad más, habla con tu docente."
                   : null}
           </p>
         ) : null}

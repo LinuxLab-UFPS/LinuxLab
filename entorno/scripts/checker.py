@@ -7,10 +7,15 @@ existe y se puede leer" seria cierto siempre y la asercion no medaria nada.
 
 Entra un JSON por stdin y sale un JSON por stdout:
 
-    {"checks": [{"id": "c1", "type": "directorio_existe",
+    {"workdir": "actividades/<carpeta>",        // opcional
+     "checks": [{"id": "c1", "type": "directorio_existe",
                  "params": {"ruta": "/home/$usuario/practicas"}}]}
 
     {"results": [{"id": "c1", "passed": true, "detail": "..."}]}
+
+Con `workdir` (la carpeta de trabajo de la actividad, relativa al home) los
+mensajes muestran la ruta tal como la escribio el docente en la asercion; sin
+el, la ruta se muestra relativa al home del estudiante.
 
 Los parametros del docente viajan como datos y nunca se interpolan en una
 shell. Toda ruta se resuelve con realpath y tiene que caer dentro del home del
@@ -66,7 +71,10 @@ def resolve(raw, home):
     real = os.path.realpath(path)
     home_real = os.path.realpath(home)
     if real != home_real and not real.startswith(home_real + os.sep):
-        raise CheckError("La ruta queda fuera de tu carpeta personal")
+        raise CheckError(
+            "La ruta que pide el enunciado queda fuera de tu carpeta personal: "
+            "todo tu trabajo debe vivir dentro de tu home."
+        )
     return real
 
 
@@ -74,12 +82,25 @@ def owned_by_me(path):
     return os.stat(path).st_uid == os.getuid()
 
 
-def display_name(path):
-    """Nombre legible de la ruta resuelta: el ultimo segmento, para insertarlo
-    en los mensajes de retroalimentacion. Si no hay nombre, un sustantivo
-    generico."""
-    name = os.path.basename(path)
-    return name or "el elemento"
+def display_name(path, home, base=""):
+    """Ruta legible para los mensajes de retroalimentacion.
+
+    Relativa al home del estudiante y, cuando vive dentro de la carpeta de
+    trabajo de la actividad, relativa a ella (el mismo camino que escribio el
+    docente en la asercion). Asi dos checks que apuntan a archivos con el
+    mismo nombre en carpetas distintas no producen mensajes identicos que se
+    contradigan entre si.
+    """
+    rel = os.path.relpath(path, home)
+    if rel == ".":
+        return "tu carpeta personal"
+    base = (base or "").strip().strip("/")
+    if base and (rel == base or rel.startswith(base + os.sep)):
+        inner = rel[len(base):].lstrip("/")
+        # La ruta es la propia carpeta de la actividad: mejor el camino completo.
+        if inner:
+            return inner
+    return rel
 
 
 def natural_join(items):
@@ -111,44 +132,68 @@ def perms_deltas(expected, actual):
     return faltan, sobran
 
 
-def check_directorio_existe(params, home):
+def check_directorio_existe(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.exists(path):
-        raise CheckError(f"Se esperaba que existiera el directorio '{name}'. No existe")
+        raise CheckError(
+            f"Busqué el directorio '{name}' en tu carpeta de trabajo, pero todavía no existe. "
+            "Créalo con mkdir y vuelve a comprobar."
+        )
     if not os.path.isdir(path):
-        raise CheckError(f"Se esperaba un directorio en '{name}'. Existe, pero es un archivo")
+        raise CheckError(
+            f"Encontré algo llamado '{name}', pero es un archivo: el enunciado pide un "
+            "directorio. Revisa si lo creaste con touch en lugar de mkdir."
+        )
     if not owned_by_me(path):
-        raise CheckError(f"El directorio '{name}' existe, pero no pertenece a {me().pw_name}")
-    return f"El directorio '{name}' existe y pertenece a {me().pw_name}"
+        raise CheckError(
+            f"El directorio '{name}' existe, pero pertenece a otra cuenta: debe ser tuyo. "
+            "Verifica en qué carpeta lo creaste y con qué usuario trabajas."
+        )
+    return f"¡Muy bien! El directorio '{name}' existe y te pertenece."
 
 
-def check_archivo_existe(params, home):
+def check_archivo_existe(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.exists(path):
-        raise CheckError(f"Se esperaba que existiera el archivo '{name}'. No existe")
+        raise CheckError(
+            f"Busqué el archivo '{name}' en tu carpeta de trabajo, pero todavía no existe. "
+            "Puedes crearlo con touch o con tu editor de texto, y luego volver a comprobar."
+        )
     if os.path.isdir(path):
-        raise CheckError(f"Se esperaba un archivo en '{name}'. Existe, pero es un directorio")
+        raise CheckError(
+            f"Encontré algo llamado '{name}', pero es un directorio: el enunciado pide un "
+            "archivo. Revisa el nombre que le diste."
+        )
     if not owned_by_me(path):
-        raise CheckError(f"El archivo '{name}' existe, pero no pertenece a {me().pw_name}")
-    return f"El archivo '{name}' existe y pertenece a {me().pw_name}"
+        raise CheckError(
+            f"El archivo '{name}' existe, pero pertenece a otra cuenta: debe ser tuyo. "
+            "Verifica en qué carpeta lo creaste."
+        )
+    return f"¡Perfecto! El archivo '{name}' existe y te pertenece."
 
 
-def check_archivo_no_existe(params, home):
+def check_archivo_no_existe(params, home, base=""):
     """Para las actividades de borrar: lo que se comprueba es la ausencia."""
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if os.path.exists(path):
-        raise CheckError(f"Se esperaba que '{name}' ya no existiera. Todavía existe")
-    return f"El archivo '{name}' ya no existe, como se esperaba"
+        raise CheckError(
+            f"'{name}' todavía está en tu carpeta. El enunciado pide que lo hayas eliminado: "
+            "prueba con rm y vuelve a comprobar."
+        )
+    return f"Listo: '{name}' ya no está en tu carpeta, tal como pedía el enunciado."
 
 
-def check_permisos_son(params, home):
+def check_permisos_son(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.exists(path):
-        raise CheckError(f"Se esperaban permisos en '{name}'. El archivo no existe")
+        raise CheckError(
+            f"Quería revisar los permisos de '{name}', pero todavía no existe. Créalo "
+            "primero y luego aplica los permisos con chmod."
+        )
     expected = (params.get("modo") or "").strip()
     if not expected.isdigit() or not 3 <= len(expected) <= 4:
         raise CheckError("El modo esperado no es un octal válido")
@@ -161,23 +206,29 @@ def check_permisos_son(params, home):
             partes.append(("falta" if len(faltan) == 1 else "faltan") + " " + natural_join(faltan))
         if sobran:
             partes.append(("sobra" if len(sobran) == 1 else "sobran") + " " + natural_join(sobran))
-        raise CheckError(f"Para '{name}' " + " y ".join(partes) + ".")
-    return f"Los permisos de '{name}' son los correctos."
+        raise CheckError(
+            f"Casi lo tienes: '{name}' tiene ahora permisos {actual}, y se esperaban "
+            f"{expected_padded} — " + " y ".join(partes) + ". Ajusta con chmod y vuelve a comprobar."
+        )
+    return f"¡Exacto! Los permisos de '{name}' son justamente los que pedía el enunciado."
 
 
-def check_propietario_es(params, home):
+def check_propietario_es(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.exists(path):
-        raise CheckError(f"Se esperaba revisar el propietario de '{name}'. El archivo no existe")
+        raise CheckError(
+            f"Quería revisar el propietario de '{name}', pero todavía no existe. "
+            "Créalo primero y luego ajusta la propiedad con chown."
+        )
     expected = (params.get("usuario") or "").strip().replace(USER_TOKEN, me().pw_name)
     owner = pwd.getpwuid(os.stat(path).st_uid).pw_name
     if owner != expected:
         raise CheckError(
-            f"El propietario de '{name}' no es el que pide el enunciado. "
-            f"Ahora mismo es '{owner}'"
+            f"El propietario de '{name}' no es el que pide el enunciado: ahora es "
+            f"'{owner}' y debería ser '{expected}'. Revisa cómo cambiarlo con chown."
         )
-    return f"El propietario de '{name}' es correcto: '{owner}'."
+    return f"El propietario de '{name}' es el correcto: '{owner}'. Bien aplicado el chown."
 
 
 def lineas_utiles(path):
@@ -189,7 +240,7 @@ def lineas_utiles(path):
         return [line.strip() for line in fh.read().splitlines() if line.strip()]
 
 
-def check_archivo_es(params, home):
+def check_archivo_es(params, home, base=""):
     """El archivo tiene exactamente este contenido, linea por linea y en orden.
 
     `archivo_contiene` no sirve cuando el orden es parte del ejercicio: con ella,
@@ -198,7 +249,7 @@ def check_archivo_es(params, home):
     tumbe un trabajo correcto.
     """
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.isfile(path):
         raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
 
@@ -210,23 +261,27 @@ def check_archivo_es(params, home):
     if len(obtenidas) != len(esperadas):
         sobran = len(obtenidas) > len(esperadas)
         raise CheckError(
-            f"'{name}' tiene {len(obtenidas)} líneas con contenido y "
-            + ("sobran algunas." if sobran else "faltan algunas.")
+            f"'{name}' tiene {len(obtenidas)} líneas con contenido y se esperaban "
+            f"{len(esperadas)}. Revisa si "
+            + ("te sobra alguna línea." if sobran else "te falta alguna línea.")
         )
     for i, (tuya, esperada) in enumerate(zip(obtenidas, esperadas), start=1):
         if tuya != esperada:
             raise CheckError(
-                f"La línea {i} de '{name}' no es la que pide el enunciado. "
-                f"Dice '{tuya}'"
+                f"Casi: la línea {i} de '{name}' no coincide con el enunciado. "
+                f"Ahí escribiste '{tuya}'. Revisa esa línea y ajústala."
             )
-    return f"El contenido de '{name}' es exactamente el esperado."
+    return f"El contenido de '{name}' coincide exactamente con lo que pedía el enunciado. ¡Buen trabajo!"
 
 
-def check_minimo_lineas(params, home):
+def check_minimo_lineas(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.isfile(path):
-        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
+        raise CheckError(
+            f"Quería contar las líneas de '{name}', pero todavía no existe. "
+            "Créalo y escribe el contenido que pide el enunciado."
+        )
     try:
         minimo = int(params.get("cantidad", 0))
     except (TypeError, ValueError):
@@ -234,35 +289,45 @@ def check_minimo_lineas(params, home):
     lineas = lineas_utiles(path)
     if len(lineas) < minimo:
         raise CheckError(
-            f"'{name}' tiene {len(lineas)} líneas con contenido y hacen falta más"
+            f"'{name}' tiene {len(lineas)} línea(s) con contenido, pero el enunciado pide "
+            f"al menos {minimo}. Añade el contenido que falta y vuelve a comprobar."
         )
-    return f"'{name}' tiene suficientes líneas ({len(lineas)})."
+    return f"'{name}' cumple el mínimo de líneas: tiene {len(lineas)} con contenido."
 
 
-def check_ultima_linea_es(params, home):
+def check_ultima_linea_es(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.isfile(path):
-        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
+        raise CheckError(
+            f"Quería revisar la última línea de '{name}', pero todavía no existe. "
+            "Créalo y escribe lo que pide el enunciado."
+        )
     esperado = (params.get("valor") or "").strip()
     if not esperado:
         raise CheckError("No se indico que debia ir en la ultima linea")
     lineas = lineas_utiles(path)
     if not lineas:
-        raise CheckError(f"'{name}' está vacío: no hay última línea que revisar")
+        raise CheckError(
+            f"'{name}' está vacío: no hay última línea que revisar. "
+            "Escribe primero el contenido que pide el enunciado."
+        )
     if lineas[-1] != esperado:
         raise CheckError(
-            f"La última línea de '{name}' no es la que pide el enunciado. "
-            f"Dice '{lineas[-1]}'"
+            f"La última línea de '{name}' no es la que pide el enunciado: dice "
+            f"'{lineas[-1]}'. Revisa el final del archivo."
         )
-    return f"La última línea de '{name}' es la correcta."
+    return f"La última línea de '{name}' es exactamente la que pedía el enunciado."
 
 
-def check_archivo_contiene(params, home):
+def check_archivo_contiene(params, home, base=""):
     path = resolve(params.get("ruta", ""), home)
-    name = display_name(path)
+    name = display_name(path, home, base)
     if not os.path.isfile(path):
-        raise CheckError(f"Se esperaba revisar '{name}'. No existe o no es un archivo")
+        raise CheckError(
+            f"Quería revisar el contenido de '{name}', pero todavía no existe. "
+            "Créalo y escribe el texto que pide el enunciado."
+        )
     needle = params.get("patron") or ""
     if not needle:
         raise CheckError("No se indicó qué buscar")
@@ -273,8 +338,11 @@ def check_archivo_contiene(params, home):
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
             if needle in line:
-                return f"'{name}' contiene lo que se pedía."
-    raise CheckError(f"'{name}' no contiene lo que pide el enunciado")
+                return f"Encontré en '{name}' el texto que pedía el enunciado. ¡Bien!"
+    raise CheckError(
+        f"Revisé '{name}' de principio a fin y no encontré el texto que pide el "
+        "enunciado. Verifica lo que escribiste (cuida mayúsculas, tildes y espacios)."
+    )
 
 
 CHECKS = {
@@ -290,18 +358,18 @@ CHECKS = {
 }
 
 
-def run(check, home):
+def run(check, home, base=""):
     fn = CHECKS.get(check.get("type"))
     if fn is None:
         return {"id": check.get("id"), "passed": False, "detail": "Tipo de aserción desconocido"}
     try:
-        return {"id": check.get("id"), "passed": True, "detail": fn(check.get("params") or {}, home)}
+        return {"id": check.get("id"), "passed": True, "detail": fn(check.get("params") or {}, home, base)}
     except CheckError as err:
         return {"id": check.get("id"), "passed": False, "detail": str(err)}
     except PermissionError:
-        return {"id": check.get("id"), "passed": False, "detail": "No tienes permiso sobre esa ruta"}
+        return {"id": check.get("id"), "passed": False, "detail": "No tienes permiso para revisar esa ruta: el chequeo corre con tu propio usuario. Ajusta los permisos e inténtalo de nuevo."}
     except OSError as err:
-        return {"id": check.get("id"), "passed": False, "detail": f"No se pudo revisar: {err.strerror}"}
+        return {"id": check.get("id"), "passed": False, "detail": f"No pude revisar la ruta: {err.strerror}. Inténtalo de nuevo; si persiste, avisa a tu docente."}
 
 
 def main():
@@ -310,7 +378,11 @@ def main():
 
     payload = json.load(sys.stdin)
     home = me().pw_dir
-    results = [run(check, home) for check in payload.get("checks", [])]
+    # Carpeta de trabajo de la actividad (relativa al home), si el backend la
+    # manda: permite que los mensajes muestren la ruta tal como la escribio el
+    # docente en la asercion, en vez del camino completo desde el home.
+    base = payload.get("workdir") or ""
+    results = [run(check, home, base) for check in payload.get("checks", [])]
     json.dump({"user": me().pw_name, "home": home, "results": results}, sys.stdout)
     sys.stdout.write("\n")
 

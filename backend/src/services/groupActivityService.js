@@ -129,13 +129,34 @@ function validateActivityInput(body) {
 
   const checks = buildChecks(parsed.checks, { evaluationType, maxScore })
 
-  return { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber }
+  return {
+    title,
+    instructions,
+    maxScore,
+    difficulty: parsed.difficulty,
+    activityType,
+    attemptLimit,
+    evaluationType,
+    dueAt,
+    checks,
+    topicNumber,
+  }
 }
 
 async function createGroupActivity({ groupId, teacherUserId, role, input }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
-    validateActivityInput(input ?? {})
+  const {
+    title,
+    instructions,
+    maxScore,
+    difficulty,
+    activityType,
+    attemptLimit,
+    evaluationType,
+    dueAt,
+    checks,
+    topicNumber,
+  } = validateActivityInput(input ?? {})
 
   const groupActivity = await runInTransaction(async (tx) => {
     const groupActivityId = randomUUID()
@@ -145,6 +166,7 @@ async function createGroupActivity({ groupId, teacherUserId, role, input }) {
         group_id: group.id,
         title,
         instructions,
+        difficulty,
         activity_type: activityType,
         evaluation_type: evaluationType,
         max_score: maxScore,
@@ -200,14 +222,25 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
     throw new AppError("Toda actividad es obligatoria", 400, "VALIDATION_ERROR")
   }
 
-  const { title, instructions, maxScore, activityType, attemptLimit, evaluationType, dueAt, checks, topicNumber } =
-    validateActivityInput(body)
+  const {
+    title,
+    instructions,
+    maxScore,
+    difficulty,
+    activityType,
+    attemptLimit,
+    evaluationType,
+    dueAt,
+    checks,
+    topicNumber,
+  } = validateActivityInput(body)
 
   const updated = await prisma.groupActivity.update({
     where: { id: ga.id },
     data: {
       title,
       instructions,
+      difficulty,
       activity_type: activityType,
       evaluation_type: evaluationType,
       checks,

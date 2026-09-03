@@ -31,8 +31,10 @@ export function ExampleCheck() {
         </p>
 
         <ul className="space-y-2">
-          {["Existe el directorio que pide el enunciado", "Existe el directorio que pide el enunciado"].map(
-            (texto, i) => (
+          {[
+            "Crea el directorio practicas en tu carpeta personal",
+            "Crea, dentro de él, el directorio tema-03",
+          ].map((texto, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
                 <span className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-muted-foreground/40" />
                 <span className="text-foreground">

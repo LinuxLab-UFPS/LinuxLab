@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Trash2, ShieldCheck } from "lucide-react"
+import { ChevronDown, Plus, Trash2 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { describeCheck } from "@shared/lib/describe-check"
+import { checkParamsSummary, describeCheck } from "@shared/lib/describe-check"
+import { checkError } from "@/lib/features/teacher/check-validation"
 import { getCheckCatalog } from "@/lib/features/teacher/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/components/ui/select"
-import { Checkbox } from "@shared/components/ui/checkbox"
+import { Switch } from "@shared/components/ui/switch"
 import { IconAction } from "@shared/components/icon-action"
 import { Skeleton } from "@shared/components/skeleton"
 import { notify } from "@shared/lib/toast"
@@ -27,6 +28,11 @@ interface CheckBuilderProps {
  * (`GET /api/activities/catalog`): la interfaz muestra exactamente los tipos
  * que la validacion acepta, y un tipo nuevo llega solo con anadirlo al checker
  * del entorno y al catalogo del servidor.
+ *
+ * Cada asercion vive en una tarjeta colapsable: la fila cerrada basta para
+ * leer la lista completa (numero, tipo, parametros y puntaje); al expandir se
+ * editan los campos y se ve la frase "Resultado esperado" que le llegara al
+ * docente en el detalle. Una recien agregada se abre sola.
  */
 export function CheckBuilder({
   checks,
@@ -38,6 +44,8 @@ export function CheckBuilder({
   const [catalog, setCatalog] = useState<CatalogEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  /** Ids de asercion expandidos; las demas quedan como fila resumen. */
+  const [openIds, setOpenIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     let alive = true
@@ -63,6 +71,14 @@ export function CheckBuilder({
   const getEntry = (type: string) =>
     catalog.find((c) => c.type === type) ?? catalog[0]
 
+  const toggleOpen = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+
   const evenPointsFor = (index: number, count = checks.length) => {
     if (count === 0) return 0
     const base = Math.floor(activityValue / count)
@@ -83,15 +99,18 @@ export function CheckBuilder({
     const next = distributeEvenly
       ? checks.map((check, index) => ({ ...check, points: evenPointsFor(index, newCount) }))
       : checks
+    const id = crypto.randomUUID()
     onChange([
       ...next,
       {
-        id: crypto.randomUUID(),
+        id,
         type: entry.type,
         params: {},
         points: evenPointsFor(checks.length, newCount),
       },
     ])
+    // La nueva se abre sola: lo primero que hace el docente es definirla.
+    setOpenIds((prev) => new Set(prev).add(id))
   }
 
   const updateCheck = (id: string, patch: Partial<ActivityCheck>) =>
@@ -111,6 +130,11 @@ export function CheckBuilder({
         ? remaining.map((check, index) => ({ ...check, points: evenPointsFor(index, remaining.length) }))
         : remaining
     )
+    setOpenIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
   }
 
   if (loading) {
@@ -135,25 +159,25 @@ export function CheckBuilder({
     <div className="space-y-4">
       {/* Header + distribute toggle */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 text-primary" />
-          <span>
-            {checks.length} {checks.length === 1 ? "aserción" : "aserciones"} de validación
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-sm font-semibold text-foreground">Aserciones</h3>
+          <span className="rounded-full border border-table-line bg-secondary px-2 py-0.5 text-xs text-muted-foreground">
+            {checks.length} {checks.length === 1 ? "validación" : "validaciones"}
           </span>
         </div>
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <Checkbox
-            checked={distributeEvenly}
-             onCheckedChange={(next) => {
-               const enabled = next === true
-               if (!enabled) {
-                 onChange(checks.map((check, index) => ({ ...check, points: evenPointsFor(index) })))
-               }
-               onDistributeChange(enabled)
-             }}
-            className="h-4 w-4"
-          />
+        <label className="flex cursor-pointer select-none items-center gap-2.5 text-sm">
           <span className="text-muted-foreground">Distribuir puntaje equitativamente</span>
+          <Switch
+            checked={distributeEvenly}
+            onCheckedChange={(enabled) => {
+              if (!enabled) {
+                // Al apagar el reparto automatico los puntos quedan congelados
+                // con los valores calculados, y de ahi en adelante son libres.
+                onChange(checks.map((check, index) => ({ ...check, points: evenPointsFor(index) })))
+              }
+              onDistributeChange(enabled)
+            }}
+          />
         </label>
       </div>
 
@@ -161,70 +185,121 @@ export function CheckBuilder({
       <div className="space-y-3">
         {checks.map((check, index) => {
           const entry = getEntry(check.type)
+          const open = openIds.has(check.id)
+          const paramError = checkError(check)
+          const hasParams = entry.fields.some((f) => (check.params[f.key] ?? "").trim() !== "")
           return (
-            <div key={check.id} className="space-y-3 rounded-lg border border-table-line bg-secondary/40 p-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-foreground/10 font-mono text-xs font-medium text-foreground">
-                  {index + 1}
+            <div
+              key={check.id}
+              className={cn(
+                "overflow-hidden rounded-xl border bg-card transition-colors",
+                open ? "border-primary/30" : "border-table-line",
+                paramError && "border-danger/40",
+              )}
+            >
+              {/* Fila resumen: siempre visible. Clic la expande o colapsa; los
+                  controles de adentro matan el clic para no plegar la tarjeta. */}
+              <button
+                type="button"
+                onClick={() => toggleOpen(check.id)}
+                aria-expanded={open}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/50"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-xs font-semibold text-primary">
+                  {String(index + 1).padStart(2, "0")}
                 </span>
-                {/* Type selector */}
-                <Select
-                  value={check.type}
-                  onValueChange={(type) => updateCheck(check.id, { type, params: {} })}
-                >
-                  <SelectTrigger className="h-9 flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {catalog.map((c) => (
-                      <SelectItem key={c.type} value={c.type}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Points */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <input
-                    type="number"
-                    min={0}
-                    value={effectivePoints(check, index)}
-                    disabled={distributeEvenly}
-                    onChange={(e) => updateCheck(check.id, { points: Number(e.target.value) })}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-foreground">
+                    {entry.label}
+                  </span>
+                  {/* Con parametros invalidos la linea resumen se vuelve el
+                      motivo, en rojo: el docente encuentra la tarjeta rota sin
+                      abrir las demas. */}
+                  <span
                     className={cn(
-                      "h-9 w-16 rounded-md border border-table-line bg-card px-2 text-center font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary",
-                      distributeEvenly && "opacity-60"
+                      "block truncate font-mono text-xs",
+                      paramError ? "text-danger" : "text-muted-foreground",
                     )}
-                  />
-                  <span className="text-xs text-muted-foreground">pts</span>
-                </div>
-                {/* Remove */}
-                <IconAction
-                  label="Eliminar aserción"
-                  icon={Trash2}
-                  onClick={() => removeCheck(check.id)}
+                  >
+                    {paramError ??
+                      (hasParams
+                        ? checkParamsSummary(check.type, check.params)
+                        : "Sin configurar")}
+                  </span>
+                </span>
+                <span className="shrink-0 font-mono text-sm text-foreground">
+                  {effectivePoints(check, index)} <span className="text-xs text-muted-foreground">pts</span>
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                    open && "rotate-180",
+                  )}
                 />
-              </div>
+                <span onClick={(e) => e.stopPropagation()}>
+                  <IconAction
+                    label="Eliminar aserción"
+                    icon={Trash2}
+                    onClick={() => removeCheck(check.id)}
+                  />
+                </span>
+              </button>
 
-              {/* Params */}
-              <div className="grid gap-3 pl-9 sm:grid-cols-2">
-                {entry.fields.map((field) => (
-                  <div key={field.key} className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{field.label}</label>
-                    <input
-                      value={check.params[field.key] ?? ""}
-                      onChange={(e) => updateParam(check.id, field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      className="h-8 w-full rounded-md border border-table-line bg-card px-2.5 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
+              {open && (
+                <div className="space-y-4 border-t border-table-line px-4 py-4">
+                  {/* Tipo: cambiarlo resetea los parametros, como siempre. */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-muted-foreground">Tipo de aserción</label>
+                    <Select
+                      value={check.type}
+                      onValueChange={(type) => updateCheck(check.id, { type, params: {} })}
+                    >
+                      <SelectTrigger className="h-9 w-full border-table-line">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {catalog.map((c) => (
+                          <SelectItem key={c.type} value={c.type}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))}
-              </div>
 
-              {/* Preview: qué evaluaría esta aserción con los parámetros actuales. */}
-              <div className="rounded-md border border-primary/20 bg-primary/5 px-3 py-2 pl-9 text-sm text-foreground">
-                {describeCheck(check.type, check.params)}
-              </div>
+                  {/* Params */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {entry.fields.map((field) => (
+                      <div key={field.key} className="space-y-1">
+                        <label className="text-xs text-muted-foreground">{field.label}</label>
+                        <input
+                          value={check.params[field.key] ?? ""}
+                          onChange={(e) => updateParam(check.id, field.key, e.target.value)}
+                          placeholder={field.placeholder}
+                          className="h-9 w-full rounded-md border border-table-line bg-card px-2.5 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Resultado esperado: qué evaluaría esta aserción con los
+                      parámetros actuales. Es la misma frase que ve el docente
+                      en el detalle de la actividad publicada. */}
+                  <div className="flex items-start gap-3 rounded-lg border border-success/25 bg-success/5 px-3.5 py-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15">
+                      <svg viewBox="0 0 16 16" className="h-3 w-3 fill-success" aria-hidden>
+                        <path d="M6.5 11.5 3 8l1.06-1.06L6.5 9.38l5.44-5.44L13 5l-6.5 6.5Z" />
+                      </svg>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-foreground">Resultado esperado</span>
+                      <span className="mt-0.5 block whitespace-pre-wrap text-sm text-muted-foreground">
+                        {describeCheck(check.type, check.params)}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
@@ -240,7 +315,7 @@ export function CheckBuilder({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={addCheck}
-          className="inline-flex h-9 items-center gap-2 rounded-md border border-table-line px-3 text-sm text-foreground transition-colors hover:bg-secondary"
+          className="inline-flex h-9 items-center gap-2 rounded-md border border-dashed border-primary/40 px-3.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
         >
           <Plus className="h-4 w-4" />
           Agregar aserción

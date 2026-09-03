@@ -70,10 +70,10 @@ const tituloTemaDe = (item: Item): string =>
       // temario por su número, para que la búsqueda también las encuentre.
       (syllabus.find((t) => t.number === item.activity.topicNumber)?.title ?? "Sin tema")
 
-/** Solo las del temario declaran dificultad; las del docente no la traen, así
- *  que un filtro de dificultad concreto las deja fuera. */
-const dificultadDe = (item: Item): Difficulty | undefined =>
-  item.source === "bank" ? item.activity.difficulty : undefined
+/** Ambos orígenes declaran dificultad hoy: la del docente viaja desde el
+ *  backend con la misma escala del temario, así que el filtro las cubre a
+ *  todas. */
+const dificultadDe = (item: Item): Difficulty | undefined => item.activity.difficulty
 
 /** La escala de calificación es fija: 0 a 100. */
 const NOTA_MAXIMA = 100

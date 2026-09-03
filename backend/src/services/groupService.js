@@ -9,7 +9,7 @@ const { runInTransaction } = require("../lib/transaction")
 const accessService = require("./accessService")
 const attemptService = require("./attemptService")
 const { groupNameOf } = require("../utils/groupName")
-const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
+const { createGroupSchema, updateGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 const { finalScore } = require("../utils/finalScore")
@@ -141,6 +141,46 @@ async function createGroup(args) {
     }),
     enrollment,
   }
+}
+
+/**
+ * Actualiza los datos editables de un grupo (nombre y descripcion).
+ *
+ * Solo los grupos activos son editables: un grupo finalizado o archivado es
+ * un registro historico y sus datos quedan congelados tal como se cerraron.
+ */
+async function updateGroup({ groupId, name, description, teacherUserId, role }) {
+  await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+
+  const parsed = parseOrThrow(updateGroupSchema, { name, description })
+
+  const group = await prisma.group.findUnique({ where: { id: groupId } })
+  if (!group) {
+    // ensureGroupAccess ya la habria rechazado, pero el chequeo explícito
+    // documenta la expectativa y protege ante cambios futuros.
+    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+  }
+  if (group.status !== "active") {
+    throw new AppError("Solo se puede editar un grupo activo", 409, "CONFLICT")
+  }
+
+  const updated = await prisma.group.update({
+    where: { id: groupId },
+    data: {
+      name: parsed.name,
+      description: parsed.description?.trim() || null,
+    },
+  })
+
+  auditService.audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "group_updated",
+    target: parsed.name,
+    metadata: { groupId },
+  })
+
+  return serializeGroup(updated, 0)
 }
 
 async function listGroups({ teacherUserId, role }) {
@@ -415,6 +455,37 @@ async function archiveGroup(args) {
 }
 
 /**
+ * Desarchiva un grupo: lo devuelve al listado principal del docente.
+ *
+ * El estado de destino es siempre 'finished': con la UI nueva el archivado
+ * solo aplica a grupos ya finalizados, y los pocos grupos que se archivaron
+ * estando activos (modo de compatibilidad) tienen su entorno destruido, asi
+ * que volver a 'active' los dejaria con un curso vivo sin entorno Linux.
+ * No toca nada mas que el estado: es el inverso exacto del archivado simple.
+ */
+async function unarchiveGroup({ groupId, role, teacherUserId }) {
+  const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
+  if (group.status !== "archived") {
+    throw new AppError("Solo se puede desarchivar un grupo archivado", 409, "CONFLICT")
+  }
+
+  const updated = await prisma.group.update({
+    where: { id: groupId },
+    data: { status: "finished" },
+  })
+
+  auditService.audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "group_unarchived",
+    target: group.name,
+    metadata: { groupId },
+  })
+
+  return serializeGroup(updated, 0)
+}
+
+/**
  * La limpieza que cierra un curso: matriculas a 'archived', cuentas Linux de
  * los estudiantes borradas de la base, jobs de aprovisionamiento pendientes
  * cancelados y teardown del entorno encolado. El worker borra del contenedor
@@ -560,11 +631,13 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
 
 module.exports = {
   createGroup,
+  updateGroup,
   listGroups,
   getGroup,
   listGroupProvisioningJobs,
   teacherProvisioningSummary,
   archiveGroup,
+  unarchiveGroup,
   finalizeGroup,
   deleteGroup,
   rotateInvite,

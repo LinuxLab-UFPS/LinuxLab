@@ -101,7 +101,13 @@ async function evaluate({ slug, studentUserId }) {
     throw new AppError("Tu perfil no tiene código estudiantil registrado", 409, "CONFLICT")
   }
 
+  // Misma convencion que las actividades de curso: la carpeta de la actividad
+  // viaja al checker para que la retroalimentacion muestre la ruta corta (la
+  // que escribio el docente en la semilla). En las actividades sin carpeta
+  // propia no se manda y las rutas se muestran relativas al home.
+  const workdir = workdirOf(activity.slug)
   const payload = JSON.stringify({
+    ...(workdir ? { workdir: `actividades/${workdir}` } : {}),
     checks: checks.map((c) => ({
       id: c.id,
       type: c.type,
@@ -130,7 +136,9 @@ async function evaluate({ slug, studentUserId }) {
       type: check.type,
       points: check.points,
       passed: outcome?.passed ?? false,
-      detail: outcome?.detail ?? "No se pudo evaluar",
+      detail:
+        outcome?.detail ??
+        "No pude revisar esta comprobación en tu entorno. Vuelve a intentarlo; si el problema continúa, avisa a tu docente.",
     }
   })
 

@@ -160,6 +160,8 @@ export interface GroupActivitySummary {
   description: string
   /** Tema real de la actividad; null si el docente no le asignó uno. */
   topicNumber: number | null
+  /** Misma escala del temario: convive con él en listados y filtros. */
+  difficulty: Difficulty
   checksCount: number
   passed: boolean
   /** Con al menos un intento o entrega la actividad queda completada (se conserva). */
@@ -198,6 +200,7 @@ export interface GroupActivityDetail {
   groupId: string
   title: string
   instructions: string
+  difficulty: Difficulty
   workdir: string
   dueAt: string | null
   evaluationType: EvaluationType

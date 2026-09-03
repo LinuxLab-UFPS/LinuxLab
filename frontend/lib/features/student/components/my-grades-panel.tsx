@@ -237,17 +237,21 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
                         >
                           {s.title}
                         </Link>
-                        {/* Las del curso se clasifican por dificultad y las del
-                            docente por quiz o taller; nunca por las dos. */}
+                        {/* Las del curso se clasifican por dificultad. Las del
+                            docente llevan su tipo y, si el docente la definió,
+                            también la dificultad (misma escala del temario). */}
                         <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
                           {/* Las del temario no llevan numero de actividad: ese
                               contador es de las que publica el docente. */}
                           {s.source === "bank" ? "Del curso" : `#${s.activityNumber}`} ·{" "}
                           {s.source === "bank"
                             ? (s.difficulty ? DIFFICULTY_LABEL[s.difficulty] : "Curso")
-                            : s.activityType === "quiz"
-                              ? "Quiz"
-                              : "Taller"}{" "}
+                            : [
+                                s.activityType === "quiz" ? "Quiz" : "Taller",
+                                s.difficulty ? DIFFICULTY_LABEL[s.difficulty] : null,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}{" "}
                           · {s.evaluationType === "manual" ? "Revisión docente" : "Auto-evaluada"}
                         </span>
                       </td>

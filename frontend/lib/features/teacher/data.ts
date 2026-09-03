@@ -37,9 +37,19 @@ export async function createGroup(input: CreateGroupInput) {
   return teacherApi.createGroup(input)
 }
 
-/** Desactiva un curso. Es de una sola vía: el backend no sabe reactivar. */
+/** Actualiza nombre y descripción de un grupo activo. */
+export async function updateGroup(id: string, input: { name: string; description?: string | null }) {
+  return teacherApi.updateGroup(id, input)
+}
+
+/** Aparta un curso ya finalizado del listado principal. */
 export async function deactivateGroup(id: string): Promise<void> {
   await teacherApi.deactivateGroup(id)
+}
+
+/** Devuelve un grupo archivado al listado principal, como finalizado. */
+export async function unarchiveGroup(id: string): Promise<Group> {
+  return teacherApi.unarchiveGroup(id)
 }
 
 /** Vista previa de la finalización de un curso activo. */

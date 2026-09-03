@@ -4,11 +4,20 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { Archive, BookOpen, CheckCircle2, FolderOpen, Plus } from "lucide-react"
+import {
+  Archive,
+  ArchiveRestore,
+  CheckCircle2,
+  FolderOpen,
+  LayoutGrid,
+  Pencil,
+  Plus,
+} from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { SearchBar } from "@shared/components/search-bar"
 import { StatTabs } from "@shared/components/stat-tabs"
+import { GroupStatusBadge } from "@shared/components/group-status-badge"
 import {
   Table,
   TableBody,
@@ -27,11 +36,16 @@ import {
   type CourseAction,
 } from "@/lib/features/teacher/components/confirm-course-dialog"
 import type { Group } from "@/lib/features/teacher/types"
-import { deactivateGroup, deleteGroup } from "@/lib/features/teacher/data"
+import {
+  deactivateGroup,
+  deleteGroup,
+  unarchiveGroup,
+} from "@/lib/features/teacher/data"
 import { queryKeys, useGroups } from "@/lib/api/queries"
 import { notifyPromise } from "@shared/lib/toast"
+import { formatBogotaDate } from "@/lib/utils/dates"
 
-type Tab = "activos" | "finalizados" | "archivados"
+type Tab = "todos" | "archivados"
 
 const PAGE_SIZE = 10
 
@@ -43,7 +57,7 @@ export function GroupsTable() {
   // actualizan la cache con setQueryData + invalidacion. Asi cualquier
   // invalidacion externa (p. ej. al crear un grupo) se refleja al instante.
   const groups = useMemo(() => groupsQuery.data ?? [], [groupsQuery.data])
-  const [tab, setTab] = useState<Tab>("activos")
+  const [tab, setTab] = useState<Tab>("todos")
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
   /** Grupo y acción destructiva esperando confirmación. */
@@ -54,8 +68,7 @@ export function GroupsTable() {
 
   const counts = useMemo(
     () => ({
-      activos: groups.filter((g) => g.status === "active").length,
-      finalizados: groups.filter((g) => g.status === "finished").length,
+      todos: groups.filter((g) => g.status !== "archived").length,
       archivados: groups.filter((g) => g.status === "archived").length,
     }),
     [groups],
@@ -63,9 +76,7 @@ export function GroupsTable() {
 
   const q = query.trim().toLowerCase()
   const visible = groups
-    .filter((g) =>
-      tab === "activos" ? g.status === "active" : tab === "finalizados" ? g.status === "finished" : g.status === "archived",
-    )
+    .filter((g) => (tab === "todos" ? g.status !== "archived" : g.status === "archived"))
     .filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -102,6 +113,22 @@ export function GroupsTable() {
     setBusy(false)
   }
 
+  const handleUnarchive = async (group: Group) => {
+    const done = await notifyPromise(unarchiveGroup(group.id), {
+      loading: "Restaurando el grupo…",
+      success: "Grupo restaurado",
+      description: "Vuelve al listado principal como finalizado.",
+      error: "No se pudo desarchivar el grupo.",
+    })
+    if (done.ok) {
+      queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
+        prev.map((g) => (g.id === group.id ? { ...g, status: "finished" } : g)),
+      )
+      queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups })
+    }
+  }
+
   return (
     <div>
       {/* En movil cada cosa en su linea. Antes iban las tres en fila con
@@ -116,19 +143,11 @@ export function GroupsTable() {
           }}
           tabs={[
             {
-              value: "activos",
-              label: "Activos",
-              statLabel: "Grupos activos",
-              count: counts.activos,
-              icon: BookOpen,
-              tone: "primary",
-            },
-            {
-              value: "finalizados",
-              label: "Finalizados",
-              statLabel: "Grupos finalizados",
-              count: counts.finalizados,
-              icon: CheckCircle2,
+              value: "todos",
+              label: "Todos",
+              statLabel: "Grupos activos y finalizados",
+              count: counts.todos,
+              icon: LayoutGrid,
               tone: "primary",
             },
             {
@@ -166,6 +185,7 @@ export function GroupsTable() {
               <TableHead className="w-56">Directorio de trabajo</TableHead>
               <TableHead className="w-28">Estudiantes</TableHead>
               <TableHead className="w-32">Creado</TableHead>
+              <TableHead className="w-32">Estado</TableHead>
               <TableHead className="w-32">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -200,28 +220,51 @@ export function GroupsTable() {
                   {group.studentCount}
                 </TableCell>
                 <TableCell className="font-mono text-sm text-muted-foreground">
-                  {new Date(group.createdAt).toLocaleDateString("es-CO")}
+                  {formatBogotaDate(group.createdAt)}
+                </TableCell>
+                <TableCell>
+                  <GroupStatusBadge status={group.status} />
                 </TableCell>
                 {/* La accion no debe navegar tambien: el clic muere aqui. El
-                    boton de ver desaparecio porque la fila ya hace eso. */}
+                    boton de ver desaparecio porque la fila ya hace eso. Las
+                    acciones viven en botones con borde (como la paginacion):
+                    rojo para las que cierran o apartan el curso, neutro para
+                    editar. */}
                 <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-center gap-1">
-                    {/* Finalizar es el cierre académico del curso: la vista de
-                        finalización muestra el criterio y pide confirmación.
-                        El archivado (solo para finalizados) aparta el grupo del
-                        listado sin tocar nada más. */}
+                  <div className="flex items-center justify-center gap-1.5">
                     {group.status === "active" && (
-                      <IconAction
-                        label="Finalizar curso"
-                        icon={CheckCircle2}
-                        onClick={() => router.push(`/grupos/${group.id}/finalizar`)}
-                      />
+                      <>
+                        <IconAction
+                          label="Editar grupo"
+                          icon={Pencil}
+                          variant="boxed"
+                          href={`/grupos/${group.id}/editar`}
+                        />
+                        <IconAction
+                          label="Finalizar curso"
+                          icon={CheckCircle2}
+                          variant="boxed"
+                          tone="danger"
+                          onClick={() => router.push(`/grupos/${group.id}/finalizar`)}
+                        />
+                      </>
                     )}
                     {group.status === "finished" && (
                       <IconAction
                         label="Archivar grupo"
                         icon={Archive}
+                        variant="boxed"
+                        tone="danger"
                         onClick={() => setConfirming({ group, action: "archive" })}
+                      />
+                    )}
+                    {group.status === "archived" && (
+                      <IconAction
+                        label="Desarchivar grupo"
+                        icon={ArchiveRestore}
+                        variant="boxed"
+                        tone="danger"
+                        onClick={() => handleUnarchive(group)}
                       />
                     )}
                   </div>
@@ -233,8 +276,9 @@ export function GroupsTable() {
 
         {visible.length === 0 && (
           <TableEmptyState>
-            No tienes grupos{" "}
-            {tab === "activos" ? "activos" : tab === "finalizados" ? "finalizados" : "archivados"}.
+            {tab === "todos"
+              ? "No tienes grupos activos ni finalizados."
+              : "No tienes grupos archivados."}
           </TableEmptyState>
         )}
       </TablePanel>

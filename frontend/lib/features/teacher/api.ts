@@ -48,14 +48,20 @@ export const teacherApi = {
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
   createGroup: (input: CreateGroupInput) =>
     apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
+  /** Actualiza nombre y descripción del grupo; el backend rechaza grupos no activos. */
+  updateGroup: (id: string, input: { name: string; description?: string | null }) =>
+    apiFetch<Group>(`/api/groups/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
   /** Regenera el token de inscripción del grupo; el enlace anterior queda inválido. */
   rotateInvite: (id: string) =>
     apiFetch<{ inviteUrl: string }>(`/api/groups/${id}/invite/rotate`, { method: "POST" }),
   // PATCH /archive aparta del listado un curso ya finalizado; por
   // compatibilidad un curso activo sigue desactivandose (teardown del entorno).
-  // Responde 409 si ya estaba archivado. No hay forma de reactivar.
+  // Responde 409 si ya estaba archivado.
   deactivateGroup: (id: string) =>
     apiFetch<void>(`/api/groups/${id}/archive`, { method: "PATCH" }),
+  /** Devuelve un grupo archivado al listado principal, como finalizado. */
+  unarchiveGroup: (id: string) =>
+    apiFetch<Group>(`/api/groups/${id}/unarchive`, { method: "POST" }),
   /** Vista previa de la finalización: progreso, definitiva y elegibilidad por estudiante. */
   getFinalizePreview: (id: string) =>
     apiFetch<FinalizePreview>(`/api/groups/${id}/finalize/preview`),

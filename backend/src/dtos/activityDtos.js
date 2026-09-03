@@ -23,6 +23,9 @@ const activityInputSchema = z.object({
     .nullable(),
   // null o ausente = intentos ilimitados; un entero positivo = límite.
   attemptLimit: z.number().int().positive().nullable().optional(),
+  // La misma escala del temario: el docente clasifica su actividad para que
+  // conviva con las del curso en los listados y filtros del estudiante.
+  difficulty: z.enum(["basic", "intermediate", "advanced"]).default("basic"),
   activityType: z.enum(["workshop", "quiz"]).default("workshop"),
   // "atomic" es una alias historico de "automatic" (lo normaliza el servicio).
   evaluationType: z.string().optional(),
@@ -111,7 +114,7 @@ function serializeGroupActivity(ga) {
     title: ga.title,
     topicNumber: ga.topic_number ?? 0,
     source: "teacher",
-    difficulty: "basic",
+    difficulty: ga.difficulty ?? "basic",
     instructions: ga.instructions ?? "",
     maxScore: ga.max_score,
     dueDate: ga.due_at?.toISOString(),
