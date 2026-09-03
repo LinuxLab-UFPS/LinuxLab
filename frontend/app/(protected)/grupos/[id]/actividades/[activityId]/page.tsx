@@ -62,7 +62,7 @@ function ActivityDetail({
     href: studentDetailHref(sub.studentId),
   }))
   return (
-    <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
+    <div className="mx-auto max-w-7xl px-6 py-8">
       <BackButton fallback={`/grupos/${groupId}?tab=${backTab}`} />
 
       <div className="grid gap-6 mt-9 lg:grid-cols-[1fr_1.2fr]">

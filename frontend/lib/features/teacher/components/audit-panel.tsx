@@ -166,7 +166,7 @@ export function AuditPanel({
   const totalPages = data?.totalPages ?? 1
 
   return (
-    <div data-section="audit-panel">
+    <div>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <SearchBar
           value={search}

@@ -143,7 +143,7 @@ function GroupDetailContent() {
   }
 
   return (
-    <div data-section="cursos" className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <ActionButton tone="neutral" href="/inicio">
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -303,7 +303,7 @@ function GroupDetailContent() {
           <GroupStudents students={studentsQuery.data ?? []} rows={progressQuery.data?.rows ?? []} query={query} />
         )
       ) : tab === "actividades" ? (
-        <div data-section="actividades">
+        <div>
           <p className="mb-3 text-sm text-muted-foreground">
             Las actividades del curso vienen con el temario y son las mismas en todos los
             grupos: no se editan ni se deshabilitan. Aquí solo puedes modificar las que crees tú.
@@ -326,11 +326,11 @@ function GroupDetailContent() {
           )}
         </div>
       ) : tab === "bitacora" ? (
-        <div data-section="bitacora">
+        <div>
           <AuditPanel groupId={id} courseScoped />
         </div>
       ) : (
-        <div data-section="calificaciones">
+        <div>
           <GradebookPanel groupId={id} query={query} />
         </div>
       )}

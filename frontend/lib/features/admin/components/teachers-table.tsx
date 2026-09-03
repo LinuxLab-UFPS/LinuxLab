@@ -39,8 +39,8 @@ type StatusFilter = "all" | "active" | "inactive"
 
 const PAGE_SIZE = 8
 
-/** El item resaltado del dropdown sigue el morado del admin. Va explícito
- *  porque Radix monta el menú en un portal, fuera de `data-section`. */
+/** El item resaltado del dropdown sigue el rojo de la marca. Va explícito
+ *  porque Radix monta el menú en un portal, fuera de este árbol. */
 const SELECT_ITEM = "focus:bg-primary/10 focus:text-primary"
 
 export function TeachersTable() {

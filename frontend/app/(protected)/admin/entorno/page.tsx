@@ -6,7 +6,7 @@ import { RoleGuard } from "@shared/components/role-guard"
 export default function EntornoPage() {
   return (
     <RoleGuard roles={["admin"]}>
-      <div data-section="entorno" className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 bg-clip-text text-transparent">
