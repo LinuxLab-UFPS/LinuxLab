@@ -80,7 +80,13 @@ function buildChecks(list, { evaluationType, maxScore }) {
       )
     }
     total += points
-    checks.push({ id: randomUUID(), type: check.type, params, points, position: i })
+    checks.push({
+      id: randomUUID(),
+      type: check.type,
+      params: checkCatalog.normalizeParams(check.type, params),
+      points,
+      position: i,
+    })
   }
 
   if (total > maxScore) {
