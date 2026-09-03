@@ -11,6 +11,30 @@ function uniqueUsername(base, taken) {
   return username
 }
 
+/**
+ * Un username libre para un correo, sin crear la fila.
+ *
+ * Lo usa el alta de docentes, donde la cuenta se crea anidada dentro del
+ * `user.create` y por tanto no puede reintentar sobre la fila de LinuxAccount.
+ * Dos correos distintos pueden sanearse al mismo username (`ana.gomez@a.edu` y
+ * `ana_gomez@b.edu` dan los dos `ana_gomez`), y sin esto el segundo alta
+ * chocaba contra el UNIQUE de `linux_username` y se reportaba como "el código
+ * de docente ya está en uso".
+ *
+ * Queda una ventana de carrera entre consultar y crear; la cierra el UNIQUE de
+ * la columna, que sigue siendo la autoridad.
+ */
+async function findFreeUsername(db, email) {
+  const base = sanitizeUsername(email)
+  const taken = new Set(
+    (await db.linuxAccount.findMany({
+      where: { linux_username: { startsWith: base.substring(0, 28) } },
+      select: { linux_username: true },
+    })).map((account) => account.linux_username),
+  )
+  return uniqueUsername(base, taken)
+}
+
 async function createLinuxAccountWithUniqueUsername(db, userId, email) {
   const base = sanitizeUsername(email)
   const taken = new Set()
@@ -70,4 +94,4 @@ async function createLinuxAccountsUnique(db, users) {
   return data
 }
 
-module.exports = { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique }
+module.exports = { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique, findFreeUsername }
