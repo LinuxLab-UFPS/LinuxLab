@@ -1,15 +1,17 @@
 "use client"
 
 import { useMemo } from "react"
-import { PanelLeft } from "lucide-react"
+import { BookOpen, PanelLeft } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import Link from "next/link"
 import { CollapsedPanelButton } from "@shared/components/collapsed-panel-button"
 import { Skeleton } from "@shared/components/skeleton"
+import { EmptyState } from "@shared/components/empty-state"
 import { ActivityCard } from "@/lib/features/student/components/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { useLessonProgress } from "@/lib/features/student/progress"
 import { getActivities } from "@shared/lib/content/activities"
+import { conOrigen } from "@shared/lib/next-url"
 
 const SHOWN = 4
 
@@ -38,7 +40,7 @@ export function SuggestedActivities({
   onHide: () => void
   visible: boolean
 }) {
-  const { passed, loading } = usePassedActivities()
+  const { passed, scores, loading } = usePassedActivities()
   const { readCountForTopic } = useLessonProgress()
 
   const pending = useMemo(() => {
@@ -80,8 +82,24 @@ export function SuggestedActivities({
             ))}
           </div>
         ) : (
-          <div className="flex min-h-0 flex-1 items-center justify-center">
-            <p className="text-sm text-muted-foreground">No hay más actividades disponibles</p>
+          <div className="flex min-h-0 flex-1 items-center">
+            {/* Sin recomendaciones todavía: casi siempre es quien llega al
+                terminal sin haber abierto contenidos. El vacío explica como se
+                llena y da la salida directa al curso. */}
+            <EmptyState
+              icon={BookOpen}
+              title="Aún no hay actividades recomendadas"
+              description="Avanza en los contenidos del curso: al visitar un tema, sus actividades aparecen aquí para resolverlas junto a la terminal."
+              action={
+                <Link
+                  href="/curso"
+                  className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Ir a los contenidos
+                </Link>
+              }
+              className="w-full"
+            />
           </div>
         )
       ) : (
@@ -94,7 +112,16 @@ export function SuggestedActivities({
               cortado. */}
           <div className="-mx-5 -mt-2 min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-2">
             {pending.map((activity) => (
-              <ActivityCard key={activity.slug} activity={activity} compact />
+              <ActivityCard
+                key={activity.slug}
+                title={activity.title}
+                description={activity.description}
+                href={conOrigen(activity.href, "/terminal")}
+                estado={scores[activity.slug] ?? { score: null, maxScore: 100 }}
+                dificultad={activity.difficulty}
+                topicTitle={activity.topicTitle}
+                compact
+              />
             ))}
           </div>
           {/* Fuera del área que hace scroll: el enlace es la salida de esta

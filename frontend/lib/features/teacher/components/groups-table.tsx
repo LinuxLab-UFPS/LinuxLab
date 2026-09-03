@@ -4,10 +4,10 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { Archive, BookOpen, FolderOpen, Plus, Search } from "lucide-react"
-import { Input } from "@shared/components/ui/input"
+import { Archive, BookOpen, FolderOpen, Plus } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
+import { SearchBar } from "@shared/components/search-bar"
 import { StatTabs } from "@shared/components/stat-tabs"
 import {
   Table,
@@ -133,18 +133,15 @@ export function GroupsTable() {
           ]}
         />
 
-        <div className="relative w-full flex-1 sm:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar grupo por nombre..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              setPage(1)
-            }}
-            className="border-table-line pl-9"
-          />
-        </div>
+        <SearchBar
+          value={query}
+          onChange={(valor) => {
+            setQuery(valor)
+            setPage(1)
+          }}
+          placeholder="Buscar grupo por nombre..."
+          className="sm:max-w-sm flex-1"
+        />
 
         <ActionButton tone="primary" href="/grupos/crear" className="sm:ml-auto">
           <Plus className="h-4 w-4" />

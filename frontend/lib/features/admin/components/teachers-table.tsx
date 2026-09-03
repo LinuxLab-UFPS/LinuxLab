@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Search, Terminal, UserCheck, UserX, Users, X } from "lucide-react"
+import { Terminal, UserCheck, UserX, Users } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import type { TeacherListItem } from "@/lib/features/admin/types"
 import type { TeacherFilters } from "@/lib/features/admin/api"
@@ -9,9 +9,9 @@ import { useTeachers } from "@/lib/features/admin/hooks"
 import { useTeacherProvisioningToast } from "@/lib/features/admin/use-teacher-provisioning-toast"
 import { RegisterTeacherDialog } from "./register-teacher-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
-import { Input } from "@shared/components/ui/input"
 import { StatusBadge } from "@shared/components/status-badge"
 import { IconAction } from "@shared/components/icon-action"
+import { SearchBar } from "@shared/components/search-bar"
 import {
   Select,
   SelectContent,
@@ -115,26 +115,15 @@ export function TeachersTable() {
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-col gap-3 sm:flex-row">
-          <div className="relative max-w-sm flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value)
-                setPage(1)
-              }}
-              placeholder="Buscar docente por nombre o correo..."
-              className="border-table-line pl-9 pr-8"
-            />
-            {searchInput && (
-              <IconAction
-                label="Limpiar búsqueda"
-                icon={X}
-                onClick={() => setSearchInput("")}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2"
-              />
-            )}
-          </div>
+          <SearchBar
+            value={searchInput}
+            onChange={(valor) => {
+              setSearchInput(valor)
+              setPage(1)
+            }}
+            placeholder="Buscar docente por nombre o correo..."
+            className="max-w-sm flex-1"
+          />
 
           <Select
             value={statusFilter}

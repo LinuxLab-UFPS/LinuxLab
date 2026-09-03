@@ -60,14 +60,15 @@ function buildCell(ga, attempts, submissions, now) {
 }
 
 /**
- * La nota que aporta una casilla al promedio.
+ * La nota que aporta una casilla a la definitiva.
+ *
+ * Todas las casillas cuentan, con lo que tengan o 0 si no lo tienen: quien no
+ * ha iniciado, quien entrego y espera revision y quien dejo pasar la fecha
+ * aportan 0. Asi la definitiva no se infla con lo que falta: una actividad sin
+ * intentar es un 0 en la nota, igual que para el acta.
  */
-function contributesToAverage(cell) {
-  return cell.status === "completed" && cell.score !== null || cell.status === "overdue"
-}
-
 function averageValueOf(cell) {
-  return cell.status === "overdue" ? 0 : cell.score ?? 0
+  return cell.score ?? 0
 }
 
 /**
@@ -224,15 +225,14 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
       if (!cells[student.id]) cells[student.id] = {}
       cells[student.id][gaId] = cell
 
-      if (contributesToAverage(cell)) {
-        const value = averageValueOf(cell)
-        aAvg.sum += value
-        aAvg.count += 1
-        const sAvg = studentSums.get(student.id) ?? { sum: 0, count: 0 }
-        sAvg.sum += value
-        sAvg.count += 1
-        studentSums.set(student.id, sAvg)
-      }
+      // Toda casilla entra en los promedios (sin iniciar y en revision valen 0).
+      const value = averageValueOf(cell)
+      aAvg.sum += value
+      aAvg.count += 1
+      const sAvg = studentSums.get(student.id) ?? { sum: 0, count: 0 }
+      sAvg.sum += value
+      sAvg.count += 1
+      studentSums.set(student.id, sAvg)
     }
   }
 
@@ -294,16 +294,16 @@ function summarizeSeries(series) {
     notStarted: 0,
     total: series.length,
   }
+  /* La definitiva: todas las actividades cuentan, con su nota o con 0. Sin
+     iniciar y en revision no tienen nota todavia (null) y aportan 0, igual que
+     una vencida. Si no, quien no trabaja tendria el mismo promedio que quien
+     va a medias. */
   let sum = 0
-  let count = 0
   for (const s of series) {
-    if (s.score !== null) {
-      sum += s.score
-      count += 1
-    }
+    sum += s.score ?? 0
     summary[STATUS_TO_KEY[s.status]] += 1
   }
-  summary.average = count > 0 ? round1(sum / count) : null
+  summary.average = series.length > 0 ? round1(sum / series.length) : null
   return summary
 }
 
@@ -342,10 +342,8 @@ function buildSeriesForStudent(
     let count = 0
     for (const sid of groupStudentIds) {
       const other = buildCell(ga, intentos.get(key(sid, gaId)) ?? [], entregas.get(key(sid, gaId)) ?? [], now)
-      if (contributesToAverage(other)) {
-        sum += averageValueOf(other)
-        count += 1
-      }
+      sum += averageValueOf(other)
+      count += 1
     }
     const groupAverage = count > 0 ? round1(sum / count) : null
 
@@ -358,10 +356,9 @@ function buildSeriesForStudent(
     }
     const topic = topicsMap.get(topicNumber)
     topic.total += 1
-    if (contributesToAverage(cell)) {
-      topic.completed += 1
-      topic.sum += averageValueOf(cell)
-    }
+    // Toda casilla cuenta para el radar, con su nota o 0.
+    topic.completed += 1
+    topic.sum += averageValueOf(cell)
 
     series.push({
       activityId: gaId,
@@ -431,7 +428,18 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
 async function getMyGrades(studentUserId) {
   const enrollment = await prisma.enrollment.findFirst({
     where: { student_id: studentUserId, status: "active", group: { status: "active" } },
-    include: { group: { select: { id: true, name: true } } },
+    /* La vista "Mi Grupo" arma su encabezado con esto: nombre, descripción y
+       docente salen de aquí y no de otra consulta a listMine. */
+    include: {
+      group: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          teacher: { select: { user: { select: { name: true } } } },
+        },
+      },
+    },
     orderBy: { created_at: "asc" },
   })
 
@@ -457,7 +465,12 @@ async function getMyGrades(studentUserId) {
   )
 
   return {
-    group: { id: enrollment.group.id, name: enrollment.group.name },
+    group: {
+      id: enrollment.group.id,
+      name: enrollment.group.name,
+      description: enrollment.group.description ?? "",
+      teacherName: enrollment.group.teacher?.user?.name ?? "",
+    },
     series,
     topics,
     summary: summarizeSeries(series),

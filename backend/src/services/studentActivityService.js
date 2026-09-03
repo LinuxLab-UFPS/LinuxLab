@@ -82,7 +82,10 @@ async function listMine(studentUserId) {
         id: ga.id,
         title: ga.title,
         description: ga.instructions ?? "",
-        topicNumber: 0,
+        // El tema real de la actividad: el catalogo del estudiante ordena por
+        // el para mezclar en una sola lista las del temario y las del docente.
+        // Null en las que el docente creo sin tema, que van al final.
+        topicNumber: ga.topic_number ?? null,
         checksCount: (ga.checks ?? []).length,
         passed: attempts[0]?.passed ?? false,
         completed: attempts.length > 0 || hasSubmission,

@@ -27,16 +27,24 @@ export const RUTA_LOGIN = "/login"
  *   - lo que empiece por `//` o `/\`, que el navegador lee como otro dominio
  *     («protocol-relative»: `//otro.sitio` va a otro.sitio, no a una ruta),
  *   - lo que traiga `\` , que algunos navegadores normalizan a `/`.
+ *
+ * Devuelve el veredicto sin maquillarlo: `destinoSeguro` usa esto para decidir
+ * si manda a su destino por defecto, y `BackButton` para saber si un `origen`
+ * que llegó por la URL es de fiar o debe caer a su fallback.
  */
+export function esRutaInterna(next: string | null | undefined): boolean {
+  const ruta = next?.trim()
+  if (!ruta) return false
+  if (!ruta.startsWith("/")) return false
+  if (ruta.startsWith("//") || ruta.startsWith("/\\")) return false
+  if (ruta.includes("\\")) return false
+  return true
+}
+
 export function destinoSeguro(next: string | null | undefined): string {
   if (!next) return DESTINO_POR_DEFECTO
-
-  const ruta = next.trim()
-  if (!ruta.startsWith("/")) return DESTINO_POR_DEFECTO
-  if (ruta.startsWith("//") || ruta.startsWith("/\\")) return DESTINO_POR_DEFECTO
-  if (ruta.includes("\\")) return DESTINO_POR_DEFECTO
-
-  return ruta
+  if (!esRutaInterna(next)) return DESTINO_POR_DEFECTO
+  return next.trim()
 }
 
 /**
@@ -49,4 +57,14 @@ export function conNext(destino?: string | null): string {
   const ruta = destinoSeguro(destino)
   if (ruta === DESTINO_POR_DEFECTO) return RUTA_LOGIN
   return `${RUTA_LOGIN}?next=${encodeURIComponent(ruta)}`
+}
+
+/**
+ * Añade el origen a un enlace de entrada, para que `BackButton` sepa a dónde
+ * volver. El origen viaja codificado porque puede ser una ruta con sus propios
+ * parámetros (`/curso?tema=x&sub=y`): cae en la URL como `?origen=...` y el
+ * botón lo valida con `esRutaInterna` antes de usarlo.
+ */
+export function conOrigen(destino: string, origen: string): string {
+  return `${destino}${destino.includes("?") ? "&" : "?"}origen=${encodeURIComponent(origen)}`
 }

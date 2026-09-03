@@ -3,8 +3,9 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
+import { BackButton } from "@shared/components/back-button"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Textarea } from "@shared/components/ui/textarea"
@@ -48,10 +49,7 @@ function CreateGroupContent() {
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <ActionButton tone="neutral" href="/inicio">
-        <ArrowLeft className="h-4 w-4" />
-        Volver
-      </ActionButton>
+      <BackButton fallback="/inicio" />
 
       <div className="mt-10">
         <div className="min-w-0">

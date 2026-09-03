@@ -214,7 +214,7 @@ module.exports = {
   evaluate,
   resetSandbox,
   lastAttempt: attemptService.lastAttempt,
-  passedSlugs: attemptService.passedSlugs,
+  statusOf: attemptService.statusOf,
   personalize,
   CHECKER,
   SETUP,

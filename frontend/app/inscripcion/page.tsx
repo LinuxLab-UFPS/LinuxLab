@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { AlertTriangle, CheckCircle2, GraduationCap, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
 import { enrollApi, type GroupInviteInfo } from "@/lib/features/enrollment/api"
-import { StudentCodeGate } from "@/lib/features/student/components/student-code-gate"
+import { CompleteProfileView } from "@/lib/features/auth/components/complete-profile-view"
 import { Button } from "@shared/components/ui/button"
 import { notify } from "@shared/lib/toast"
 
@@ -42,6 +42,14 @@ function InscripcionInner() {
       cancelled = true
     }
   }, [token, groupId])
+
+  /* Misma puerta que el layout protegido: nadie se inscribe con un perfil a
+     medias. Aquí el formulario toma toda la pantalla y, al completarse, el
+     enlace de invitación sigue intacto en la URL para continuar el flujo.
+     Va después de los hooks: un retorno antes haría condicional el useEffect. */
+  if (!loading && user && user.role === "student" && !user.code) {
+    return <CompleteProfileView defaultName={user.name} />
+  }
 
   const goToLogin = () => {
     const current = `${window.location.pathname}${window.location.search}`
@@ -153,11 +161,8 @@ function InscripcionInner() {
 
 export default function InscripcionPage() {
   return (
-    <>
-      <Suspense fallback={null}>
-        <InscripcionInner />
-      </Suspense>
-      <StudentCodeGate />
-    </>
+    <Suspense fallback={null}>
+      <InscripcionInner />
+    </Suspense>
   )
 }

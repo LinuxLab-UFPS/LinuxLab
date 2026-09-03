@@ -1,7 +1,6 @@
-import Link from "next/link"
-import { ArrowLeft, ListChecks, FolderOpen, BarChart3 } from "lucide-react"
-import { Button } from "@shared/components/ui/button"
+import { ListChecks, FolderOpen, BarChart3 } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
+import { BackButton } from "@shared/components/back-button"
 import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
 import { describeCheck } from "@shared/lib/describe-check"
@@ -64,10 +63,7 @@ function ActivityDetail({
   }))
   return (
     <div data-section="cursos" className="mx-auto max-w-7xl px-6 py-8">
-      <ActionButton tone="neutral" href={`/grupos/${groupId}?tab=${backTab}`}>
-        <ArrowLeft className="h-4 w-4" />
-        Volver
-      </ActionButton>
+      <BackButton fallback={`/grupos/${groupId}?tab=${backTab}`} />
 
       <div className="grid gap-6 mt-9 lg:grid-cols-[1fr_1.2fr]">
         {/* Columna izquierda: detalle completo */}
@@ -207,9 +203,7 @@ export default async function ActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           Esta actividad no existe o no pertenece al curso.
         </p>
-        <Link href={`/grupos/${id}?tab=${backTab}`}>
-          <Button variant="outline">Volver al curso</Button>
-        </Link>
+        <BackButton fallback={`/grupos/${id}?tab=${backTab}`} label="Volver al curso" />
       </div>
     )
   }

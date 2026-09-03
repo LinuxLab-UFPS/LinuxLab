@@ -1,5 +1,4 @@
-import Link from "next/link"
-import { Button } from "@shared/components/ui/button"
+import { BackButton } from "@shared/components/back-button"
 import { requireServerRole } from "@/lib/features/auth/session"
 import { teacherApi } from "@/lib/features/teacher/api"
 import { StudentActivityDetail } from "@/lib/features/teacher/components/student-activity-detail"
@@ -27,9 +26,7 @@ export default async function StudentActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           No puedes ver las entregas de otros estudiantes.
         </p>
-        <Link href="/actividades">
-          <Button variant="outline">Volver a actividades</Button>
-        </Link>
+        <BackButton fallback="/actividades" label="Volver a actividades" />
       </div>
     )
   }
@@ -44,9 +41,7 @@ export default async function StudentActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           No se encontró la entrega de este estudiante.
         </p>
-        <Link href={`/grupos/${id}/actividades/${activityId}`}>
-          <Button variant="outline">Volver a la actividad</Button>
-        </Link>
+        <BackButton fallback={`/grupos/${id}/actividades/${activityId}`} label="Volver a la actividad" />
       </div>
     )
   }

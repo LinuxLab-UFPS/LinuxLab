@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ArrowLeft, FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
+import { FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
+import { BackButton } from "@shared/components/back-button"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnLaCarpeta, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
@@ -109,13 +109,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-3">
-          <Link
-            href="/actividades"
-            className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Actividades
-          </Link>
+          {/* Vuelve de donde se entró (catálogo, rendimiento...) vía el
+              `origen` del enlace; sin origen, al catálogo de actividades. */}
+          <BackButton fallback="/actividades" />
         </div>
 
         <div className="mt-4">
