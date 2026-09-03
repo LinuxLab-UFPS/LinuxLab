@@ -9,6 +9,7 @@ import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
 import { activities } from "@shared/lib/content/activities"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
+import { conOrigen } from "@shared/lib/next-url"
 import type { TopicLessons } from "@shared/lib/content/lessons"
 
 /** Un punto verde si la pieza esta hecha, hueco si no. */
@@ -131,7 +132,7 @@ export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, T
                       // no se puede usar.
                       <li key={a.slug} className="hidden md:list-item">
                         <LessonLink
-                          href={a.href}
+                          href={conOrigen(a.href, "/curso")}
                           className="flex items-center gap-2 rounded px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
                         >
                           <Punto hecho={passed.has(a.slug)} />

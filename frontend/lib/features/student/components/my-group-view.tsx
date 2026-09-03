@@ -1,6 +1,7 @@
 "use client"
 
 import { GraduationCap, Users } from "lucide-react"
+import { EmptyState } from "@shared/components/empty-state"
 import { MyGradesPanel } from "@/lib/features/student/components/my-grades-panel"
 import type { MyGrades } from "@/lib/models/groups"
 
@@ -16,14 +17,11 @@ export function MyGroupView({ grades }: { grades: MyGrades }) {
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       {!group ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <Users className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-          <h2 className="text-base font-medium text-foreground">Sin grupo de laboratorio</h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            No estás inscrito en ningún grupo activo. Cuando un docente te matricule,
-            aquí verás tu grupo.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="Sin grupo de laboratorio"
+          description="No estás inscrito en ningún grupo activo. Cuando un docente te matricule, aquí verás tu grupo."
+        />
       ) : (
         <>
           <div className="mb-6">

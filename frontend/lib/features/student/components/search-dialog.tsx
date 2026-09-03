@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { MonitorPlay, FileText, SquareTerminal, Target, BookOpen } from "lucide-react"
 import { Dialog, DialogContent } from "@shared/components/ui/dialog"
 import {
@@ -12,6 +12,7 @@ import {
   CommandList,
 } from "@shared/components/ui/command"
 import { cn } from "@shared/lib/utils"
+import { conOrigen } from "@shared/lib/next-url"
 import type { SearchItem } from "@shared/lib/content/lessons"
 
 const MAX_RESULTS = 5
@@ -42,6 +43,7 @@ export function SearchDialog({
   onOpenChange: (v: boolean) => void
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const [query, setQuery] = useState("")
   const q = query.trim().toLowerCase()
   const results =
@@ -58,7 +60,9 @@ export function SearchDialog({
   const go = (href: string) => {
     onOpenChange(false)
     setQuery("")
-    router.push(href)
+    // Se estampa de dónde se abrió la búsqueda: los destinos con botón de
+    // volver (las actividades, sobre todo) regresan a esta misma vista.
+    router.push(conOrigen(href, pathname))
   }
 
   return (

@@ -4,9 +4,9 @@ import { ActivityCard } from "@/lib/features/student/components/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import type { ActivityListing } from "@/lib/models/activities"
 
-/** The catalog grid: four per row, each card knowing whether it is done. */
+/** The catalog grid: four per row, each card knowing how it is going. */
 export function ActivityGrid({ activities }: { activities: ActivityListing[] }) {
-  const { passed, scores } = usePassedActivities()
+  const { scores } = usePassedActivities()
 
   if (activities.length === 0) {
     return <p className="text-muted-foreground">Aún no hay actividades disponibles.</p>
@@ -17,9 +17,12 @@ export function ActivityGrid({ activities }: { activities: ActivityListing[] }) 
       {activities.map((activity) => (
         <ActivityCard
           key={activity.slug}
-          activity={activity}
-          completed={activity.completed ?? passed.has(activity.slug)}
-          score={scores[activity.slug] ?? null}
+          title={activity.title}
+          description={activity.description}
+          href={activity.href}
+          estado={scores[activity.slug] ?? { score: null, maxScore: 100 }}
+          dificultad={activity.difficulty}
+          topicTitle={activity.topicTitle}
         />
       ))}
     </div>

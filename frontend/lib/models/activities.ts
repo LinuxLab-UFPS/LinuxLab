@@ -158,7 +158,8 @@ export interface GroupActivitySummary {
   id: string
   title: string
   description: string
-  topicNumber: number
+  /** Tema real de la actividad; null si el docente no le asignó uno. */
+  topicNumber: number | null
   checksCount: number
   passed: boolean
   /** Con al menos un intento o entrega la actividad queda completada (se conserva). */
@@ -175,6 +176,15 @@ export interface GroupActivitySummary {
   evaluationType: EvaluationType
   /** Null en las del curso: esas se clasifican por dificultad, no por taller/quiz. */
   activityType: ActivityType | null
+  /** La entrega manual del estudiante, si hizo alguno (score null mientras espera revisión). */
+  submission: {
+    id: string
+    status: string
+    score: number | null
+    feedback: string | null
+    submittedAt: string
+    files: number
+  } | null
 }
 
 export interface MyGroupOverview {

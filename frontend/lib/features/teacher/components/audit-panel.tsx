@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Download } from "lucide-react"
-import { Input } from "@shared/components/ui/input"
+import { Download } from "lucide-react"
+import { SearchBar } from "@shared/components/search-bar"
 import { cn } from "@shared/lib/utils"
 import {
   Table,
@@ -168,18 +168,15 @@ export function AuditPanel({
   return (
     <div data-section="audit-panel">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="relative max-w-sm flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por mensaje, nombre o email..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
-            }}
-            className="border-table-line pl-9"
-          />
-        </div>
+        <SearchBar
+          value={search}
+          onChange={(valor) => {
+            setSearch(valor)
+            setPage(1)
+          }}
+          placeholder="Buscar por mensaje, nombre o email..."
+          className="max-w-sm flex-1"
+        />
 
         <Select
           value={category}

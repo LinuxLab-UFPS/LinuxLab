@@ -1,6 +1,5 @@
 import { getActivities } from "@shared/lib/content/activities"
 import { ActivityBrowser } from "@/lib/features/student/components/activity-browser"
-import { GroupActivitiesSection } from "@/lib/features/student/components/group-activities-section"
 import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
 
@@ -26,12 +25,9 @@ export default async function ActivitiesPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6">
-        {/* El buscador abre la página y no se mueve nunca. Las del curso van
-            debajo de él, y solo si el docente publicó alguna: sin actividades
-            asignadas la página es el catálogo y ya. */}
-        <ActivityBrowser activities={getActivities()}>
-          {activities.length > 0 && <GroupActivitiesSection activities={activities} />}
-        </ActivityBrowser>
+        {/* Una sola lista: las del temario y las que publicó el docente para el
+            grupo, ordenadas por tema. Sin grupo solo aparecen las del temario. */}
+        <ActivityBrowser activities={getActivities()} groupActivities={activities} />
       </section>
     </div>
   )

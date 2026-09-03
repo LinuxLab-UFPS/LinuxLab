@@ -105,21 +105,36 @@ async function recordTopicAttempt({ studentId, topicActivityId, score, passed, r
 }
 
 /**
- * Los slugs del temario que el estudiante ya aprobo, comprobaciones y
- * actividades por igual.
+ * El estado del temario para un estudiante: los slugs que aprobo y la nota del
+ * ultimo intento de cada actividad que haya intentado, aprobada o no.
  *
- * Se filtra por `passed` y no por `score >= 60`. Son lo mismo hoy (quien evalua
- * calcula uno a partir del otro), pero tener dos criterios para "aprobada"
- * repartidos por el codigo es como acaban dos pantallas mostrando numeros
- * distintos del mismo estudiante. El progreso ya usa `passed`.
+ * Es la respuesta de `GET /api/activities/mine/status`, la que pintan las
+ * tarjetas ("Completada" + nota) y el filtro de estado del catalogo. Sale de
+ * una sola consulta ordenada por fecha y el ultimo registro por actividad
+ * gana: la misma politica de "ultimo intento" que aplica `finalScore` en el
+ * cuaderno, para que una tarjeta y el boletin nunca den notas distintas de la
+ * misma actividad.
  */
-async function passedSlugs(studentId) {
+async function statusOf(studentId) {
   const submissions = await prisma.topicSubmission.findMany({
-    where: { enrollment: { student_id: studentId }, passed: true },
-    select: { topicActivity: { select: { slug: true } } },
-    distinct: ["topic_activity_id"],
+    where: { enrollment: { student_id: studentId } },
+    orderBy: { created_at: "asc" },
+    select: {
+      score: true,
+      passed: true,
+      topicActivity: { select: { slug: true } },
+    },
   })
-  return submissions.map((s) => s.topicActivity.slug).filter(Boolean)
+
+  const passed = new Set()
+  const scores = new Map()
+  for (const s of submissions) {
+    const slug = s.topicActivity.slug
+    if (!slug) continue
+    if (s.passed) passed.add(slug)
+    scores.set(slug, { score: s.score, maxScore: 100 })
+  }
+  return { passed: [...passed], scores: Object.fromEntries(scores) }
 }
 
 /**
@@ -209,7 +224,7 @@ async function listAttempts({ slug, studentId }) {
 module.exports = {
   recordGroupAttempt,
   recordTopicAttempt,
-  passedSlugs,
+  statusOf,
   passedTopicCountByEnrollment,
   topicActivitiesTotal,
   lastAttempt,

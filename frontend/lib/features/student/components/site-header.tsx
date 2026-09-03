@@ -13,7 +13,7 @@ import {
   SquarePen,
   Stamp,
   FileArchive,
-  Users,
+  BarChart3,
 } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { notify } from "@shared/lib/toast"
@@ -119,8 +119,8 @@ export function SiteHeader({
                 : NAV_IDLE,
             )}
           >
-            <Users className="h-4 w-4" />
-            Mi Grupo
+            <BarChart3 className="h-4 w-4" />
+            Rendimiento
           </Link>
         </nav>
 

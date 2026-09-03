@@ -5,6 +5,7 @@ import { cn } from "@shared/lib/utils"
 import { ActivityCard } from "@/lib/features/student/components/activity-card"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { getActivity } from "@shared/lib/content/activities"
+import { conOrigen } from "@shared/lib/next-url"
 
 /**
  * Las actividades que ofrece una lección. La lección solo enseña la tarjeta:
@@ -16,18 +17,23 @@ import { getActivity } from "@shared/lib/content/activities"
  * salía repetido, con una tarjeta debajo de otra.
  */
 export function LessonActivity({ slugs }: { slugs: string[] }) {
-  const { passed } = usePassedActivities()
+  const { scores } = usePassedActivities()
   const params = useSearchParams()
 
   const lista = slugs.map(getActivity).filter((a) => a !== undefined)
   if (lista.length === 0) return null
 
-  // El origen viaja en la URL: con él la actividad sabe a qué lección devolver
-  // al estudiante y cuál es el tema que sigue.
+  // El contexto de la lección viaja en la URL por dos vías: los params
+  // `tema`/`sub`, que el panel usa para ofrecer el tema que sigue, y `origen`,
+  // que es lo que lee el botón de volver para regresar a ESTA lección y no a
+  // un destino fijo.
   const tema = params.get("tema")
   const sub = params.get("sub")
-  const conOrigen = (href: string) =>
-    tema ? `${href}&tema=${tema}${sub ? `&sub=${sub}` : ""}` : href
+  const destinoLeccion = tema ? `/curso?tema=${tema}${sub ? `&sub=${sub}` : ""}` : null
+  const conContexto = (href: string) =>
+    destinoLeccion
+      ? conOrigen(`${href}&tema=${tema}${sub ? `&sub=${sub}` : ""}`, destinoLeccion)
+      : href
 
   const varias = lista.length > 1
 
@@ -43,8 +49,12 @@ export function LessonActivity({ slugs }: { slugs: string[] }) {
         {lista.map((activity) => (
           <ActivityCard
             key={activity.slug}
-            activity={{ ...activity, href: conOrigen(activity.href) }}
-            completed={passed.has(activity.slug)}
+            title={activity.title}
+            description={activity.description}
+            href={conContexto(activity.href)}
+            estado={scores[activity.slug] ?? { score: null, maxScore: 100 }}
+            dificultad={activity.difficulty}
+            topicTitle={activity.topicTitle}
           />
         ))}
       </div>

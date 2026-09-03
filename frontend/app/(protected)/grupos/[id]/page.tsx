@@ -11,13 +11,13 @@ import {
   Target,
   Users,
   Plus,
-  Search,
   BarChart3,
   Download,
   ScrollText,
 } from "lucide-react"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
+import { SearchBar } from "@shared/components/search-bar"
 import { StatTabs } from "@shared/components/stat-tabs"
 import { ActionButton } from "@shared/components/action-button"
 import { downloadExcel } from "@shared/lib/excel"
@@ -25,7 +25,6 @@ import { slugify } from "@shared/lib/utils"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
 import { GroupInviteActions } from "@/lib/features/teacher/components/group-invite-actions"
-import { Input } from "@shared/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -227,21 +226,18 @@ function GroupDetailContent() {
 
         <div className="flex flex-wrap items-center gap-2">
           {tab !== "bitacora" && (
-            <div className="relative w-full max-w-xs flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={
-                  tab === "estudiantes"
-                    ? "Buscar estudiante por nombre o código..."
-                    : tab === "actividades"
-                      ? "Buscar actividad por nombre..."
-                      : "Buscar por nombre o código..."
-                }
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="border-table-line pl-9"
-              />
-            </div>
+            <SearchBar
+              value={query}
+              onChange={setQuery}
+              placeholder={
+                tab === "estudiantes"
+                  ? "Buscar estudiante por nombre o código..."
+                  : tab === "actividades"
+                    ? "Buscar actividad por nombre..."
+                    : "Buscar por nombre o código..."
+              }
+              className="max-w-xs flex-1"
+            />
           )}
 
           {tab === "actividades" && (
