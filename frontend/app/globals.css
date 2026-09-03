@@ -190,7 +190,6 @@
   --color-danger: var(--danger);
   --color-table-surface: var(--table-surface);
   --color-table-line: var(--table-line);
-  --color-section: var(--section);
   --color-terminal-surface: var(--terminal-surface);
   /* Registrado aqui y no usado como `bg-[var(--ilus-panel)]`: Tailwind v4 no
      emite una utilidad arbitraria con var() si no se le dice de que tipo es, y
@@ -220,38 +219,6 @@
     @apply bg-background text-foreground;
   }
 
-}
-
-/* ============================================================
-   ACENTO POR SECCION DE DOCENTE
-   Cada pestaña del header tiene su color y los controles de esa
-   pantalla (pestañas, paginación, items de dropdown) lo siguen en
-   vez de usar siempre el rojo. Se declara con `data-section` en el
-   contenedor de la página; por defecto es el rojo de la marca.
-   ============================================================ */
-[data-section] {
-  --section: var(--primary);
-}
-
-[data-section='banco'] {
-  --section: #f59e0b;
-}
-
-[data-section='actividades'] {
-  --section: #f59e0b;
-}
-
-[data-section='bitacora'] {
-  --section: #0ea5e9;
-}
-
-[data-section='admin'] {
-  /* El area de admin usa el rojo de la marca, como el resto del sitio. */
-  --section: var(--primary);
-}
-
-[data-section='entorno'] {
-  --section: #10b981;
 }
 
 /* Neon / red-halo utilities: values come from the theme variables above */

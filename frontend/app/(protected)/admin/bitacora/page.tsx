@@ -6,7 +6,7 @@ import { RoleGuard } from "@shared/components/role-guard"
 export default function AuditLogPage() {
   return (
     <RoleGuard roles={["admin"]}>
-      <div data-section="bitacora" className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             <span className="bg-gradient-to-r from-sky-400 to-sky-600 bg-clip-text text-transparent">

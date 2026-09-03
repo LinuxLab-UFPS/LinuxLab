@@ -57,10 +57,6 @@ export function getSubtopicMarkdown(topicNumber: number, file: string): string |
   }
 }
 
-export function hasTopicContent(topicNumber: number): boolean {
-  return getTopicContentMeta(topicNumber) !== null
-}
-
 /** Public URL of a lesson image, e.g. "/temario/tema-01/tux-evolution.png". */
 export function lessonAssetUrl(topicNumber: number, file: string): string {
   return `/temario/${topicDir(topicNumber)}/${file}`

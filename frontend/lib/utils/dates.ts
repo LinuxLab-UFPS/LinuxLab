@@ -32,11 +32,6 @@ export function parseBogotaInput(value: string): Date {
 export function currentBogotaInputValue(): string {
   return toBogotaInputValue(new Date().toISOString())
 }
-
-export function formatBogotaDateParts(year: number, month: number, day: number, hour: number, minute: number): string {
-  return `${year}-${twoDigits(month)}-${twoDigits(day)}T${twoDigits(hour)}:${twoDigits(minute)}`
-}
-
 /**
  * Tiempo relativo en español, estilo "Hace 5 minutos". Usado para la ultima
  * conexion. Devuelve "Hace un momento" para menos de un minuto.

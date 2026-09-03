@@ -9,7 +9,7 @@ export default function DocentesPage() {
 
   return (
     <RoleGuard roles={["admin"]}>
-      <div data-section="admin" className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-10">
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
             <span className="text-foreground">Bienvenido, </span>

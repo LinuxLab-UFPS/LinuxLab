@@ -69,8 +69,8 @@ export function TableEmptyState({ children }: { children: React.ReactNode }) {
   return <div className="px-4 py-16 text-center text-sm text-muted-foreground">{children}</div>
 }
 
-/** Color de la página actual. Va explícito y no por `--section` para que no
- *  dependa de dónde esté montada la tabla. */
+/** Color de la página actual. Va explícito, en el tono que le pase quien la use,
+ *  para que no dependa de dónde esté montada la tabla. */
 const PAGE_TONE = {
   primary: "border-primary/50 bg-primary/10 text-primary",
   amber: "border-amber-500/50 bg-amber-500/10 text-amber-500",
