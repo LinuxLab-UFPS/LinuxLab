@@ -27,6 +27,7 @@ import {
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { downloadExcel, tableToSheet } from "@shared/lib/excel"
 import { notify } from "@shared/lib/toast"
+import { formatBogotaDate, formatBogotaDateTime, formatBogotaTime } from "@/lib/utils/dates"
 import { ActionButton } from "@shared/components/action-button"
 import { useAuditLog } from "@/lib/api/queries"
 import { teacherApi } from "@/lib/features/teacher/api"
@@ -80,7 +81,7 @@ async function exportAll(base: AuditFilters, groupId: string | undefined, setBus
       page += 1
     }
     const rows = acc.map((e) => [
-      new Date(e.timestamp).toLocaleString("es-CO"),
+      formatBogotaDateTime(e.timestamp),
       e.userName ?? "—",
       e.email ?? "—",
       roleBadge(e.role).label,
@@ -249,13 +250,12 @@ export function AuditPanel({
             </TableHeader>
             <TableBody>
               {entries.map((entry) => {
-                const date = new Date(entry.timestamp)
                 const badge = roleBadge(entry.role)
                 return (
                   <TableRow key={entry.id}>
                     <TableCell>
-                      <span className="block text-sm text-foreground">{date.toLocaleDateString("es-CO")}</span>
-                      <span className="block font-mono text-xs text-muted-foreground">{date.toLocaleTimeString("es-CO")}</span>
+                      <span className="block text-sm text-foreground">{formatBogotaDate(entry.timestamp)}</span>
+                      <span className="block font-mono text-xs text-muted-foreground">{formatBogotaTime(entry.timestamp)}</span>
                     </TableCell>
                     <TableCell>
                       <span className="block text-sm font-medium text-foreground">{entry.userName ?? "—"}</span>

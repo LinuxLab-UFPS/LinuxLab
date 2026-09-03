@@ -2,12 +2,46 @@ export const BOGOTA_TIME_ZONE = "America/Bogota"
 
 const twoDigits = (value: number) => String(value).padStart(2, "0")
 
-export function formatBogotaDateTime(value: string | Date): string {
-  return new Intl.DateTimeFormat("es-CO", {
-    dateStyle: "short",
-    timeStyle: "short",
+/** Mes abreviado en español: ICU es-CO da "sept" y aqui la casa quiere "sep". */
+const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+/** Separa una fecha en sus partes numericas (hora Bogota), sin depender del locale. */
+function partsDe(value: string | Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
     timeZone: BOGOTA_TIME_ZONE,
-  }).format(new Date(value))
+  }).formatToParts(new Date(value))
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ""
+  return {
+    day: Number(get("day")),
+    month: Number(get("month")),
+    year: get("year"),
+    hour: get("hour"),
+    minute: get("minute"),
+  }
+}
+
+/** "03 sep 2026, 00:00" — el formato de toda fecha con hora de la app. */
+export function formatBogotaDateTime(value: string | Date): string {
+  const p = partsDe(value)
+  return `${twoDigits(p.day)} ${MESES[p.month - 1]} ${p.year}, ${p.hour}:${p.minute}`
+}
+
+/** "03 sep 2026" — el mismo formato, para fechas que no muestran hora. */
+export function formatBogotaDate(value: string | Date): string {
+  const p = partsDe(value)
+  return `${twoDigits(p.day)} ${MESES[p.month - 1]} ${p.year}`
+}
+
+/** "00:00" — solo la hora, para acompañar a `formatBogotaDate` en dos líneas. */
+export function formatBogotaTime(value: string | Date): string {
+  const p = partsDe(value)
+  return `${p.hour}:${p.minute}`
 }
 
 export function toBogotaInputValue(value: string): string {

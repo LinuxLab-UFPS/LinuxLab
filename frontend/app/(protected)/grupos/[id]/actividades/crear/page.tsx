@@ -3,54 +3,30 @@
 import { Suspense, useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, Send } from "lucide-react"
+import { ArrowLeft, ArrowRight, Send } from "lucide-react"
 import { notify, notifyPromise } from "@shared/lib/toast"
 import { ActionButton } from "@shared/components/action-button"
+import { Stepper } from "@shared/components/stepper"
 import { Skeleton } from "@shared/components/skeleton"
-import { Input } from "@shared/components/ui/input"
-import { Label } from "@shared/components/ui/label"
-import { Textarea } from "@shared/components/ui/textarea"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@shared/components/ui/select"
-import { CheckBuilder, type ActivityCheck } from "@/lib/features/teacher/components/check-builder"
-import { cn } from "@shared/lib/utils"
-import { syllabus } from "@shared/lib/content/temario"
 import { createActivity, updateActivity, getGroupActivity } from "@/lib/features/teacher/data"
+import { checkError } from "@/lib/features/teacher/check-validation"
+import { ActivityBasicStep } from "@/lib/features/teacher/components/activity-basic-step"
+import { ActivityChecksStep } from "@/lib/features/teacher/components/activity-checks-step"
+import { ActivitySummaryStep } from "@/lib/features/teacher/components/activity-summary-step"
+import type { ActivityCheck } from "@/lib/features/teacher/components/check-builder"
 import { queryKeys } from "@/lib/api/queries"
-import type { ActivityType, CreateActivityInput, EvaluationType } from "@/lib/features/teacher/types"
+import type { ActivityType, CreateActivityInput, Difficulty, EvaluationType } from "@/lib/features/teacher/types"
 import { currentBogotaInputValue, parseBogotaInput, toBogotaInputValue } from "@/lib/utils/dates"
 import { RoleGuard } from "@shared/components/role-guard"
 
 /** La escala de calificacion es fija: 0 a 100. */
 const MAX_SCORE = 100
 
-/** Bloque del formulario: cabecera con su título y el cuerpo debajo. */
-function Seccion({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <section className="rounded-xl border border-table-line bg-card">
-      <div className="border-b border-table-line px-5 py-4">
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-        {description && (
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{description}</p>
-        )}
-      </div>
-      <div className="space-y-5 p-5">{children}</div>
-    </section>
-  )
-}
+const STEPS = [
+  { id: "basica", label: "Información básica" },
+  { id: "validaciones", label: "Validaciones (checks)" },
+  { id: "resumen", label: "Resumen" },
+]
 
 function NewActivityPage() {
   const params = useParams<{ id: string }>()
@@ -61,8 +37,10 @@ function NewActivityPage() {
   const editId = searchParams.get("edit")
   const editing = Boolean(editId)
 
+  const [step, setStep] = useState(0)
   const [activityName, setActivityName] = useState("")
   const [selectedTopic, setSelectedTopic] = useState("")
+  const [difficulty, setDifficulty] = useState<Difficulty>("basic")
   const [dueDate, setDueDate] = useState("")
   const [activityType, setActivityType] = useState<ActivityType>("workshop")
   const [attemptLimit, setAttemptLimit] = useState("")
@@ -72,6 +50,7 @@ function NewActivityPage() {
   const [distributeEvenly, setDistributeEvenly] = useState(true)
   const [loadingDetail, setLoadingDetail] = useState(Boolean(editId))
   const [publishing, setPublishing] = useState(false)
+
   const attemptLimitError =
     activityType === "quiz" &&
     attemptLimit.trim() !== "" &&
@@ -79,7 +58,27 @@ function NewActivityPage() {
       ? "El límite debe ser un entero positivo."
       : ""
 
-  // Modo edicion: se carga la actividad publicada y se rellena el formulario.
+  // Las dos compuertas del asistente: sin un paso publicable no se avanza al
+  // siguiente. En validaciones, un reparto que se pasa de los 100 pts tambien
+  // lo rechazaria el backend al publicar.
+  const step1Error =
+    !activityName.trim()
+      ? "Falta el título de la actividad."
+      : attemptLimitError || (dueDate && parseBogotaInput(dueDate) <= new Date())
+        ? "La fecha de cierre debe ser posterior a la fecha actual."
+        : ""
+  const checkTotal = checks.reduce((sum, c) => sum + (Number(c.points) || 0), 0)
+  const firstInvalid = evaluationType === "atomic" ? checks.findIndex((c) => checkError(c) !== null) : -1
+  const step2Error =
+    evaluationType === "atomic" && checks.length === 0
+      ? "Agrega al menos una aserción para poder validar la actividad."
+      : firstInvalid !== -1
+        ? `La aserción ${firstInvalid + 1} está incompleta: ${checkError(checks[firstInvalid])}.`
+        : evaluationType === "atomic" && !distributeEvenly && checkTotal > MAX_SCORE
+          ? `El puntaje asignado (${checkTotal}) supera los ${MAX_SCORE} pts.`
+          : ""
+
+  // Modo edicion: se carga la actividad publicada y se rellena el asistente.
   useEffect(() => {
     if (!editId) return
     let alive = true
@@ -88,6 +87,7 @@ function NewActivityPage() {
         if (!alive || !activity) return
         setActivityName(activity.title)
         setSelectedTopic(activity.topicNumber ? String(activity.topicNumber) : "")
+        setDifficulty(activity.difficulty ?? "basic")
         setDueDate(activity.dueDate ? toBogotaInputValue(activity.dueDate) : "")
         setActivityType(activity.activityType ?? "workshop")
         setAttemptLimit(activity.attemptLimit ? String(activity.attemptLimit) : "")
@@ -112,34 +112,14 @@ function NewActivityPage() {
   const minDateTime = currentBogotaInputValue()
 
   const handlePublish = async () => {
-    let hasError = false
-    const title = activityName.trim()
-    if (!title) {
-      notify.error(null, "El nombre de la actividad es requerido")
-      hasError = true
-    } else if (title.length > 255) {
-      notify.error(null, "El nombre no puede superar los 255 caracteres")
-      hasError = true
-    }
-    if (instructions.length > 2000) {
-      notify.error(null, "La descripción no puede superar los 2000 caracteres")
-      hasError = true
-    }
-    if (dueDate && parseBogotaInput(dueDate) <= new Date()) {
-      notify.error(null, "La fecha de cierre debe ser posterior a la fecha actual")
-      hasError = true
-    }
-    if (attemptLimitError) {
-      notify.error(null, attemptLimitError)
-      hasError = true
-    }
-    if (hasError) return
+    if (!activityName.trim() || step1Error || step2Error) return
 
     setPublishing(true)
     const input: CreateActivityInput = {
-      title,
+      title: activityName.trim(),
       topicNumber: Number(selectedTopic) || 0,
       source: "teacher",
+      difficulty,
       instructions,
       maxScore: MAX_SCORE,
       dueDate: dueDate ? parseBogotaInput(dueDate).toISOString() : undefined,
@@ -181,6 +161,8 @@ function NewActivityPage() {
     }
   }
 
+  const gateError = step === 0 ? step1Error : step === 1 ? step2Error : ""
+
   if (loadingDetail) {
     return (
       <div className="mx-auto max-w-3xl space-y-5 px-6 py-10">
@@ -194,7 +176,10 @@ function NewActivityPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-8">
-      <ActionButton tone="neutral" href={editing ? `/grupos/${groupId}/actividades/${editId}` : `/grupos/${groupId}?tab=actividades`}>
+      <ActionButton
+        tone="neutral"
+        href={editing ? `/grupos/${groupId}/actividades/${editId}` : `/grupos/${groupId}?tab=actividades`}
+      >
         <ArrowLeft className="h-4 w-4" />
         Volver
       </ActionButton>
@@ -209,171 +194,95 @@ function NewActivityPage() {
         </p>
       </div>
 
-      <div className="space-y-6">
-        <Seccion title="Información general">
-          <div className="space-y-2">
-            <Label htmlFor="activityName" className="text-muted-foreground">
-              Nombre de la actividad
-            </Label>
-            <Input
-              id="activityName"
-              value={activityName}
-              onChange={(e) => setActivityName(e.target.value)}
-              placeholder="Ej: Script de respaldo"
-              maxLength={255}
-              className="border-table-line"
-            />
-          </div>
+      <Stepper
+        className="mb-8"
+        steps={STEPS}
+        current={step}
+        onSelect={(i) => i < step && setStep(i)}
+        orientation="horizontal"
+      />
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Tema asociado</Label>
-              <Select value={selectedTopic} onValueChange={setSelectedTopic}>
-                <SelectTrigger className="w-full border-table-line">
-                  <SelectValue placeholder="Seleccionar tema" />
-                </SelectTrigger>
-                <SelectContent>
-                  {syllabus.map((topic) => (
-                    <SelectItem key={topic.number} value={String(topic.number)}>
-                      {topic.number}. {topic.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate" className="text-muted-foreground">
-                Fecha y hora de cierre
-              </Label>
-              <Input
-                id="dueDate"
-                type="datetime-local"
-                value={dueDate}
-                min={minDateTime}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="border-table-line [color-scheme:light] dark:[color-scheme:dark]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-muted-foreground">Tipo de actividad</Label>
-              <Select
-                value={activityType}
-                onValueChange={(v) => {
-                  setActivityType(v as ActivityType)
-                  if (v === "workshop") setAttemptLimit("")
-                }}
-              >
-                <SelectTrigger className="w-full border-table-line">
-                  <SelectValue placeholder="Tipo de actividad" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="workshop">Taller (intentos ilimitados)</SelectItem>
-                  <SelectItem value="quiz">Quiz (límite de intentos)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {activityType === "quiz" && (
-              <div className="space-y-2">
-                <Label htmlFor="attemptLimit" className="text-muted-foreground">
-                  Límite de intentos
-                </Label>
-                <Input
-                  id="attemptLimit"
-                  type="number"
-                  min={1}
-                  value={attemptLimit}
-                  onChange={(e) => setAttemptLimit(e.target.value)}
-                  placeholder="Ej. 3"
-                  aria-invalid={Boolean(attemptLimitError)}
-                  className={cn("border-table-line", attemptLimitError && "border-danger")}
-                />
-                {attemptLimitError && <p className="text-xs text-danger">{attemptLimitError}</p>}
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="instructions" className="text-muted-foreground">
-              Enunciado
-            </Label>
-            <Textarea
-              id="instructions"
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Escribe las instrucciones de la actividad…"
-              maxLength={2000}
-              className="h-28 resize-none overflow-y-auto border-table-line text-sm"
-            />
-          </div>
-        </Seccion>
-
-        <Seccion
-          title="Validación"
-          description={
-            evaluationType === "atomic"
-              ? `El laboratorio ejecuta las aserciones sobre el entorno del estudiante cuando este pide validar, sin escribir ningún script. Los ${MAX_SCORE} pts se reparten entre ellas.`
-              : "Tú revisas y calificas cada entrega."
-          }
-        >
-          {/* Un riel con las dos modalidades: la elegida se levanta sobre el fondo. */}
-          <div className="inline-flex items-center gap-1.5 rounded-xl bg-foreground/[0.08] p-1.5">
-            {(
-              [
-                ["atomic", "Aserciones atómicas"],
-                ["manual", "Revisión manual"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setEvaluationType(value)}
-                className={cn(
-                  "h-9 rounded-lg px-3.5 text-sm font-medium transition-colors",
-                  evaluationType === value
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {evaluationType === "atomic" ? (
-            <>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Las rutas son relativas a la carpeta de trabajo de la actividad: escribe
-                solo el archivo o directorio que se va a verificar (ej:{" "}
-                <code className="font-mono text-foreground">informe.txt</code>).
-              </p>
-              <CheckBuilder
-                checks={checks}
-                onChange={setChecks}
-                activityValue={MAX_SCORE}
-                distributeEvenly={distributeEvenly}
-                onDistributeChange={setDistributeEvenly}
-              />
-            </>
-          ) : (
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Cuando el estudiante envíe su trabajo debes revisar la entrega, asignar la
-              calificación y escribir una retroalimentación o comentario.
-            </p>
-          )}
-        </Seccion>
+      <div className="rounded-xl border border-table-line bg-card p-6">
+        {step === 0 && (
+          <ActivityBasicStep
+            title={activityName}
+            onTitleChange={setActivityName}
+            topic={selectedTopic}
+            onTopicChange={setSelectedTopic}
+            instructions={instructions}
+            onInstructionsChange={setInstructions}
+            activityType={activityType}
+            onActivityTypeChange={setActivityType}
+            attemptLimit={attemptLimit}
+            onAttemptLimitChange={setAttemptLimit}
+            attemptLimitError={attemptLimitError}
+            dueDate={dueDate}
+            onDueDateChange={setDueDate}
+            minDateTime={minDateTime}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
+          />
+        )}
+        {step === 1 && (
+          <ActivityChecksStep
+            evaluationType={evaluationType}
+            onEvaluationTypeChange={setEvaluationType}
+            checks={checks}
+            onChecksChange={setChecks}
+            distributeEvenly={distributeEvenly}
+            onDistributeChange={setDistributeEvenly}
+          />
+        )}
+        {step === 2 && (
+          <ActivitySummaryStep
+            title={activityName.trim()}
+            topic={selectedTopic}
+            difficulty={difficulty}
+            activityType={activityType}
+            attemptLimit={attemptLimit}
+            dueDate={dueDate}
+            instructions={instructions}
+            evaluationType={evaluationType}
+            checks={checks}
+          />
+        )}
       </div>
 
-      <div className="mt-8 flex items-center gap-3">
-        <ActionButton tone="primary" onClick={handlePublish} disabled={publishing || Boolean(attemptLimitError)}>
-          <Send className="h-4 w-4" />
-          {publishing ? "Guardando…" : editing ? "Guardar cambios" : "Publicar actividad"}
-        </ActionButton>
-        <ActionButton tone="neutral" href={`/grupos/${groupId}`}>
+      {/* Navegacion del asistente. El bloqueo es silencioso pero explícito:
+          la razon se muestra al lado de los botones. */}
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        {step > 0 && (
+          <ActionButton tone="neutral" onClick={() => setStep(step - 1)}>
+            <ArrowLeft className="h-4 w-4" />
+            Anterior
+          </ActionButton>
+        )}
+        <ActionButton tone="neutral" href={`/grupos/${groupId}`} className="sm:ml-auto">
           Cancelar
         </ActionButton>
+        {step < 2 ? (
+          <ActionButton
+            tone="primary"
+            onClick={() => {
+              // La validacion del paso se reporta al momento de intentar
+              // avanzar, como toast: el formulario no se rompe con texto
+              // rojo permanente junto a los botones.
+              if (gateError) {
+                notify.error(null, gateError)
+                return
+              }
+              setStep(step + 1)
+            }}
+          >
+            Siguiente
+            <ArrowRight className="h-4 w-4" />
+          </ActionButton>
+        ) : (
+          <ActionButton tone="primary" onClick={handlePublish} disabled={publishing}>
+            <Send className="h-4 w-4" />
+            {publishing ? "Guardando…" : editing ? "Guardar cambios" : "Publicar actividad"}
+          </ActionButton>
+        )}
       </div>
     </div>
   )

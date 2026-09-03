@@ -43,6 +43,7 @@ import {
 } from "@/lib/features/teacher/data"
 import { queryKeys, useGroups } from "@/lib/api/queries"
 import { notifyPromise } from "@shared/lib/toast"
+import { formatBogotaDate } from "@/lib/utils/dates"
 
 type Tab = "todos" | "archivados"
 
@@ -219,7 +220,7 @@ export function GroupsTable() {
                   {group.studentCount}
                 </TableCell>
                 <TableCell className="font-mono text-sm text-muted-foreground">
-                  {new Date(group.createdAt).toLocaleDateString("es-CO")}
+                  {formatBogotaDate(group.createdAt)}
                 </TableCell>
                 <TableCell>
                   <GroupStatusBadge status={group.status} />

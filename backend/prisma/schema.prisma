@@ -305,12 +305,13 @@ model LessonView {
 // ════════════════════════════════════════
 
 model GroupActivity {
-  id              String         @id @default(uuid()) @db.Uuid
+  id              String         @id @default(uuid())
   activity_number Int            @unique @default(autoincrement())
   group_id        String         @db.Uuid
   group           Group          @relation(fields: [group_id], references: [id])
   title           String         @db.VarChar(255)
   instructions    String?        @db.Text
+  difficulty      Difficulty     @default(basic)
   activity_type   ActivityType   @default(workshop)
   evaluation_type EvaluationType @default(automatic)
   max_score       Int            @default(100)

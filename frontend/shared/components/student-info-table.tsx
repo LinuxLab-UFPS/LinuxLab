@@ -129,7 +129,7 @@ export function StudentInfoTable({
                 </div>
               ) : score != null ? (
                 <span className={cn("font-mono text-sm font-medium", scoreColor(score))}>
-                  {score}/{maxScore}
+                  {score}/{maxScore} pts.
                 </span>
               ) : (
                 <span className="text-muted-foreground">—</span>
@@ -163,24 +163,27 @@ export function StudentInfoTable({
 
 /**
  * Resultado de cada aserción de una actividad automática: a la izquierda la
- * descripción de la aserción y a la derecha su puntaje. El texto lo construye
- * el checker (backend), así que aquí solo se muestra `detail` tal cual viene.
+ * descripción de la aserción (con todo el ancho disponible) y a la derecha su
+ * puntaje. El texto lo construye el checker (backend), así que aquí solo se
+ * muestra `detail` tal cual viene.
  */
 function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
   return (
     <div className="border-t border-border">
-      <div className="grid grid-cols-2 border-b border-border/50">
+      {/* La columna de resultado es fija y angosta: el detalle de la aserción
+          es lo que se lee, así que se queda con todo el ancho restante. */}
+      <div className="grid grid-cols-[1fr_9rem] border-b border-border/50">
         <div className="px-4 py-2.5 text-sm font-medium text-foreground">Aserciones</div>
         <div className="px-4 py-2.5 text-right text-sm font-medium text-foreground">Resultado</div>
       </div>
       {results.length === 0 ? (
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-[1fr_9rem]">
           <div className="px-4 py-3 text-sm text-muted-foreground">—</div>
           <div className="px-4 py-3 text-right text-sm text-muted-foreground">—</div>
         </div>
       ) : (
         results.map((r) => (
-          <div key={r.id} className="grid grid-cols-2 border-b border-border/50 last:border-0">
+          <div key={r.id} className="grid grid-cols-[1fr_9rem] border-b border-border/50 last:border-0">
             <div className="px-4 py-3 text-left text-sm">
               <div className="flex items-start gap-2.5">
                 {r.passed ? (
@@ -188,12 +191,12 @@ function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
                 ) : (
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 )}
-                <span className="flex-1 text-foreground">{r.detail}</span>
+                <span className="min-w-0 flex-1 break-words text-foreground">{r.detail}</span>
               </div>
             </div>
             <div className="px-4 py-3 text-right text-sm font-mono">
               <span className={r.passed ? "text-success" : "text-destructive"}>
-                {r.passed ? r.points : 0}/{r.points}
+                {r.passed ? r.points : 0}/{r.points} pts.
               </span>
             </div>
           </div>
@@ -245,7 +248,7 @@ export function AttemptsTable({ attempts, maxScore }: { attempts: AttemptRow[]; 
                     <XCircle className="inline h-4 w-4 text-destructive" />
                   )}
                 </td>
-                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.score}/{maxScore}</td>
+                <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.score}/{maxScore} pts.</td>
               </tr>
             ))}
           </tbody>

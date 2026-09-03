@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { cn } from "@shared/lib/utils"
+import { formatBogotaDate } from "@/lib/utils/dates"
 import { scoreColor } from "@shared/lib/score-color"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip"
 import { getTopic } from "@shared/lib/content/temario"
@@ -203,7 +204,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                           {a.activityType === "quiz" ? "Quiz" : "Taller"} ·{" "}
                           {a.evaluationType === "manual" ? "Revisión docente" : "Auto-evaluada"}
                           {a.dueAt
-                            ? ` · Cierre: ${new Date(a.dueAt).toLocaleDateString("es-CO")}`
+                            ? ` · Cierre: ${formatBogotaDate(a.dueAt)}`
                             : ""}
                         </p>
                       </TooltipContent>

@@ -15,6 +15,7 @@ import {
   type GroupCheckResult,
 } from "@/lib/features/student/group-activities"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
+import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import { notify } from "@shared/lib/toast"
 import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
 
@@ -120,6 +121,11 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             <Tag tone="brand">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
             <Tag tone="brand">
               {detail.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
+            </Tag>
+            {/* Misma escala del temario: el docente clasificó la actividad y
+                viaja desde el backend para convivir con las del curso. */}
+            <Tag tone={DIFFICULTY_TONE[detail.difficulty]}>
+              {DIFFICULTY_LABEL[detail.difficulty]}
             </Tag>
           </div>
         </div>
