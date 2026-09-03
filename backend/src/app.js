@@ -25,6 +25,28 @@ const app = express()
 
 app.use(helmet());
 
+/**
+ * Ninguna respuesta de la API se guarda en una cache intermedia.
+ *
+ * Casi todas llevan datos de quien pregunta, pero la URL es la misma para todo
+ * el mundo: `/api/activities/mine/status` no lleva el id en la ruta, lo saca de
+ * la sesion. Sin cabecera de cache, un proxy delante del backend aplica su
+ * heuristica, guarda la primera respuesta y se la sirve al siguiente que pida
+ * esa URL — que es otra persona.
+ *
+ * Paso de verdad: un estudiante veia las actividades de otro marcadas como
+ * completadas, desde otra maquina y otra red, mientras su propio progreso salia
+ * en cero. `helmet()` no pone `Cache-Control`, asi que hay que ponerla aqui.
+ *
+ * `private` se la prohibe a las caches compartidas; `no-store`, ademas, que la
+ * escriban en disco.
+ */
+app.use("/api", (_req, res, next) => {
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("Vary", "Cookie");
+    next();
+});
+
 app.use(cors({
     origin: (origin, cb) => cb(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true,
