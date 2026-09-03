@@ -160,6 +160,85 @@ function drawBrand(doc, x, y, subtitle) {
 }
 
 /**
+ * Parrafo con tramos: cada uno es `{ text, italic }`. Se compone palabra a
+ * palabra midiendo con `widthOfString`, en vez de encadenar con `continued`,
+ * porque la cursiva se sintetiza con una transformacion de matriz y eso
+ * desincroniza el cursor interno de pdfkit: los tramos se pisan.
+ *
+ * Onest no trae cursiva. La del nombre del curso se obtiene inclinando el
+ * texto 12 grados, que es la "oblicua falsa" que aplicaria un visor, y ahorra
+ * cargar otra familia entera para una sola frase.
+ */
+function drawRuns(doc, runs, x, y, width, { size = 13, lineHeight = 22 } = {}) {
+  const SKEW = Math.tan((12 * Math.PI) / 180)
+  let cursorX = x
+  let cursorY = y
+
+  const draw = (word, italic) => {
+    if (!italic) {
+      doc.text(word, cursorX, cursorY, { lineBreak: false })
+      return
+    }
+    doc.save()
+    // El eje Y del PDF crece hacia abajo, asi que para que la cursiva se
+    // incline a la derecha el termino de la matriz va negativo. La traslacion
+    // compensa el desplazamiento que la propia inclinacion introduce, tomando
+    // como pivote la linea base del renglon.
+    const baseline = cursorY + size
+    doc.transform(1, 0, -SKEW, 1, SKEW * baseline, 0)
+    doc.text(word, cursorX, cursorY, { lineBreak: false })
+    doc.restore()
+  }
+
+  // Los tramos se concatenan y luego se parten en palabras: asi el espacio
+  // entre el final de un tramo y el principio del siguiente no depende de que
+  // uno lo lleve pegado.
+  const pieces = splitPieces(runs)
+
+  setFont(doc, "regular", size, INK)
+  for (const { word, italic, tail } of pieces) {
+    // El espacio va como avance del cursor y no dentro del texto: pdfkit
+    // recorta los espacios de los extremos al pintar, asi que uno pegado a la
+    // palabra se perderia.
+    const spaceWidth = cursorX > x ? doc.widthOfString(" ") : 0
+    const wordWidth = doc.widthOfString(word)
+    if (cursorX + spaceWidth + wordWidth > x + width) {
+      cursorX = x
+      cursorY += lineHeight
+    } else {
+      cursorX += spaceWidth
+    }
+    draw(word, italic)
+    cursorX += wordWidth
+    if (tail) {
+      draw(tail, false)
+      cursorX += doc.widthOfString(tail)
+    }
+  }
+}
+
+/**
+ * Un tramo que empieza por signo de puntuacion se pega al anterior: sin esto
+ * la coma que sigue al nombre del curso viajaria como palabra suelta y saldria
+ * separada por un espacio.
+ */
+function splitPieces(runs) {
+  const pieces = []
+  for (const run of runs) {
+    const words = run.text.split(/\s+/).filter((w) => w.length > 0)
+    words.forEach((word, i) => {
+      const glue = i === 0 && !run.text.startsWith(" ") && /^[,.;:)»]/.test(word)
+      if (glue && pieces.length > 0) {
+        pieces[pieces.length - 1].tail = word
+        return
+      }
+      pieces.push({ word, italic: Boolean(run.italic), tail: "" })
+    })
+  }
+  return pieces
+}
+
+/**
  * Tira de datos del certificado: etiqueta pequena en versalitas sobre el valor.
  * Sirve para dos o tres celdas; `accent` pinta el valor en rojo.
  */
@@ -207,8 +286,7 @@ async function renderCertificate({ title, name, subline, body, cells, code, issu
     y += 22
   }
 
-  setFont(doc, "regular", 13, INK)
-  doc.text(body, margin, y + 14, { width: 560, lineGap: 5 })
+  drawRuns(doc, body, margin, y + 14, 560)
 
   // La tira va anclada: un nombre de curso largo empuja el parrafo, pero el
   // bloque de datos no se mueve de su sitio. Se ancla a la altura del pie y no
@@ -237,11 +315,16 @@ async function renderStudentCertificate(cert) {
   return renderCertificate({
     title: "Certificado de finalización",
     name: cert.holderName,
-    subline: cert.holderCode ? `Código estudiantil ${cert.holderCode}` : null,
-    body:
-      `completó satisfactoriamente el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}), ` +
-      `dirigido por el docente ${cert.teacherName}, entre el ${formatDate(cert.courseStartedAt)} ` +
-      `y el ${formatDate(cert.issuedAt)}.`,
+    subline: null,
+    body: [
+      { text: "completó satisfactoriamente el curso " },
+      { text: cert.groupName, italic: true },
+      {
+        text:
+          `, dirigido por el docente ${cert.teacherName}, entre el ` +
+          `${formatDate(cert.courseStartedAt)} y el ${formatDate(cert.issuedAt)}.`,
+      },
+    ],
     cells: [
       { label: "Temas completados", value: `${cert.topicsCompleted}/${cert.topicsTotal}` },
       { label: "Definitiva", value: cert.definitive == null ? "—" : String(cert.definitive), accent: true },
@@ -262,9 +345,15 @@ async function renderInstructorCertificate(cert) {
     title: "Certificado de instructor",
     name: cert.holderName,
     subline: null,
-    body:
-      `dirigió el curso «${cert.groupName}» (grupo N° ${cert.groupNumber}) en la plataforma LinuxLab, ` +
-      `desde el ${formatDate(cert.courseStartedAt)} hasta el ${formatDate(cert.issuedAt)}.`,
+    body: [
+      { text: "dirigió el curso " },
+      { text: cert.groupName, italic: true },
+      {
+        text:
+          ` en la plataforma LinuxLab, desde el ${formatDate(cert.courseStartedAt)} ` +
+          `hasta el ${formatDate(cert.issuedAt)}.`,
+      },
+    ],
     cells: [
       { label: "Grupo", value: `N° ${cert.groupNumber}` },
       { label: "Inicio", value: formatShort(cert.courseStartedAt) },
