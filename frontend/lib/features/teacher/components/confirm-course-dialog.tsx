@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogClose } from "@shared/compone
 import { cn } from "@shared/lib/utils"
 import type { Group } from "@/lib/features/teacher/types"
 
-export type CourseAction = "deactivate" | "delete"
+export type CourseAction = "archive" | "delete"
 
 const ACTION: Record<
   CourseAction,
@@ -18,12 +18,12 @@ const ACTION: Record<
     button: string
   }
 > = {
-  deactivate: {
+  archive: {
     icon: Archive,
     message:
-      "Se eliminará el entorno de la terminal (usuarios y carpeta del grupo) y los estudiantes perderán acceso al curso. El histórico del curso se conserva.",
-    confirm: "Sí, desactivar",
-    pending: "Desactivando...",
+      "El curso está finalizado: archivarlo solo lo aparta del listado. El histórico y los certificados emitidos se conservan.",
+    confirm: "Sí, archivar",
+    pending: "Archivando...",
     box: "bg-primary/10 text-primary",
     button:
       "border-primary/40 bg-primary/15 text-primary hover:bg-primary/25",
@@ -40,8 +40,8 @@ const ACTION: Record<
 }
 
 /**
- * Confirmacion para las dos acciones destructivas sobre un curso: desactivarlo
- * (se pierde el entorno y el progreso) y eliminarlo (se borra el historico).
+ * Confirmacion para las acciones sobre un curso ya finalizado: archivarlo
+ * (solo lo aparta del listado) y eliminarlo (se borra el historico).
  *
  * El curso llega por prop en vez de un booleano `open` para que el contenido no
  * parpadee al cerrarse: si es null no hay dialogo.

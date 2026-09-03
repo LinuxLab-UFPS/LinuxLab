@@ -4,7 +4,7 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { Archive, BookOpen, FolderOpen, Plus } from "lucide-react"
+import { Archive, BookOpen, CheckCircle2, FolderOpen, Plus } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { SearchBar } from "@shared/components/search-bar"
@@ -31,7 +31,7 @@ import { deactivateGroup, deleteGroup } from "@/lib/features/teacher/data"
 import { queryKeys, useGroups } from "@/lib/api/queries"
 import { notifyPromise } from "@shared/lib/toast"
 
-type Tab = "activos" | "desactivados"
+type Tab = "activos" | "finalizados" | "archivados"
 
 const PAGE_SIZE = 10
 
@@ -55,14 +55,17 @@ export function GroupsTable() {
   const counts = useMemo(
     () => ({
       activos: groups.filter((g) => g.status === "active").length,
-      desactivados: groups.filter((g) => g.status === "archived").length,
+      finalizados: groups.filter((g) => g.status === "finished").length,
+      archivados: groups.filter((g) => g.status === "archived").length,
     }),
     [groups],
   )
 
   const q = query.trim().toLowerCase()
   const visible = groups
-    .filter((g) => (tab === "activos" ? g.status === "active" : g.status === "archived"))
+    .filter((g) =>
+      tab === "activos" ? g.status === "active" : tab === "finalizados" ? g.status === "finished" : g.status === "archived",
+    )
     .filter((g) => !q || g.name.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
@@ -73,18 +76,16 @@ export function GroupsTable() {
     const { group, action } = confirming
     setBusy(true)
     const done = await notifyPromise(
-      action === "deactivate" ? deactivateGroup(group.id) : deleteGroup(group.id),
+      action === "archive" ? deactivateGroup(group.id) : deleteGroup(group.id),
       {
-        loading: action === "deactivate" ? "Desactivando el grupo…" : "Eliminando el grupo…",
-        success: action === "deactivate" ? "Grupo desactivado" : "Grupo eliminado",
+        loading: action === "archive" ? "Archivando el grupo…" : "Eliminando el grupo…",
+        success: action === "archive" ? "Grupo archivado" : "Grupo eliminado",
         error:
-          action === "deactivate"
-            ? "No se pudo desactivar el grupo."
-            : "No se pudo eliminar el grupo.",
+          action === "archive" ? "No se pudo archivar el grupo." : "No se pudo eliminar el grupo.",
       },
     )
     if (done.ok) {
-      if (action === "deactivate") {
+      if (action === "archive") {
         queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
           prev.map((g) => (g.id === group.id ? { ...g, status: "archived" } : g)),
         )
@@ -123,11 +124,19 @@ export function GroupsTable() {
               tone: "primary",
             },
             {
-              value: "desactivados",
-              label: "Inactivos",
-              statLabel: "Grupos inactivos",
-              count: counts.desactivados,
-              icon: BookOpen,
+              value: "finalizados",
+              label: "Finalizados",
+              statLabel: "Grupos finalizados",
+              count: counts.finalizados,
+              icon: CheckCircle2,
+              tone: "primary",
+            },
+            {
+              value: "archivados",
+              label: "Archivados",
+              statLabel: "Grupos archivados",
+              count: counts.archivados,
+              icon: Archive,
               tone: "neutral",
             },
           ]}
@@ -197,13 +206,22 @@ export function GroupsTable() {
                     boton de ver desaparecio porque la fila ya hace eso. */}
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-center gap-1">
-                    {/* Un grupo desactivado ya solo se consulta. El icono es un
-                        archivador y no una equis: esto archiva, no borra. */}
+                    {/* Finalizar es el cierre académico del curso: la vista de
+                        finalización muestra el criterio y pide confirmación.
+                        El archivado (solo para finalizados) aparta el grupo del
+                        listado sin tocar nada más. */}
                     {group.status === "active" && (
+                      <IconAction
+                        label="Finalizar curso"
+                        icon={CheckCircle2}
+                        onClick={() => router.push(`/grupos/${group.id}/finalizar`)}
+                      />
+                    )}
+                    {group.status === "finished" && (
                       <IconAction
                         label="Archivar grupo"
                         icon={Archive}
-                        onClick={() => setConfirming({ group, action: "deactivate" })}
+                        onClick={() => setConfirming({ group, action: "archive" })}
                       />
                     )}
                   </div>
@@ -215,7 +233,8 @@ export function GroupsTable() {
 
         {visible.length === 0 && (
           <TableEmptyState>
-            No tienes grupos {tab === "activos" ? "activos" : "desactivados"}.
+            No tienes grupos{" "}
+            {tab === "activos" ? "activos" : tab === "finalizados" ? "finalizados" : "archivados"}.
           </TableEmptyState>
         )}
       </TablePanel>
@@ -233,7 +252,7 @@ export function GroupsTable() {
 
       <ConfirmCourseDialog
         group={confirming?.group ?? null}
-        action={confirming?.action ?? "deactivate"}
+        action={confirming?.action ?? "archive"}
         busy={busy}
         onConfirm={runConfirmed}
         onCancel={() => !busy && setConfirming(null)}

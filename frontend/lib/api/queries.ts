@@ -15,6 +15,8 @@ export const queryKeys = {
   groupStudents: (id: string) => ["groups", id, "students"] as const,
   groupActivities: (id: string) => ["groups", id, "activities"] as const,
   gradebook: (id: string) => ["groups", id, "gradebook"] as const,
+  finalizePreview: (id: string) => ["groups", id, "finalize-preview"] as const,
+  groupCertificates: (id: string) => ["groups", id, "certificates"] as const,
   studentPerformance: (id: string, studentId: string) =>
     ["groups", id, "gradebook", "students", studentId] as const,
   teacherJobs: ["admin", "teacher-jobs"] as const,
@@ -98,6 +100,24 @@ export function useGroupProgress(id: string) {
   return useQuery({
     queryKey: queryKeys.groupProgress(id),
     queryFn: () => teacherData.getGroupProgress(id),
+    enabled: Boolean(id),
+  })
+}
+
+/** Vista previa de la finalización; null si el grupo ya no está activo (409). */
+export function useFinalizePreview(id: string) {
+  return useQuery({
+    queryKey: queryKeys.finalizePreview(id),
+    queryFn: () => teacherData.getFinalizePreview(id),
+    enabled: Boolean(id),
+  })
+}
+
+/** Certificados emitidos de un curso finalizado o archivado. */
+export function useGroupCertificates(id: string) {
+  return useQuery({
+    queryKey: queryKeys.groupCertificates(id),
+    queryFn: () => teacherData.getGroupCertificates(id),
     enabled: Boolean(id),
   })
 }

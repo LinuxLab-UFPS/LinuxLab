@@ -18,6 +18,7 @@ const studentActivityDetailRoutes = require("./routes/studentActivityDetailRoute
 const studentRoutes = require("./routes/studentRoutes")
 const auditRoutes = require("./routes/auditRoutes")
 const progressRoutes = require("./routes/progressRoutes")
+const certificateRoutes = require("./routes/certificateRoutes")
 const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
@@ -53,6 +54,7 @@ app.use('/api/group-activities', groupActivityRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/certificates', certificateRoutes);
 app.use('/api', progressRoutes);
 app.use('/api/groups/:id/activities/:activityId/students/:studentId', studentActivityDetailRoutes);
 

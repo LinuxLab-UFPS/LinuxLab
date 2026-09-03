@@ -18,6 +18,7 @@ enum Role {
 
 enum GroupStatus {
   active
+  finished
   archived
 }
 
@@ -57,6 +58,7 @@ enum JobType {
   user_provisioning
   group_provisioning
   group_teardown
+  certificate_email
 }
 
 enum JobStatus {
@@ -86,6 +88,7 @@ enum EventType {
   teacher_registered
   teacher_toggled
   group_created
+  group_finished
   group_archived
   group_deleted
   student_registered
@@ -172,9 +175,10 @@ model Group {
   created_at   DateTime    @default(now())
   updated_at   DateTime    @updatedAt
 
-  enrollments     Enrollment[]
-  groupActivities GroupActivity[]
-  jobs            Job[]
+  enrollments           Enrollment[]
+  groupActivities       GroupActivity[]
+  jobs                  Job[]
+  instructorCertificate InstructorCertificate?
 }
 
 model Enrollment {
@@ -193,6 +197,7 @@ model Enrollment {
   topicSubmissions  TopicSubmission[]
   lessonViews       LessonView[]
   groupSubmissions  GroupSubmission[]
+  certificates      Certificate[]
 }
 
 // ════════════════════════════════════════
@@ -364,6 +369,41 @@ model SubmissionManualDetail {
   graded_at     DateTime?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
+}
+
+// ════════════════════════════════════════
+// CERTIFICADOS
+// ════════════════════════════════════════
+
+model Certificate {
+  id                String     @id @default(uuid()) @db.Uuid
+  code              String     @unique @db.VarChar(32)
+  enrollment_id     String     @unique @db.Uuid
+  enrollment        Enrollment @relation(fields: [enrollment_id], references: [id])
+  holder_name       String     @db.VarChar(255)
+  holder_code       String?    @db.VarChar(20)
+  group_name        String     @db.VarChar(255)
+  group_number      Int
+  teacher_name      String     @db.VarChar(255)
+  course_started_at DateTime
+  topics_completed  Int
+  topics_total      Int
+  definitive        Float
+  issued_at         DateTime   @default(now())
+}
+
+model InstructorCertificate {
+  id                 String   @id @default(uuid()) @db.Uuid
+  code               String   @unique @db.VarChar(32)
+  group_id           String   @unique @db.Uuid
+  group              Group    @relation(fields: [group_id], references: [id])
+  holder_name        String   @db.VarChar(255)
+  group_name         String   @db.VarChar(255)
+  group_number       Int
+  course_started_at  DateTime
+  students_certified Int
+  students_total     Int
+  issued_at          DateTime @default(now())
 }
 
 // ════════════════════════════════════════

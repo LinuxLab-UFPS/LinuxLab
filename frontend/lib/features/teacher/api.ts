@@ -19,6 +19,9 @@ import type {
   SubmissionDetail,
   SubmissionGrade,
   ManualSubmission,
+  FinalizePreview,
+  FinalizeResponse,
+  GroupCertificates,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -48,11 +51,20 @@ export const teacherApi = {
   /** Regenera el token de inscripción del grupo; el enlace anterior queda inválido. */
   rotateInvite: (id: string) =>
     apiFetch<{ inviteUrl: string }>(`/api/groups/${id}/invite/rotate`, { method: "POST" }),
-  // PATCH /archive desactiva el grupo, archiva sus matriculas y encola el
-  // teardown del entorno (usuarios Linux y carpeta). Responde 409 si ya lo
-  // estaba. No hay forma de reactivar, por eso la UI no la ofrece.
+  // PATCH /archive aparta del listado un curso ya finalizado; por
+  // compatibilidad un curso activo sigue desactivandose (teardown del entorno).
+  // Responde 409 si ya estaba archivado. No hay forma de reactivar.
   deactivateGroup: (id: string) =>
     apiFetch<void>(`/api/groups/${id}/archive`, { method: "PATCH" }),
+  /** Vista previa de la finalización: progreso, definitiva y elegibilidad por estudiante. */
+  getFinalizePreview: (id: string) =>
+    apiFetch<FinalizePreview>(`/api/groups/${id}/finalize/preview`),
+  /** Finaliza el curso: emite certificados, envía correos y destruye el entorno. */
+  finalizeGroup: (id: string) =>
+    apiFetch<FinalizeResponse>(`/api/groups/${id}/finalize`, { method: "POST" }),
+  /** Certificados emitidos del grupo (estudiantes + instructor). */
+  getGroupCertificates: (id: string) =>
+    apiFetch<GroupCertificates>(`/api/groups/${id}/certificates`),
 
   deleteGroup: (id: string) => apiFetch<void>(`/api/groups/${id}`, { method: "DELETE" }),
 

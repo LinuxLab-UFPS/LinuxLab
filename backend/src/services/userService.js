@@ -1,6 +1,6 @@
 const { Role } = require("@prisma/client")
 const prisma = require("../../prisma/client")
-const { sanitizeUsername } = require("../utils/sanitizeUsername")
+const { findFreeUsername } = require("../utils/linuxUsername")
 const { AppError } = require("../lib/errors")
 const { runInTransaction } = require("../lib/transaction")
 const { registerTeacherSchema } = require("../dtos/userDtos")
@@ -85,7 +85,8 @@ async function register(args) {
       await db.student.delete({ where: { user_id: existing.id } })
     }
 
-    const linuxUsername = existing.linuxAccount?.linux_username ?? sanitizeUsername(normalizedEmail)
+    const linuxUsername =
+      existing.linuxAccount?.linux_username ?? (await findFreeUsername(db, normalizedEmail))
 
     try {
       const user = await db.user.update({
@@ -110,14 +111,20 @@ async function register(args) {
       })
       return serializeTeacher(user)
     } catch (err) {
+      // P2002 puede venir del codigo de docente o del username del entorno; el
+      // campo que lo provoco viene en `meta.target`.
       if (err?.code === "P2002") {
+        const target = String(err?.meta?.target ?? "")
+        if (target.includes("linux_username")) {
+          throw new AppError("No se pudo asignar una cuenta del entorno, inténtalo de nuevo", 409)
+        }
         throw new AppError("El código de docente ya está en uso", 409)
       }
       throw err
     }
   }
 
-  const linuxUsername = sanitizeUsername(normalizedEmail)
+  const linuxUsername = await findFreeUsername(db, normalizedEmail)
 
   const user = await db.user.create({
     data: {

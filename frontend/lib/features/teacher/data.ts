@@ -15,6 +15,9 @@ import type {
   ProvisioningJobSummary,
   CatalogEntry,
   ManualSubmission,
+  FinalizePreview,
+  FinalizeResponse,
+  GroupCertificates,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -37,6 +40,25 @@ export async function createGroup(input: CreateGroupInput) {
 /** Desactiva un curso. Es de una sola vía: el backend no sabe reactivar. */
 export async function deactivateGroup(id: string): Promise<void> {
   await teacherApi.deactivateGroup(id)
+}
+
+/** Vista previa de la finalización de un curso activo. */
+export async function getFinalizePreview(id: string): Promise<FinalizePreview | null> {
+  try {
+    return await teacherApi.getFinalizePreview(id)
+  } catch {
+    return null
+  }
+}
+
+/** Finaliza el curso: emite certificados, encola los correos y destruye el entorno. */
+export async function finalizeGroup(id: string): Promise<FinalizeResponse> {
+  return teacherApi.finalizeGroup(id)
+}
+
+/** Certificados emitidos de un curso finalizado o archivado. */
+export async function getGroupCertificates(id: string): Promise<GroupCertificates> {
+  return teacherApi.getGroupCertificates(id)
 }
 
 export async function rotateGroupInvite(id: string): Promise<{ inviteUrl: string }> {

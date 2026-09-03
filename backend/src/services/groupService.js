@@ -13,6 +13,9 @@ const { createGroupSchema, serializeGroup } = require("../dtos/groupDtos")
 const { parseOrThrow } = require("../dtos/common")
 const { serializeGroupUserJob } = require("../dtos/provisioningDtos")
 const { finalScore } = require("../utils/finalScore")
+const { PRIORITIES } = require("../lib/constants")
+const finalizationService = require("./finalizationService")
+const certificateService = require("./certificateService")
 const auditService = require("./auditService")
 
 function generateGroupDir(groupNumber) {
@@ -276,16 +279,98 @@ async function teacherProvisioningSummary({ teacherUserId }) {
 }
 
 /**
- * Archiva un grupo (fin de semestre) y deja de ser usable al instante:
- * - El grupo queda desactivado y sus matriculas pasan a 'archived' (historico).
- * - Las cuentas Linux de los estudiantes se borran de la base: su usuario en
- *   el entorno ya no debe existir.
- * - Se encola un teardown job: el worker borra del contenedor los usuarios de
- *   los matriculados (los usernames se conservan en el job porque las filas se
- *   acaban de borrar) y la carpeta del grupo, eliminada por su group_dir.
+ * Finaliza un grupo: el cierre academico del curso. Es la unica via de salida
+ * de 'active' en el modelo nuevo y es irreversible.
  *
- * Al re-matricularse el proximo semestre se le crea una cuenta nueva y un job
- * de aprovisionamiento, por lo que nada de lo borrado aqui hace falta.
+ * En una sola transaccion:
+ * 1. Evalua la regla de certificacion y emite los certificados (estudiante por
+ *    matricula elegible + el de instructor del grupo), con los datos congelados.
+ * 2. Encola los jobs de correo: uno por certificado y uno para el docente con
+ *    el acta y su certificado de instructor.
+ * 3. Destruye el entorno y cierra las matriculas (la misma limpieza del
+ *    archivado): los estudiantes quedan liberados para matricularse en otro
+ *    grupo y su curso se entrega por correo.
+ */
+async function finalizeGroup({ groupId, role, teacherUserId }) {
+  return runInTransaction(async (tx) => {
+    await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
+
+    // Serializa dos finalizaciones concurrentes sobre la misma fila.
+    await tx.$queryRaw`SELECT id FROM "Group" WHERE id = ${groupId} FOR UPDATE`
+
+    const group = await tx.group.findUnique({
+      where: { id: groupId },
+      include: { teacher: { select: { user: { select: { name: true } } } } },
+    })
+    if (group.status !== "active") {
+      // Re-chequeo bajo lock: otra finalizacion pudo ganar la carrera.
+      throw new AppError("Solo se puede finalizar un grupo activo", 409, "CONFLICT")
+    }
+
+    const summary = await finalizationService.computeGroupSummary(group, tx)
+    const { certificates, instructorCertificate } = await certificateService.issueForGroup(tx, {
+      group,
+      summary,
+    })
+
+    const emailJobs = certificates.map((certificate) => {
+      const student = summary.students.find((s) => s.enrollmentId === certificate.enrollment_id)
+      return {
+        type: "certificate_email",
+        priority: PRIORITIES.STUDENT,
+        group_id: groupId,
+        payload: { kind: "student", code: certificate.code, email: student?.email },
+      }
+    })
+    emailJobs.push({
+      type: "certificate_email",
+      priority: PRIORITIES.TEACHER,
+      group_id: groupId,
+      payload: { kind: "teacher", groupId },
+    })
+    await tx.job.createMany({ data: emailJobs })
+
+    const updated = await deactivateGroupEnvironment(tx, {
+      groupId,
+      group,
+      teacherUserId,
+      nextStatus: "finished",
+    })
+
+    auditService.audit({
+      userId: teacherUserId,
+      groupId,
+      eventType: "group_finished",
+      target: group.name,
+      metadata: {
+        groupId,
+        certificatesIssued: certificates.length,
+        eligible: summary.summary.eligibleCount,
+        total: summary.summary.total,
+      },
+    })
+
+    return {
+      group: serializeGroup(updated, 0),
+      summary: {
+        certificatesIssued: certificates.length,
+        eligibleCount: summary.summary.eligibleCount,
+        total: summary.summary.total,
+        instructorCode: instructorCertificate.code,
+      },
+    }
+  })
+}
+
+/**
+ * Archiva un grupo. Es un movimiento de organizacion del listado: solo aplica
+ * a grupos ya finalizados, cuyo entorno se destruyo al finalizar, y no toca
+ * nada mas que el estado.
+ *
+ * Modo de compatibilidad: archivar un grupo 'active' conserva el comportamiento
+ * previo (destruye el entorno y cierra matriculas) mientras la UI nueva de
+ * finalizacion no este desplegada. Una vez la UI solo ofrezca finalizar, esta
+ * via se elimina y el archivado exigira 'finished'.
  */
 async function archiveGroup(args) {
   if (!args.tx) return runInTransaction((tx) => archiveGroup({ ...args, tx }))
@@ -296,6 +381,50 @@ async function archiveGroup(args) {
     throw new AppError("El grupo ya está archivado", 409, "CONFLICT")
   }
 
+  if (group.status === "finished") {
+    const updated = await tx.group.update({
+      where: { id: groupId },
+      data: { status: "archived" },
+    })
+    auditService.audit({
+      userId: teacherUserId,
+      groupId,
+      eventType: "group_archived",
+      target: group.name,
+      metadata: { groupId },
+    })
+    return serializeGroup(updated, 0)
+  }
+
+  const updated = await deactivateGroupEnvironment(tx, {
+    groupId,
+    group,
+    teacherUserId,
+    nextStatus: "archived",
+  })
+
+  auditService.audit({
+    userId: teacherUserId,
+    groupId,
+    eventType: "group_archived",
+    target: group.name,
+    metadata: { groupId },
+  })
+
+  return serializeGroup(updated, 0)
+}
+
+/**
+ * La limpieza que cierra un curso: matriculas a 'archived', cuentas Linux de
+ * los estudiantes borradas de la base, jobs de aprovisionamiento pendientes
+ * cancelados y teardown del entorno encolado. El worker borra del contenedor
+ * los usuarios de los matriculados (los usernames se conservan en el job
+ * porque las filas se acaban de borrar) y la carpeta del grupo.
+ *
+ * Corre dentro de la transaccion del llamador, que fija el estado final con
+ * nextStatus ('finished' al finalizar, 'archived' en el modo de compatibilidad).
+ */
+async function deactivateGroupEnvironment(tx, { groupId, group, teacherUserId, nextStatus }) {
   const [enrollments, teacherAccount] = await Promise.all([
     tx.enrollment.findMany({
       where: { group_id: groupId },
@@ -310,7 +439,7 @@ async function archiveGroup(args) {
 
   const updated = await tx.group.update({
     where: { id: groupId },
-    data: { status: "archived" },
+    data: { status: nextStatus },
   })
 
   await tx.enrollment.updateMany({
@@ -344,15 +473,7 @@ async function archiveGroup(args) {
     logger.warn({ groupId }, "Teacher not provisioned, teardown job skipped")
   }
 
-  auditService.audit({
-    userId: teacherUserId,
-    groupId,
-    eventType: "group_archived",
-    target: group.name,
-    metadata: { groupId },
-  })
-
-  return serializeGroup(updated, 0)
+  return updated
 }
 
 /**
@@ -444,6 +565,7 @@ module.exports = {
   listGroupProvisioningJobs,
   teacherProvisioningSummary,
   archiveGroup,
+  finalizeGroup,
   deleteGroup,
   rotateInvite,
 }

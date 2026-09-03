@@ -7,6 +7,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query"
 import {
   ArrowLeft,
   BookOpen,
+  GraduationCap,
   Loader2,
   Target,
   Users,
@@ -25,6 +26,7 @@ import { slugify } from "@shared/lib/utils"
 import { GroupStudents } from "@/lib/features/teacher/components/group-students"
 import { AddStudentDialog } from "@/lib/features/teacher/components/add-student-dialog"
 import { GroupInviteActions } from "@/lib/features/teacher/components/group-invite-actions"
+import { GroupCertificatesPanel } from "@/lib/features/teacher/components/group-certificates-panel"
 import {
   Select,
   SelectContent,
@@ -155,9 +157,15 @@ function GroupDetailContent() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {group.name}
           </h1>
+          {group.status === "finished" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <GraduationCap className="h-3 w-3" />
+              Finalizado
+            </span>
+          )}
           {group.status === "archived" && (
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
-              Desactivado
+              Archivado
             </span>
           )}
         </div>
@@ -165,6 +173,9 @@ function GroupDetailContent() {
           <p className="mt-1 truncate text-sm text-muted-foreground">{group.description}</p>
         )}
       </div>
+
+      {/* En un curso finalizado o archivado, lo relevante son los certificados. */}
+      {group.status !== "active" && <GroupCertificatesPanel groupId={id} />}
 
       {/* Tabs */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">

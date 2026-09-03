@@ -1,4 +1,4 @@
-const { Role } = require("@prisma/client")
+const { Prisma, Role } = require("@prisma/client")
 const { parse } = require("csv-parse/sync")
 const prisma = require("../../prisma/client")
 const { createLinuxAccountWithUniqueUsername, createLinuxAccountsUnique } = require("../utils/linuxUsername")
@@ -270,6 +270,27 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
     }
   }
 
+  // Un estudiante cursa un solo grupo a la vez. El lock de la fila del
+  // estudiante serializa dos matriculas concurrentes, igual que los intentos
+  // serializan con la fila de la matricula.
+  await tx.$queryRaw`SELECT user_id FROM "Student" WHERE user_id = ${user.id} FOR UPDATE`
+  const activeElsewhere = await tx.enrollment.findFirst({
+    where: {
+      student_id: user.id,
+      status: "active",
+      group: { status: "active" },
+      group_id: { not: groupId },
+    },
+    select: { group: { select: { name: true } } },
+  })
+  if (activeElsewhere) {
+    throw new AppError(
+      `El estudiante ya pertenece al grupo activo '${activeElsewhere.group.name}'`,
+      409,
+      "CONFLICT",
+    )
+  }
+
   try {
     await tx.enrollment.create({
       data: {
@@ -486,8 +507,40 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
     select: { student_id: true },
   })
   const enrolledIds = new Set(existingEnrollments.map((e) => e.student_id))
-  const newEnrollments = toEnroll.filter((e) => !enrolledIds.has(e.userId))
-  result.skipped += toEnroll.length - newEnrollments.length
+  const candidates = toEnroll.filter((e) => !enrolledIds.has(e.userId))
+  result.skipped += toEnroll.length - candidates.length
+
+  // Un estudiante cursa un solo grupo a la vez: los que ya estan matriculados
+  // en otro grupo activo se apartan y se reportan como error de fila. El lock
+  // de las filas de estudiante serializa dos lotes concurrentes.
+  const newEnrollments = []
+  if (candidates.length > 0) {
+    await db.$queryRaw`SELECT user_id FROM "Student" WHERE user_id IN (${Prisma.join(
+      candidates.map((e) => e.userId),
+    )}) FOR UPDATE`
+    const busy = await db.enrollment.findMany({
+      where: {
+        student_id: { in: candidates.map((e) => e.userId) },
+        status: "active",
+        group: { status: "active" },
+        group_id: { not: groupId },
+      },
+      select: { student_id: true, group: { select: { name: true } } },
+    })
+    const busyByUser = new Map(busy.map((b) => [b.student_id, b.group.name]))
+    for (const e of candidates) {
+      const busyGroup = busyByUser.get(e.userId)
+      if (busyGroup) {
+        result.errors.push({
+          row: e.row,
+          email: e.email,
+          error: `Ya pertenece al grupo activo '${busyGroup}'; no se puede matricular en otro`,
+        })
+        continue
+      }
+      newEnrollments.push(e)
+    }
+  }
 
   if (newEnrollments.length > 0) {
     await db.enrollment.createMany({
