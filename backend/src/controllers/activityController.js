@@ -21,7 +21,9 @@ const getCatalog = asyncHandler(async (_req, res) => {
 })
 
 const getMyStatus = asyncHandler(async (req, res) => {
-  res.json({ passed: await lessonEvaluatorService.passedSlugs(req.user.id) })
+  // Aprobadas y nota del ultimo intento de cada actividad intentada: con esto
+  // las tarjetas pintan su calificacion y el catalogo filtra por estado.
+  res.json(await lessonEvaluatorService.statusOf(req.user.id))
 })
 
 const resetActivity = asyncHandler(async (req, res) => {

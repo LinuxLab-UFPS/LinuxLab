@@ -1,45 +1,65 @@
 import Link from "next/link"
 import { BookOpen, Target } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { DIFFICULTY_TONE, DIFFICULTY_LABEL } from "@shared/lib/content/activities"
-import { Tag } from "@shared/components/tag"
-import type { ActivityListing } from "@/lib/models/activities"
+import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
+import { Tag, type TagTone } from "@shared/components/tag"
+import type { Difficulty } from "@/lib/models/activities"
+
+/** La nota se colorea por tramos: aprobada holgada, justa o insuficiente. */
+export function tonoDeNota(nota: number): TagTone {
+  if (nota >= 80) return "emerald"
+  if (nota >= 60) return "amber"
+  return "rose"
+}
 
 const GLOW =
   "hover:border-primary/50 hover:shadow-[var(--neon-glow-strong)]"
 
 /**
- * An activity, wherever it is offered: the catalog, the panel next to the
- * terminal, or a topic that advertises it. It never links into the course —
- * activities are always solved next to the terminal.
+ * Una actividad, donde se ofrezca: el catálogo, el panel de la terminal o una
+ * lección que la anuncia. Tarjeta ÚNICA para las del temario y las que publica
+ * el docente: mismo tamaño de letra y mismos badges en el mismo orden, para que
+ * en una misma grid no se noten dos diseños.
  *
- * `compact` is the same card with the description clamped, for the narrow
- * column beside the terminal.
+ * Los badges cuentan la actividad en dos frases. Bajo el título, el estado:
+ * cómo va la calificación (la nota con su color, o "Pendiente" mientras no
+ * haya) y la dificultad. Al pie, de qué se trata: el tipo (taller o quiz) y el
+ * tema. Nunca se enlaza al curso: las actividades se resuelven junto a la
+ * terminal, y ahí lleva el `href`.
  */
 export function ActivityCard({
-  activity,
-  completed = false,
-  score = null,
+  title,
+  description,
+  href,
+  estado,
+  dificultad,
+  tipo = "taller",
+  topicTitle,
   compact = false,
 }: {
-  activity: ActivityListing
-  completed?: boolean
-  /** La nota del último intento, si ya entregó alguno. */
-  score?: { score: number; maxScore: number } | null
+  title: string
+  description: string
+  href: string
+  /** La calificación, o null mientras no haya (badge "Pendiente"). */
+  estado: { score: number | null; maxScore: number }
+  /** Solo las que la declaran la traen; las del docente van sin ella. */
+  dificultad?: Difficulty
+  /** Taller por defecto: las del temario y las prácticas del docente. */
+  tipo?: "taller" | "quiz"
+  topicTitle: string
+  /** La misma tarjeta con la descripción recortada, para la columna angosta
+      junto a la terminal. */
   compact?: boolean
 }) {
   return (
     <Link
-      href={activity.href}
+      href={href}
       className={cn(
         "group flex flex-col rounded-2xl border border-border bg-card transition-all duration-300 ease-out hover:z-10 hover:scale-[1.02]",
         GLOW,
         compact ? "p-4" : "p-5",
       )}
     >
-      {/* `items-center` y no `items-start`: el titulo se alinea con el centro
-          del icono en vez de con su borde de arriba, que es lo que se lee como
-          alineado cuando el icono es un circulo. */}
       <div className="flex items-center gap-3">
         <span
           className={cn(
@@ -53,25 +73,25 @@ export function ActivityCard({
         <div className="min-w-0 flex-1">
           <h3
             className={cn(
-              "font-bold tracking-tight text-foreground transition-colors group-hover:text-primary",
+              "line-clamp-1 font-bold tracking-tight text-foreground transition-colors group-hover:text-primary",
               compact ? "text-sm" : "text-base",
             )}
           >
-            {activity.title}
+            {title}
           </h3>
-          {/* Bajo el titulo va como le fue y de que tamaño es el reto: primero
-              si esta completada, despues la nota del ultimo intento y al final
-              la dificultad. Se lee de izquierda a derecha como una frase. */}
+          {/* Estado primero (qué valdría hoy) y después la dificultad (de qué
+              tamaño es el reto). Cuando no hay nota todavía, "Pendiente". */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-            {completed && <Tag tone="sky">Completada</Tag>}
-            {score && (
-              <Tag tone={score.score >= 60 ? "emerald" : "amber"}>
-                {score.score}/{score.maxScore}
+            {estado.score !== null ? (
+              <Tag tone={tonoDeNota(estado.score)}>
+                {estado.score}/{estado.maxScore}
               </Tag>
+            ) : (
+              <Tag tone="neutral">Pendiente</Tag>
             )}
-            {activity.difficulty && (
-              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
-                {DIFFICULTY_LABEL[activity.difficulty]}
+            {dificultad && (
+              <Tag tone={DIFFICULTY_TONE[dificultad]}>
+                {DIFFICULTY_LABEL[dificultad]}
               </Tag>
             )}
           </div>
@@ -80,17 +100,17 @@ export function ActivityCard({
 
       <p
         className={cn(
-          "mt-3 leading-relaxed text-muted-foreground",
-          compact ? "line-clamp-2 text-xs" : "text-sm",
+          "mt-3 line-clamp-2 leading-relaxed text-muted-foreground",
+          compact ? "text-xs" : "text-sm",
         )}
       >
-        {activity.description}
+        {description}
       </p>
 
-      {/* Abajo queda el tema, que es lo unico que situa la actividad dentro del
-          curso. La dificultad subio junto al titulo, con el resto del estado. */}
+      {/* Al pie lo que sitúa la actividad: el tipo y el tema. */}
       <div className="mt-4 flex flex-wrap gap-1.5">
-        <Tag icon={BookOpen}>{activity.topicTitle}</Tag>
+        <Tag tone="neutral">{tipo === "quiz" ? "Quiz" : "Taller"}</Tag>
+        <Tag icon={BookOpen}>{topicTitle}</Tag>
       </div>
     </Link>
   )

@@ -43,12 +43,12 @@ export default function LoginPage() {
     // barra del anterior hasta recargar a mano.
     if (typeof window === "undefined") return
     if (user.role === "admin") {
-      window.location.href = "/admin/docentes"
+      router.push("/admin/docentes")
       return
     }
     const next = new URLSearchParams(window.location.search).get("next")
     if (next) {
-      window.location.href = destinoSeguro(next)
+      router.push(destinoSeguro(next))
       return
     }
     /* La primera vez, a la guia del laboratorio: las tarjetas del inicio llevan
@@ -63,8 +63,8 @@ export default function LoginPage() {
     } catch {
       /* sin almacenamiento (modo privado): se entra al inicio */
     }
-    window.location.href = visto ? destinoSeguro(null) : "/curso?tema=bienvenida"
-  }, [user])
+    router.push(visto ? destinoSeguro(null) : "/curso?tema=bienvenida")
+  }, [user, router])
 
   const handleGoogleSignIn = async () => {
     setSigningIn(true)
@@ -159,7 +159,7 @@ export default function LoginPage() {
                 <Input
                   id="code"
                   autoComplete="off"
-                  placeholder="Ej. 202310123"
+                  placeholder="1150000"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   className="h-11"
@@ -199,7 +199,7 @@ export default function LoginPage() {
                 id="password"
                 type={showPass ? "text" : "password"}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
-                placeholder="••••••••"
+                placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-11 pr-10"

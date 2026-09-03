@@ -1,13 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
-import { ArrowLeft, FileText, Folder, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
+import { FileText, Folder, ChevronDown, ChevronRight, Loader2 } from "lucide-react"
 import { Skeleton } from "@shared/components/skeleton"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
+import { BackButton } from "@shared/components/back-button"
 import { Tag } from "@shared/components/tag"
 import { notify } from "@shared/lib/toast"
 import { teacherApi } from "@/lib/features/teacher/api"
@@ -107,13 +107,7 @@ export function StudentActivityDetail({ detail, groupId, backHref, isTeacher }: 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <div className="mb-6">
-        <Link
-          href={backHref}
-          className="mb-4 inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Volver
-        </Link>
+        <BackButton fallback={backHref} className="mb-4" />
 
         <div className="mt-4 mb-4">
           <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>

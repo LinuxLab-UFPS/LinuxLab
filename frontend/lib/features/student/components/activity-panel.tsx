@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
+import { ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Markdown } from "@shared/components/markdown"
 import { ActionButton } from "@shared/components/action-button"
+import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
@@ -74,13 +75,9 @@ export function ActivityPanel({
     <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-3">
-          <Link
-            href={origin ?? "/terminal"}
-            className="inline-flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Volver
-          </Link>
+          {/* Vuelve de donde se entró (catálogo, lección, rendimiento...) vía
+              el `origen` que cada entrada estampa; sin origen, al catálogo. */}
+          <BackButton fallback="/actividades" />
 
           {/* Sólo tiene sentido seguir el curso si vino de él y ya cumplió. */}
           {origin && next && passed && (

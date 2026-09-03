@@ -281,7 +281,8 @@ export interface StudentPerformance {
 }
 
 export interface MyGrades {
-  group: { id: string; name: string } | null
+  /** Con descripción y docente: el encabezado de "Mi Grupo" se arma de aquí. */
+  group: { id: string; name: string; description: string; teacherName: string } | null
   series: GradeSeriesPoint[]
   topics: GradeTopicSummary[]
   summary: GradeSummary

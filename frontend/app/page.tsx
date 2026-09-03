@@ -44,6 +44,10 @@ export default async function LandingPage() {
   // puerta del middleware, sin que la portada tenga que saber nada de eso.
   const irAlCurso = session ? "/inicio" : conNext("/inicio")
   const irAlTemario = irAlCurso
+  /* El temario es del estudiante. Un docente o un admin que pulse una tarjeta
+     va a su propio panel: `/curso` los dejaria en una leccion que no les toca,
+     y ademas la barra lateral de ahi da por hecho que hay matricula. */
+  const soloEstudiante = session?.user.role === "student"
   const portada = syllabus.slice(0, TEMAS_EN_PORTADA)
   return (
     // El color del pie va en el envoltorio para que el rebote del scroll, al
@@ -58,7 +62,7 @@ export default async function LandingPage() {
             accion={
               <Link href={irAlCurso} className={BOTON}>
                 <Play className="h-4 w-4" />
-                {session ? "Ir al curso" : "Comenzar"}
+                Comenzar
               </Link>
             }
             pie={<FlechaSiguiente hacia="acerca-de" />}
@@ -81,7 +85,13 @@ export default async function LandingPage() {
               {portada.map((topic) => (
                 <ContentCard
                   key={topic.slug}
-                  href={session ? `/curso?tema=${topic.slug}` : conNext(`/curso?tema=${topic.slug}`)}
+                  href={
+                    soloEstudiante
+                      ? `/curso?tema=${topic.slug}`
+                      : session
+                        ? irAlCurso
+                        : conNext(`/curso?tema=${topic.slug}`)
+                  }
                   title={`${topic.number}. ${topic.title}`}
                   description={topic.description}
                   illustration={topicIllustration(topic.number)}

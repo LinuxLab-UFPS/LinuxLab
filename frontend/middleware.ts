@@ -53,7 +53,11 @@ export async function middleware(request: NextRequest) {
     const { payload } = await jwtVerify(token, JWT_SECRET)
     const role = payload.role as Role
     if (!rule.roles.includes(role)) {
-      return NextResponse.redirect(new URL("/unauthorized", request.url))
+      /* A su propio panel y no a "sin permiso". Quien tiene sesion valida y se
+         mete donde no le toca —un docente escribiendo /curso— no es un intruso,
+         solo esta en el sitio equivocado; `/inicio` ya reparte por rol. La
+         pagina de sin permiso queda para quien llega sin sesion que valga. */
+      return NextResponse.redirect(new URL("/inicio", request.url))
     }
     const hasEnrollment = (payload.hasEnrollment as boolean | undefined) ?? false
     if (role === "student" && hasEnrollment === false && rule.requiresEnrollment) {

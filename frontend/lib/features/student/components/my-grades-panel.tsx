@@ -1,9 +1,12 @@
 "use client"
 
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { BarChart3, CalendarX, CheckCircle2, Clock3, ListChecks, Radar, TrendingUp, Users } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
 import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
+import { conOrigen } from "@shared/lib/next-url"
 import { GraficaNotas, GraficaTemas } from "@shared/components/charts/grade-charts"
 import type { LucideIcon } from "lucide-react"
 import type { GradebookCellStatus, GradeSeriesPoint, MyGrades } from "@/lib/models/groups"
@@ -12,6 +15,18 @@ import type { GradebookCellStatus, GradeSeriesPoint, MyGrades } from "@/lib/mode
 function topicTitleOf(topicNumber: number): string {
   if (topicNumber === 0) return "Sin tema"
   return getTopic(topicNumber)?.title ?? `Tema ${topicNumber}`
+}
+
+/**
+ * A donde se resuelve cada actividad: las del temario se abren por su slug y
+ * las del docente por su id, siempre junto a la terminal — que es el unico
+ * sitio donde se trabajan. El origen viaja en el enlace: el botón de volver de
+ * la actividad regresa aquí, a la fila de la que se salió.
+ */
+function hrefDe(s: GradeSeriesPoint): string {
+  const destino =
+    s.source === "bank" ? `/terminal?actividad=${s.workdir}` : `/terminal?ga=${s.activityId}`
+  return conOrigen(destino, "/estudiante/grupo")
 }
 
 const STATUS_META: Record<GradebookCellStatus, { label: string; text: string; dot: string }> = {
@@ -88,6 +103,8 @@ function Cifra({
 }
 
 export function MyGradesPanel({ grades }: { grades: MyGrades }) {
+  const router = useRouter()
+
   if (!grades.group) {
     return (
       <div className="mx-auto max-w-md py-24 text-center">
@@ -124,13 +141,12 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
 
   return (
     <div className="space-y-6">
-      <div className="text-sm text-muted-foreground">
-        Curso: <span className="font-medium text-foreground">{grades.group.name}</span>
-      </div>
+      {/* El nombre del curso no se repite aquí: es el título de la vista que
+          contiene este panel. */}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Cifra
-          title="Promedio general"
+          title="Definitiva"
           value={summary.average != null ? `${summary.average}/100` : "—"}
           icon={TrendingUp}
           tone="primary"
@@ -204,12 +220,23 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
                 {series.map((s) => {
                   const meta = STATUS_META[s.status]
                   return (
+                    /* La fila entera lleva a la actividad: el cuaderno es el
+                       punto de partida natural para retomar lo pendiente. El
+                       titulo sigue siendo un `Link` para que la navegación
+                       también funcione con teclado y clic derecho. */
                     <tr
                       key={s.activityId}
-                      className="border-b border-border/50 transition-colors hover:bg-foreground/[0.04]"
+                      onClick={() => router.push(hrefDe(s))}
+                      className="cursor-pointer border-b border-border/50 transition-colors hover:bg-foreground/[0.04]"
                     >
                       <td className="px-5 py-2.5 text-left">
-                        <span className="block text-sm font-medium">{s.title}</span>
+                        <Link
+                          href={hrefDe(s)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="block text-sm font-medium transition-colors hover:text-primary"
+                        >
+                          {s.title}
+                        </Link>
                         {/* Las del curso se clasifican por dificultad y las del
                             docente por quiz o taller; nunca por las dos. */}
                         <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
