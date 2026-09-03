@@ -235,7 +235,14 @@ async function checkForStudent(studentUserId, groupActivityId) {
     select: { student: { select: { code: true } }, email: true },
   })
 
+  // La carpeta de la actividad viaja en el payload para que el checker muestre
+  // en sus mensajes la ruta tal como la escribio el docente (relativa a esa
+  // carpeta) y no el camino completo desde el home: dos aserciones que apuntan
+  // a un archivo con el mismo nombre en carpetas distintas dejan de producir
+  // mensajes identicos que parezcan contradictorios. Un checker antiguo la
+  // ignora y un checker nuevo sin ella muestra la ruta relativa al home.
   const payload = JSON.stringify({
+    workdir: ga.workdir ? `actividades/${ga.workdir}` : undefined,
     checks: checks.map((c) => ({
       id: c.id,
       type: c.type,
@@ -269,7 +276,9 @@ async function checkForStudent(studentUserId, groupActivityId) {
       type: check.type,
       points: check.points,
       passed: outcome?.passed ?? false,
-      detail: outcome?.detail ?? "No se pudo evaluar",
+      detail:
+        outcome?.detail ??
+        "No pude revisar esta comprobación en tu entorno. Vuelve a intentarlo; si el problema continúa, avisa a tu docente.",
     }
   })
 
@@ -344,8 +353,11 @@ async function getStudentTemarioDetail(groupId, slug, studentId, userId, role) {
   })
   if (!studentUser) throw new NotFoundError("Estudiante no encontrado")
 
+  // Lectura de historial: no se exige status "active". Al finalizar o
+  // archivar un grupo las matriculas pasan a "archived" y esta vista debe
+  // seguir mostrando intentos, notas y retroalimentacion tal como quedaron.
   const enrollment = await prisma.enrollment.findFirst({
-    where: { student_id: studentId, group_id: groupId, status: "active" },
+    where: { student_id: studentId, group_id: groupId },
     select: { id: true },
   })
 
@@ -431,8 +443,12 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
     maxScore: ga.max_score,
   }
 
+  // Lectura de historial: no se exige status "active". Al finalizar o
+  // archivar un grupo las matriculas pasan a "archived", pero las entregas
+  // (nota, intentos y retroalimentacion) deben seguir visibles para el
+  // docente. Las escrituras (check/submit) si exigen matricula activa.
   const enrollment = await prisma.enrollment.findFirst({
-    where: { student_id: studentId, group_id: groupId, status: "active" },
+    where: { student_id: studentId, group_id: groupId },
     select: { id: true },
   })
   const enrollmentId = enrollment?.id

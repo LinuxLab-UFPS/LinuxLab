@@ -48,25 +48,25 @@ function fileBasename(ruta: string): string {
 export function describeCheckForStudent(type: string): string {
   switch (type) {
     case "directorio_existe":
-      return "Existe el directorio que pide el enunciado"
+      return "Crea el directorio que pide el enunciado en tu carpeta de trabajo"
     case "archivo_existe":
-      return "Existe el archivo que pide el enunciado"
+      return "Crea el archivo que pide el enunciado en tu carpeta de trabajo"
     case "archivo_no_existe":
-      return "Ya no existe el archivo que había que borrar"
+      return "Elimina de tu carpeta el archivo que pide el enunciado"
     case "permisos_son":
-      return "Los permisos son los que pide el enunciado"
+      return "Deja los permisos del archivo tal como los pide el enunciado"
     case "propietario_es":
-      return "El propietario es el que pide el enunciado"
+      return "Deja el archivo a nombre del dueño que pide el enunciado"
     case "archivo_contiene":
-      return "El archivo contiene lo que pide el enunciado"
+      return "Escribe dentro del archivo el texto que pide el enunciado"
     case "minimo_lineas":
-      return "El archivo tiene suficientes líneas con contenido"
+      return "Escribe en el archivo las líneas mínimas que pide el enunciado"
     case "archivo_es":
-      return "El contenido del archivo es exactamente el esperado"
+      return "Deja el contenido del archivo exactamente como lo pide el enunciado"
     case "ultima_linea_es":
-      return "La última línea del archivo es la que pide el enunciado"
+      return "Termina el archivo con la última línea que pide el enunciado"
     default:
-      return "Comprobación del enunciado"
+      return "Completa la comprobación del enunciado"
   }
 }
 

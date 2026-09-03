@@ -28,6 +28,18 @@ const listGroups = asyncHandler(async (req, res) => {
   res.json(groups)
 })
 
+const updateGroup = asyncHandler(async (req, res) => {
+  const { name, description } = req.body
+  const group = await groupService.updateGroup({
+    groupId: req.params.id,
+    name,
+    description,
+    teacherUserId: req.user.id,
+    role: req.user.role,
+  })
+  res.json(group)
+})
+
 const getGroup = asyncHandler(async (req, res) => {
   const group = await groupService.getGroup({
     groupId: req.params.id,
@@ -39,6 +51,15 @@ const getGroup = asyncHandler(async (req, res) => {
 
 const archiveGroup = asyncHandler(async (req, res) => {
   const group = await groupService.archiveGroup({
+    groupId: req.params.id,
+    role: req.user.role,
+    teacherUserId: req.user.id,
+  })
+  res.json(group)
+})
+
+const unarchiveGroup = asyncHandler(async (req, res) => {
+  const group = await groupService.unarchiveGroup({
     groupId: req.params.id,
     role: req.user.role,
     teacherUserId: req.user.id,
@@ -197,9 +218,11 @@ const actaPdf = asyncHandler(async (req, res) => {
 
 module.exports = {
   createGroup,
+  updateGroup,
   listGroups,
   getGroup,
   archiveGroup,
+  unarchiveGroup,
   rotateInvite,
   deleteGroup,
   registerStudent,

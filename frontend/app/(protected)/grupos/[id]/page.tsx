@@ -12,6 +12,7 @@ import {
   Target,
   Users,
   Plus,
+  Pencil,
   BarChart3,
   Download,
   ScrollText,
@@ -167,6 +168,16 @@ function GroupDetailContent() {
             <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500">
               Archivado
             </span>
+          )}
+          {group.status === "active" && (
+            <ActionButton
+              tone="neutral"
+              href={`/grupos/${id}/editar`}
+              className="ml-auto border border-table-line"
+            >
+              <Pencil className="h-4 w-4" />
+              Editar
+            </ActionButton>
           )}
         </div>
         {group.description && (

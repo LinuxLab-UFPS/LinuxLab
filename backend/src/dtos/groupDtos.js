@@ -35,6 +35,21 @@ const createGroupSchema = z.object({
   students: z.array(studentRowSchema).max(500, "No se pueden matricular más de 500 estudiantes a la vez").default([]),
 })
 
+// La edicion reutiliza el mismo formulario de creacion, asi que siempre viajan
+// los dos campos: el nombre es requerido y la descripcion llega vacia si el
+// docente la borro.
+const updateGroupSchema = z.object({
+  name: z
+    .string({
+      required_error: "El nombre del grupo es requerido",
+      invalid_type_error: "El nombre del grupo es requerido",
+    })
+    .trim()
+    .min(1, "El nombre del grupo es requerido")
+    .max(255, "El nombre del grupo no puede superar los 255 caracteres"),
+  description: z.string().trim().max(2000).optional().nullable(),
+})
+
 const registerStudentSchema = z.object({
   name: z.string().trim().max(255).optional().default(""),
   email: emailField,
@@ -79,4 +94,10 @@ const inviteTokenSchema = z.object({
     .min(1, "Se requiere el enlace de inscripción"),
 })
 
-module.exports = { createGroupSchema, registerStudentSchema, inviteTokenSchema, serializeGroup }
+module.exports = {
+  createGroupSchema,
+  updateGroupSchema,
+  registerStudentSchema,
+  inviteTokenSchema,
+  serializeGroup,
+}

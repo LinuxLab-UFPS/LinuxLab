@@ -223,13 +223,13 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         ) : detail.evaluationType === "atomic" && !canCheck ? (
           <p className="text-xs text-muted-foreground">
               {!enLaCarpeta
-               ? "Entra en la carpeta de la actividad para poder comprobarla."
+               ? "Entra en la carpeta de la actividad para poder comprobarla: la revisión corre dentro de ella."
                : !detail.enabled
-               ? "La actividad está deshabilitada."
+               ? "Esta actividad está deshabilitada por ahora. Habla con tu docente si crees que es un error."
               : closed
-                ? "La actividad venció."
+                ? "El plazo de esta actividad ya venció y no admite más comprobaciones. Habla con tu docente si necesitas una extensión."
                 : limitReached
-                  ? "Alcanzaste el límite de intentos de esta actividad."
+                  ? "Ya usaste todos los intentos que permitía esta actividad. Si crees que mereces una oportunidad más, habla con tu docente."
                   : null}
           </p>
         ) : null}
