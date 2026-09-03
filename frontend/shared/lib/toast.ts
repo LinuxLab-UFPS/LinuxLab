@@ -105,11 +105,6 @@ export function notifyResolve(
 export function hasToast(id: number | string): boolean {
   return toast.getToasts().some((t) => t.id === id)
 }
-
-export function dismissToast(id: number | string) {
-  toast.dismiss(id)
-}
-
 export const notify = {
   success: notifySuccess,
   error: notifyError,

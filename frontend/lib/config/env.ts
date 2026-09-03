@@ -28,12 +28,3 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET ?? "",
   nodeEnv: process.env.NODE_ENV ?? "development",
 } as const
-
-/** Use once a value becomes mandatory; throws if unset. */
-export function requireEnv(key: keyof typeof env): string {
-  const value = env[key]
-  if (!value) {
-    throw new Error(`Missing required environment variable for "${key}". See .env.example.`)
-  }
-  return value
-}

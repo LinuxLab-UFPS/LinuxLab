@@ -60,16 +60,6 @@ export interface GroupProgressSummary {
   activeNow: number
   rows: StudentProgress[]
 }
-
-/** Progreso sin datos: lo usan las pantallas que dependen de endpoints aun no implementados. */
-export const EMPTY_PROGRESS: GroupProgressSummary = {
-  enrolledCount: 0,
-  averageProgress: 0,
-  completedToday: 0,
-  activeNow: 0,
-  rows: [],
-}
-
 export interface TopicProgress {
   topicNumber: number
   title: string

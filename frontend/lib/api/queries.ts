@@ -145,12 +145,3 @@ export function useAuditLog(filters?: AuditFilters) {
     queryFn: () => teacherData.listAuditLog(filters),
   })
 }
-
-/** Últimos eventos de un curso (panel "Actividad reciente" del resumen). */
-export function useGroupAuditLog(id: string, limit = 10) {
-  return useQuery({
-    queryKey: queryKeys.groupAuditLog(id),
-    queryFn: () => teacherData.listGroupAuditLog(id, limit),
-    enabled: Boolean(id),
-  })
-}
