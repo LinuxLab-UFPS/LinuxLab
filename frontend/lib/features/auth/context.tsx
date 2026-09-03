@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   signInWithPopup,
   signOut as firebaseSignOut,
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     apiFetch<{ user: User }>("/api/auth/me")
@@ -169,7 +171,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {}
     terminarSesion()
     setUser(null)
-  }, [])
+    // La cache de React Query se indexa solo por su clave, sin nada del usuario
+    // dentro: si no se vacia al salir, la siguiente cuenta que entre en este
+    // mismo navegador ve las respuestas de la anterior. El sintoma era un
+    // estudiante con las actividades de otro marcadas como completadas.
+    queryClient.clear()
+  }, [queryClient])
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, sendPasswordReset, resendVerification, hydrate, signOut }}>

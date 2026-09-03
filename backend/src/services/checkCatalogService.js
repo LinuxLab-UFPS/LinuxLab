@@ -13,6 +13,9 @@
  * directorio que va a verificar, y el backend la resuelve al evaluar.
  */
 
+/** El mismo token que sustituye `checker.py` por la identidad del proceso. */
+const USER_TOKEN = "$usuario"
+
 const field = (key, label, placeholder) => ({ key, label, placeholder })
 
 const CATALOG = [
@@ -52,16 +55,27 @@ const CATALOG = [
     },
   },
   {
+    /* El unico propietario que se puede exigir es el propio estudiante, y por eso
+       `usuario` va fijo en el token `$usuario`, que el checker sustituye por la
+       identidad real del proceso al evaluar.
+
+       Antes era un campo libre que solo se comprobaba no vacio, asi que un docente
+       podia escribir ahi el nombre de una cuenta concreta. Una asercion asi es
+       imposible de cumplir para el resto del curso: cada estudiante trabaja en su
+       propio home, de modo que el propietario siempre es el mismo y nunca el
+       nombre escrito. Ademas el enunciado se le mostraba a todos como "pertenece
+       a <esa persona>", que se lee como si el progreso fuera de otro. */
     type: "propietario_es",
-    label: "El propietario es",
-    hint: "Verifica el usuario propietario del archivo o directorio.",
-    fields: [
-      field("ruta", "Archivo", "archivo"),
-      field("usuario", "Usuario esperado", "$usuario"),
-    ],
+    label: "El propietario es el estudiante",
+    hint:
+      "Verifica que el archivo o directorio pertenezca al estudiante que resuelve " +
+      "la actividad. El propietario siempre es él, no se puede exigir otro.",
+    fields: [field("ruta", "Archivo", "archivo")],
     validate: ({ ruta, usuario }) => {
       if (!ruta) return "Falta la ruta"
-      if (!usuario) return "Falta el usuario esperado"
+      if (usuario !== undefined && usuario !== USER_TOKEN) {
+        return "El propietario solo puede ser el estudiante que resuelve la actividad"
+      }
       return null
     },
   },
@@ -135,6 +149,18 @@ function isKnown(type) {
   return TYPES.has(type)
 }
 
+/**
+ * Deja los parametros como los espera el checker.
+ *
+ * Hoy solo actua sobre `propietario_es`, cuyo `usuario` va siempre en el token:
+ * el formulario ya no manda ese campo, y asi la asercion queda bien formada
+ * tanto si viene vacio como si llega un valor de una version anterior.
+ */
+function normalizeParams(type, params) {
+  if (type !== "propietario_es") return params
+  return { ...params, usuario: USER_TOKEN }
+}
+
 /** La forma publica que se sirve por API (sin validadores). */
 function publicCatalog() {
   return CATALOG.map(({ type, label, hint, fields }) => ({ type, label, hint, fields }))
@@ -145,4 +171,4 @@ function getCatalog() {
   return publicCatalog()
 }
 
-module.exports = { CATALOG, isKnown, validatorOf, publicCatalog, getCatalog }
+module.exports = { CATALOG, isKnown, validatorOf, normalizeParams, publicCatalog, getCatalog, USER_TOKEN }

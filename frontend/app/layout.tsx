@@ -65,14 +65,17 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <QueryProvider>
+          {/* QueryProvider va por fuera: al cerrar sesion, AuthProvider vacia la
+              cache de React Query para que la siguiente cuenta no herede las
+              respuestas de la anterior, y para eso necesita el cliente. */}
+          <QueryProvider>
+            <AuthProvider>
               <TooltipProvider delayDuration={150}>
                 {children}
                 <Toaster richColors position="top-right" />
               </TooltipProvider>
-            </QueryProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
