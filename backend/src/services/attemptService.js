@@ -4,6 +4,26 @@ const { runInTransaction } = require("../lib/transaction")
 const { recomputeTopicProgress } = require("./progressService")
 
 /**
+ * Los envios que cuentan para lo que el estudiante ve HOY: los de su matricula
+ * vigente, no los de todas las que haya tenido.
+ *
+ * Cada matricula es un curso: al archivar un grupo, el trabajo hecho ahi queda
+ * como historico y el estudiante empieza de cero en el siguiente. Sin esta
+ * condicion, las tarjetas de actividad se pintaban como completadas con
+ * intentos de un grupo archivado mientras el progreso del temario —que si
+ * filtra por matricula activa— salia en cero. Dos cifras del mismo estudiante
+ * que no cuadraban entre si.
+ *
+ * El historico no se borra ni se toca: sigue en la base para el docente y para
+ * los certificados ya emitidos, que deben poder consultarse siempre.
+ */
+const matriculaVigente = (studentId) => ({
+  student_id: studentId,
+  status: "active",
+  group: { status: "active" },
+})
+
+/**
  * Registra un intento de actividad de grupo. El numero de intento sale de contar
  * los intentos previos del estudiante en esa publicacion.
  *
@@ -117,7 +137,7 @@ async function recordTopicAttempt({ studentId, topicActivityId, score, passed, r
  */
 async function statusOf(studentId) {
   const submissions = await prisma.topicSubmission.findMany({
-    where: { enrollment: { student_id: studentId } },
+    where: { enrollment: matriculaVigente(studentId) },
     orderBy: { created_at: "asc" },
     select: {
       score: true,
@@ -182,7 +202,7 @@ async function lastAttempt({ slug, studentId }) {
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
   const submission = await prisma.topicSubmission.findFirst({
-    where: { topic_activity_id: activity.id, enrollment: { student_id: studentId } },
+    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentId) },
     orderBy: { created_at: "desc" },
   })
   if (!submission) return null
@@ -204,7 +224,7 @@ async function listAttempts({ slug, studentId }) {
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
   const submissions = await prisma.topicSubmission.findMany({
-    where: { topic_activity_id: activity.id, enrollment: { student_id: studentId } },
+    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentId) },
     orderBy: { created_at: "desc" },
     select: {
       attempt_number: true,
