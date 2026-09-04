@@ -17,11 +17,27 @@ const { recomputeTopicProgress } = require("./progressService")
  * El historico no se borra ni se toca: sigue en la base para el docente y para
  * los certificados ya emitidos, que deben poder consultarse siempre.
  */
-const matriculaVigente = (studentId) => ({
-  student_id: studentId,
+const matriculaVigente = (studentUserId) => ({
+  student_id: studentUserId,
   status: "active",
   group: { status: "active" },
 })
+
+/**
+ * Corta la consulta si no llega el estudiante.
+ *
+ * Prisma BORRA las claves `undefined` de un `where` en vez de no encontrar
+ * nada: un id que no llega no restringe menos, deja de restringir. La consulta
+ * pasa de "los intentos de esta persona" a "los intentos de cualquiera" sin un
+ * solo error, y el fallo solo se ve cuando alguien nota datos ajenos en su
+ * pantalla. Fallar aqui, ruidosamente, es lo unico que lo convierte en algo
+ * imposible de pasar por alto.
+ */
+function exigirEstudiante(studentUserId) {
+  if (!studentUserId) {
+    throw new Error("attemptService: falta el id del estudiante en la consulta")
+  }
+}
 
 /**
  * Registra un intento de actividad de grupo. El numero de intento sale de contar
@@ -38,6 +54,7 @@ const matriculaVigente = (studentId) => ({
  * consume intento (el registro se crea igual), conforme a las reglas de negocio.
  */
 async function recordGroupAttempt({ studentId, groupId, groupActivityId, score, passed, results, attemptLimit }) {
+  exigirEstudiante(studentId)
   return runInTransaction(async (tx) => {
     const enrollment = await tx.enrollment.findFirst({
       where: { student_id: studentId, group_id: groupId, status: "active", group: { status: "active" } },
@@ -88,6 +105,7 @@ async function recordGroupAttempt({ studentId, groupId, groupActivityId, score, 
  * el rastro en la bitacora: un evento sin `group_id` no lo ve ningun docente.
  */
 async function recordTopicAttempt({ studentId, topicActivityId, score, passed, results }) {
+  exigirEstudiante(studentId)
   return runInTransaction(async (tx) => {
     const enrollment = await tx.enrollment.findFirst({
       where: { student_id: studentId, status: "active", group: { status: "active" } },
@@ -135,9 +153,10 @@ async function recordTopicAttempt({ studentId, topicActivityId, score, passed, r
  * cuaderno, para que una tarjeta y el boletin nunca den notas distintas de la
  * misma actividad.
  */
-async function statusOf(studentId) {
+async function statusOf(studentUserId) {
+  exigirEstudiante(studentUserId)
   const submissions = await prisma.topicSubmission.findMany({
-    where: { enrollment: matriculaVigente(studentId) },
+    where: { enrollment: matriculaVigente(studentUserId) },
     orderBy: { created_at: "asc" },
     select: {
       score: true,
@@ -194,7 +213,8 @@ async function topicActivitiesTotal() {
 
 /** El ultimo intento del estudiante en una comprobacion del temario, para que la
  * leccion abra con su estado. */
-async function lastAttempt({ slug, studentId }) {
+async function lastAttempt({ slug, studentUserId }) {
+  exigirEstudiante(studentUserId)
   const activity = await prisma.topicActivity.findUnique({
     where: { slug },
     select: { id: true },
@@ -202,7 +222,7 @@ async function lastAttempt({ slug, studentId }) {
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
   const submission = await prisma.topicSubmission.findFirst({
-    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentId) },
+    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentUserId) },
     orderBy: { created_at: "desc" },
   })
   if (!submission) return null
@@ -216,7 +236,8 @@ async function lastAttempt({ slug, studentId }) {
 
 /** Todos los intentos del estudiante en una comprobacion del temario, del mas
  * reciente al mas antiguo, para la tabla de intentos de la vista del estudiante. */
-async function listAttempts({ slug, studentId }) {
+async function listAttempts({ slug, studentUserId }) {
+  exigirEstudiante(studentUserId)
   const activity = await prisma.topicActivity.findUnique({
     where: { slug },
     select: { id: true },
@@ -224,7 +245,7 @@ async function listAttempts({ slug, studentId }) {
   if (!activity) throw new NotFoundError("Actividad no encontrada")
 
   const submissions = await prisma.topicSubmission.findMany({
-    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentId) },
+    where: { topic_activity_id: activity.id, enrollment: matriculaVigente(studentUserId) },
     orderBy: { created_at: "desc" },
     select: {
       attempt_number: true,
