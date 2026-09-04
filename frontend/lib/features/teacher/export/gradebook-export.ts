@@ -77,7 +77,7 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
     }
     col += group.activities.length
   }
-  // Las del temario van como recuento, igual que en pantalla.
+  // Las del temario van como promedio, igual que en pantalla.
   header.push({ value: "Curso", bold: true, align: "center", fill: HEADER_FILL })
   header.push({ value: "Definitiva", bold: true, align: "center", fill: HEADER_FILL })
 
@@ -86,13 +86,15 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
   merges.push({ from: { row: 0, col: colCount - 2 }, to: { row: 1, col: colCount - 2 } })
   merges.push({ from: { row: 0, col: colCount - 1 }, to: { row: 1, col: colCount - 1 } })
 
-  const workdirRow: ExcelCell[] = [
+  // El titulo de cada actividad, igual que en la tabla; el codigo del
+  // directorio ya no se muestra alli y aqui tampoco.
+  const titleRow: ExcelCell[] = [
     { value: null },
     { value: null },
     ...orderedActivities.map(
       (a) =>
         ({
-          value: a.workdir,
+          value: a.title,
           align: "center",
           fill: HEADER_FILL,
           fontColor: a.enabled ? undefined : DISABLED_MUTED,
@@ -133,16 +135,26 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
       ? Math.round((activityAvgs.reduce((a, b) => a + b, 0) / activityAvgs.length) * 10) / 10
       : null
 
+  const topicAvgs = Object.values(topicActivities.average).filter(
+    (v): v is number => v !== null,
+  )
+  const topicAverageOfGroup =
+    topicAvgs.length > 0
+      ? Math.round((topicAvgs.reduce((a, b) => a + b, 0) / topicAvgs.length) * 10) / 10
+      : null
+
   const footer: ExcelCell[] = [
     { value: null, fill: HEADER_FILL },
-    { value: "Promedio por actividad", bold: true, align: "left", fill: HEADER_FILL },
+    { value: "Promedio", bold: true, align: "left", fill: HEADER_FILL },
     ...orderedActivities.map((a): ExcelCell => {
       const v = activityAverages[a.id]
       return v != null
         ? { value: v, align: "center", fill: HEADER_FILL }
         : { value: null, align: "center", fill: HEADER_FILL }
     }),
-    { value: null, align: "center", fill: HEADER_FILL },
+    topicAverageOfGroup != null
+      ? { value: topicAverageOfGroup, align: "center", fill: HEADER_FILL }
+      : ({ value: null, align: "center", fill: HEADER_FILL } as ExcelCell),
     overallAverage != null
       ? { value: overallAverage, align: "center", bold: true, fill: HEADER_FILL }
       : ({ value: null, align: "center", fill: HEADER_FILL } as ExcelCell),
@@ -150,7 +162,7 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
 
   return {
     name: "Calificaciones",
-    grid: [header, workdirRow, ...body, footer],
+    grid: [header, titleRow, ...body, footer],
     merges,
     freeze: { xSplit: 2, ySplit: 2 },
     columnWidths: [14, 32, ...orderedActivities.map(() => 12), 12, 12],

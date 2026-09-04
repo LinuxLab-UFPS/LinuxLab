@@ -234,23 +234,27 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
               return (
                 <tr
                   key={student.id}
-                  className="border-b border-table-line transition-colors hover:bg-muted/50"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver el rendimiento de ${student.name}`}
+                  onClick={() => onStudentClick(student.id, student.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onStudentClick(student.id, student.name)
+                    }
+                  }}
+                  className="group cursor-pointer border-b border-table-line transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                 >
-                  <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-b border-r border-table-line bg-background px-3 py-2.5 text-center">
+                  <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-b border-r border-table-line bg-background px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
                     <span className="font-mono text-xs text-muted-foreground">
                       {student.code ?? "—"}
                     </span>
                   </td>
-                  <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-b border-r border-table-line bg-background px-4 py-2.5 text-left">
-                    <button
-                      type="button"
-                      onClick={() => onStudentClick(student.id, student.name)}
-                      className="text-left"
-                    >
-                      <span className="block w-full truncate text-sm font-medium text-foreground underline-offset-2 hover:text-primary hover:underline">
-                        {student.name}
-                      </span>
-                    </button>
+                  <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-b border-r border-table-line bg-background px-4 py-2.5 text-left transition-colors group-hover:bg-muted/50">
+                    <span className="block w-full truncate text-sm font-medium text-foreground underline-offset-2 group-hover:text-primary group-hover:underline">
+                      {student.name}
+                    </span>
                   </td>
 
                   {orderedActivities.map((a) => (
@@ -267,7 +271,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
 
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <td className="cursor-default border-b border-l border-table-line px-3 py-2.5 text-center">
+                      <td className="border-b border-l border-table-line px-3 py-2.5 text-center">
                         <span
                           className={cn(
                             "font-mono text-sm",
@@ -284,9 +288,8 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>
-                        Aprobadas {topicActivities.done[student.id] ?? 0} de{" "}
-                        {topicActivities.total}. El promedio cuenta todas: las que no ha
-                        empezado valen 0.
+                        Actividades fijas del curso: {topicActivities.done[student.id] ?? 0}/
+                        {topicActivities.total} aprobadas
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -310,7 +313,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
             <tr className="bg-table-surface">
               <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-t border-r border-table-line bg-table-surface px-3 py-2.5 text-center"></td>
               <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-t border-r border-table-line bg-table-surface px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                Promedio por actividad
+                Promedio
               </td>
               {orderedActivities.map((a) => (
                 <td
