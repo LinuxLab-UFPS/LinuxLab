@@ -95,10 +95,19 @@ function GroupDetailContent() {
 
   const addStudentMutation = useMutation({
     mutationFn: (student: Omit<EnrollmentStudent, "id">) => addStudent(id, student),
-    onSuccess: (created) => {
+    onSuccess: (outcome) => {
+      /* La respuesta viene envuelta: `enrolled` en false significa que ya
+         estaba en este grupo, y eso llega como 200. Antes se metia el sobre
+         entero en la lista como si fuera el estudiante, asi que la fila
+         aparecia con el nombre y el correo vacios hasta el siguiente refresco. */
+      if (!outcome.enrolled) {
+        setAdding(false)
+        notify.info("Ese estudiante ya estaba en el grupo")
+        return
+      }
       queryClient.setQueryData(queryKeys.groupStudents(id), (prev: EnrollmentStudent[] = []) => [
         ...prev,
-        created,
+        outcome.student,
       ])
       queryClient.invalidateQueries({ queryKey: queryKeys.group(id) })
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
@@ -106,8 +115,10 @@ function GroupDetailContent() {
       setAdding(false)
       notify.success("Estudiante agregado")
     },
-    onError: () => {
-      notify.error(null, "No se pudo agregar el estudiante.")
+    onError: (e) => {
+      // El servidor explica por que (ya matriculado en otro grupo activo, correo
+      // invalido...). Tragarse ese mensaje deja todos los fallos iguales.
+      notify.error(e, "No se pudo agregar el estudiante.")
     },
   })
 

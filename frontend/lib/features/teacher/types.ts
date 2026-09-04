@@ -66,3 +66,17 @@ export interface AuditListResult {
   limit: number
   totalPages: number
 }
+
+/**
+ * Lo que responde el alta de un estudiante en un grupo.
+ *
+ * No es el estudiante a secas: viene envuelto, porque el alta puede terminar
+ * sin matricular (`enrolled: false` cuando ya estaba en ese mismo grupo) y eso
+ * llega como 200, no como error.
+ */
+export interface AddStudentOutcome {
+  enrolled: boolean
+  reason?: string
+  student: import("@/lib/models/auth").EnrollmentStudent
+  linuxProvisioned: boolean
+}

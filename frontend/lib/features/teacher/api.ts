@@ -22,6 +22,7 @@ import type {
   FinalizePreview,
   FinalizeResponse,
   GroupCertificates,
+  AddStudentOutcome,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -130,7 +131,7 @@ export const teacherApi = {
   listEnrollments: (groupId: string) =>
     apiFetch<Enrollment[]>(`/api/groups/${groupId}/enrollments`),
   addStudent: (groupId: string, input: Omit<EnrollmentStudent, "id">) =>
-    apiFetch<EnrollmentStudent>(`/api/groups/${groupId}/students`, {
+    apiFetch<AddStudentOutcome>(`/api/groups/${groupId}/students`, {
       method: "POST",
       body: JSON.stringify(input),
     }),

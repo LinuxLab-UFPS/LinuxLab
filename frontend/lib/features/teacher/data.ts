@@ -18,6 +18,7 @@ import type {
   FinalizePreview,
   FinalizeResponse,
   GroupCertificates,
+  AddStudentOutcome,
 } from "./types"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
 
@@ -164,7 +165,7 @@ export async function listStudents(groupId: string): Promise<EnrollmentStudent[]
 export async function addStudent(
   groupId: string,
   input: Omit<EnrollmentStudent, "id">,
-): Promise<EnrollmentStudent> {
+): Promise<AddStudentOutcome> {
   return teacherApi.addStudent(groupId, input)
 }
 
