@@ -110,9 +110,15 @@ export function GroupActivities({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
+                  {/* Las del temario no tienen carpeta propia: se trabajan en el
+                      home del estudiante, y decirlo es mas util que un guion. */}
+                  <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {activity.workdir ?? "—"}
+                    {activity.workdir ? (
+                      <span className="font-mono">{activity.workdir}</span>
+                    ) : (
+                      "Home del estudiante"
+                    )}
                   </span>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">

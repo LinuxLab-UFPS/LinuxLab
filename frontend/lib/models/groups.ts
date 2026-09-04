@@ -213,15 +213,17 @@ export interface Gradebook {
   /**
    * Las del curso, como recuento y no como columnas.
    *
-   * Son las mismas catorce para todos, asi que lo que interesa es cuantas lleva
-   * cada estudiante. Como columnas ensancharian una tabla que ya crece con cada
-   * actividad que publica el docente. Al no ser una nota, no entran en
+   * Son las mismas catorce para todos, asi que no tienen columna propia: como
+   * columnas ensancharian una tabla que ya crece con cada actividad que publica
+   * el docente. Si cuentan para la nota, y su promedio ya esta incluido en
    * `studentAverages`.
    */
   topicActivities: {
     total: number
     /** studentId -> cuantas aprobo. */
     done: Record<string, number>
+    /** studentId -> promedio de las del temario, o null si no hay ninguna. */
+    average: Record<string, number | null>
   }
 }
 

@@ -201,7 +201,7 @@ async function loadGroupData(groupId) {
 
 async function getGroupGradebook({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
-  const { activities, enrollments, attemptMap, submissionMap, topicDone, topicTotal } =
+  const { activities, enrollments, attemptMap, submissionMap, topicDone, topicTotal, delTemario, topicAttemptMap } =
     await loadGroupData(groupId)
 
   const students = enrollments.map((e) => ({
@@ -214,6 +214,31 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
   const cells = {}
   const activitySums = new Map()
   const studentSums = new Map()
+  // El promedio de las del temario va aparte: alimenta la columna Curso.
+  const temarioSums = new Map()
+
+  /* Las del temario suman a la definitiva igual que las del docente, aunque no
+     tengan columna propia en la tabla (son catorce iguales para todos y la
+     harian crecer a lo ancho sin aportar). Se recorren aqui para que la nota
+     del cuaderno y la del detalle de un estudiante salgan del mismo conjunto:
+     antes la tabla promediaba solo las del docente y el modal las dos, asi que
+     la misma persona tenia dos definitivas distintas segun donde se mirara. */
+  for (const ta of delTemario) {
+    for (const student of students) {
+      const cell = buildCell(ta, topicAttemptMap.get(key(student.id, ta.id)) ?? [], [], now)
+      const value = averageValueOf(cell)
+
+      const sAvg = studentSums.get(student.id) ?? { sum: 0, count: 0 }
+      sAvg.sum += value
+      sAvg.count += 1
+      studentSums.set(student.id, sAvg)
+
+      const tAvg = temarioSums.get(student.id) ?? { sum: 0, count: 0 }
+      tAvg.sum += value
+      tAvg.count += 1
+      temarioSums.set(student.id, tAvg)
+    }
+  }
 
   for (const ga of activities) {
     const gaId = ga.id
@@ -266,13 +291,20 @@ async function getGroupGradebook({ groupId, teacherUserId, role }) {
     cells,
     activityAverages,
     studentAverages,
-    /* Las del temario, como recuento y no como nota: son catorce iguales para
-       todos y lo que interesa del cuaderno es cuantas lleva cada quien. Al no
-       ser una nota, no entra en `studentAverages`. */
+    /* Las del temario no tienen columna propia —serian catorce iguales para
+       todos— pero si nota: `average` es su promedio, que la columna Curso
+       muestra, y ese mismo valor ya esta dentro de `studentAverages`. `done`
+       se mantiene para el "N de M" del tooltip. */
     topicActivities: {
       total: topicTotal,
       done: Object.fromEntries(
         enrollments.map((e) => [e.student.user.id, topicDone.get(e.id) ?? 0]),
+      ),
+      average: Object.fromEntries(
+        students.map((s) => {
+          const t = temarioSums.get(s.id)
+          return [s.id, t && t.count > 0 ? round1(t.sum / t.count) : null]
+        }),
       ),
     },
   }

@@ -51,19 +51,7 @@ export default function LoginPage() {
       router.push(destinoSeguro(next))
       return
     }
-    /* La primera vez, a la guia del laboratorio: las tarjetas del inicio llevan
-       directo a un tema y se saltan la explicacion de como funciona esto. A
-       partir de la segunda, al inicio de siempre. La marca es por navegador
-       porque solo decide un destino; si se pierde, lo unico que pasa es que la
-       guia se ve otra vez. */
-    let visto = true
-    try {
-      visto = window.localStorage.getItem("linuxlab:guia-vista") === "1"
-      window.localStorage.setItem("linuxlab:guia-vista", "1")
-    } catch {
-      /* sin almacenamiento (modo privado): se entra al inicio */
-    }
-    router.push(visto ? destinoSeguro(null) : "/curso?tema=bienvenida")
+    router.push(destinoSeguro(null))
   }, [user, router])
 
   const handleGoogleSignIn = async () => {

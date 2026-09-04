@@ -123,6 +123,16 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
       ? Math.round((activityAvgs.reduce((a, b) => a + b, 0) / activityAvgs.length) * 10) / 10
       : null
 
+  // Como el promedio por actividad, pero de la columna del curso: la media de
+  // lo que lleva cada estudiante en el temario.
+  const topicAvgs = Object.values(topicActivities.average).filter(
+    (v): v is number => v !== null,
+  )
+  const topicAverageOfGroup =
+    topicAvgs.length > 0
+      ? Math.round((topicAvgs.reduce((a, b) => a + b, 0) / topicAvgs.length) * 10) / 10
+      : null
+
   return (
     <div className="overflow-hidden rounded-xl border border-table-line bg-background shadow-md dark:shadow-none">
       {activityCount > 0 && (
@@ -167,8 +177,9 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Actividades del temario que el estudiante ya aprobó. No entran en la
-                      definitiva: es un recuento, no una nota.
+                      Promedio de las actividades del temario. Son las mismas para todo el
+                      grupo, así que no tienen columna propia, pero cuentan para la
+                      definitiva igual que las que publica el docente.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -180,26 +191,28 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                 Definitiva
               </th>
             </tr>
-            {/* Fila de actividades: código del directorio (T-0001) que enlaza
-                al detalle; el título completo vive en el tooltip. */}
+            {/* Fila de actividades: el titulo, que es lo que el docente reconoce.
+                El codigo del directorio (T-0001) baja al tooltip junto al resto
+                de la ficha. */}
             <tr>
               {groups.flatMap((group) =>
                 group.activities.map((a) => (
                   <th
                     key={a.id}
-                    className="w-24 min-w-24 max-w-24 border-b border-r border-table-line bg-table-surface p-0"
+                    className="w-32 min-w-32 max-w-32 border-b border-r border-table-line bg-table-surface p-0"
                   >
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link
                           href={`/grupos/${groupId}/actividades/${a.id}?from=calificaciones`}
-                          className="block w-full px-1 py-2 text-center font-mono text-[11px] font-semibold text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+                          className="block w-full px-1 py-2 text-center text-[11px] font-semibold leading-tight text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
                         >
-                          {a.workdir}
+                          <span className="line-clamp-2 break-words normal-case">{a.title}</span>
                         </Link>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-xs text-left">
                         <p className="font-medium normal-case">{a.title}</p>
+                        <p className="mt-1 font-mono font-normal normal-case">{a.workdir}</p>
                         <p className="mt-1 font-normal normal-case">
                           {a.activityType === "quiz" ? "Quiz" : "Taller"} ·{" "}
                           {a.evaluationType === "manual" ? "Revisión docente" : "Auto-evaluada"}
@@ -219,22 +232,29 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
             {students.map((student) => {
               const studentCells = cells[student.id] ?? {}
               return (
-                <tr key={student.id} className="border-b border-table-line">
-                  <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-b border-r border-table-line bg-background px-3 py-2.5 text-center">
+                <tr
+                  key={student.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver el rendimiento de ${student.name}`}
+                  onClick={() => onStudentClick(student.id, student.name)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      onStudentClick(student.id, student.name)
+                    }
+                  }}
+                  className="group cursor-pointer border-b border-table-line transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                >
+                  <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-b border-r border-table-line bg-background px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
                     <span className="font-mono text-xs text-muted-foreground">
                       {student.code ?? "—"}
                     </span>
                   </td>
-                  <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-b border-r border-table-line bg-background px-4 py-2.5 text-left">
-                    <button
-                      type="button"
-                      onClick={() => onStudentClick(student.id, student.name)}
-                      className="text-left"
-                    >
-                      <span className="block w-full truncate text-sm font-medium text-foreground underline-offset-2 hover:text-primary hover:underline">
-                        {student.name}
-                      </span>
-                    </button>
+                  <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-b border-r border-table-line bg-background px-4 py-2.5 text-left transition-colors group-hover:bg-muted/50">
+                    <span className="block w-full truncate text-sm font-medium text-foreground underline-offset-2 group-hover:text-primary group-hover:underline">
+                      {student.name}
+                    </span>
                   </td>
 
                   {orderedActivities.map((a) => (
@@ -249,13 +269,32 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </td>
                   ))}
 
-                  <td className="border-b border-l border-table-line px-3 py-2.5 text-center">
-                    <span className="font-mono text-sm text-muted-foreground">
-                      {topicActivities.done[student.id] ?? 0}/{topicActivities.total}
-                    </span>
-                  </td>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <td className="border-b border-l border-table-line px-3 py-2.5 text-center">
+                        <span
+                          className={cn(
+                            "font-mono text-sm",
+                            topicActivities.average[student.id] != null
+                              ? scoreColor(topicActivities.average[student.id]!)
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {topicActivities.average[student.id] != null
+                            ? `${topicActivities.average[student.id]}/100`
+                            : "—"}
+                        </span>
+                      </td>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Actividades fijas del curso: {topicActivities.done[student.id] ?? 0}/
+                        {topicActivities.total} aprobadas
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
 
-                  <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center">
+                  <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
                     {studentAverages[student.id] != null ? (
                       <span className={cn("font-mono text-sm font-semibold", scoreColor(studentAverages[student.id]!))}>
                         {studentAverages[student.id]}/100
@@ -274,7 +313,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
             <tr className="bg-table-surface">
               <td className="sticky left-0 z-10 w-24 min-w-24 max-w-24 border-t border-r border-table-line bg-table-surface px-3 py-2.5 text-center"></td>
               <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-t border-r border-table-line bg-table-surface px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground">
-                Promedio por actividad
+                Promedio
               </td>
               {orderedActivities.map((a) => (
                 <td
@@ -290,10 +329,14 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   )}
                 </td>
               ))}
-              {/* La columna del curso es un recuento por estudiante: no tiene
-                  promedio de grupo que enseñar aqui. */}
               <td className="border-t border-l border-table-line px-3 py-2.5 text-center">
-                <span className="text-muted-foreground">—</span>
+                {topicAverageOfGroup != null ? (
+                  <span className="font-mono text-xs font-medium text-foreground">
+                    {topicAverageOfGroup}/100
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </td>
               <td className="sticky right-0 z-10 border-t border-l border-table-line bg-table-surface px-3 py-2.5 text-center">
                 {overallAverage != null ? (
