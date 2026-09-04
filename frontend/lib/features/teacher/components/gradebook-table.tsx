@@ -252,7 +252,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </span>
                   </td>
                   <td className="sticky left-24 z-10 w-56 min-w-56 max-w-56 border-b border-r border-table-line bg-background px-4 py-2.5 text-left transition-colors group-hover:bg-muted/50">
-                    <span className="block w-full truncate text-sm font-medium text-foreground">
+                    <span className="block w-full truncate text-sm font-medium text-foreground underline-offset-2 group-hover:text-primary group-hover:underline">
                       {student.name}
                     </span>
                   </td>
