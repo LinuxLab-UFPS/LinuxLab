@@ -110,7 +110,11 @@ export function buildGradebookSheet(gradebook: Gradebook): ExcelSheetSpec {
       ...orderedActivities.map((a) => cellFrom(studentCells[a.id])),
     ]
     row.push({
-      value: `${topicActivities.done[student.id] ?? 0}/${topicActivities.total}`,
+      // Mismo criterio que la tabla: la columna es el promedio del temario.
+      value:
+        topicActivities.average[student.id] != null
+          ? `${topicActivities.average[student.id]}/100`
+          : "—",
       align: "center",
     })
     const avg = studentAverages[student.id]

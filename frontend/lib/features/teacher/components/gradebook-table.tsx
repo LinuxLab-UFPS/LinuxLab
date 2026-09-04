@@ -167,8 +167,9 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Actividades del temario que el estudiante ya aprobó. No entran en la
-                      definitiva: es un recuento, no una nota.
+                      Promedio de las actividades del temario. Son las mismas para todo el
+                      grupo, así que no tienen columna propia, pero cuentan para la
+                      definitiva igual que las que publica el docente.
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -250,9 +251,29 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                   ))}
 
                   <td className="border-b border-l border-table-line px-3 py-2.5 text-center">
-                    <span className="font-mono text-sm text-muted-foreground">
-                      {topicActivities.done[student.id] ?? 0}/{topicActivities.total}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn(
+                            "cursor-default font-mono text-sm",
+                            topicActivities.average[student.id] != null
+                              ? scoreColor(topicActivities.average[student.id]!)
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {topicActivities.average[student.id] != null
+                            ? `${topicActivities.average[student.id]}/100`
+                            : "—"}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Aprobadas {topicActivities.done[student.id] ?? 0} de{" "}
+                          {topicActivities.total}. El promedio cuenta todas: las que no ha
+                          empezado valen 0.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                   </td>
 
                   <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center">
