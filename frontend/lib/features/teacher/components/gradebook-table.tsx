@@ -294,7 +294,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </TooltipContent>
                   </Tooltip>
 
-                  <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center">
+                  <td className="sticky right-0 z-10 border-b border-l border-table-line bg-background px-3 py-2.5 text-center transition-colors group-hover:bg-muted/50">
                     {studentAverages[student.id] != null ? (
                       <span className={cn("font-mono text-sm font-semibold", scoreColor(studentAverages[student.id]!))}>
                         {studentAverages[student.id]}/100
