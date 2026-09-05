@@ -47,8 +47,9 @@ A partir de los 37 requerimientos funcionales consolidados se definieron los cas
 | CU-22 | Exportar reporte Excel | Docente | — | RF-31 |
 | CU-23 | Finalizar grupo y certificar | Docente | Sistema | RF-32, RF-33 |
 | CU-24 | Verificar certificado | Cualquier persona | — | RF-34 |
-| CU-25 | Consultar auditoría | Administrador, Docente | — | RF-35, RF-36 |
-| CU-26 | Reintentar aprovisionamiento | Administrador | — | RF-37 |
+| CU-25 | Consultar auditoría de grupo | Docente | — | RF-35 |
+| CU-26 | Consultar auditoría del sistema | Administrador | — | RF-36 |
+| CU-27 | Reintentar aprovisionamiento | Administrador | — | RF-37 |
 
 > **Nota:** El RF-05 (control de acceso por roles) es transversal y se valida en cada operación protegida del sistema, por lo que no constituye un caso de uso independiente.
 
@@ -108,8 +109,9 @@ rectangle "Laboratorio Virtual de Linux" {
   }
 
   package "Auditoría" {
-    usecase "CU-25\nConsultar auditoría" as UC25
-    usecase "CU-26\nReintentar\naprovisionamiento" as UC26
+    usecase "CU-25\nConsultar auditoría\nde grupo" as UC25
+    usecase "CU-26\nConsultar auditoría\ndel sistema" as UC26
+    usecase "CU-27\nReintentar\naprovisionamiento" as UC27
   }
 }
 
@@ -146,8 +148,8 @@ Doc --> UC25
 Admin --> UC02
 Admin --> UC04
 Admin --> UC05
-Admin --> UC25
 Admin --> UC26
+Admin --> UC27
 
 UC01 ..> Sys : <<include>>
 UC02 ..> Sys : <<include>>
@@ -201,8 +203,8 @@ UC16 ..> UC15 : <<extend>>
 | RF-33 | CU-23 |
 | RF-34 | CU-24 |
 | RF-35 | CU-25 |
-| RF-36 | CU-25 |
-| RF-37 | CU-26 |
+| RF-36 | CU-26 |
+| RF-37 | CU-27 |
 
 ---
 

@@ -2158,27 +2158,26 @@ end
 
 ---
 
-## CU-25: Consultar auditoría
+## CU-25: Consultar auditoría de grupo
 
 ### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
 | **ID** | CU-25 |
-| **Nombre** | Consultar auditoría |
-| **Actor principal** | Administrador, Docente |
+| **Nombre** | Consultar auditoría de grupo |
+| **Actor principal** | Docente |
 | **Actor secundario** | — |
-| **RFs asociados** | RF-35, RF-36 |
-| **Precondiciones** | El usuario tiene una sesión activa con rol de administrador o docente. |
+| **RFs asociados** | RF-35 |
+| **Precondiciones** | El docente tiene una sesión activa y es propietario de al menos un grupo. |
 
 **Flujo principal:**
 
-1. El usuario accede a la sección de auditoría.
-2. **Si es docente:** El sistema muestra los eventos de sus grupos.
-3. **Si es administrador:** El sistema muestra todos los eventos del sistema.
-4. El usuario puede aplicar filtros.
-5. El sistema muestra los eventos que coinciden con los filtros.
-6. El usuario puede paginar los resultados.
+1. El docente accede a la sección de auditoría.
+2. El sistema muestra los eventos de los grupos del docente.
+3. El docente puede filtrar por grupo, tipo de evento o rango de fechas.
+4. El sistema muestra los eventos que coinciden con los filtros.
+5. El docente puede paginar los resultados.
 
 **Flujos alternativos:**
 
@@ -2194,16 +2193,14 @@ end
 @startuml
 left to right direction
 
-title CU-25: Consultar auditoría
+title CU-25: Consultar auditoría de grupo
 
 rectangle "Laboratorio Virtual de Linux" {
-  usecase "Consultar auditoría" as UC25
+  usecase "Consultar auditoría\nde grupo" as UC25
 }
 
-actor "Administrador" as Admin
 actor "Docente" as Doc
 
-Admin --> UC25
 Doc --> UC25
 
 @enduml
@@ -2213,43 +2210,115 @@ Doc --> UC25
 
 ```plantuml
 @startuml
-actor "Administrador\no Docente" as U
+actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
 
-U -> FE : Accede a auditoría
+D -> FE : Accede a auditoría de grupo
 FE -> BE : GET /api/audit?group_id=...&type=...&from=...&to=...
 
-alt Rol = Docente
-  BE -> DB : SELECT AuditEvent WHERE group_id IN (grupos del docente)
-else Rol = Administrador
-  BE -> DB : SELECT AuditEvent
-end
-
+BE -> DB : SELECT AuditEvent WHERE group_id IN (grupos del docente)
 DB --> BE : lista de eventos
 BE --> FE : 200 OK [{ id, eventType, userId, message, groupId, createdAt }]
-FE -> U : Muestra tabla de eventos con filtros
+FE -> D : Muestra tabla de eventos con filtros
 
-U -> FE : Aplica filtros adicionales
+D -> FE : Aplica filtros adicionales
 FE -> BE : GET /api/audit?filters...
 BE -> DB : Query filtrada
 DB --> BE : resultados
 BE --> FE : 200 OK
-FE -> U : Actualiza tabla
+FE -> D : Actualiza tabla
 
 @enduml
 ```
 
 ---
 
-## CU-26: Reintentar aprovisionamiento
+## CU-26: Consultar auditoría del sistema
 
 ### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
 | **ID** | CU-26 |
+| **Nombre** | Consultar auditoría del sistema |
+| **Actor principal** | Administrador |
+| **Actor secundario** | — |
+| **RFs asociados** | RF-36 |
+| **Precondiciones** | El administrador tiene una sesión activa. |
+
+**Flujo principal:**
+
+1. El administrador accede a la sección de auditoría del sistema.
+2. El sistema muestra todos los eventos del sistema.
+3. El administrador puede filtrar por usuario, grupo, tipo de evento o rango de fechas.
+4. El sistema muestra los eventos que coinciden con los filtros.
+5. El administrador puede paginar los resultados.
+
+**Flujos alternativos:**
+
+- **A1:** No hay eventos que coincidan → El sistema muestra "No se encontraron eventos".
+
+**Postcondiciones:**
+
+- No hay cambios en el estado del sistema.
+
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-26: Consultar auditoría del sistema
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Consultar auditoría\ndel sistema" as UC26
+}
+
+actor "Administrador" as Admin
+
+Admin --> UC26
+
+@enduml
+```
+
+### Diagrama de secuencia
+
+```plantuml
+@startuml
+actor Administrador as A
+participant "Frontend" as FE
+participant "Backend" as BE
+database "PostgreSQL" as DB
+
+A -> FE : Accede a auditoría del sistema
+FE -> BE : GET /api/audit?user_id=...&group_id=...&type=...&from=...&to=...
+
+BE -> DB : SELECT AuditEvent
+DB --> BE : lista de eventos
+BE --> FE : 200 OK [{ id, eventType, userId, message, groupId, createdAt }]
+FE -> A : Muestra tabla de eventos con filtros
+
+A -> FE : Aplica filtros adicionales
+FE -> BE : GET /api/audit?filters...
+BE -> DB : Query filtrada
+DB --> BE : resultados
+BE --> FE : 200 OK
+FE -> A : Actualiza tabla
+
+@enduml
+```
+
+---
+
+## CU-27: Reintentar aprovisionamiento
+
+### Tabla de especificación
+
+| Campo | Descripción |
+|-------|-------------|
+| **ID** | CU-27 |
 | **Nombre** | Reintentar aprovisionamiento |
 | **Actor principal** | Administrador |
 | **Actor secundario** | — |
@@ -2280,15 +2349,15 @@ FE -> U : Actualiza tabla
 @startuml
 left to right direction
 
-title CU-26: Reintentar aprovisionamiento
+title CU-27: Reintentar aprovisionamiento
 
 rectangle "Laboratorio Virtual de Linux" {
-  usecase "Reintentar\naprovisionamiento" as UC26
+  usecase "Reintentar\naprovisionamiento" as UC27
 }
 
 actor "Administrador" as Admin
 
-Admin --> UC26
+Admin --> UC27
 
 @enduml
 ```
