@@ -6,22 +6,9 @@
 
 ---
 
-## Contenido
+## CU-01: Registrarse
 
-1. [Autenticación (CU-01 a CU-03)](#1-autenticación)
-2. [Gestión de Docentes (CU-04 a CU-05)](#2-gestión-de-docentes)
-3. [Gestión de Grupos (CU-06 a CU-10)](#3-gestión-de-grupos)
-4. [Contenido y Terminal (CU-11 a CU-14)](#4-contenido-y-terminal)
-5. [Actividades Personalizadas (CU-15 a CU-20)](#5-actividades-personalizadas)
-6. [Seguimiento y Reportes (CU-21 a CU-22)](#6-seguimiento-y-reportes)
-7. [Certificados (CU-23 a CU-24)](#7-certificados)
-8. [Auditoría (CU-25 a CU-26)](#8-auditoría)
-
----
-
-## 1. Autenticación
-
-### CU-01: Registrarse
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -51,7 +38,29 @@
 - Se crea una cuenta de estudiante con estado "no verificado".
 - Se envía un correo de verificación.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-01: Registrarse
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Registrarse" as UC01
+  usecase "Enviar correo de verificación" as UC01a
+}
+
+actor "Estudiante" as Est
+actor "Sistema" as Sys
+
+Est --> UC01
+UC01 ..> UC01a : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -61,8 +70,6 @@ participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Firebase Auth" as FB
 participant "Nodemailer" as Mail
-
-== CU-01: Registrarse ==
 
 E -> FE : Accede al formulario de registro
 FE -> E : Muestra formulario (nombre, código, email, contraseña)
@@ -93,7 +100,9 @@ end
 
 ---
 
-### CU-02: Iniciar sesión
+## CU-02: Iniciar sesión
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -116,9 +125,9 @@ end
    - El usuario selecciona "Iniciar con Google".
    - Firebase muestra el popup de selección de cuenta.
    - El sistema valida la cuenta de Google contra la base de datos.
-5. El sistema firma un JWT con el perfil del usuario (id, email, rol, nombre, código).
+5. El sistema firma un JWT con el perfil del usuario.
 6. El sistema envía el JWT como cookie `httpOnly`.
-7. El frontend redirige al usuario según su rol (admin → `/admin`, docente → `/grupos`, estudiante → `/mi-grupo`).
+7. El frontend redirige al usuario según su rol.
 
 **Flujos alternativos:**
 
@@ -131,7 +140,36 @@ end
 - El usuario tiene una sesión activa (cookie JWT).
 - Se registra el evento de login en la bitácora.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-02: Iniciar sesión
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Iniciar sesión" as UC02
+  usecase "Validar credenciales" as UC02a
+  usecase "Firmar JWT" as UC02b
+}
+
+actor "Estudiante" as Est
+actor "Docente" as Doc
+actor "Administrador" as Admin
+actor "Sistema" as Sys
+
+Est --> UC02
+Doc --> UC02
+Admin --> UC02
+UC02 ..> UC02a : <<include>>
+UC02a ..> UC02b : <<include>>
+UC02b ..> Sys : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -140,8 +178,6 @@ participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Firebase Auth" as FB
-
-== CU-02: Iniciar sesión ==
 
 U -> FE : Accede a /login
 FE -> U : Muestra formulario de login
@@ -161,9 +197,6 @@ alt Email/Contraseña
   alt Correo no verificado
     BE --> FE : 403 "Correo no verificado"
     FE --> U : Muestra mensaje de verificación
-  else Credenciales inválidas
-    BE --> FE : 401 "Credenciales inválidas"
-    FE --> U : Muestra error
   else Válido
     BE -> BE : signJWT({ id, email, role, name, code })
     BE -> DB : UPDATE User SET last_login = NOW()
@@ -199,7 +232,9 @@ end
 
 ---
 
-### CU-03: Restablecer contraseña
+## CU-03: Restablecer contraseña
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -215,7 +250,7 @@ end
 1. El usuario accede a "¿Olvidaste tu contraseña?".
 2. El usuario ingresa su dirección de correo electrónico.
 3. El sistema valida que el correo exista en la base de datos.
-4. El sistema envía un correo electrónico con un enlace de restablecimiento (token temporal).
+4. El sistema envía un correo electrónico con un enlace de restablecimiento.
 5. El usuario abre el enlace y accede al formulario de nueva contraseña.
 6. El usuario ingresa y confirma la nueva contraseña.
 7. El sistema actualiza la contraseña en Firebase Auth.
@@ -223,15 +258,41 @@ end
 
 **Flujos alternativos:**
 
-- **A1:** El correo no está registrado → El sistema muestra "Si el correo está registrado, recibirás un enlace" (no revela existencia).
+- **A1:** El correo no está registrado → El sistema muestra "Si el correo está registrado, recibirás un enlace".
 - **A2:** El token expiró o es inválido → El sistema muestra "Enlace expirado, solicita uno nuevo".
 
 **Postcondiciones:**
 
 - La contraseña del usuario ha sido actualizada.
-- Los tokens de restablecimiento anteriores quedan invalidados.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-03: Restablecer contraseña
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Restablecer contraseña" as UC03
+  usecase "Enviar correo de restablecimiento" as UC03a
+}
+
+actor "Estudiante" as Est
+actor "Docente" as Doc
+actor "Administrador" as Admin
+actor "Sistema" as Sys
+
+Est --> UC03
+Doc --> UC03
+Admin --> UC03
+UC03 ..> UC03a : <<include>>
+UC03a ..> Sys : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -241,8 +302,6 @@ participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Firebase Auth" as FB
 participant "Nodemailer" as Mail
-
-== CU-03: Restablecer contraseña ==
 
 U -> FE : Accede a "¿Olvidaste tu contraseña?"
 FE -> U : Muestra campo de email
@@ -285,9 +344,9 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 
 ---
 
-## 2. Gestión de Docentes
+## CU-04: Registrar docente
 
-### CU-04: Registrar docente
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -303,7 +362,7 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 1. El administrador accede a la sección de gestión de docentes.
 2. El administrador selecciona "Registrar docente".
 3. El administrador ingresa nombre, código institucional y dirección de correo electrónico.
-4. El sistema valida los campos (nombre requerido, código único, formato de email válido).
+4. El sistema valida los campos.
 5. El sistema crea la cuenta del docente con estado "pendiente de activación".
 6. El sistema envía automáticamente un correo electrónico al docente con un enlace para establecer su contraseña.
 7. El sistema muestra confirmación del registro.
@@ -318,7 +377,30 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 - Se crea una cuenta de docente con estado "pendiente de activación".
 - Se envía un correo con enlace de activación.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-04: Registrar docente
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Registrar docente" as UC04
+  usecase "Enviar correo de activación" as UC04a
+}
+
+actor "Administrador" as Admin
+actor "Sistema" as Sys
+
+Admin --> UC04
+UC04 ..> UC04a : <<include>>
+UC04a ..> Sys : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -328,8 +410,6 @@ participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Firebase Auth" as FB
 participant "Nodemailer" as Mail
-
-== CU-04: Registrar docente ==
 
 A -> FE : Accede a gestión de docentes
 FE -> A : Lista de docentes
@@ -366,7 +446,9 @@ end
 
 ---
 
-### CU-05: Listar y gestionar docentes
+## CU-05: Listar y gestionar docentes
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -380,10 +462,10 @@ end
 **Flujo principal:**
 
 1. El administrador accede a la sección de gestión de docentes.
-2. El sistema muestra una tabla con los docentes registrados (nombre, código, email, estado).
+2. El sistema muestra una tabla con los docentes registrados.
 3. El administrador puede filtrar por nombre o código.
 4. Para activar/desactivar un docente, el administrador selecciona la acción correspondiente.
-5. El sistema cambia el estado del docente (activo/inactivo).
+5. El sistema cambia el estado del docente.
 6. El sistema muestra confirmación.
 
 **Flujos alternativos:**
@@ -393,9 +475,27 @@ end
 **Postcondiciones:**
 
 - El estado del docente ha sido actualizado.
-- Un docente inactivo no puede iniciar sesión.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-05: Listar y gestionar docentes
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Listar y gestionar\ndocentes" as UC05
+}
+
+actor "Administrador" as Admin
+
+Admin --> UC05
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -403,8 +503,6 @@ actor Administrador as A
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-05: Listar y gestionar docentes ==
 
 A -> FE : Accede a gestión de docentes
 FE -> BE : GET /api/admin/docentes
@@ -425,9 +523,9 @@ FE -> A : "Docente activado/inactivado"
 
 ---
 
-## 3. Gestión de Grupos
+## CU-06: Crear grupo
 
-### CU-06: Crear grupo
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -443,7 +541,7 @@ FE -> A : "Docente activado/inactivado"
 1. El docente accede a su panel de grupos.
 2. El docente selecciona "Crear grupo".
 3. El docente ingresa nombre y descripción del grupo.
-4. El sistema valida los campos (nombre requerido, nombre único para el docente).
+4. El sistema valida los campos.
 5. El sistema crea el grupo con estado "activo".
 6. El sistema genera automáticamente un directorio de trabajo en el entorno Linux.
 7. El sistema muestra confirmación.
@@ -457,7 +555,26 @@ FE -> A : "Docente activado/inactivado"
 - Se crea un grupo con estado "activo".
 - Se crea el directorio del grupo en el entorno Linux.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-06: Crear grupo
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Crear grupo" as UC06
+}
+
+actor "Docente" as Doc
+
+Doc --> UC06
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -465,8 +582,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-06: Crear grupo ==
 
 D -> FE : Accede a panel de grupos
 FE -> D : Lista de grupos
@@ -497,7 +612,9 @@ end
 
 ---
 
-### CU-07: Editar grupo
+## CU-07: Editar grupo
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -525,7 +642,26 @@ end
 
 - La información del grupo ha sido actualizada.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-07: Editar grupo
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Editar grupo" as UC07
+}
+
+actor "Docente" as Doc
+
+Doc --> UC07
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -533,8 +669,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-07: Editar grupo ==
 
 D -> FE : Selecciona grupo → "Editar"
 FE -> D : Muestra formulario con datos actuales
@@ -558,7 +692,9 @@ end
 
 ---
 
-### CU-08: Archivar grupo
+## CU-08: Archivar grupo
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -567,13 +703,13 @@ end
 | **Actor principal** | Docente |
 | **Actor secundario** | — |
 | **RFs asociados** | RF-12 |
-| **Precondiciones** | El docente tiene una sesión activa y es propietario del grupo. El grupo tiene estado "activo". |
+| **Precondiciones** | El docente tiene una sesión activa, es propietario del grupo y el grupo tiene estado "activo". |
 
 **Flujo principal:**
 
 1. El docente selecciona un grupo activo.
 2. El docente selecciona "Archivar grupo".
-3. El sistema muestra confirmación ("¿Estás seguro de archivar este grupo?").
+3. El sistema muestra confirmación.
 4. El docente confirma.
 5. El sistema cambia el estado del grupo a "archivado".
 6. El sistema muestra confirmación.
@@ -587,7 +723,26 @@ end
 - El grupo tiene estado "archivado".
 - Los estudiantes del grupo no pueden realizar nuevas entregas.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-08: Archivar grupo
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Archivar grupo" as UC08
+}
+
+actor "Docente" as Doc
+
+Doc --> UC08
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -595,8 +750,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-08: Archivar grupo ==
 
 D -> FE : Selecciona grupo activo → "Archivar"
 FE -> D : Muestra confirmación
@@ -614,7 +767,9 @@ FE -> D : "Grupo archivado."
 
 ---
 
-### CU-09: Generar enlace de invitación
+## CU-09: Generar enlace de invitación
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -630,7 +785,7 @@ FE -> D : "Grupo archivado."
 1. El docente selecciona un grupo.
 2. El docente selecciona "Generar enlace de invitación".
 3. El sistema genera un token único y lo asocia al grupo.
-4. El sistema muestra el enlace completo (URL con el token).
+4. El sistema muestra el enlace completo.
 5. El docente puede copiar el enlace y compartirlo con los estudiantes.
 
 **Flujos alternativos:**
@@ -641,9 +796,27 @@ FE -> D : "Grupo archivado."
 **Postcondiciones:**
 
 - Existe un enlace de invitación válido para el grupo.
-- El enlace anterior (si existía) queda invalidado.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-09: Generar enlace de invitación
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Generar enlace\nde invitación" as UC09
+}
+
+actor "Docente" as Doc
+
+Doc --> UC09
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -651,8 +824,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-09: Generar enlace de invitación ==
 
 D -> FE : Selecciona grupo → "Invitar"
 FE -> BE : GET /api/groups/:id/invite-link
@@ -680,7 +851,9 @@ end
 
 ---
 
-### CU-10: Vincular estudiante individual
+## CU-10: Vincular estudiante individual
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -697,7 +870,7 @@ end
 2. El docente selecciona "Vincular estudiante".
 3. El docente ingresa el email o código del estudiante.
 4. El sistema busca el estudiante en la base de datos.
-5. El sistema crea la matrícula (Enrollment) con estado "activo".
+5. El sistema crea la matrícula.
 6. El sistema muestra confirmación.
 
 **Flujos alternativos:**
@@ -709,7 +882,26 @@ end
 
 - El estudiante queda matriculado en el grupo.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-10: Vincular estudiante individual
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Vincular estudiante\nindividual" as UC10
+}
+
+actor "Docente" as Doc
+
+Doc --> UC10
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -717,8 +909,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-10: Vincular estudiante individual ==
 
 D -> FE : Selecciona grupo → "Vincular estudiante"
 FE -> D : Muestra campo (email o código)
@@ -748,9 +938,9 @@ end
 
 ---
 
-## 4. Contenido y Terminal
+## CU-11: Navegar temario
 
-### CU-11: Navegar temario
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -766,7 +956,7 @@ end
 1. El estudiante accede a la sección de temario.
 2. El sistema muestra la lista de temas disponibles para su grupo.
 3. El estudiante selecciona un tema.
-4. El sistema muestra el contenido del tema: textos, videos y enlaces de referencia.
+4. El sistema muestra el contenido del tema.
 5. El estudiante navega entre los subtemas.
 
 **Flujos alternativos:**
@@ -777,7 +967,26 @@ end
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-11: Navegar temario
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Navegar temario" as UC11
+}
+
+actor "Estudiante" as Est
+
+Est --> UC11
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -785,8 +994,6 @@ actor Estudiante as E
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-11: Navegar temario ==
 
 E -> FE : Accede a temario
 FE -> BE : GET /api/enrollments/:id/topics
@@ -807,7 +1014,9 @@ FE -> E : Muestra contenido (texto, video, enlaces)
 
 ---
 
-### CU-12: Usar simuladores
+## CU-12: Usar simuladores
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -822,7 +1031,7 @@ FE -> E : Muestra contenido (texto, video, enlaces)
 
 1. El estudiante selecciona un tema que contiene un simulador.
 2. El sistema carga el simulador interactivo en el navegador.
-3. El estudiante interactúa con el simulador (ejecuta comandos, observa resultados).
+3. El estudiante interactúa con el simulador.
 4. El simulador muestra retroalimentación visual.
 
 **Flujos alternativos:**
@@ -833,15 +1042,32 @@ FE -> E : Muestra contenido (texto, video, enlaces)
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-12: Usar simuladores
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Usar simuladores" as UC12
+}
+
+actor "Estudiante" as Est
+
+Est --> UC12
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
 actor Estudiante as E
 participant "Frontend" as FE
 participant "Simulador\n(JavaScript)" as SIM
-
-== CU-12: Usar simuladores ==
 
 E -> FE : Selecciona tema con simulador
 FE -> SIM : Carga simulador
@@ -856,7 +1082,9 @@ SIM -> E : Muestra resultado + retroalimentación
 
 ---
 
-### CU-13: Resolver actividades del temario
+## CU-13: Resolver actividades del temario
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -871,23 +1099,44 @@ SIM -> E : Muestra resultado + retroalimentación
 
 1. El estudiante navega el temario y encuentra una actividad asociada a una sección.
 2. El estudiante selecciona la actividad.
-3. El sistema muestra los criterios de evaluación (aserciones) y un botón "Evaluar".
+3. El sistema muestra los criterios de evaluación y un botón "Evaluar".
 4. El estudiante realiza los comandos necesarios en su terminal Linux.
 5. El estudiante pulsa "Evaluar".
 6. El sistema ejecuta el checker contra el entorno del estudiante.
-7. El sistema muestra el resultado de cada aserción (superada/fallida) y el puntaje obtenido.
+7. El sistema muestra el resultado de cada aserción y el puntaje obtenido.
 8. El estudiante puede reintentar cuantas veces sea necesario.
 
 **Flujos alternativos:**
 
-- **A1:** La cuenta Linux no está provisionada → El sistema muestra "Tu entorno no está disponible, contacta al docente".
+- **A1:** La cuenta Linux no está provisionada → El sistema muestra error.
 - **A2:** Error en la evaluación → El sistema muestra "Error al evaluar, intenta de nuevo".
 
 **Postcondiciones:**
 
 - Se registra un intento de evaluación con su resultado.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-13: Resolver actividades del temario
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Resolver actividades\ndel temario" as UC13
+  usecase "Evaluar con checker" as UC13a
+}
+
+actor "Estudiante" as Est
+
+Est --> UC13
+UC13 ..> UC13a : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -897,8 +1146,6 @@ participant "Backend" as BE
 participant "SSH\n(entorno)" as SSH
 participant "checker.py" as CHK
 database "PostgreSQL" as DB
-
-== CU-13: Resolver actividades del temario ==
 
 E -> FE : Selecciona actividad del temario
 FE -> BE : GET /api/activities/:slug
@@ -926,7 +1173,9 @@ FE -> E : Muestra resultado por aserción
 
 ---
 
-### CU-14: Usar terminal Linux
+## CU-14: Usar terminal Linux
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -944,7 +1193,7 @@ FE -> E : Muestra resultado por aserción
 3. El backend abre una sesión SSH al entorno Linux como el estudiante.
 4. El estudiante ve una terminal funcional en el navegador.
 5. El estudiante ejecuta comandos y observa la salida en tiempo real.
-6. El estudiante puede personalizar la apariencia (fuente, tamaño).
+6. El estudiante puede personalizar la apariencia.
 7. El estudiante puede reiniciar la terminal cuando lo requiera.
 
 **Flujos alternativos:**
@@ -957,7 +1206,32 @@ FE -> E : Muestra resultado por aserción
 - Se establece una sesión de terminal funcional.
 - Los archivos creados persisten entre sesiones.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-14: Usar terminal Linux
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Usar terminal\nLinux" as UC14
+  usecase "Establecer conexión\nWebSocket" as UC14a
+  usecase "Personalizar\napariencia" as UC14b
+  usecase "Reiniciar terminal" as UC14c
+}
+
+actor "Estudiante" as Est
+
+Est --> UC14
+UC14 ..> UC14a : <<include>>
+UC14 ..> UC14b : <<extend>>
+UC14 ..> UC14c : <<extend>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -966,8 +1240,6 @@ participant "Frontend\n(Xterm.js)" as FE
 participant "Backend\n(WebSocket)" as WS
 participant "SSH Client" as SSH
 participant "Entorno Linux\n(Ubuntu)" as LIN
-
-== CU-14: Usar terminal Linux ==
 
 E -> FE : Accede a terminal
 FE -> WS : Conexión WebSocket /terminal
@@ -1000,9 +1272,9 @@ WS --> FE : Terminal reiniciada
 
 ---
 
-## 5. Actividades Personalizadas
+## CU-15: Crear actividad personalizada
 
-### CU-15: Crear actividad personalizada
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1019,12 +1291,12 @@ WS --> FE : Terminal reiniciada
 2. El docente selecciona "Crear actividad".
 3. El docente ingresa título, enunciado, tipo (taller/quiz), dificultad y fecha de cierre.
 4. El docente selecciona el tipo de revisión (automática/manual).
-5. **Si es automática:** El docente configura las aserciones del catálogo (tipo, parámetros, puntaje). La suma de puntajes debe ser exactamente 100.
+5. **Si es automática:** El docente configura las aserciones del catálogo.
 6. **Si es manual:** El docente define los criterios de evaluación.
-7. El docente define el límite de intentos (null para ilimitado, o un número entero positivo).
-8. El sistema valida la configuración (aserciones, suma de puntajes, fechas).
+7. El docente define el límite de intentos.
+8. El sistema valida la configuración.
 9. El sistema crea la actividad y la publica en el grupo.
-10. El sistema genera automáticamente una carpeta de trabajo en el entorno Linux del grupo.
+10. El sistema genera automáticamente una carpeta de trabajo.
 
 **Flujos alternativos:**
 
@@ -1034,9 +1306,29 @@ WS --> FE : Terminal reiniciada
 **Postcondiciones:**
 
 - Se crea una actividad publicada y habilitada en el grupo.
-- Se genera la carpeta de trabajo en el entorno.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-15: Crear actividad personalizada
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Crear actividad\npersonalizada" as UC15
+  usecase "Configurar aserciones\nde validación" as UC15a
+}
+
+actor "Docente" as Doc
+
+Doc --> UC15
+UC15 ..> UC15a : <<extend>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1044,8 +1336,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-15: Crear actividad personalizada ==
 
 D -> FE : Selecciona grupo → "Crear actividad"
 FE -> D : Muestra formulario
@@ -1078,7 +1368,9 @@ FE -> D : "Actividad creada y publicada."
 
 ---
 
-### CU-16: Habilitar/deshabilitar actividad
+## CU-16: Habilitar/deshabilitar actividad
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1099,15 +1391,39 @@ FE -> D : "Actividad creada y publicada."
 
 **Flujos alternativos:**
 
-- **A1:** La actividad tiene entregas registradas → El sistema muestra "No se puede modificar una actividad con entregas".
+- **A1:** La actividad tiene entregas registradas → El sistema muestra "No se puede modificar".
 - **A2:** La nueva fecha de cierre es anterior a la actual → El sistema muestra error.
 
 **Postcondiciones:**
 
 - El estado de la actividad ha sido actualizado.
-- La fecha de cierre ha sido actualizada (si aplica).
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-16: Habilitar/deshabilitar actividad
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Habilitar actividad" as UC16a
+  usecase "Deshabilitar actividad" as UC16b
+  usecase "Definir fecha de cierre" as UC16c
+  usecase "Habilitar/deshabilitar\nactividad" as UC16
+}
+
+actor "Docente" as Doc
+
+Doc --> UC16
+UC16 ..> UC16a : <<extend>>
+UC16 ..> UC16b : <<extend>>
+UC16 ..> UC16c : <<extend>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1115,8 +1431,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-16: Habilitar/deshabilitar actividad ==
 
 D -> FE : Selecciona actividad
 FE -> D : Muestra estado actual + acciones disponibles
@@ -1150,7 +1464,9 @@ FE -> D : "Fecha de cierre extendida."
 
 ---
 
-### CU-17: Resolver actividad automática
+## CU-17: Resolver actividad automática
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1168,24 +1484,46 @@ FE -> D : "Fecha de cierre extendida."
 3. El estudiante realiza comandos en su terminal.
 4. El estudiante pulsa "Evaluar".
 5. El sistema ejecuta el checker contra el entorno del estudiante.
-6. El sistema muestra el resultado de cada aserción (superada/fallida) y el puntaje.
+6. El sistema muestra el resultado de cada aserción y el puntaje.
 7. El sistema registra el intento.
-8. **Si es taller:** El estudiante puede reintentar ilimitadamente mientras esté habilitado.
-9. **Si es quiz:** El estudiante puede reintentar hasta el límite definido por el docente.
-10. La calificación final se calcula según la política configurada (mejor intento o último intento).
+8. **Si es taller:** Reintentos ilimitados.
+9. **Si es quiz:** Reintentos hasta el límite definido.
+10. La calificación final se calcula según la política configurada.
 
 **Flujos alternativos:**
 
-- **A1:** Se alcanzó el límite de intentos (quiz) → El sistema muestra "Has alcanzado el límite de intentos".
+- **A1:** Se alcanzó el límite de intentos → El sistema muestra "Has alcanzado el límite de intentos".
 - **A2:** La actividad está vencida o deshabilitada → El sistema muestra "La actividad no está disponible".
 - **A3:** La cuenta Linux no está provisionada → El sistema muestra error correspondiente.
 
 **Postcondiciones:**
 
 - Se registra un intento con su resultado y puntaje.
-- La calificación final se actualiza según la política.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-17: Resolver actividad automática
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Resolver actividad\nautomática" as UC17
+  usecase "Evaluar con checker" as UC17a
+  usecase "Registrar intento" as UC17b
+}
+
+actor "Estudiante" as Est
+
+Est --> UC17
+UC17 ..> UC17a : <<include>>
+UC17 ..> UC17b : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1194,8 +1532,6 @@ participant "Frontend" as FE
 participant "Backend" as BE
 participant "checker.py" as CHK
 database "PostgreSQL" as DB
-
-== CU-17: Resolver actividad automática ==
 
 E -> FE : Accede a la actividad
 FE -> BE : GET /api/group-activities/:id
@@ -1229,7 +1565,9 @@ end
 
 ---
 
-### CU-18: Entregar actividad manual
+## CU-18: Entregar actividad manual
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1244,9 +1582,9 @@ end
 
 1. El estudiante accede a la actividad manual desde su grupo.
 2. El sistema muestra las instrucciones y la fecha de cierre.
-3. El estudiante prepara su evidencia (archivos en su terminal).
+3. El estudiante prepara su evidencia.
 4. El estudiante selecciona "Entregar".
-5. El sistema captura el estado actual del directorio de trabajo del estudiante como evidencia.
+5. El sistema captura el estado actual del directorio de trabajo.
 6. El sistema registra la entrega con estado "enviada".
 7. El sistema muestra confirmación.
 
@@ -1258,9 +1596,29 @@ end
 **Postcondiciones:**
 
 - Se registra una entrega con estado "enviada".
-- La evidencia queda capturada en el momento del envío.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-18: Entregar actividad manual
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Entregar actividad\nmanual" as UC18
+  usecase "Capturar evidencia" as UC18a
+}
+
+actor "Estudiante" as Est
+
+Est --> UC18
+UC18 ..> UC18a : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1269,8 +1627,6 @@ participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Entorno Linux" as LIN
-
-== CU-18: Entregar actividad manual ==
 
 E -> FE : Accede a actividad manual
 FE -> BE : GET /api/group-activities/:id
@@ -1297,7 +1653,9 @@ FE -> E : "Entrega enviada. Espera calificación del docente."
 
 ---
 
-### CU-19: Calificar entrega manual
+## CU-19: Calificar entrega manual
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1312,13 +1670,12 @@ FE -> E : "Entrega enviada. Espera calificación del docente."
 
 1. El docente accede a la sección de actividades de su grupo.
 2. El docente selecciona una actividad con entregas pendientes.
-3. El sistema muestra la lista de entregas (estudiante, fecha, estado).
+3. El sistema muestra la lista de entregas.
 4. El docente selecciona una entrega para calificar.
 5. El sistema muestra la evidencia del estudiante.
 6. El docente ingresa una calificación (0 a 100) y retroalimentación escrita.
 7. El sistema valida el rango de la calificación.
 8. El sistema registra la calificación y la retroalimentación.
-9. El sistema muestra confirmación.
 
 **Flujos alternativos:**
 
@@ -1328,9 +1685,27 @@ FE -> E : "Entrega enviada. Espera calificación del docente."
 **Postcondiciones:**
 
 - La entrega tiene calificación y retroalimentación.
-- El estudiante puede consultar su calificación.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-19: Calificar entrega manual
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Calificar entrega\nmanual" as UC19
+}
+
+actor "Docente" as Doc
+
+Doc --> UC19
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1338,8 +1713,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-19: Calificar entrega manual ==
 
 D -> FE : Selecciona actividad con entregas
 FE -> BE : GET /api/groups/:groupId/activities/:id/submissions
@@ -1367,7 +1740,9 @@ FE -> D : "Calificación registrada."
 
 ---
 
-### CU-20: Consultar calificación
+## CU-20: Consultar calificación
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1381,7 +1756,7 @@ FE -> D : "Calificación registrada."
 **Flujo principal:**
 
 1. El estudiante accede a la sección de actividades de su grupo.
-2. El sistema muestra la lista de actividades con su estado (pendiente, enviada, calificada).
+2. El sistema muestra la lista de actividades con su estado.
 3. El estudiante selecciona una actividad.
 4. El sistema muestra el estado de entrega y la calificación obtenida.
 5. Si es actividad automática, muestra los resultados por aserción.
@@ -1395,7 +1770,26 @@ FE -> D : "Calificación registrada."
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-20: Consultar calificación
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Consultar\ncalificación" as UC20
+}
+
+actor "Estudiante" as Est
+
+Est --> UC20
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1403,8 +1797,6 @@ actor Estudiante as E
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-20: Consultar calificación ==
 
 E -> FE : Accede a actividades de su grupo
 FE -> BE : GET /api/group-activities?enrollmentId=...
@@ -1434,9 +1826,9 @@ end
 
 ---
 
-## 6. Seguimiento y Reportes
+## CU-21: Consultar avance del grupo
 
-### CU-21: Consultar avance del grupo
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1451,7 +1843,7 @@ end
 
 1. El docente selecciona un grupo.
 2. El docente selecciona "Ver avance".
-3. El sistema muestra un resumen del avance del grupo: porcentaje de temas completados, calificación promedio.
+3. El sistema muestra un resumen del avance del grupo.
 4. El docente puede ver el avance detallado por estudiante y por actividad.
 5. El sistema muestra las actividades pendientes y completadas de cada estudiante.
 
@@ -1463,7 +1855,26 @@ end
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-21: Consultar avance del grupo
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Consultar avance\ndel grupo" as UC21
+}
+
+actor "Docente" as Doc
+
+Doc --> UC21
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1471,8 +1882,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-21: Consultar avance del grupo ==
 
 D -> FE : Selecciona grupo → "Ver avance"
 FE -> BE : GET /api/groups/:id/progress
@@ -1494,7 +1903,9 @@ FE -> D : Muestra avance detallado del estudiante
 
 ---
 
-### CU-22: Exportar reporte Excel
+## CU-22: Exportar reporte Excel
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1509,8 +1920,8 @@ FE -> D : Muestra avance detallado del estudiante
 
 1. El docente selecciona un grupo.
 2. El docente selecciona "Exportar reporte".
-3. El sistema recopila los datos de avance y calificaciones del grupo.
-4. El sistema genera un archivo Excel (.xlsx) con la información.
+3. El sistema recopila los datos de avance y calificaciones.
+4. El sistema genera un archivo Excel.
 5. El sistema envía el archivo para descarga.
 
 **Flujos alternativos:**
@@ -1521,7 +1932,26 @@ FE -> D : Muestra avance detallado del estudiante
 
 - Se descarga un archivo Excel con el reporte del grupo.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-22: Exportar reporte Excel
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Exportar reporte\nExcel" as UC22
+}
+
+actor "Docente" as Doc
+
+Doc --> UC22
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1529,8 +1959,6 @@ actor Docente as D
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-22: Exportar reporte Excel ==
 
 D -> FE : Selecciona grupo → "Exportar reporte"
 FE -> BE : GET /api/groups/:id/export
@@ -1547,9 +1975,9 @@ FE -> D : Descarga archivo Excel
 
 ---
 
-## 7. Certificados
+## CU-23: Finalizar grupo y certificar
 
-### CU-23: Finalizar grupo y certificar
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1567,25 +1995,47 @@ FE -> D : Descarga archivo Excel
 3. El sistema muestra confirmación.
 4. El docente confirma.
 5. El sistema cambia el estado del grupo a "finalizado".
-6. El sistema evalúa la elegibilidad de certificados para cada estudiante:
-   - 100% del temario completado.
-   - Calificación promedio ≥ 60 puntos en actividades personalizadas.
+6. El sistema evalúa la elegibilidad de certificados (100% temario + promedio ≥ 60).
 7. El sistema genera certificados en PDF para los estudiantes elegibles.
-8. El sistema envía automáticamente un correo electrónico a cada estudiante con su certificado adjunto.
+8. El sistema envía automáticamente un correo electrónico a cada estudiante con su certificado.
 9. El sistema muestra confirmación con el número de certificados generados.
 
 **Flujos alternativos:**
 
-- **A1:** Ningún estudiante cumple los criterios → El sistema muestra "Ningún estudiante cumple los criterios para certificación".
+- **A1:** Ningún estudiante cumple los criterios → El sistema muestra "Ningún estudiante cumple los criterios".
 - **A2:** El docente cancela → No se realiza ninguna acción.
 
 **Postcondiciones:**
 
 - El grupo tiene estado "finalizado".
-- Se generan certificados PDF para los estudiantes elegibles.
-- Se envían correos electrónicos con los certificados.
+- Se generan certificados PDF y se envían por correo.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-23: Finalizar grupo y certificar
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Finalizar grupo\ny certificar" as UC23
+  usecase "Generar certificados\nPDF" as UC23a
+  usecase "Enviar certificados\npor correo" as UC23b
+}
+
+actor "Docente" as Doc
+actor "Sistema" as Sys
+
+Doc --> UC23
+UC23 ..> UC23a : <<include>>
+UC23a ..> UC23b : <<include>>
+UC23b ..> Sys : <<include>>
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1595,8 +2045,6 @@ participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "PDFKit" as PDF
 participant "Nodemailer" as Mail
-
-== CU-23: Finalizar grupo y certificar ==
 
 D -> FE : Selecciona grupo → "Finalizar grupo"
 FE -> D : Muestra confirmación
@@ -1631,7 +2079,9 @@ FE -> D : "Grupo finalizado. N certificados generados y enviados."
 
 ---
 
-### CU-24: Verificar certificado
+## CU-24: Verificar certificado
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1647,7 +2097,7 @@ FE -> D : "Grupo finalizado. N certificados generados y enviados."
 1. Cualquier persona accede a la página de verificación de certificados.
 2. La persona ingresa el código único del certificado.
 3. El sistema busca el certificado en la base de datos.
-4. El sistema muestra la información del certificado: nombre del estudiante, nombre del grupo, fecha de emisión, calificación definitiva.
+4. El sistema muestra la información del certificado.
 5. El sistema indica si el certificado es auténtico.
 
 **Flujos alternativos:**
@@ -1658,7 +2108,26 @@ FE -> D : "Grupo finalizado. N certificados generados y enviados."
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-24: Verificar certificado
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Verificar certificado" as UC24
+}
+
+actor "Cualquier\npersona" as U
+
+U --> UC24
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1666,8 +2135,6 @@ actor "Cualquier\npersona" as U
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-24: Verificar certificado ==
 
 U -> FE : Accede a /certificados/verificar
 FE -> U : Muestra campo de código
@@ -1691,9 +2158,9 @@ end
 
 ---
 
-## 8. Auditoría
+## CU-25: Consultar auditoría
 
-### CU-25: Consultar auditoría
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1709,19 +2176,40 @@ end
 1. El usuario accede a la sección de auditoría.
 2. **Si es docente:** El sistema muestra los eventos de sus grupos.
 3. **Si es administrador:** El sistema muestra todos los eventos del sistema.
-4. El usuario puede aplicar filtros: tipo de evento, usuario, grupo, rango de fechas.
+4. El usuario puede aplicar filtros.
 5. El sistema muestra los eventos que coinciden con los filtros.
 6. El usuario puede paginar los resultados.
 
 **Flujos alternativos:**
 
-- **A1:** No hay eventos que coincidan con los filtros → El sistema muestra "No se encontraron eventos".
+- **A1:** No hay eventos que coincidan → El sistema muestra "No se encontraron eventos".
 
 **Postcondiciones:**
 
 - No hay cambios en el estado del sistema.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-25: Consultar auditoría
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Consultar auditoría" as UC25
+}
+
+actor "Administrador" as Admin
+actor "Docente" as Doc
+
+Admin --> UC25
+Doc --> UC25
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1729,8 +2217,6 @@ actor "Administrador\no Docente" as U
 participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
-
-== CU-25: Consultar auditoría ==
 
 U -> FE : Accede a auditoría
 FE -> BE : GET /api/audit?group_id=...&type=...&from=...&to=...
@@ -1757,7 +2243,9 @@ FE -> U : Actualiza tabla
 
 ---
 
-### CU-26: Reintentar aprovisionamiento
+## CU-26: Reintentar aprovisionamiento
+
+### Tabla de especificación
 
 | Campo | Descripción |
 |-------|-------------|
@@ -1771,7 +2259,7 @@ FE -> U : Actualiza tabla
 **Flujo principal:**
 
 1. El administrador accede a la sección de administración del entorno.
-2. El sistema muestra el estado del aprovisionamiento (cuentas y directorios).
+2. El sistema muestra el estado del aprovisionamiento.
 3. El administrador identifica trabajos fallidos.
 4. El administrador selecciona "Reintentar" para los trabajos fallidos.
 5. El sistema reprograma los trabajos en la cola de procesamiento.
@@ -1785,9 +2273,27 @@ FE -> U : Actualiza tabla
 **Postcondiciones:**
 
 - Los trabajos fallidos quedan reprogramados para reintento.
-- El worker procesará los trabajos en la siguiente iteración.
 
----
+### Diagrama de casos de uso
+
+```plantuml
+@startuml
+left to right direction
+
+title CU-26: Reintentar aprovisionamiento
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "Reintentar\naprovisionamiento" as UC26
+}
+
+actor "Administrador" as Admin
+
+Admin --> UC26
+
+@enduml
+```
+
+### Diagrama de secuencia
 
 ```plantuml
 @startuml
@@ -1796,8 +2302,6 @@ participant "Frontend" as FE
 participant "Backend" as BE
 database "PostgreSQL" as DB
 participant "Worker" as W
-
-== CU-26: Reintentar aprovisionamiento ==
 
 A -> FE : Accede a administración del entorno
 FE -> BE : GET /api/admin/provisioning
@@ -1821,64 +2325,5 @@ loop Worker poll
   W -> DB : UPDATE Job SET status = 'completed' | 'failed'
 end
 
-@enduml
-```
-
----
-
-## 9. Diagrama de estados del ciclo de vida de una actividad
-
-```plantuml
-@startuml
-[*] --> Creada : CU-15 (Crear)
-
-Creada --> Habilitada : Publicar
-Habilitada --> Deshabilitada : CU-16 (Deshabilitar)
-Deshabilitada --> Habilitada : CU-16 (Habilitar)
-
-Habilitada --> Cerrada : Fecha de cierre alcanzada
-Habilitada --> Finalizada : CU-23 (Finalizar grupo)
-Deshabilitada --> Finalizada : CU-23 (Finalizar grupo)
-Cerrada --> Finalizada : CU-23 (Finalizar grupo)
-
-Habilitada --> Resuelta : Estudiante resuelve (auto)
-Habilitada --> Entregada : CU-18 (Entregar manual)
-Entregada --> Calificada : CU-19 (Calificar)
-
-Finalizada --> [*]
-
-note right of Habilitada
-  Acepta intentos y entregas
-end note
-
-note right of Cerrada
-  No acepta nuevos intentos
-end note
-
-note right of Calificada
-  Consultable por estudiante
-end note
-@enduml
-```
-
----
-
-## 10. Diagrama de estados del ciclo de vida de una entrega manual
-
-```plantuml
-@startuml
-[*] --> Enviada : CU-18 (Entregar)
-Enviada --> EnRevisión : Docente abre
-EnRevisión --> Calificada : CU-19 (Calificar)
-Calificada --> [*]
-
-note right of Enviada
-  Estado inicial después del envío
-end note
-
-note right of Calificada
-  Calificación y retroalimentación
-  visibles para el estudiante
-end note
 @enduml
 ```
