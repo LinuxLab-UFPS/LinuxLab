@@ -95,6 +95,15 @@ const RAW = [
     checks: 2,
   },
   {
+    slug: "expediente-empleado",
+    title: "El expediente del empleado",
+    description:
+      "Organiza el servidor desordenado del empleado anterior: crea estructura, mueve archivos con comodines, copia respaldos y limpia temporales.",
+    difficulty: "intermediate" as Difficulty,
+    topicNumber: 4,
+    checks: 9,
+  },
+  {
     slug: "paquete-de-entrega",
     title: "El paquete de entrega",
     description:

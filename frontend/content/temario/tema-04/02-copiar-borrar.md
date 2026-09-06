@@ -91,6 +91,8 @@ Las variantes recursivas de `cp` y `rm`, junto con `rmdir`, se cubrieron en
 Operaciones con directorios. Para aplicar estos tres comandos a muchos archivos
 a la vez, la lección siguiente cubre los comodines.
 
+<!-- ACTIVIDAD: expediente-empleado -->
+
 ---
 
 **Fuentes**
