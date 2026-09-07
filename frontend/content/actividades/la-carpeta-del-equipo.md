@@ -1,4 +1,4 @@
-El equipo necesita una carpeta compartida. Abrirla al grupo no basta: si cada archivo que nace dentro se queda con el grupo de quien lo creó, el resto acaba sin poder tocarlo. Para eso existe el setgid, que hace que lo creado dentro herede el grupo del directorio.
+El equipo necesita un directorio compartido. Abrirlo al grupo no basta: si cada archivo que nace dentro se queda con el grupo de quien lo creó, el resto acaba sin poder tocarlo. Para eso existe el setgid, que hace que lo creado dentro herede el grupo del directorio.
 
 Tu cuenta pertenece a dos grupos: el **primario**, que se llama igual que tu usuario, y el **del curso**, que empieza por `grp_` y es el que necesitas aquí.
 

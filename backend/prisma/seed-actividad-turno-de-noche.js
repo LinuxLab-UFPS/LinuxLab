@@ -20,7 +20,7 @@ const DATOS = {
     "Deja tres tareas corriendo en segundo plano, apunta cuáles son, cierra " +
     "una y cuenta las que quedan.",
   /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
-     la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
+     el directorio de la actividad aunque no haya nada dentro. Asi el estudiante la
      encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de
      rehacer archivos funciona igual que en las demas. */
   setup: {},

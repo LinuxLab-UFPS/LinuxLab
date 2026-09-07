@@ -66,7 +66,7 @@ function buildChecks(list, { evaluationType, maxScore }) {
     const ruta = params.ruta
     if (typeof ruta === "string" && ruta.trim() && (ruta.startsWith("/") || ruta.split("/").includes(".."))) {
       throw new AppError(
-        `Aserción ${i + 1} (${check.type}): la ruta debe ser relativa a la carpeta de trabajo de la actividad`,
+        `Aserción ${i + 1} (${check.type}): la ruta debe ser relativa al directorio de trabajo de la actividad`,
         400,
         "VALIDATION_ERROR",
       )
@@ -219,7 +219,7 @@ async function updateGroupActivity({ groupId, activityId, teacherUserId, role, i
 
   const body = input ?? {}
   if (body.workdir !== undefined && body.workdir !== ga.workdir) {
-    throw new AppError("La carpeta de trabajo no se puede cambiar", 400, "VALIDATION_ERROR")
+    throw new AppError("El directorio de trabajo no se puede cambiar", 400, "VALIDATION_ERROR")
   }
   if (body.maxScore !== undefined && Number(body.maxScore) !== 100) {
     throw new AppError("La puntuación máxima siempre es 100", 400, "VALIDATION_ERROR")

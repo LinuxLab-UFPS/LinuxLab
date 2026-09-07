@@ -9,7 +9,7 @@ const SETUP = {
     { path: "datos/alfa.log", lines: 12, fill: "INFO tarea completada" },
     { path: "datos/beta.log", lines: 30, fill: "INFO lote procesado" },
     { path: "datos/gamma.log", lines: 8, fill: "INFO sincronizacion" },
-    { path: "datos/leeme.txt", content: "Solo cuentan los .log de esta carpeta.\n" },
+    { path: "datos/leeme.txt", content: "Solo cuentan los .log de este directorio.\n" },
   ],
 }
 

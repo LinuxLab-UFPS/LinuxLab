@@ -48,11 +48,11 @@ function fileBasename(ruta: string): string {
 export function describeCheckForStudent(type: string): string {
   switch (type) {
     case "directorio_existe":
-      return "Crea el directorio que pide el enunciado en tu carpeta de trabajo"
+      return "Crea el directorio que pide el enunciado en tu directorio de trabajo"
     case "archivo_existe":
-      return "Crea el archivo que pide el enunciado en tu carpeta de trabajo"
+      return "Crea el archivo que pide el enunciado en tu directorio de trabajo"
     case "archivo_no_existe":
-      return "Elimina de tu carpeta el archivo que pide el enunciado"
+      return "Elimina de tu directorio el archivo que pide el enunciado"
     case "permisos_son":
       return "Deja los permisos del archivo tal como los pide el enunciado"
     case "propietario_es":

@@ -53,7 +53,7 @@ export interface LessonActivity {
   /** La actividad prepara archivos y por tanto se pueden rehacer. */
   hasSetup: boolean
   /**
-   * Carpeta de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
+   * Directorio de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
    * no trabaja ahi y por tanto no se ofrece ni abrirla ni reiniciarla.
    */
   workdir: string | null
@@ -117,9 +117,9 @@ export interface Activity {
   /** Habilita/deshabilita la actividad (publicar/deshabilitar). */
   enabled?: boolean
   /**
-   * Carpeta de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
-   * no trabaja ahi: `universidad-facultades` monta su arbol en la carpeta
-   * personal, y sin carpeta propia no se le ofrece ni abrirla ni reiniciarla.
+   * Directorio de trabajo (`~/actividades/<workdir>/`). Null cuando la actividad
+   * no trabaja ahi: `universidad-facultades` monta su arbol en el directorio
+   * personal, y sin directorio propio no se le ofrece ni abrirla ni reiniciarla.
    */
   workdir?: string | null
   checks: ActivityCheck[]

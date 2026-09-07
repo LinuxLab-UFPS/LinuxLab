@@ -27,7 +27,7 @@ const DATOS = {
   kind: "activity",
   difficulty: "basic",
   instructions:
-    "Crea el directorio universidad en tu carpeta personal, con las facultades " +
+    "Crea el directorio universidad en tu directorio personal, con las facultades " +
       "ingenieria, enfermeria y arquitectura dentro, y un pensum.txt en cada una.",
 }
 

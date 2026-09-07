@@ -350,7 +350,7 @@ export function KernelMemoriaIllustration() {
    3. Sistema de archivos
    ============================================================ */
 
-/** Carpeta del arbol de directorios. */
+/** Directorio del arbol de directorios. */
 function Folder({ x, y }: { x: number; y: number }) {
   return (
     <path
@@ -374,7 +374,7 @@ export function KernelArchivosIllustration() {
       title="El arbol de directorios: una sola raiz de la que cuelgan etc, home y dev, donde hasta el disco aparece como un archivo"
       height={330}
     >
-      {/* Tronco desde la raiz y codos hacia cada carpeta */}
+      {/* Tronco desde la raiz y codos hacia cada directorio */}
       <g className={TRAZO} strokeWidth="2" fill="none">
         <path d="M46 58 V242" />
         <path d="M46 102 H144" />

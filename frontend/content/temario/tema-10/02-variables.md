@@ -77,7 +77,7 @@ Cuenta: andres_torres
 Shell:  /bin/bash
 ```
 
-`HOME` guarda la ruta de la carpeta personal, y `PATH` es la del tema anterior, la lista de directorios donde el shell busca los comandos. Se consultan igual, con `echo "$HOME"`.
+`HOME` guarda la ruta del directorio personal, y `PATH` es la del tema anterior, la lista de directorios donde el shell busca los comandos. Se consultan igual, con `echo "$HOME"`.
 
 ## Argumentos
 

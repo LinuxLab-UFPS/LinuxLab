@@ -71,12 +71,12 @@ La segunda salió vacía porque `propia` dejó de existir al terminar la funció
 Ya apareció con `exit 1` al comprobar los argumentos. La variable `$?` guarda el código del último comando ejecutado, y sirve para reaccionar a un fallo:
 
 ```bash
-ls carpeta-que-no-existe
+ls directorio-que-no-existe
 echo "código: $?"
 ```
 
 ```
-ls: cannot access 'carpeta-que-no-existe': No such file or directory
+ls: cannot access 'directorio-que-no-existe': No such file or directory
 código: 2
 ```
 
@@ -97,10 +97,10 @@ if [ "$#" -lt 1 ]; then
     exit 1
 fi
 
-carpeta="$1"
+directorio="$1"
 
-if [ ! -d "$carpeta" ]; then
-    echo "No existe el directorio: $carpeta"
+if [ ! -d "$directorio" ]; then
+    echo "No existe el directorio: $directorio"
     exit 1
 fi
 
@@ -109,7 +109,7 @@ contar() {
 }
 
 total=0
-for f in "$carpeta"/*.txt; do
+for f in "$directorio"/*.txt; do
     [ -e "$f" ] || continue
     n=$(contar "$f")
     echo "$(basename "$f"): $n líneas"

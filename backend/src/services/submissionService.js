@@ -57,14 +57,14 @@ async function createSubmission(studentUserId, groupActivityId) {
   try {
     treeResult = JSON.parse(treeOut)
   } catch {
-    throw new AppError("No se pudo leer la carpeta de trabajo", 502, "INTERNAL_ERROR")
+    throw new AppError("No se pudo leer el directorio de trabajo", 502, "INTERNAL_ERROR")
   }
   if (!treeResult.ok) {
-    throw new AppError(treeResult.error || "No se pudo leer la carpeta de trabajo", 400, "VALIDATION_ERROR")
+    throw new AppError(treeResult.error || "No se pudo leer el directorio de trabajo", 400, "VALIDATION_ERROR")
   }
   const tree = treeResult.tree ?? []
   if (tree.length === 0) {
-    throw new AppError("La carpeta de trabajo está vacía; trabaja en ella antes de entregar", 400, "VALIDATION_ERROR")
+    throw new AppError("El directorio de trabajo está vacía; trabaja en ella antes de entregar", 400, "VALIDATION_ERROR")
   }
 
   const zipPath = `submissions/${ga.group_id}/${submissionId}.zip`

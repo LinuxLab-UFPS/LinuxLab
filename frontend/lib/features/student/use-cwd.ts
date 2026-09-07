@@ -45,15 +45,15 @@ export function useProgramaAPantallaCompleta(): boolean {
 }
 
 /**
- * Si el estudiante esta parado en la carpeta de la actividad (o dentro de ella,
- * porque trabajar en una subcarpeta sigue siendo estar en la actividad).
+ * Si el estudiante esta parado en el directorio de la actividad (o dentro de ella,
+ * porque trabajar en un subdirectorio sigue siendo estar en la actividad).
  *
  * Devuelve `true` mientras no se sepa la ruta: hasta el primer prompt no hay
  * dato, y bloquear en esa espera es exactamente el falso negativo que hay que
- * evitar. Tambien `true` cuando la actividad no declara carpeta, como
+ * evitar. Tambien `true` cuando la actividad no declara directorio, como
  * `universidad-facultades`, que monta su arbol en el home a proposito.
  */
-export function useEnLaCarpeta(workdir: string | null | undefined): boolean {
+export function useEnElDirectorio(workdir: string | null | undefined): boolean {
   const ruta = useCwd()
   if (!workdir) return true
   if (ruta === null) return true

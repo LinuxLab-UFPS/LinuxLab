@@ -62,8 +62,8 @@ const serialize = (activity) => ({
   topicNumber: activity.topic_id,
   maxScore: 100,
   hasSetup: Boolean(activity.setup),
-  // La carpeta donde se trabaja, para poder volver a ella desde el enunciado.
-  // Null en la que monta su arbol en la carpeta personal (ver activityDtos).
+  // El directorio donde se trabaja, para poder volver a ella desde el enunciado.
+  // Null en la que monta su arbol en el directorio personal (ver activityDtos).
   workdir: workdirOf(activity.slug),
   checks: withIds(activity.checks).map(publicCheck),
 })
@@ -101,9 +101,9 @@ async function evaluate({ slug, studentUserId }) {
     throw new AppError("Tu perfil no tiene código estudiantil registrado", 409, "CONFLICT")
   }
 
-  // Misma convencion que las actividades de curso: la carpeta de la actividad
+  // Misma convencion que las actividades de curso: el directorio de la actividad
   // viaja al checker para que la retroalimentacion muestre la ruta corta (la
-  // que escribio el docente en la semilla). En las actividades sin carpeta
+  // que escribio el docente en la semilla). En las actividades sin directorio
   // propia no se manda y las rutas se muestran relativas al home.
   const workdir = workdirOf(activity.slug)
   const payload = JSON.stringify({

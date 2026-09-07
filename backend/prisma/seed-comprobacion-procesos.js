@@ -26,7 +26,7 @@ const DATOS = {
   difficulty: "basic",
   instructions:
     "Abre la terminal y guarda en un archivo llamado procesos.txt, en tu " +
-    "carpeta personal, la lista de procesos con su consumo de CPU y memoria. " +
+    "directorio personal, la lista de procesos con su consumo de CPU y memoria. " +
     "Usa una redirección: el archivo tiene que quedar con la salida del " +
     "comando, cabecera incluida. Verás pocas líneas, y está bien: en este " +
     "laboratorio cada cuenta solo ve sus propios procesos.",

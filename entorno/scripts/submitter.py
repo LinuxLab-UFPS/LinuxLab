@@ -39,7 +39,7 @@ def me():
 
 
 def resolve_workdir(workdir):
-    """Resuelve y valida la ruta de la carpeta de trabajo.
+    """Resuelve y valida la ruta del directorio de trabajo.
 
     La ruta debe quedar dentro de ~/actividades/ y no puede contener '..'.
     """
@@ -62,7 +62,7 @@ def resolve_workdir(workdir):
 
 
 def action_tree(workdir):
-    """Lista los archivos relativos dentro de la carpeta de trabajo."""
+    """Lista los archivos relativos dentro del directorio de trabajo."""
     root = resolve_workdir(workdir)
     if not os.path.isdir(root):
         return {"ok": True, "tree": []}
@@ -79,14 +79,14 @@ def action_tree(workdir):
 
 
 def action_zipball(workdir, dest):
-    """Crea un .zip de la carpeta de trabajo.
+    """Crea un .zip del directorio de trabajo.
 
     El zip se escribe en `dest` (ruta absoluta, normalmente /tmp/).
     El backend limpia el archivo despues de subirlo a Storage.
     """
     root = resolve_workdir(workdir)
     if not os.path.isdir(root):
-        raise ValueError("La carpeta de trabajo no existe")
+        raise ValueError("El directorio de trabajo no existe")
 
     if not dest or not isinstance(dest, str):
         raise ValueError("Falta el dest")

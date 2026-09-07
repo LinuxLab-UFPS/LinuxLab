@@ -21,7 +21,7 @@ Detrás de lo que ves hay varias piezas, cada una encargada de una parte del tra
 - **Gestor de ventanas:** dibuja los bordes y las barras de título, y se encarga de mover, redimensionar, minimizar y apilar ventanas. También maneja los escritorios virtuales.
 - **Panel o barra de tareas:** muestra las aplicaciones abiertas, el reloj y la bandeja del sistema, y permite saltar de una ventana a otra.
 - **Menú de aplicaciones:** el lanzador de los programas instalados, casi siempre con un buscador.
-- **Explorador de archivos:** recorrer carpetas, copiar, mover y renombrar con el ratón, sin escribir rutas.
+- **Explorador de archivos:** recorrer directorios, copiar, mover y renombrar con el ratón, sin escribir rutas.
 - **Centro de configuración:** pantalla, teclado, sonido, red, tema y cuentas de usuario en un solo lugar.
 - **Notificaciones:** los avisos del sistema y de las aplicaciones, más los indicadores de batería, volumen y conexión.
 

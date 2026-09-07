@@ -156,7 +156,7 @@ TODO falta la conclusion
 
 Con un solo archivo no hace falta, porque entonces `grep` no antepone nada.
 
-Para buscar en un directorio completo, incluidas sus subcarpetas, se usa `-r`:
+Para buscar en un directorio completo, incluidas sus subdirectorios, se usa `-r`:
 
 ```bash
 grep -r contrasena ~/actividades
@@ -222,7 +222,7 @@ Este es el uso más frecuente de `grep` en el trabajo diario: quedarse con la pa
 | `grep -w` | Solo palabras completas |
 | `grep -v` | Muestra las líneas que no contienen el texto |
 | `grep -h` | Quita el nombre del archivo cuando se busca en varios |
-| `grep -r ruta` | Busca en un directorio y sus subcarpetas |
+| `grep -r ruta` | Busca en un directorio y sus subdirectorios |
 | `grep -l` | Muestra solo los nombres de archivo |
 | `grep -C 2` | Añade dos líneas de contexto a cada lado |
 | `comando \| grep texto` | Filtra la salida de otro comando |

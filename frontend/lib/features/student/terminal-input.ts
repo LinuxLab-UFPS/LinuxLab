@@ -11,7 +11,7 @@
  * Lo que se envía es lo mismo que teclearía el estudiante, con sus caracteres de
  * control: la terminal no distingue el origen.
  *
- * Hay una cola: un comando (p. ej. el `cd` a la carpeta de trabajo al abrir una
+ * Hay una cola: un comando (p. ej. el `cd` al directorio de trabajo al abrir una
  * actividad) puede llegar antes de que la terminal haya abierto su WebSocket.
  * Mientras no esté lista se encola, y en cuanto lo está se vacía en orden. Es el
  * mismo patrón del mensaje de resize en el gateway, del lado del navegador: sin

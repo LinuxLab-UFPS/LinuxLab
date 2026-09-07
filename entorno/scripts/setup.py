@@ -3,7 +3,7 @@
 
 Se ejecuta DENTRO del contenedor y CON LA IDENTIDAD DEL ESTUDIANTE
 (`sudo -u <estudiante>`), igual que el checker. Recibe un JSON por stdin con la
-descripcion del arbol y lo materializa dentro de la carpeta de la actividad:
+descripcion del arbol y lo materializa dentro del directorio de la actividad:
 
     {"slug": "comodines", "force": false,
      "dirs": ["archivo"],
@@ -13,7 +13,7 @@ descripcion del arbol y lo materializa dentro de la carpeta de la actividad:
 
     {"ok": true, "root": "/home/.../actividades/comodines", "creados": 4}
 
-Con `force` en falso no toca nada si la carpeta ya existe: eso es lo que permite
+Con `force` en falso no toca nada si el directorio ya existe: eso es lo que permite
 preparar el arbol al abrir la actividad sin borrar lo que el estudiante llevaba
 hecho. El boton de recargar manda `force` y ahi si se rehace entero.
 
@@ -67,7 +67,7 @@ def valida_slug(slug):
 
 
 def dentro(raiz, relativa):
-    """Resuelve una ruta relativa y comprueba que no se salga de la carpeta.
+    """Resuelve una ruta relativa y comprueba que no se salga del directorio.
 
     Mismo criterio que el checker: se resuelve primero y se juzga despues, para
     que un `..` o un enlace simbolico no sirvan de atajo hacia fuera.
@@ -178,7 +178,7 @@ def reparte(spec):
 def construye(spec):
     raiz = os.path.join(home(), BASE, valida_slug(spec.get("slug", "")))
 
-    # Sin `force`, una carpeta que ya existe se deja intacta. Abrir la actividad
+    # Sin `force`, un directorio que ya existe se deja intacta. Abrir la actividad
     # no puede borrar el trabajo a medias de quien vuelve a ella.
     if os.path.exists(raiz):
         if not spec.get("force"):
@@ -193,8 +193,8 @@ def construye(spec):
     creados = 0
     total = 0
 
-    for carpeta in spec.get("dirs") or []:
-        os.makedirs(dentro(raiz, carpeta), mode=0o700, exist_ok=True)
+    for directorio in spec.get("dirs") or []:
+        os.makedirs(dentro(raiz, directorio), mode=0o700, exist_ok=True)
         creados += 1
 
     for archivo in archivos:

@@ -20,7 +20,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea notas.txt en tu carpeta personal con al menos una " +
+    "Abre la terminal y crea notas.txt en tu directorio personal con al menos una " +
     "línea escrita. Comprímelo con gzip y deja solo el archivo comprimido: el " +
     "original no debe quedar.",
 }

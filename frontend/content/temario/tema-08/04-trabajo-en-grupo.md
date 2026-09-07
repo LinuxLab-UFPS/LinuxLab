@@ -29,7 +29,7 @@ chgrp: changing group of 'informe.txt': Operation not permitted
 
 ## El problema del directorio compartido
 
-Con eso ya se puede montar una carpeta común. Se crea el directorio, se le pone el grupo y se le concede escritura al grupo:
+Con eso ya se puede montar un directorio común. Se crea el directorio, se le pone el grupo y se le concede escritura al grupo:
 
 ```bash
 mkdir taller
@@ -141,7 +141,7 @@ drwxrws--- 1 maurox1177 grp_387a8af4 18 Aug 24 04:24 compartido
 -rw-rw-r-- 1 maurox1177 grp_387a8af4 0 Aug 24 04:24 despues.txt
 ```
 
-Los dos archivos están en la misma carpeta y los creó la misma persona con el mismo comando. El segundo heredó el grupo del directorio porque nació después del `chmod g+s`, y el primero se quedó como estaba.
+Los dos archivos están en la mismo directorio y los creó la misma persona con el mismo comando. El segundo heredó el grupo del directorio porque nació después del `chmod g+s`, y el primero se quedó como estaba.
 
 La comprobación final es un archivo creado fuera:
 

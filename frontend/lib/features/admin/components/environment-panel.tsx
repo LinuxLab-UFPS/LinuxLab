@@ -214,7 +214,7 @@ export function EnvironmentPanel() {
                 <TableHead>Grupo</TableHead>
                 <TableHead className="w-44">Docente</TableHead>
                 <TableHead className="w-36">Grupo Unix</TableHead>
-                <TableHead className="w-36">Carpeta</TableHead>
+                <TableHead className="w-36">Directorio</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -245,7 +245,7 @@ export function EnvironmentPanel() {
         </TablePanel>
         {brokenCourses.length > 0 && (
           <p className="mt-2 text-xs text-danger">
-            {brokenCourses.length} grupo(s) sin su grupo Unix o su carpeta: reintenta los trabajos
+            {brokenCourses.length} grupo(s) sin su grupo Unix o su directorio: reintenta los trabajos
             fallidos.
           </p>
         )}

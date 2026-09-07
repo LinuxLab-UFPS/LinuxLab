@@ -34,7 +34,7 @@ const DATOS = {
   kind: "activity",
   difficulty: "basic",
   instructions:
-    "Borra los .tmp de la carpeta de la actividad, mueve los .txt a " +
+    "Borra los .tmp del directorio de la actividad, mueve los .txt a " +
     "documentos y los .png a imagenes.",
   setup: SETUP,
 }

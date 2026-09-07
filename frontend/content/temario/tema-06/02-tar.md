@@ -1,8 +1,8 @@
 ## Empaquetar con tar
 
-`gzip` comprime **un** archivo. No sabe qué hacer con una carpeta ni con un grupo de ellos, y ahí es donde entra `tar`.
+`gzip` comprime **un** archivo. No sabe qué hacer con un directorio ni con un grupo de ellos, y ahí es donde entra `tar`.
 
-`tar` hace algo distinto de comprimir: junta muchos archivos en uno solo, conservando los nombres, las rutas y los permisos de cada uno. A ese resultado se le llama paquete o archivo `.tar`, y por sí mismo no ocupa menos. Las dos operaciones se combinan, y de ahí salen los nombres que se ven por todas partes: `.tar.gz` es una carpeta empaquetada con `tar` y después comprimida con `gzip`.
+`tar` hace algo distinto de comprimir: junta muchos archivos en uno solo, conservando los nombres, las rutas y los permisos de cada uno. A ese resultado se le llama paquete o archivo `.tar`, y por sí mismo no ocupa menos. Las dos operaciones se combinan, y de ahí salen los nombres que se ven por todas partes: `.tar.gz` es un directorio empaquetada con `tar` y después comprimida con `gzip`.
 
 ## Las tres operaciones
 
@@ -34,7 +34,7 @@ ls -l practica.tar.gz
 -rw-rw-r-- 1 andres_torres grp_cec1648c 298 Aug 11 18:48 practica.tar.gz
 ```
 
-`-c` crea, `-z` comprime con gzip y `-f` da el nombre del paquete. El último argumento es lo que se quiere empaquetar, en este caso una carpeta entera. `tar` entra solo en las subcarpetas y guarda las rutas dentro del paquete.
+`-c` crea, `-z` comprime con gzip y `-f` da el nombre del paquete. El último argumento es lo que se quiere empaquetar, en este caso un directorio entero. `tar` entra solo en los subdirectorios y guarda las rutas dentro del paquete.
 
 ### Ver qué hay dentro
 
@@ -53,7 +53,7 @@ practica/datos/medidas.csv
 practica/leeme.txt
 ```
 
-Aquí todo cuelga de `practica/`, así que al extraerlo aparecerá esa única carpeta y nada más.
+Aquí todo cuelga de `practica/`, así que al extraerlo aparecerá esa única directorio y nada más.
 
 ### Extraer
 
@@ -104,9 +104,9 @@ practica/leeme.txt
 
 Por eso conviene el `-t` de antes: la ruta hay que darla completa, y el listado es donde se lee.
 
-## Extraer en otra carpeta
+## Extraer en otro directorio
 
-`tar` deja lo que saca donde estés parado, así que abrir un paquete al lado del original mezcla las dos copias. `-C` dice a qué carpeta ir a extraer:
+`tar` deja lo que saca donde estés parado, así que abrir un paquete al lado del original mezcla las dos copias. `-C` dice a qué directorio ir a extraer:
 
 ```bash
 mkdir revision
@@ -118,7 +118,7 @@ ls revision
 practica
 ```
 
-La carpeta tiene que existir antes: `tar` no la crea, y si no está, falla. Es lo que se hace al instalar algo que llega comprimido. El paquete se descarga a un lado y se extrae donde toca, sin moverse de sitio.
+El directorio tiene que existir antes: `tar` no la crea, y si no está, falla. Es lo que se hace al instalar algo que llega comprimido. El paquete se descarga a un lado y se extrae donde toca, sin moverse de sitio.
 
 ## Las rutas se guardan relativas
 
@@ -132,7 +132,7 @@ tar -czf copia.tar.gz /home/estudiante/practica
 tar: Removing leading `/' from member names
 ```
 
-Dentro del paquete la ruta queda como `home/estudiante/practica`, sin la barra de delante. Al extraerlo, esa ruta se recrea **a partir del directorio actual** y no desde la raíz, de modo que aparece una carpeta `home` justo donde estés parado. Es deliberado, porque permite abrir un paquete en cualquier sitio en lugar de obligarlo a volver a su ubicación original (Shotts, 2026).
+Dentro del paquete la ruta queda como `home/estudiante/practica`, sin la barra de delante. Al extraerlo, esa ruta se recrea **a partir del directorio actual** y no desde la raíz, de modo que aparece un directorio `home` justo donde estés parado. Es deliberado, porque permite abrir un paquete en cualquier sitio en lugar de obligarlo a volver a su ubicación original (Shotts, 2026).
 
 Hay una consecuencia más al extraer. Salvo que se haga como administrador, los archivos que salen quedan a nombre de quien los extrae, no del dueño que tenían cuando se empaquetaron.
 
@@ -170,7 +170,7 @@ unzip -l practica.zip
        35                     6 files
 ```
 
-La opción `-r` entra en las subcarpetas, que en `zip` no es automático como en `tar`, y `-q` evita que liste todo lo que va metiendo. Se deshace con `unzip`, y `-l` muestra el contenido sin extraerlo.
+La opción `-r` entra en los subdirectorios, que en `zip` no es automático como en `tar`, y `-q` evita que liste todo lo que va metiendo. Se deshace con `unzip`, y `-l` muestra el contenido sin extraerlo.
 
 Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo que se quede en el mundo Unix, porque conserva permisos y propietarios; `zip` para lo que vaya a abrir alguien desde otro sistema.
 
@@ -182,14 +182,14 @@ Entre uno y otro la elección es de destinatario: `tar` con `gzip` para todo lo 
 
 | Comando | Efecto |
 |---|---|
-| `tar -czf paquete.tar.gz carpeta` | Empaqueta y comprime con gzip |
-| `tar -cjf paquete.tar.bz2 carpeta` | Empaqueta y comprime con bzip2 |
+| `tar -czf paquete.tar.gz directorio` | Empaqueta y comprime con gzip |
+| `tar -cjf paquete.tar.bz2 directorio` | Empaqueta y comprime con bzip2 |
 | `tar -tzf paquete.tar.gz` | Lista el contenido sin extraerlo |
 | `tar -xzvf paquete.tar.gz` | Extrae mostrando cada archivo |
 | `tar -xzvf paquete.tar.gz ruta/archivo` | Extrae solo esa ruta |
-| `tar -xzf paquete.tar.gz -C carpeta` | Extrae dentro de esa carpeta |
-| `tar -cf plano.tar carpeta` | Empaqueta sin comprimir |
-| `zip -rq paquete.zip carpeta` | Empaqueta y comprime en formato zip |
+| `tar -xzf paquete.tar.gz -C directorio` | Extrae dentro de ese directorio |
+| `tar -cf plano.tar directorio` | Empaqueta sin comprimir |
+| `zip -rq paquete.zip directorio` | Empaqueta y comprime en formato zip |
 | `unzip paquete.zip` | Extrae un zip |
 
 ---

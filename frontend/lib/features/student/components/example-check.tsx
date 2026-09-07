@@ -26,13 +26,13 @@ export function ExampleCheck() {
 
       <div className="space-y-4 px-5 py-4">
         <p className="text-sm leading-relaxed text-foreground">
-          Abre la terminal y crea un directorio llamado practicas dentro de tu carpeta
+          Abre la terminal y crea un directorio llamado practicas dentro de tu directorio
           personal y, dentro de él, otro llamado tema-03.
         </p>
 
         <ul className="space-y-2">
           {[
-            "Crea el directorio practicas en tu carpeta personal",
+            "Crea el directorio practicas en tu directorio personal",
             "Crea, dentro de él, el directorio tema-03",
           ].map((texto, i) => (
               <li key={i} className="flex items-start gap-2.5 text-sm">
@@ -51,7 +51,7 @@ export function ExampleCheck() {
             Comprobar
           </ActionButton>
           <p className="text-xs text-muted-foreground">
-            Aquí no hace nada: la de verdad revisa tu carpeta dentro del laboratorio.
+            Aquí no hace nada: la de verdad revisa tu directorio dentro del laboratorio.
           </p>
         </div>
       </div>

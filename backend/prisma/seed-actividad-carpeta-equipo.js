@@ -14,15 +14,15 @@ const TOPIC_NUMBER = 8
 const SUBTOPIC_SLUG = "trabajo-en-grupo"
 
 const DATOS = {
-  title: "La carpeta del equipo",
+  title: "El directorio del equipo",
   kind: "activity",
   difficulty: "intermediate",
   instructions:
-    "Monta una carpeta compartida de verdad: del grupo del curso, cerrada a " +
+    "Monta un directorio compartido de verdad: del grupo del curso, cerrado a " +
     "los de fuera y con setgid, para que todo lo que nazca dentro herede el " +
     "grupo. Y deja la prueba de que funcionó.",
   /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
-     la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
+     el directorio de la actividad aunque no haya nada dentro. Asi el estudiante la
      encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de
      rehacer archivos funciona igual que en las demas. */
   setup: {},

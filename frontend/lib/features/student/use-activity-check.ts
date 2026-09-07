@@ -81,10 +81,10 @@ export function useActivityCheck(slug: string) {
         prev ? { ...prev, lastAttempt: null } : prev,
       )
       queryClient.invalidateQueries({ queryKey: ESTADO_ACTIVIDADES_KEY })
-      // Reiniciar borra la carpeta y crea otra en su lugar. Una shell que
+      // Reiniciar borra el directorio y crea otro en su lugar. Una shell que
       // estuviera dentro se queda en el directorio viejo, que ya no figura en
       // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo
-      // que se escriba ahí no llega a la carpeta nueva.
+      // que se escriba ahí no llega al directorio nuevo.
       //
       // El `\x15` (Ctrl+U) borra lo que el estudiante tuviera escrito a medias.
       // Antes se usaba `\x03` (Ctrl+C) y ensuciaba la terminal por partida

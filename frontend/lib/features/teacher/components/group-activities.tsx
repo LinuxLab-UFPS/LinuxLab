@@ -110,7 +110,7 @@ export function GroupActivities({
                   </span>
                 </TableCell>
                 <TableCell>
-                  {/* Las del temario no tienen carpeta propia: se trabajan en el
+                  {/* Las del temario no tienen directorio propio: se trabajan en el
                       home del estudiante, y decirlo es mas util que un guion. */}
                   <span className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
