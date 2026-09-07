@@ -93,8 +93,14 @@ export function TerminalWorkspace({
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)
 
-  // El enunciado necesita más columna que un par de tarjetas.
-  const track = open ? "34rem" : "28rem"
+  /* El enunciado necesita más columna que un par de tarjetas.
+   *
+   * Proporcional y no un numero fijo: la consola pide `TERMINAL_WIDTH` y no
+   * cede, asi que con un ancho fijo la fila se pasaba del viewport y el
+   * `max-w-full` la recortaba. Con `38vw` la columna se queda con lo que haya:
+   * en una pantalla grande llega al tope de 44rem, y en una de 1440px se
+   * encoge en vez de desbordar. */
+  const track = open ? "min(44rem, 38vw)" : "28rem"
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">

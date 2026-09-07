@@ -107,7 +107,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   const hasEntrega = isManual ? !!submission : attempts.length > 0
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
+    /* Sin tarjeta, igual que la actividad del temario: el enunciado se lleva
+       este lado entero (ver activity-panel.tsx). */
+    <div className="flex h-full min-h-0 flex-col pr-1">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-3">
           {/* Vuelve de donde se entró (catálogo, rendimiento...) vía el

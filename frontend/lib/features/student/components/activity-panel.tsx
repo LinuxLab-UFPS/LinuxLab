@@ -72,7 +72,10 @@ export function ActivityPanel({
   const [confirmando, setConfirmando] = useState(false)
 
   return (
-    <div className="flex h-full min-h-0 flex-col rounded-xl border border-border bg-background p-5">
+    /* Sin tarjeta: el enunciado es todo este lado, no una ficha dentro de el.
+       El `pr-1` deja respirar al texto frente a la consola sin meterle un marco
+       en medio, y el resto del aire lo pone la columna. */
+    <div className="flex h-full min-h-0 flex-col pr-1">
       <header className="shrink-0">
         <div className="flex items-center justify-between gap-3">
           {/* Vuelve de donde se entró (catálogo, lección, rendimiento...) vía
