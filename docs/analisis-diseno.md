@@ -17,16 +17,15 @@ A partir de los 37 requerimientos funcionales consolidados se definieron los cas
 | **Estudiante** | Usuario matriculado en un grupo de laboratorio. Navega el temario, usa la terminal, resuelve actividades y consulta sus calificaciones. |
 | **Docente** | Usuario responsable de uno o más grupos de laboratorio. Crea y administra grupos, actividades, califica entregas y genera reportes. |
 | **Administrador** | Usuario con privilegios elevados. Gestiona docentes, aprueba provisionamiento y consulta la auditoría global del sistema. |
-| **Sistema** | Actor no humano. Envía correos electrónicos, genera certificados y ejecuta tareas automáticas en segundo plano. |
 
 ### 1.2 Tabla de casos de uso
 
 | CU | Nombre | Actor principal | Actor secundario | RFs |
 |----|--------|-----------------|------------------|-----|
-| CU-01 | Registrarse | Estudiante | Sistema | RF-01, RF-02 |
-| CU-02 | Iniciar sesión | Cualquier usuario | Sistema | RF-01, RF-04 |
-| CU-03 | Restablecer contraseña | Cualquier usuario | Sistema | RF-03 |
-| CU-04 | Registrar docente | Administrador | Sistema | RF-06, RF-07 |
+| CU-01 | Registrarse | Estudiante | — | RF-01, RF-02 |
+| CU-02 | Iniciar sesión | Cualquier usuario | — | RF-04 |
+| CU-03 | Restablecer contraseña | Cualquier usuario | — | RF-03 |
+| CU-04 | Registrar docente | Administrador | — | RF-06, RF-07 |
 | CU-05 | Listar y gestionar docentes | Administrador | — | RF-08, RF-09 |
 | CU-06 | Crear grupo | Docente | — | RF-10 |
 | CU-07 | Editar grupo | Docente | — | RF-11 |
@@ -41,11 +40,11 @@ A partir de los 37 requerimientos funcionales consolidados se definieron los cas
 | CU-16 | Habilitar/deshabilitar actividad | Docente | — | RF-22, RF-23 |
 | CU-17 | Resolver actividad automática | Estudiante | — | RF-24, RF-25, RF-29 |
 | CU-18 | Entregar actividad manual | Estudiante | — | RF-26 |
-| CU-19 | Calificar entrega manual | Docente | Sistema | RF-27 |
+| CU-19 | Calificar entrega manual | Docente | — | RF-27 |
 | CU-20 | Consultar calificación | Estudiante | — | RF-28 |
 | CU-21 | Consultar avance del grupo | Docente | — | RF-30 |
 | CU-22 | Exportar reporte Excel | Docente | — | RF-31 |
-| CU-23 | Finalizar grupo y certificar | Docente | Sistema | RF-32, RF-33 |
+| CU-23 | Finalizar grupo y certificar | Docente | — | RF-32, RF-33 |
 | CU-24 | Verificar certificado | Cualquier persona | — | RF-34 |
 | CU-25 | Consultar auditoría de grupo | Docente | — | RF-35 |
 | CU-26 | Consultar auditoría del sistema | Administrador | — | RF-36 |
@@ -118,7 +117,6 @@ rectangle "Laboratorio Virtual de Linux" {
 actor "Estudiante" as Est
 actor "Docente" as Doc
 actor "Administrador" as Admin
-actor "Sistema" as Sys
 
 Est --> UC01
 Est --> UC02
@@ -151,14 +149,6 @@ Admin --> UC05
 Admin --> UC26
 Admin --> UC27
 
-UC01 ..> Sys : <<include>>
-UC02 ..> Sys : <<include>>
-UC04 ..> Sys : <<include>>
-UC23 ..> Sys : <<include>>
-
-UC17 ..> UC13 : <<extend>>
-UC16 ..> UC15 : <<extend>>
-
 @enduml
 ```
 
@@ -168,7 +158,7 @@ UC16 ..> UC15 : <<extend>>
 
 | RF | CU(s) |
 |----|-------|
-| RF-01 | CU-01, CU-02 |
+| RF-01 | CU-01 |
 | RF-02 | CU-01 |
 | RF-03 | CU-03 |
 | RF-04 | CU-02 |
@@ -210,6 +200,17 @@ UC16 ..> UC15 : <<extend>>
 
 ## 3. Anexo
 
-La especificación detallada de cada caso de uso (tabla de especificación y diagrama de secuencia) se encuentra en el archivo:
+La especificación detallada de cada caso de uso se encuentra en el anexo, organizada en 8 módulos funcionales. Cada módulo incluye su diagrama de casos de uso y, para cada CU, su tabla de especificación y su diagrama de secuencia:
 
 **[annexes/cu-especificacion.md](annexes/cu-especificacion.md)**
+
+| Módulo | CUs |
+|--------|-----|
+| 1. Autenticación | CU-01, CU-02, CU-03 |
+| 2. Gestión de Docentes | CU-04, CU-05 |
+| 3. Gestión de Grupos | CU-06 a CU-10 |
+| 4. Contenido y Terminal | CU-11 a CU-14 |
+| 5. Actividades Personalizadas | CU-15 a CU-20 |
+| 6. Seguimiento y Reportes | CU-21, CU-22 |
+| 7. Certificados | CU-23, CU-24 |
+| 8. Auditoría | CU-25 a CU-27 |

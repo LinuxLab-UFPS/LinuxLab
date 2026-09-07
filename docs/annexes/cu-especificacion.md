@@ -1,8 +1,81 @@
 # Anexo — Especificación detallada de casos de uso
 
 **Proyecto:** LinuxLab UFPS
-**Fecha:** 2026-09-04
+**Fecha:** 2026-09-05
 **Estado:** Borrador
+
+---
+
+## Introducción
+
+Este anexo presenta la especificación detallada de los 27 casos de uso del sistema, organizados en 8 módulos funcionales. Cada módulo incluye un diagrama de casos de uso que muestra la interacción entre los actores y los casos de uso que lo componen, seguido de la especificación de cada caso de uso con su tabla de especificación y su diagrama de secuencia.
+
+---
+
+## Índice de casos de uso
+
+| Módulo | CU | Nombre |
+|--------|----|--------|
+| 1. Autenticación | CU-01 | Registrarse |
+| 1. Autenticación | CU-02 | Iniciar sesión |
+| 1. Autenticación | CU-03 | Restablecer contraseña |
+| 2. Gestión de Docentes | CU-04 | Registrar docente |
+| 2. Gestión de Docentes | CU-05 | Listar y gestionar docentes |
+| 3. Gestión de Grupos | CU-06 | Crear grupo |
+| 3. Gestión de Grupos | CU-07 | Editar grupo |
+| 3. Gestión de Grupos | CU-08 | Archivar grupo |
+| 3. Gestión de Grupos | CU-09 | Generar enlace de invitación |
+| 3. Gestión de Grupos | CU-10 | Vincular estudiante individual |
+| 4. Contenido y Terminal | CU-11 | Navegar temario |
+| 4. Contenido y Terminal | CU-12 | Usar simuladores |
+| 4. Contenido y Terminal | CU-13 | Resolver actividades del temario |
+| 4. Contenido y Terminal | CU-14 | Usar terminal Linux |
+| 5. Actividades Personalizadas | CU-15 | Crear actividad personalizada |
+| 5. Actividades Personalizadas | CU-16 | Habilitar/deshabilitar actividad |
+| 5. Actividades Personalizadas | CU-17 | Resolver actividad automática |
+| 5. Actividades Personalizadas | CU-18 | Entregar actividad manual |
+| 5. Actividades Personalizadas | CU-19 | Calificar entrega manual |
+| 5. Actividades Personalizadas | CU-20 | Consultar calificación |
+| 6. Seguimiento y Reportes | CU-21 | Consultar avance del grupo |
+| 6. Seguimiento y Reportes | CU-22 | Exportar reporte Excel |
+| 7. Certificados | CU-23 | Finalizar grupo y certificar |
+| 7. Certificados | CU-24 | Verificar certificado |
+| 8. Auditoría | CU-25 | Consultar auditoría de grupo |
+| 8. Auditoría | CU-26 | Consultar auditoría del sistema |
+| 8. Auditoría | CU-27 | Reintentar aprovisionamiento |
+
+---
+
+## Módulo 1: Autenticación
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 1: Autenticación
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-01\nRegistrarse" as M1UC01
+  usecase "CU-02\nIniciar sesión" as M1UC02
+  usecase "CU-03\nRestablecer\ncontraseña" as M1UC03
+}
+
+actor "Estudiante" as Est
+actor "Docente" as Doc
+actor "Administrador" as Admin
+
+Est --> M1UC01
+Est --> M1UC02
+Est --> M1UC03
+Doc --> M1UC02
+Doc --> M1UC03
+Admin --> M1UC02
+Admin --> M1UC03
+
+@enduml
+```
 
 ---
 
@@ -15,7 +88,7 @@
 | **ID** | CU-01 |
 | **Nombre** | Registrarse |
 | **Actor principal** | Estudiante |
-| **Actor secundario** | Sistema |
+| **Actor secundario** | — |
 | **RFs asociados** | RF-01, RF-02 |
 | **Precondiciones** | El estudiante no tiene cuenta previa en la plataforma. |
 
@@ -37,28 +110,6 @@
 
 - Se crea una cuenta de estudiante con estado "no verificado".
 - Se envía un correo de verificación.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-01: Registrarse
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Registrarse" as UC01
-  usecase "Enviar correo de verificación" as UC01a
-}
-
-actor "Estudiante" as Est
-actor "Sistema" as Sys
-
-Est --> UC01
-UC01 ..> UC01a : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -109,8 +160,8 @@ end
 | **ID** | CU-02 |
 | **Nombre** | Iniciar sesión |
 | **Actor principal** | Cualquier usuario |
-| **Actor secundario** | Sistema |
-| **RFs asociados** | RF-01, RF-04 |
+| **Actor secundario** | — |
+| **RFs asociados** | RF-04 |
 | **Precondiciones** | El usuario tiene una cuenta creada y verificada. |
 
 **Flujo principal:**
@@ -139,35 +190,6 @@ end
 
 - El usuario tiene una sesión activa (cookie JWT).
 - Se registra el evento de login en la bitácora.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-02: Iniciar sesión
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Iniciar sesión" as UC02
-  usecase "Validar credenciales" as UC02a
-  usecase "Firmar JWT" as UC02b
-}
-
-actor "Estudiante" as Est
-actor "Docente" as Doc
-actor "Administrador" as Admin
-actor "Sistema" as Sys
-
-Est --> UC02
-Doc --> UC02
-Admin --> UC02
-UC02 ..> UC02a : <<include>>
-UC02a ..> UC02b : <<include>>
-UC02b ..> Sys : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -241,7 +263,7 @@ end
 | **ID** | CU-03 |
 | **Nombre** | Restablecer contraseña |
 | **Actor principal** | Cualquier usuario |
-| **Actor secundario** | Sistema |
+| **Actor secundario** | — |
 | **RFs asociados** | RF-03 |
 | **Precondiciones** | El usuario tiene una cuenta existente y verificada. |
 
@@ -264,33 +286,6 @@ end
 **Postcondiciones:**
 
 - La contraseña del usuario ha sido actualizada.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-03: Restablecer contraseña
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Restablecer contraseña" as UC03
-  usecase "Enviar correo de restablecimiento" as UC03a
-}
-
-actor "Estudiante" as Est
-actor "Docente" as Doc
-actor "Administrador" as Admin
-actor "Sistema" as Sys
-
-Est --> UC03
-Doc --> UC03
-Admin --> UC03
-UC03 ..> UC03a : <<include>>
-UC03a ..> Sys : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -344,6 +339,31 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 
 ---
 
+## Módulo 2: Gestión de Docentes
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 2: Gestión de Docentes
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-04\nRegistrar docente" as M2UC04
+  usecase "CU-05\nListar y gestionar\ndocentes" as M2UC05
+}
+
+actor "Administrador" as Admin
+
+Admin --> M2UC04
+Admin --> M2UC05
+
+@enduml
+```
+
+---
+
 ## CU-04: Registrar docente
 
 ### Tabla de especificación
@@ -353,7 +373,7 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 | **ID** | CU-04 |
 | **Nombre** | Registrar docente |
 | **Actor principal** | Administrador |
-| **Actor secundario** | Sistema |
+| **Actor secundario** | — |
 | **RFs asociados** | RF-06, RF-07 |
 | **Precondiciones** | El administrador tiene una sesión activa. |
 
@@ -376,29 +396,6 @@ FE --> U : "Contraseña actualizada. Inicia sesión."
 
 - Se crea una cuenta de docente con estado "pendiente de activación".
 - Se envía un correo con enlace de activación.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-04: Registrar docente
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Registrar docente" as UC04
-  usecase "Enviar correo de activación" as UC04a
-}
-
-actor "Administrador" as Admin
-actor "Sistema" as Sys
-
-Admin --> UC04
-UC04 ..> UC04a : <<include>>
-UC04a ..> Sys : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -476,25 +473,6 @@ end
 
 - El estado del docente ha sido actualizado.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-05: Listar y gestionar docentes
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Listar y gestionar\ndocentes" as UC05
-}
-
-actor "Administrador" as Admin
-
-Admin --> UC05
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -517,6 +495,37 @@ BE -> DB : UPDATE User SET active = NOT active
 DB --> BE : Estado actualizado
 BE --> FE : 200 OK { active: true/false }
 FE -> A : "Docente activado/inactivado"
+
+@enduml
+```
+
+---
+
+## Módulo 3: Gestión de Grupos
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 3: Gestión de Grupos
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-06\nCrear grupo" as M3UC06
+  usecase "CU-07\nEditar grupo" as M3UC07
+  usecase "CU-08\nArchivar grupo" as M3UC08
+  usecase "CU-09\nGenerar enlace\nde invitación" as M3UC09
+  usecase "CU-10\nVincular estudiante\nindividual" as M3UC10
+}
+
+actor "Docente" as Doc
+
+Doc --> M3UC06
+Doc --> M3UC07
+Doc --> M3UC08
+Doc --> M3UC09
+Doc --> M3UC10
 
 @enduml
 ```
@@ -554,25 +563,6 @@ FE -> A : "Docente activado/inactivado"
 
 - Se crea un grupo con estado "activo".
 - Se crea el directorio del grupo en el entorno Linux.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-06: Crear grupo
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Crear grupo" as UC06
-}
-
-actor "Docente" as Doc
-
-Doc --> UC06
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -642,25 +632,6 @@ end
 
 - La información del grupo ha sido actualizada.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-07: Editar grupo
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Editar grupo" as UC07
-}
-
-actor "Docente" as Doc
-
-Doc --> UC07
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -723,25 +694,6 @@ end
 - El grupo tiene estado "archivado".
 - Los estudiantes del grupo no pueden realizar nuevas entregas.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-08: Archivar grupo
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Archivar grupo" as UC08
-}
-
-actor "Docente" as Doc
-
-Doc --> UC08
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -796,25 +748,6 @@ FE -> D : "Grupo archivado."
 **Postcondiciones:**
 
 - Existe un enlace de invitación válido para el grupo.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-09: Generar enlace de invitación
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Generar enlace\nde invitación" as UC09
-}
-
-actor "Docente" as Doc
-
-Doc --> UC09
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -882,25 +815,6 @@ end
 
 - El estudiante queda matriculado en el grupo.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-10: Vincular estudiante individual
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Vincular estudiante\nindividual" as UC10
-}
-
-actor "Docente" as Doc
-
-Doc --> UC10
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -938,6 +852,35 @@ end
 
 ---
 
+## Módulo 4: Contenido y Terminal
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 4: Contenido y Terminal
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-11\nNavegar temario" as M4UC11
+  usecase "CU-12\nUsar simuladores" as M4UC12
+  usecase "CU-13\nResolver actividades\ndel temario" as M4UC13
+  usecase "CU-14\nUsar terminal\nLinux" as M4UC14
+}
+
+actor "Estudiante" as Est
+
+Est --> M4UC11
+Est --> M4UC12
+Est --> M4UC13
+Est --> M4UC14
+
+@enduml
+```
+
+---
+
 ## CU-11: Navegar temario
 
 ### Tabla de especificación
@@ -966,25 +909,6 @@ end
 **Postcondiciones:**
 
 - No hay cambios en el estado del sistema.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-11: Navegar temario
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Navegar temario" as UC11
-}
-
-actor "Estudiante" as Est
-
-Est --> UC11
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1042,25 +966,6 @@ FE -> E : Muestra contenido (texto, video, enlaces)
 
 - No hay cambios en el estado del sistema.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-12: Usar simuladores
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Usar simuladores" as UC12
-}
-
-actor "Estudiante" as Est
-
-Est --> UC12
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1114,27 +1019,6 @@ SIM -> E : Muestra resultado + retroalimentación
 **Postcondiciones:**
 
 - Se registra un intento de evaluación con su resultado.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-13: Resolver actividades del temario
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Resolver actividades\ndel temario" as UC13
-  usecase "Evaluar con checker" as UC13a
-}
-
-actor "Estudiante" as Est
-
-Est --> UC13
-UC13 ..> UC13a : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1206,31 +1090,6 @@ FE -> E : Muestra resultado por aserción
 - Se establece una sesión de terminal funcional.
 - Los archivos creados persisten entre sesiones.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-14: Usar terminal Linux
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Usar terminal\nLinux" as UC14
-  usecase "Establecer conexión\nWebSocket" as UC14a
-  usecase "Personalizar\napariencia" as UC14b
-  usecase "Reiniciar terminal" as UC14c
-}
-
-actor "Estudiante" as Est
-
-Est --> UC14
-UC14 ..> UC14a : <<include>>
-UC14 ..> UC14b : <<extend>>
-UC14 ..> UC14c : <<extend>>
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1272,6 +1131,40 @@ WS --> FE : Terminal reiniciada
 
 ---
 
+## Módulo 5: Actividades Personalizadas
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 5: Actividades Personalizadas
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-15\nCrear actividad\npersonalizada" as M5UC15
+  usecase "CU-16\nHabilitar/deshabilitar\nactividad" as M5UC16
+  usecase "CU-17\nResolver actividad\nautomática" as M5UC17
+  usecase "CU-18\nEntregar actividad\nmanual" as M5UC18
+  usecase "CU-19\nCalificar entrega\nmanual" as M5UC19
+  usecase "CU-20\nConsultar\ncalificación" as M5UC20
+}
+
+actor "Docente" as Doc
+actor "Estudiante" as Est
+
+Doc --> M5UC15
+Doc --> M5UC16
+Doc --> M5UC19
+Est --> M5UC17
+Est --> M5UC18
+Est --> M5UC20
+
+@enduml
+```
+
+---
+
 ## CU-15: Crear actividad personalizada
 
 ### Tabla de especificación
@@ -1306,27 +1199,6 @@ WS --> FE : Terminal reiniciada
 **Postcondiciones:**
 
 - Se crea una actividad publicada y habilitada en el grupo.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-15: Crear actividad personalizada
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Crear actividad\npersonalizada" as UC15
-  usecase "Configurar aserciones\nde validación" as UC15a
-}
-
-actor "Docente" as Doc
-
-Doc --> UC15
-UC15 ..> UC15a : <<extend>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1397,31 +1269,6 @@ FE -> D : "Actividad creada y publicada."
 **Postcondiciones:**
 
 - El estado de la actividad ha sido actualizado.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-16: Habilitar/deshabilitar actividad
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Habilitar actividad" as UC16a
-  usecase "Deshabilitar actividad" as UC16b
-  usecase "Definir fecha de cierre" as UC16c
-  usecase "Habilitar/deshabilitar\nactividad" as UC16
-}
-
-actor "Docente" as Doc
-
-Doc --> UC16
-UC16 ..> UC16a : <<extend>>
-UC16 ..> UC16b : <<extend>>
-UC16 ..> UC16c : <<extend>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1500,29 +1347,6 @@ FE -> D : "Fecha de cierre extendida."
 
 - Se registra un intento con su resultado y puntaje.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-17: Resolver actividad automática
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Resolver actividad\nautomática" as UC17
-  usecase "Evaluar con checker" as UC17a
-  usecase "Registrar intento" as UC17b
-}
-
-actor "Estudiante" as Est
-
-Est --> UC17
-UC17 ..> UC17a : <<include>>
-UC17 ..> UC17b : <<include>>
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1597,27 +1421,6 @@ end
 
 - Se registra una entrega con estado "enviada".
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-18: Entregar actividad manual
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Entregar actividad\nmanual" as UC18
-  usecase "Capturar evidencia" as UC18a
-}
-
-actor "Estudiante" as Est
-
-Est --> UC18
-UC18 ..> UC18a : <<include>>
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1662,7 +1465,7 @@ FE -> E : "Entrega enviada. Espera calificación del docente."
 | **ID** | CU-19 |
 | **Nombre** | Calificar entrega manual |
 | **Actor principal** | Docente |
-| **Actor secundario** | Sistema |
+| **Actor secundario** | — |
 | **RFs asociados** | RF-27 |
 | **Precondiciones** | El docente tiene una sesión activa, es propietario del grupo y existen entregas pendientes de calificar. |
 
@@ -1685,25 +1488,6 @@ FE -> E : "Entrega enviada. Espera calificación del docente."
 **Postcondiciones:**
 
 - La entrega tiene calificación y retroalimentación.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-19: Calificar entrega manual
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Calificar entrega\nmanual" as UC19
-}
-
-actor "Docente" as Doc
-
-Doc --> UC19
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1770,25 +1554,6 @@ FE -> D : "Calificación registrada."
 
 - No hay cambios en el estado del sistema.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-20: Consultar calificación
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Consultar\ncalificación" as UC20
-}
-
-actor "Estudiante" as Est
-
-Est --> UC20
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1826,6 +1591,31 @@ end
 
 ---
 
+## Módulo 6: Seguimiento y Reportes
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 6: Seguimiento y Reportes
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-21\nConsultar avance\ndel grupo" as M6UC21
+  usecase "CU-22\nExportar reporte\nExcel" as M6UC22
+}
+
+actor "Docente" as Doc
+
+Doc --> M6UC21
+Doc --> M6UC22
+
+@enduml
+```
+
+---
+
 ## CU-21: Consultar avance del grupo
 
 ### Tabla de especificación
@@ -1854,25 +1644,6 @@ end
 **Postcondiciones:**
 
 - No hay cambios en el estado del sistema.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-21: Consultar avance del grupo
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Consultar avance\ndel grupo" as UC21
-}
-
-actor "Docente" as Doc
-
-Doc --> UC21
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -1932,25 +1703,6 @@ FE -> D : Muestra avance detallado del estudiante
 
 - Se descarga un archivo Excel con el reporte del grupo.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-22: Exportar reporte Excel
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Exportar reporte\nExcel" as UC22
-}
-
-actor "Docente" as Doc
-
-Doc --> UC22
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -1975,6 +1727,32 @@ FE -> D : Descarga archivo Excel
 
 ---
 
+## Módulo 7: Certificados
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 7: Certificados
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-23\nFinalizar grupo\ny certificar" as M7UC23
+  usecase "CU-24\nVerificar certificado" as M7UC24
+}
+
+actor "Docente" as Doc
+actor "Cualquier persona" as Pub
+
+Doc --> M7UC23
+Pub --> M7UC24
+
+@enduml
+```
+
+---
+
 ## CU-23: Finalizar grupo y certificar
 
 ### Tabla de especificación
@@ -1984,7 +1762,7 @@ FE -> D : Descarga archivo Excel
 | **ID** | CU-23 |
 | **Nombre** | Finalizar grupo y certificar |
 | **Actor principal** | Docente |
-| **Actor secundario** | Sistema |
+| **Actor secundario** | — |
 | **RFs asociados** | RF-32, RF-33 |
 | **Precondiciones** | El docente tiene una sesión activa, es propietario del grupo y el grupo tiene estado "activo". |
 
@@ -2009,31 +1787,6 @@ FE -> D : Descarga archivo Excel
 
 - El grupo tiene estado "finalizado".
 - Se generan certificados PDF y se envían por correo.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-23: Finalizar grupo y certificar
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Finalizar grupo\ny certificar" as UC23
-  usecase "Generar certificados\nPDF" as UC23a
-  usecase "Enviar certificados\npor correo" as UC23b
-}
-
-actor "Docente" as Doc
-actor "Sistema" as Sys
-
-Doc --> UC23
-UC23 ..> UC23a : <<include>>
-UC23a ..> UC23b : <<include>>
-UC23b ..> Sys : <<include>>
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -2108,25 +1861,6 @@ FE -> D : "Grupo finalizado. N certificados generados y enviados."
 
 - No hay cambios en el estado del sistema.
 
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-24: Verificar certificado
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Verificar certificado" as UC24
-}
-
-actor "Cualquier\npersona" as U
-
-U --> UC24
-
-@enduml
-```
-
 ### Diagrama de secuencia
 
 ```plantuml
@@ -2152,6 +1886,34 @@ else Encontrado
   BE --> FE : 200 OK { holderName, groupName, issuedAt, definitive, code }
   FE -> U : Muestra información del certificado + "Certificado auténtico"
 end
+
+@enduml
+```
+
+---
+
+## Módulo 8: Auditoría
+
+### Diagrama del módulo
+
+```plantuml
+@startuml
+left to right direction
+
+title Módulo 8: Auditoría
+
+rectangle "Laboratorio Virtual de Linux" {
+  usecase "CU-25\nConsultar auditoría\nde grupo" as M8UC25
+  usecase "CU-26\nConsultar auditoría\ndel sistema" as M8UC26
+  usecase "CU-27\nReintentar\naprovisionamiento" as M8UC27
+}
+
+actor "Docente" as Doc
+actor "Administrador" as Admin
+
+Doc --> M8UC25
+Admin --> M8UC26
+Admin --> M8UC27
 
 @enduml
 ```
@@ -2186,25 +1948,6 @@ end
 **Postcondiciones:**
 
 - No hay cambios en el estado del sistema.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-25: Consultar auditoría de grupo
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Consultar auditoría\nde grupo" as UC25
-}
-
-actor "Docente" as Doc
-
-Doc --> UC25
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -2263,25 +2006,6 @@ FE -> D : Actualiza tabla
 **Postcondiciones:**
 
 - No hay cambios en el estado del sistema.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-26: Consultar auditoría del sistema
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Consultar auditoría\ndel sistema" as UC26
-}
-
-actor "Administrador" as Admin
-
-Admin --> UC26
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
@@ -2342,25 +2066,6 @@ FE -> A : Actualiza tabla
 **Postcondiciones:**
 
 - Los trabajos fallidos quedan reprogramados para reintento.
-
-### Diagrama de casos de uso
-
-```plantuml
-@startuml
-left to right direction
-
-title CU-27: Reintentar aprovisionamiento
-
-rectangle "Laboratorio Virtual de Linux" {
-  usecase "Reintentar\naprovisionamiento" as UC27
-}
-
-actor "Administrador" as Admin
-
-Admin --> UC27
-
-@enduml
-```
 
 ### Diagrama de secuencia
 
