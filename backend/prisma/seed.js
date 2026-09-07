@@ -24,6 +24,7 @@ const seeds = [
   "seed-actividad-paquete-entrega.js",
   "seed-actividad-turno-de-noche.js",
   "seed-actividad-foto-sistema.js",
+  "seed-actividad-expediente.js",
   "seed-actividades-retiradas.js",
 ]
 

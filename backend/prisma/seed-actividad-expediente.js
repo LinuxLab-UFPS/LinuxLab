@@ -21,7 +21,7 @@ const SETUP = {
     { path: "mezclado/borrador.txt", content: "esto es un borrador que no sirve\n" },
     { path: "mezclado/contrato.pdf", content: "(documento de contrato)\n" },
     { path: "RESPALDO_VIEJO/datos_2024.csv", content: "enero,100\nfebrero,200\n" },
-    { path: "LEEME.txt", content: "Carpeta del proyecto - organizado por sistemas\n" },
+    { path: "LEEME.txt", content: "Directorio del proyecto - organizado por sistemas\n" },
   ],
 }
 
@@ -117,7 +117,7 @@ const DATOS = {
     "Organiza el servidor desordenado del empleado anterior. Crea una nueva " +
     "estructura con archivos/fotos, archivos/documentos y archivos/respaldos. " +
     "Mueve los archivos a su lugar, copia el respaldo viejo, renombra el CSV " +
-    "como informe_final.csv y elimina temporales y carpetas vacias.",
+    "como informe_final.csv y elimina temporales y directorios vacios.",
   setup: SETUP,
 }
 
