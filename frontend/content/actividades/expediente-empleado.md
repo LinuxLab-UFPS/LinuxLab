@@ -4,7 +4,7 @@ Lo único que sabes es lo que te dijo tu jefe antes de irse:
 
 > "Las fotos del equipo no pueden perderse, los contratos y presupuestos van juntos, y los archivos temporales hay que borrarlos todos. Lo viejo que sea importante lo mete en respaldos."
 
-Este es el estado en el que encontraste la carpeta `expediente-empleado/`:
+Este es el estado en el que encontraste el directorio `expediente-empleado/`:
 
 ```
 expediente-empleado/
@@ -27,14 +27,14 @@ expediente-empleado/
 
 **Objetivos:**
 
-1. Crea la estructura `archivos/` con tres subcarpetas: `fotos`, `documentos` y `respaldos`.
+1. Crea la estructura `archivos/` con tres subdirectorios: `fotos`, `documentos` y `respaldos`.
 2. Mueve todos los archivos de imagen (`.jpg`) a `archivos/fotos/`.
 3. Mueve los documentos (`.txt`, `.pdf`, `.xlsx`) a `archivos/documentos/`.
 4. Copia el respaldo viejo completo dentro de `archivos/respaldos/`.
 5. Renombra `datos_2024.csv` a `informe_final.csv` y lo mueve a `archivos/documentos/`.
-6. Elimina todos los archivos temporales (`.tmp` y `.bak`) de la carpeta `temporal/`.
+6. Elimina todos los archivos temporales (`.tmp` y `.bak`) del directorio `temporal/`.
 7. Elimina el `borrador.txt` de su nueva ubicación: no sirve, era solo un borrador.
-8. Elimina las carpetas que quedaron vacías con el comando adecuado.
+8. Elimina los directorios que quedaron vacíos con el comando adecuado.
 9. Verifica con `ls -laR archivos/` que todo quedó en su lugar.
 
 **Estructura final esperada:**
@@ -59,7 +59,7 @@ expediente-empleado/
 **Hints:**
 
 - Los comodines le permiten operar sobre muchos archivos de una vez: `*.jpg`, `*.tmp`.
-- `rmdir` solo elimina carpetas que están vacías; si tienen contenido, use `rm -r`.
+- `rmdir` solo elimina directorios que están vacíos; si tienen contenido, use `rm -r`.
 - `cp -r` copia directorios con todo lo que llevan dentro.
 - `mv` sirve tanto para mover como para renombrar.
 - Antes de borrar algo, puede usar `ls` con el comodín para confirmar qué va a afectar.
