@@ -38,7 +38,7 @@ export function getTopicContentMeta(topicNumber: number): TopicContentMeta | nul
 /**
  * El markdown de la seccion de bienvenida.
  *
- * Carpeta aparte de `temario/`: la bienvenida no es un tema y no tiene numero
+ * Directorio aparte de `temario/`: la bienvenida no es un tema y no tiene numero
  * con el que construir `tema-NN` (ver shared/lib/content/bienvenida.ts).
  */
 export function getBienvenidaMarkdown(file: string): string | null {

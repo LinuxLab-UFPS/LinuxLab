@@ -64,7 +64,7 @@ export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: strin
             {checking ? "Comprobando..." : "Comprobar"}
           </ActionButton>
           <p className="text-xs text-muted-foreground">
-            Se revisa tu propia carpeta dentro del laboratorio.
+            Se revisa tu propio directorio dentro del laboratorio.
           </p>
         </div>
       </div>

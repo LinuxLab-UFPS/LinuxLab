@@ -238,10 +238,10 @@ async function checkForStudent(studentUserId, groupActivityId) {
     select: { student: { select: { code: true } }, email: true },
   })
 
-  // La carpeta de la actividad viaja en el payload para que el checker muestre
+  // El directorio de la actividad viaja en el payload para que el checker muestre
   // en sus mensajes la ruta tal como la escribio el docente (relativa a esa
-  // carpeta) y no el camino completo desde el home: dos aserciones que apuntan
-  // a un archivo con el mismo nombre en carpetas distintas dejan de producir
+  // directorio) y no el camino completo desde el home: dos aserciones que apuntan
+  // a un archivo con el mismo nombre en directorios distintos dejan de producir
   // mensajes identicos que parezcan contradictorios. Un checker antiguo la
   // ignora y un checker nuevo sin ella muestra la ruta relativa al home.
   const payload = JSON.stringify({

@@ -35,8 +35,8 @@ const DATOS = {
   kind: "activity",
   difficulty: "intermediate",
   instructions:
-    "Empaqueta la carpeta del informe en un .tar.gz, deja por escrito qué " +
-    "trae dentro, comprueba que el paquete abre extrayéndolo en otra carpeta " +
+    "Empaqueta el directorio del informe en un .tar.gz, deja por escrito qué " +
+    "trae dentro, comprueba que el paquete abre extrayéndolo en otro directorio " +
     "y quita lo que no se entrega.",
   setup: SETUP,
 }

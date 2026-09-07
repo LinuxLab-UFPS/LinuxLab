@@ -407,7 +407,7 @@ export function topicIllustration(topicNumber: number): ComponentType {
  * la raiz, un desvio que no se toma, el directorio por el que se pasa y el
  * objetivo con el recuadro de puntos que el propio simulador le pone.
  *
- * Llego a tener dos niveles mas, cuatro carpetas sueltas y un prompt dibujado
+ * Llego a tener dos niveles mas, cuatro directorios sueltas y un prompt dibujado
  * abajo. A tamaño de tarjeta no se leia ninguno: era una maraña de recuadros, y
  * el prompt encima sobraba, porque la terminal no es lo que esta tarjeta cuenta.
  */

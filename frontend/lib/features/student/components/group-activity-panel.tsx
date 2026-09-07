@@ -7,7 +7,7 @@ import { Tag } from "@shared/components/tag"
 import { BackButton } from "@shared/components/back-button"
 import { ActionButton } from "@shared/components/action-button"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { useEnLaCarpeta, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
+import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
   submitGroupActivity,
@@ -24,8 +24,8 @@ import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info
  * Una actividad de curso (creada por el docente) abierta junto a la terminal.
  *
  * Igual que las actividades del temario: los criterios no se muestran hasta
- * aprobar, y la solución se trabaja en la carpeta de trabajo de la actividad.
- * Al abrir, la terminal navega a esa carpeta (la cola del seam cubre el caso
+ * aprobar, y la solución se trabaja en el directorio de trabajo de la actividad.
+ * Al abrir, la terminal navega a ese directorio (la cola del seam cubre el caso
  * de que la conexión aún no esté lista).
  */
 export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupActivityDetail; userId: string }) {
@@ -43,16 +43,16 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
   const closed = detail.dueAt ? new Date(detail.dueAt) <= new Date() : false
   const limitReached = detail.attemptLimit != null && attemptsCount >= detail.attemptLimit
-  /* Comprobar exige estar parado en la carpeta de trabajo. La ruta la dice la
+  /* Comprobar exige estar parado en el directorio de trabajo. La ruta la dice la
      propia shell en cada prompt, asi que vale tanto si se llego con el boton
      como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
      se sepa la ruta el boton queda activo: la version que guardaba en React si
-     se habia pulsado "ir a la carpeta" sacaba el boton gris tras cada recarga a
+     se habia pulsado "ir al directorio" sacaba el boton gris tras cada recarga a
      quien ya estaba en el sitio correcto. */
-  const enLaCarpeta = useEnLaCarpeta(detail.workdir)
+  const enElDirectorio = useEnElDirectorio(detail.workdir)
   const canCheck =
     detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
-    enLaCarpeta
+    enElDirectorio
 
   /* Con `vi` abierto, lo que se manda a la terminal no se ejecuta: se teclea
      dentro del archivo, y en modo normal `c`, `d` y `~` son ordenes de edicion
@@ -220,7 +220,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
           <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
             <FolderOpen className="h-4 w-4" />
-            Ir a la carpeta
+            Ir al directorio
           </ActionButton>
         </div>
 
@@ -230,8 +230,8 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           </p>
         ) : detail.evaluationType === "atomic" && !canCheck ? (
           <p className="text-xs text-muted-foreground">
-              {!enLaCarpeta
-               ? "Entra en la carpeta de la actividad para poder comprobarla: la revisión corre dentro de ella."
+              {!enElDirectorio
+               ? "Entra en el directorio de la actividad para poder comprobarla: la revisión corre dentro de ella."
                : !detail.enabled
                ? "Esta actividad está deshabilitada por ahora. Habla con tu docente si crees que es un error."
               : closed

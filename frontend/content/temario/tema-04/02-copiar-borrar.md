@@ -50,7 +50,7 @@ Lo interesante es que renombrar es exactamente lo mismo que mover: cambiarle el 
 mv notas.txt apuntes.txt
 ```
 
-No hay un comando `rename` separado en Linux, porque no hace falta. Y `mv` no necesita `-r` para directorios: mover una carpeta es una sola operación, no una copia de todo su contenido.
+No hay un comando `rename` separado en Linux, porque no hace falta. Y `mv` no necesita `-r` para directorios: mover un directorio es una sola operación, no una copia de todo su contenido.
 
 ## rm
 
@@ -62,7 +62,7 @@ rm respaldo.txt
 
 ### No hay papelera
 
-Esto es lo más importante de esta lección: **`rm` no manda nada a la papelera de reciclaje**. Lo que borras desde la terminal se borra, y no hay una carpeta donde ir a buscarlo después.
+Esto es lo más importante de esta lección: **`rm` no manda nada a la papelera de reciclaje**. Lo que borras desde la terminal se borra, y no hay un directorio donde ir a buscarlo después.
 
 La combinación `-rf` (recursivo y forzado) es la que más daño hace, porque borra directorios enteros sin preguntar ni una vez. Es una herramienta legítima y de uso corriente, pero conviene mirar dos veces la ruta antes de darle *Enter*.
 

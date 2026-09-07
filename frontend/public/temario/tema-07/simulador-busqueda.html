@@ -506,8 +506,8 @@ const PISTAS_FIND = [
   },
   {
     id: "oculto",
-    etiqueta: "Carpeta oculta",
-    pista: "Hay una carpeta que no sale al listar el proyecto. Dime cómo se llama: está <b>oculta</b>, y eso se nota en su nombre.",
+    etiqueta: "Directorio oculta",
+    pista: "Hay un directorio que no sale al listar el proyecto. Dime cómo se llama: está <b>oculta</b>, y eso se nota en su nombre.",
     terreno: "Los nombres que empiezan por punto están ocultos. Busca por tipo directorio y por esa forma de nombre.",
     terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
     arma() {
@@ -1144,7 +1144,7 @@ const GLOSARIO = {
   cat: "Escribe el contenido entero de un archivo. Para archivos largos es mejor `head` o `grep`.",
   ls: "Lista lo que hay en un directorio: los nombres, y con la opción adecuada también el tamaño y la fecha. Lo que empieza por punto no sale salvo que lo pidas.",
   archivo: "Un archivo es cualquier cosa guardada con un nombre: un texto, una imagen, un programa. En Linux hasta los dispositivos se tratan como archivos.",
-  directorio: "Lo que en otros sistemas se llama carpeta: un archivo especial cuyo contenido es una lista de otros nombres.",
+  directorio: "Lo que en otros sistemas se llama directorio: un archivo especial cuyo contenido es una lista de otros nombres.",
   tubo: "El mercado digital de videojuegos más grande del mundo. Ya tienes una tubodeck y la tubomachine? Poco tiene que ver con el incidente, pero se agradece la curiosidad.",
   cd: "Cambia de directorio.",
   pipe: "La barra vertical `|` encadena comandos: la salida del primero entra en el segundo, sin pasar por ningún archivo.",
@@ -1156,10 +1156,10 @@ const GLOSARIO = {
   despliegue: "Subir una versión nueva a producción. Cuando algo se rompe, es lo primero que se mira.",
   produccion: "El sistema que usan las personas de verdad, no el de pruebas. Por eso una caída ahí es urgente.",
   volcado: "Una copia del contenido de una base de datos, guardada en un archivo. Suele terminar en .sql.",
-  oculto: "Un archivo o carpeta cuyo nombre empieza por punto. `ls` no los enseña salvo que se le pida.",
+  oculto: "Un archivo o directorio cuyo nombre empieza por punto. `ls` no los enseña salvo que se le pida.",
   csv: "Un archivo de texto donde cada línea es una fila y las columnas van separadas por comas.",
   help: "Escríbelo en la terminal y te enseña los comandos que puedes usar aquí.",
-  "-r": "Hace que la búsqueda entre en las carpetas y siga hacia dentro, en vez de quedarse en el sitio donde estás.",
+  "-r": "Hace que la búsqueda entre en los directorios y siga hacia dentro, en vez de quedarse en el sitio donde estás.",
   "-i": "Hace que dé igual mayúsculas y minúsculas: así «ERROR» y «error» cuentan lo mismo.",
   "-c": "En vez de enseñar las líneas, dice cuántas hay.",
   "-l": "En vez de las líneas, devuelve solo los nombres de los archivos donde hay coincidencia.",
@@ -1179,7 +1179,7 @@ const ALIAS = {
   "hexadecimal": "commit", "branch": "rama",
   "servidor": "nodo", "maquina": "nodo",
   "base de datos": "volcado", "backup": "volcado", "respaldo": "volcado",
-  "archivo oculto": "oculto", "carpeta oculta": "oculto",
+  "archivo oculto": "oculto", "directorio oculta": "oculto",
   "recursivo": "-r", "recursiva": "-r",
 };
 

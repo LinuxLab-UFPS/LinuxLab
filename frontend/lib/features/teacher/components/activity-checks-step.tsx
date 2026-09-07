@@ -65,7 +65,7 @@ export function ActivityChecksStep({
       {evaluationType === "atomic" ? (
         <>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Las rutas son relativas a la carpeta de trabajo de la actividad: escribe
+            Las rutas son relativas al directorio de trabajo de la actividad: escribe
             solo el archivo o directorio que se va a verificar (ej:{" "}
             <code className="font-mono text-foreground">informe.txt</code>). Los{" "}
             {MAX_SCORE} pts se reparten entre las aserciones.

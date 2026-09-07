@@ -27,7 +27,7 @@ async function dirExists(path) {
 
 /**
  * Lo que dice la base contra lo que hay en el contenedor: cuentas que faltan,
- * cuentas sobrantes, cursos sin su grupo o sin su carpeta, y trabajos atascados.
+ * cuentas sobrantes, cursos sin su grupo o sin su directorio, y trabajos atascados.
  * Es solo lectura; arreglar es otra llamada.
  */
 async function snapshot() {

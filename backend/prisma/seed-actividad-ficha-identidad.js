@@ -23,7 +23,7 @@ const DATOS = {
     "Deja por escrito quién eres para el sistema: tu identidad completa y tu " +
     "línea entera de la base de cuentas.",
   /* Sin archivos que preparar, pero con `setup` de todas formas: el script crea
-     la carpeta de la actividad aunque no haya nada dentro. Asi el estudiante la
+     el directorio de la actividad aunque no haya nada dentro. Asi el estudiante la
      encuentra hecha (el enunciado no tiene que pedirle un `mkdir`) y el boton de
      rehacer archivos funciona igual que en las demas. */
   setup: {},

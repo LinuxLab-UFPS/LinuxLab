@@ -17,7 +17,7 @@ function rutaError(params: Record<string, string>): string | null {
   const ruta = value(params, "ruta")
   if (!ruta) return "Falta la ruta"
   if (ruta.startsWith("/") || ruta.split("/").includes("..")) {
-    return "La ruta debe ser relativa a la carpeta de trabajo (sin '/' inicial ni '..')"
+    return "La ruta debe ser relativa al directorio de trabajo (sin '/' inicial ni '..')"
   }
   return null
 }

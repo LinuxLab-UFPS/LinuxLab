@@ -62,7 +62,7 @@ function cerrarEspera(err?: Error) {
  *
  * Vive en el modulo y no en un componente a proposito: sobrevive a cambiar de
  * pagina, igual que la propia sesion. Un intento anterior de saber esto guardaba
- * en React si se habia pulsado "ir a la carpeta", y al recargar volvia a cero y
+ * en React si se habia pulsado "ir al directorio", y al recargar volvia a cero y
  * bloqueaba el boton a quien ya estaba en el sitio correcto.
  *
  * Null significa "no se sabe", que no es lo mismo que "esta fuera": hasta el
@@ -105,7 +105,7 @@ function leerCwd(texto: string) {
  *
  * Se sabe por la pantalla alternativa: al arrancar, esos programas piden el
  * bufer de repuesto con `?1049h` y al salir lo devuelven con `?1049l`. Importa
- * porque escribir en la terminal desde fuera (el boton de "ir a la carpeta")
+ * porque escribir en la terminal desde fuera (el boton de "ir al directorio")
  * mientras `vi` esta abierto no ejecuta nada: teclea dentro del archivo, y en
  * modo normal `c`, `d` y `~` son ordenes de edicion que lo estropean.
  */
@@ -164,7 +164,7 @@ function conectar() {
     intento = 0
     if (tamaño) socket.send(JSON.stringify({ type: "resize", ...tamaño }))
     // La terminal está lista: los comandos que llegaron antes (p. ej. el cd a
-    // la carpeta de trabajo al abrir una actividad) se vacían en orden.
+    // el directorio de trabajo al abrir una actividad) se vacían en orden.
     markTerminalReady()
   }
 

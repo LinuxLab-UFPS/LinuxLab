@@ -9,7 +9,7 @@ const CHILDREN: Node[] = [
   { name: "etc/", detail: "configuración del sistema", color: "text-orange-500 border-orange-500/60" },
   {
     name: "home/",
-    detail: "carpetas de usuario",
+    detail: "directorios de usuario",
     color: "text-emerald-500 border-emerald-500/60",
     child: { name: "usuario/", detail: "tu espacio personal" },
   },

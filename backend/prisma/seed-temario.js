@@ -55,7 +55,7 @@ const TOPICS = [
   },
   {
     number: 6, slug: "compresion", title: "Compresión",
-    description: "Reducir el tamaño de un archivo con gzip y bzip2, y empaquetar carpetas enteras con tar",
+    description: "Reducir el tamaño de un archivo con gzip y bzip2, y empaquetar directorios enteras con tar",
     subtopics: [
       { id: "comprimir", title: "Comprimir y descomprimir", file: "01-comprimir.md" },
       { id: "tar", title: "Empaquetar con tar", file: "02-tar.md" },

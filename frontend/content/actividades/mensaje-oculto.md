@@ -22,7 +22,7 @@ bloque-a.txt  bloque-b.txt  bloque-c.txt  bloque-d.txt
 
 **Objetivos:**
 
-Sacar los trozos usando `head` y `tail`, juntarlos en un archivo nuevo llamado `logo.txt` dentro de esa misma carpeta, y añadir tu código estudiantil como última línea.
+Sacar los trozos usando `head` y `tail`, juntarlos en un archivo nuevo llamado `logo.txt` dentro de esa mismo directorio, y añadir tu código estudiantil como última línea.
 
 **Hints:**
 

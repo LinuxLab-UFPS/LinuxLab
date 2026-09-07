@@ -7,13 +7,13 @@ existe y se puede leer" seria cierto siempre y la asercion no medaria nada.
 
 Entra un JSON por stdin y sale un JSON por stdout:
 
-    {"workdir": "actividades/<carpeta>",        // opcional
+    {"workdir": "actividades/<directorio>",        // opcional
      "checks": [{"id": "c1", "type": "directorio_existe",
                  "params": {"ruta": "/home/$usuario/practicas"}}]}
 
     {"results": [{"id": "c1", "passed": true, "detail": "..."}]}
 
-Con `workdir` (la carpeta de trabajo de la actividad, relativa al home) los
+Con `workdir` (el directorio de trabajo de la actividad, relativa al home) los
 mensajes muestran la ruta tal como la escribio el docente en la asercion; sin
 el, la ruta se muestra relativa al home del estudiante.
 
@@ -72,7 +72,7 @@ def resolve(raw, home):
     home_real = os.path.realpath(home)
     if real != home_real and not real.startswith(home_real + os.sep):
         raise CheckError(
-            "La ruta que pide el enunciado queda fuera de tu carpeta personal: "
+            "La ruta que pide el enunciado queda fuera de tu directorio personal: "
             "todo tu trabajo debe vivir dentro de tu home."
         )
     return real
@@ -85,19 +85,19 @@ def owned_by_me(path):
 def display_name(path, home, base=""):
     """Ruta legible para los mensajes de retroalimentacion.
 
-    Relativa al home del estudiante y, cuando vive dentro de la carpeta de
+    Relativa al home del estudiante y, cuando vive dentro del directorio de
     trabajo de la actividad, relativa a ella (el mismo camino que escribio el
     docente en la asercion). Asi dos checks que apuntan a archivos con el
-    mismo nombre en carpetas distintas no producen mensajes identicos que se
+    mismo nombre en directorios distintos no producen mensajes identicos que se
     contradigan entre si.
     """
     rel = os.path.relpath(path, home)
     if rel == ".":
-        return "tu carpeta personal"
+        return "tu directorio personal"
     base = (base or "").strip().strip("/")
     if base and (rel == base or rel.startswith(base + os.sep)):
         inner = rel[len(base):].lstrip("/")
-        # La ruta es la propia carpeta de la actividad: mejor el camino completo.
+        # La ruta es la propio directorio de la actividad: mejor el camino completo.
         if inner:
             return inner
     return rel
@@ -137,7 +137,7 @@ def check_directorio_existe(params, home, base=""):
     name = display_name(path, home, base)
     if not os.path.exists(path):
         raise CheckError(
-            f"Busqué el directorio '{name}' en tu carpeta de trabajo, pero todavía no existe. "
+            f"Busqué el directorio '{name}' en tu directorio de trabajo, pero todavía no existe. "
             "Créalo con mkdir y vuelve a comprobar."
         )
     if not os.path.isdir(path):
@@ -148,7 +148,7 @@ def check_directorio_existe(params, home, base=""):
     if not owned_by_me(path):
         raise CheckError(
             f"El directorio '{name}' existe, pero pertenece a otra cuenta: debe ser tuyo. "
-            "Verifica en qué carpeta lo creaste y con qué usuario trabajas."
+            "Verifica en qué directorio lo creaste y con qué usuario trabajas."
         )
     return f"¡Muy bien! El directorio '{name}' existe y te pertenece."
 
@@ -158,7 +158,7 @@ def check_archivo_existe(params, home, base=""):
     name = display_name(path, home, base)
     if not os.path.exists(path):
         raise CheckError(
-            f"Busqué el archivo '{name}' en tu carpeta de trabajo, pero todavía no existe. "
+            f"Busqué el archivo '{name}' en tu directorio de trabajo, pero todavía no existe. "
             "Puedes crearlo con touch o con tu editor de texto, y luego volver a comprobar."
         )
     if os.path.isdir(path):
@@ -169,7 +169,7 @@ def check_archivo_existe(params, home, base=""):
     if not owned_by_me(path):
         raise CheckError(
             f"El archivo '{name}' existe, pero pertenece a otra cuenta: debe ser tuyo. "
-            "Verifica en qué carpeta lo creaste."
+            "Verifica en qué directorio lo creaste."
         )
     return f"¡Perfecto! El archivo '{name}' existe y te pertenece."
 
@@ -180,10 +180,10 @@ def check_archivo_no_existe(params, home, base=""):
     name = display_name(path, home, base)
     if os.path.exists(path):
         raise CheckError(
-            f"'{name}' todavía está en tu carpeta. El enunciado pide que lo hayas eliminado: "
+            f"'{name}' todavía está en tu directorio. El enunciado pide que lo hayas eliminado: "
             "prueba con rm y vuelve a comprobar."
         )
-    return f"Listo: '{name}' ya no está en tu carpeta, tal como pedía el enunciado."
+    return f"Listo: '{name}' ya no está en tu directorio, tal como pedía el enunciado."
 
 
 def check_permisos_son(params, home, base=""):
@@ -378,7 +378,7 @@ def main():
 
     payload = json.load(sys.stdin)
     home = me().pw_dir
-    # Carpeta de trabajo de la actividad (relativa al home), si el backend la
+    # Directorio de trabajo de la actividad (relativa al home), si el backend la
     # manda: permite que los mensajes muestren la ruta tal como la escribio el
     # docente en la asercion, en vez del camino completo desde el home.
     base = payload.get("workdir") or ""

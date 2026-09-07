@@ -8,7 +8,7 @@
  * `entorno/scripts/checker.py` (la autoridad final de evaluacion) y anadirlo
  * aqui — la interfaz lo muestra solo.
  *
- * La `ruta` de cada asercion es RELATIVA a la carpeta de trabajo de la
+ * La `ruta` de cada asercion es RELATIVA al directorio de trabajo de la
  * actividad (`~/actividades/<workdir>/`): el docente escribe solo el archivo o
  * directorio que va a verificar, y el backend la resuelve al evaluar.
  */
@@ -22,21 +22,21 @@ const CATALOG = [
   {
     type: "directorio_existe",
     label: "El directorio existe",
-    hint: "Verifica que exista un directorio dentro de la carpeta de trabajo de la actividad.",
-    fields: [field("ruta", "Directorio", "carpeta")],
+    hint: "Verifica que exista un directorio dentro del directorio de trabajo de la actividad.",
+    fields: [field("ruta", "Directorio", "directorio")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {
     type: "archivo_existe",
     label: "El archivo existe",
-    hint: "Verifica que exista un archivo dentro de la carpeta de trabajo de la actividad.",
+    hint: "Verifica que exista un archivo dentro del directorio de trabajo de la actividad.",
     fields: [field("ruta", "Archivo", "informe.txt")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {
     type: "archivo_no_existe",
     label: "El archivo ya no existe",
-    hint: "Verifica que el archivo no exista dentro de la carpeta de trabajo de la actividad.",
+    hint: "Verifica que el archivo no exista dentro del directorio de trabajo de la actividad.",
     fields: [field("ruta", "Archivo", "temporal.tmp")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },

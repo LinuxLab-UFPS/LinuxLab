@@ -172,7 +172,7 @@ Conviene mirar ese resultado con atención. El `700` era el permiso adecuado par
 | `chmod o= archivo` | Cierra un bloque por completo |
 | `chmod g+r,o-r archivo` | Encadena cambios con comas |
 | `chmod u+wx,g+w archivo` | Varios permisos en cada tramo de la coma |
-| `chmod -R 700 carpeta` | Aplica el cambio a todo el contenido |
+| `chmod -R 700 directorio` | Aplica el cambio a todo el contenido |
 
 ---
 

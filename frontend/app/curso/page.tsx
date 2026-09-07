@@ -34,7 +34,7 @@ export default async function GroupPage({
   const { tema, sub } = await searchParams
 
   /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo
-     lo que viene despues (carpeta `tema-NN`, assets, vecinos) se construye a
+     lo que viene despues (directorio `tema-NN`, assets, vecinos) se construye a
      partir de ese numero. */
   if (esBienvenida(tema)) {
     const pagina = paginaBienvenida(sub)

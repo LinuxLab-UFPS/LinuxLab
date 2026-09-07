@@ -100,7 +100,7 @@ touch u5.txt
 
 ## Solo dura la sesión
 
-El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar la terminal. Los archivos ya existentes no se ven alterados: `umask` decide con qué permisos se crean las cosas, `chmod` cambia las que ya están. Para que un valor distinto persista hay que escribirlo en el archivo `.bashrc` de la carpeta personal, que es el que se lee al abrir cada sesión.
+El cambio afecta a lo que se cree a partir de ese momento y desaparece al cerrar la terminal. Los archivos ya existentes no se ven alterados: `umask` decide con qué permisos se crean las cosas, `chmod` cambia las que ya están. Para que un valor distinto persista hay que escribirlo en el archivo `.bashrc` del directorio personal, que es el que se lee al abrir cada sesión.
 
 <!-- SIMULATOR: filtro-de-permisos -->
 

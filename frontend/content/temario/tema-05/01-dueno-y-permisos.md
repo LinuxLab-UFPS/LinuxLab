@@ -128,7 +128,7 @@ stat -c "%A  %a  %U  %G  %n" notas.txt informe.txt saludo.sh
 
 Cada bloque de tres letras equivale a un dígito. De dónde salen esos números y cómo se usan para cambiar permisos es el contenido de los dos temas siguientes.
 
-Crea en tu carpeta personal un archivo `solo-lectura.txt` con al menos dos líneas y déjalo sin permiso de escritura para nadie. Los permisos se entienden mejor estorbando.
+Crea en tu directorio personal un archivo `solo-lectura.txt` con al menos dos líneas y déjalo sin permiso de escritura para nadie. Los permisos se entienden mejor estorbando.
 
 Se escribe con `vi`, igual que en el tema anterior:
 
@@ -178,7 +178,7 @@ rm solo-lectura.txt
 rm: remove write-protected regular file 'solo-lectura.txt'?
 ```
 
-`rm` pide confirmación justo porque el archivo no tiene permiso de escritura. Respondiendo `y` lo borra igual, y la razón es la del tema de directorios: borrar no depende del permiso del archivo, sino del de la carpeta que lo contiene.
+`rm` pide confirmación justo porque el archivo no tiene permiso de escritura. Respondiendo `y` lo borra igual, y la razón es la del tema de directorios: borrar no depende del permiso del archivo, sino del del directorio que lo contiene.
 
 ---
 

@@ -17,7 +17,7 @@ REAL=/usr/bin/tree
 HOME_REAL=$(realpath -q "$HOME" 2>/dev/null) || HOME_REAL="$HOME"
 
 fuera() {
-  echo "tree: '$1' queda fuera de tu carpeta personal" >&2
+  echo "tree: '$1' queda fuera de tu directorio personal" >&2
   echo "Solo puedes recorrer lo que hay dentro de $HOME." >&2
   exit 1
 }

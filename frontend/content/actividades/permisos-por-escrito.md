@@ -16,4 +16,4 @@ Escribir los permisos de los siguientes archivos, en forma simbólica, dentro de
 
 **Hint:**
 
-La forma simbólica son diez caracteres: el primero dice qué tipo de archivo es, y los nueve siguientes van en tres bloques de tres. `ls -l` los muestra así para todo lo que hay en la carpeta.
+La forma simbólica son diez caracteres: el primero dice qué tipo de archivo es, y los nueve siguientes van en tres bloques de tres. `ls -l` los muestra así para todo lo que hay en el directorio.

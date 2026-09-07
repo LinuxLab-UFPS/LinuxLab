@@ -59,15 +59,15 @@ function bankSlugOf(activityId) {
 /**
  * La unica actividad del temario cuyo trabajo NO vive en `~/actividades/<slug>`.
  *
- * Monta su arbol en la carpeta personal a proposito, y sus comprobaciones
- * apuntan alli. Sin `workdir` la interfaz no ofrece ni "ir a la carpeta" (seria
- * una carpeta vacia) ni reiniciar (borraria algo que no es suyo).
+ * Monta su arbol en el directorio personal a proposito, y sus comprobaciones
+ * apuntan alli. Sin `workdir` la interfaz no ofrece ni "ir al directorio" (seria
+ * un directorio vacio) ni reiniciar (borraria algo que no es suyo).
  */
-const SIN_CARPETA_PROPIA = new Set(["universidad-facultades"])
+const SIN_DIRECTORIO_PROPIO = new Set(["universidad-facultades"])
 
-/** La carpeta de trabajo de una actividad del temario, o null si no tiene. */
+/** El directorio de trabajo de una actividad del temario, o null si no tiene. */
 function workdirOf(slug) {
-  return SIN_CARPETA_PROPIA.has(slug) ? null : slug
+  return SIN_DIRECTORIO_PROPIO.has(slug) ? null : slug
 }
 
 /**

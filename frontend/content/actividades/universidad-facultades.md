@@ -2,7 +2,7 @@ Acabas de conseguir tu primer empleo. Se te ha asignado la tarea de crear la est
 
 **Objetivos:**
 
-1. Crea el directorio `universidad` en tu carpeta personal.
+1. Crea el directorio `universidad` en tu directorio personal.
 2. Dentro de él, crea `ingenieria`, `enfermeria` y `arquitectura`.
 3. Dentro de cada una de las tres, crea un archivo llamado `pensum.txt`.
 
@@ -20,4 +20,4 @@ universidad
 
 **Hint:**
 
-Se puede armar paso a paso, creando cada carpeta y cada archivo por separado, o en bastantes menos órdenes aprovechando las opciones que ya se vieron en el tema.
+Se puede armar paso a paso, creando cada directorio y cada archivo por separado, o en bastantes menos órdenes aprovechando las opciones que ya se vieron en el tema.

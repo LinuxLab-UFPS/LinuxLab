@@ -103,7 +103,7 @@ function ActivityDetail({
             <DetailRow label="Fecha de cierre">
               {activity.dueDate ? formatBogotaDateTime(activity.dueDate) : "Sin fecha"}
             </DetailRow>
-            <DetailRow label="Carpeta de trabajo">
+            <DetailRow label="Directorio de trabajo">
               <span className="flex items-center justify-end gap-1.5 font-mono">
                 <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 ~/actividades/{activity.workdir}

@@ -118,7 +118,7 @@ cat d/uno/dos/tres/final.txt
 dato
 ```
 
-Así está montado el aislamiento de este laboratorio. Los directorios por los que se pasa para llegar a tu carpeta dan `x` a todo el mundo pero no `r`: se cruzan sin poder listar quién más hay dentro. Y tu carpeta, al final del camino, no da nada a los demás. Por eso ningún compañero llega a tus archivos, tengan los permisos que tengan.
+Así está montado el aislamiento de este laboratorio. Los directorios por los que se pasa para llegar a tu directorio dan `x` a todo el mundo pero no `r`: se cruzan sin poder listar quién más hay dentro. Y tu directorio, al final del camino, no da nada a los demás. Por eso ningún compañero llega a tus archivos, tengan los permisos que tengan.
 
 ## Borrar depende del directorio, no del archivo
 
@@ -141,7 +141,7 @@ chmod 700 caja
 rm caja/blindado.txt
 ```
 
-El motivo es que borrar no toca el archivo: quita su nombre de la lista del directorio. El permiso que se comprueba es el del directorio, no el del archivo. Poner un archivo a `000` no lo protege de ser borrado por quien pueda escribir en la carpeta donde vive.
+El motivo es que borrar no toca el archivo: quita su nombre de la lista del directorio. El permiso que se comprueba es el del directorio, no el del archivo. Poner un archivo a `000` no lo protege de ser borrado por quien pueda escribir en el directorio donde vive.
 
 ## Los valores que se usan de verdad
 
@@ -169,7 +169,7 @@ ls -ld recien
 drwxrwsr-x 1 andres_torres grp_cec1648c 0 Aug 10 22:21 recien
 ```
 
-En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea (DevOps Daily, 2025). Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado de la carpeta personal y no hay que tocarlo.
+En el bloque de grupo hay una `s` donde debería ir la `x`. Es un permiso especial que hace que todo lo creado dentro herede el grupo del directorio en lugar del grupo de quien lo crea (DevOps Daily, 2025). Está puesto a propósito para que los archivos del curso queden asociados al curso, viene heredado del directorio personal y no hay que tocarlo.
 
 <!-- ACTIVIDAD: permisos-por-escrito -->
 

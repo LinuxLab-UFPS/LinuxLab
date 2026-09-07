@@ -7,7 +7,7 @@ if [ -n "$PS1" ]; then
 
   # En cada prompt, la shell dice en que directorio esta (OSC 7, el estandar que
   # usan los emuladores para seguir el cwd). La plataforma lo lee para saber si
-  # el estudiante esta dentro de la carpeta de la actividad que tiene abierta.
+  # el estudiante esta dentro del directorio de la actividad que tiene abierta.
   #
   # Es una secuencia de control: el emulador la consume y no se ve en pantalla.
   # Va por aqui y no leyendo /proc porque el entorno monta hidepid=2 a proposito

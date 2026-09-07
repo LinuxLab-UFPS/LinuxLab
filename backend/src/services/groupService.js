@@ -490,7 +490,7 @@ async function unarchiveGroup({ groupId, role, teacherUserId }) {
  * los estudiantes borradas de la base, jobs de aprovisionamiento pendientes
  * cancelados y teardown del entorno encolado. El worker borra del contenedor
  * los usuarios de los matriculados (los usernames se conservan en el job
- * porque las filas se acaban de borrar) y la carpeta del grupo.
+ * porque las filas se acaban de borrar) y el directorio del grupo.
  *
  * Corre dentro de la transaccion del llamador, que fija el estado final con
  * nextStatus ('finished' al finalizar, 'archived' en el modo de compatibilidad).
@@ -574,7 +574,7 @@ async function deleteGroup({ groupId, role, teacherUserId }) {
   // hay forma de saber a quien se le elimino la cuenta. Los usernames pueden
   // venir vacios: al archivar ya se borraron las filas de linux_accounts y los
   // usuarios los elimino el teardown job; esta pasada de respaldo se queda con
-  // el grupo Unix y la carpeta.
+  // el grupo Unix y el directorio.
   const enrolled = await prisma.enrollment.findMany({
     where: { group_id: groupId },
     select: {

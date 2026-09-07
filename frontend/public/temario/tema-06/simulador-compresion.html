@@ -391,7 +391,7 @@ button.win-dot::after{
   <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
   <h2>Escritorio comprimido</h2>
   <p>
-    Un escritorio con una terminal y un correo que no admite carpetas.
+    Un escritorio con una terminal y un correo que no admite directorios.
     Empaqueta con tar, mira dentro de un respaldo antes de abrirlo y envía la
     entrega sin lo que no debía salir.
   </p>
@@ -407,7 +407,7 @@ const barra = Barra.montar({
   titulo: 'Escritorio comprimido',
   ayuda: [
     { clave: 'help',  tono: 'verde',   texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
-    { clave: 'Correo', tono: 'azul',   texto: 'No admite carpetas. Lo que se envíe tiene que ser un archivo, y eso es lo que hay que preparar con <code>tar</code>.' },
+    { clave: 'Correo', tono: 'azul',   texto: 'No admite directorios. Lo que se envíe tiene que ser un archivo, y eso es lo que hay que preparar con <code>tar</code>.' },
     { clave: 'TUBO',  tono: 'naranja', texto: 'El mercado digital de videojuegos más grande del mundo. Ya tienes una tubodeck y la tubomachine?' },
   ],
   onReiniciar: () => reiniciar(),
@@ -419,7 +419,7 @@ const barra = Barra.montar({
    dependian de la fuente del sistema y cada maquina los dibujaba distinto.
    ============================================================ */
 const SVG = {
-  carpeta:
+  directorio:
     '<svg viewBox="0 0 64 64">' +
     '<path d="M5 13a4 4 0 0 1 4-4h15.5l5 6H55a4 4 0 0 1 4 4v5H5z" fill="#C98A2E"/>' +
     '<path d="M5 22h54a4 4 0 0 1 4 4.4l-3.4 24A5 5 0 0 1 54.7 55H9.3a5 5 0 0 1-5-4.6L1 26.4A4 4 0 0 1 5 22z" fill="#F0B454"/>' +
@@ -439,14 +439,14 @@ const SVG = {
    igual que el reparto al azar de la actividad del logo. El orden
    de los desafios NO cambia: se encadenan.
    ============================================================ */
-const CARPETAS = ["informe", "practica", "entrega", "proyecto"];
+const DIRECTORIOS = ["informe", "practica", "entrega", "proyecto"];
 const SUELTOS  = ["notas", "borrador", "resumen", "apuntes"];
 const RESPALDOS = ["respaldo", "copia", "historico"];
 const INTRUSOS = ["clave.txt", "password.txt", "token.txt"];
 const JUEGOS = [
-  { titulo: "Starforge", carpeta: "starforge" },
-  { titulo: "Neon Rift", carpeta: "neonrift" },
-  { titulo: "Duskfall", carpeta: "duskfall" },
+  { titulo: "Starforge", directorio: "starforge" },
+  { titulo: "Neon Rift", directorio: "neonrift" },
+  { titulo: "Duskfall", directorio: "duskfall" },
 ];
 const PACKS = ["pack-invierno", "pack-armas", "pack-texturas"];
 
@@ -471,24 +471,24 @@ let fs, nombres, paso, enviado, descargado, jugado;
 function nuevaPartida() {
   const juego = alAzar(JUEGOS);
   nombres = {
-    carpeta: alAzar(CARPETAS),
+    directorio: alAzar(DIRECTORIOS),
     respaldo: alAzar(RESPALDOS) + ".tar.gz",
     intruso: alAzar(INTRUSOS),
     suelto: alAzar(SUELTOS) + ".txt",
     juego: juego.titulo,
     // Un solo nivel: el modelo del sistema de archivos no anida mas.
-    mods: juego.carpeta + "-mods",
+    mods: juego.directorio + "-mods",
     pack: alAzar(PACKS) + ".tar.gz",
   };
 
   const hojas = ["datos.csv", "lectura.md", nombres.suelto];
   fs = {};
-  // La carpeta del desafio 1, con su peso repartido entre los archivos.
-  fs[nombres.carpeta] = { tipo: "dir", hijos: hojas.slice(), bytes: 1_200_000 };
+  // El directorio del desafio 1, con su peso repartido entre los archivos.
+  fs[nombres.directorio] = { tipo: "dir", hijos: hojas.slice(), bytes: 1_200_000 };
   hojas.forEach((h, i) => {
-    fs[nombres.carpeta + "/" + h] = { tipo: "file", bytes: [520_000, 410_000, 270_000][i] };
+    fs[nombres.directorio + "/" + h] = { tipo: "file", bytes: [520_000, 410_000, 270_000][i] };
   });
-  // El respaldo del desafio 2 ya viene comprimido. Lleva dentro una carpeta,
+  // El respaldo del desafio 2 ya viene comprimido. Lleva dentro un directorio,
   // como cualquier tar de verdad: extraerlo deja un directorio, no un puñado
   // de archivos sueltos por el sitio.
   nombres.raizRespaldo = nombres.respaldo.replace(".tar.gz", "");
@@ -500,7 +500,7 @@ function nuevaPartida() {
     pesos: { "config.yml": 140_000, "registro.log": 520_000, [nombres.intruso]: 90_000 },
   };
 
-  // La carpeta de mods del juego existe desde el principio: la crea el
+  // El directorio de mods del juego existe desde el principio: la crea el
   // launcher al instalarse, como cualquier juego. Vacia, esperando el pack.
   fs[nombres.mods] = { tipo: "dir", hijos: [], bytes: 0 };
 
@@ -511,7 +511,7 @@ function nuevaPartida() {
   jugado = false;
 }
 
-/** Lo que hay en la raiz de ~/escritorio (no las hojas de las carpetas). */
+/** Lo que hay en la raiz de ~/escritorio (no las hojas de los directorios). */
 const enRaiz = () => Object.keys(fs).filter((k) => !k.includes("/"));
 
 /**
@@ -560,7 +560,7 @@ const rutaMods = () => "~/escritorio/" + nombres.mods;
 /** Los .mod que trae el pack, sin el leeme: son los que cuentan como instalados. */
 const MODS = ["arma-legendaria.mod", "texturas-hd.mod"];
 
-/** El pack esta extraido en la carpeta de mods del juego. */
+/** El pack esta extraido en el directorio de mods del juego. */
 const modsInstalados = () => {
   const d = fs[nombres.mods];
   return Boolean(d && MODS.every((m) => d.hijos.includes(m)));
@@ -578,10 +578,10 @@ const listoParaJugar = () => modsInstalados();
 function desafios() {
   return [
     {
-      objetivo: `Comprime ${nombres.carpeta}/ en un .tar.gz`,
-      texto: `Comprime la carpeta ${nombres.carpeta}/ en un .tar.gz con tar. El correo no admite carpetas.`,
+      objetivo: `Comprime ${nombres.directorio}/ en un .tar.gz`,
+      texto: `Comprime el directorio ${nombres.directorio}/ en un .tar.gz con tar. El correo no admite directorios.`,
       hecho: () =>
-        Object.keys(fs).some((n) => n.endsWith(".tar.gz") && fs[n].deLaCarpeta === nombres.carpeta),
+        Object.keys(fs).some((n) => n.endsWith(".tar.gz") && fs[n].deLDirectorio === nombres.directorio),
     },
     {
       objetivo: `Lista y extrae ${nombres.respaldo}`,
@@ -623,12 +623,12 @@ function log(texto, clase) {
 
 const AYUDA = [
   "Comandos disponibles en esta práctica:",
-  "  cd <carpeta>               entra en una carpeta (.. sube, ~ vuelve)",
-  "  ls [-l] [carpeta]          lista lo que hay",
+  "  cd <directorio>               entra en un directorio (.. sube, ~ vuelve)",
+  "  ls [-l] [directorio]          lista lo que hay",
   "  tar -czf <salida> <origen> empaqueta y comprime",
   "  tar -tzf <archivo>         lista el contenido sin extraer",
   "  tar -xzf <archivo>         extrae",
-  "  tar -xzf <archivo> -C <carpeta>  extrae dentro de esa carpeta",
+  "  tar -xzf <archivo> -C <directorio>  extrae dentro de ese directorio",
   "  rm [-r] <ruta>             borra",
   "  clear                      limpia la consola",
 ];
@@ -653,7 +653,7 @@ function cmdLs(args) {
   const clave = resolver(donde);
   if (clave === null) return log(`ls: ${donde}: en esta práctica solo existe ~/escritorio`, "bad");
 
-  // Sin argumento lista donde estas; con uno, esa carpeta.
+  // Sin argumento lista donde estas; con uno, ese directorio.
   if (clave !== "" && !fs[clave]) return log(`ls: ${donde}: no existe`, "bad");
   if (clave !== "" && fs[clave].tipo !== "dir") return log(donde, "echo");
 
@@ -668,14 +668,14 @@ function cmdLs(args) {
 }
 
 function cmdTar(args) {
-  // `-C <carpeta>` se saca antes de nada: su valor no es un origen ni el
+  // `-C <directorio>` se saca antes de nada: su valor no es un origen ni el
   // paquete, y si se quedara en la lista se leeria como uno de los dos.
   let destino = null;
   const iC = args.indexOf("-C");
   if (iC !== -1) {
     const escrito = args[iC + 1];
     args = args.slice(0, iC).concat(args.slice(iC + 2));
-    if (!escrito) return log("tar: -C necesita una carpeta", "bad");
+    if (!escrito) return log("tar: -C necesita un directorio", "bad");
     destino = resolver(escrito);
     if (destino === null) return log(`tar: ${escrito}: en esta práctica solo existe ~/escritorio`, "bad");
   }
@@ -699,17 +699,17 @@ function cmdTar(args) {
     const falta = origenes.find((o) => !fs[o]);
     if (falta !== undefined) return log(`tar: ${falta}: no existe`, "bad");
 
-    // Lo que entra al paquete: los archivos de cada carpeta y los sueltos que
+    // Lo que entra al paquete: los archivos de cada directorio y los sueltos que
     // se nombren. Se guarda el nombre a secas para poder comprobar despues si
     // el intruso sigue dentro.
     let crudo = 0;
     const hojas = [];
-    const carpetas = [];
+    const directorios = [];
     origenes.forEach((o) => {
       const e = fs[o];
       crudo += e.bytes;
       if (e.tipo === "dir") {
-        carpetas.push(o);
+        directorios.push(o);
         e.hijos.forEach((h) => hojas.push(h));
       } else {
         hojas.push(o);
@@ -719,8 +719,8 @@ function cmdTar(args) {
       tipo: "file",
       bytes: Math.round(crudo * RATIO),
       dentro: hojas,
-      raiz: carpetas.length === 1 ? carpetas[0] : null,
-      deLaCarpeta: carpetas.length === 1 ? carpetas[0] : null,
+      raiz: directorios.length === 1 ? directorios[0] : null,
+      deLDirectorio: directorios.length === 1 ? directorios[0] : null,
     };
     log(`${salida} creado · ${tam(crudo)} → ${tam(fs[salida].bytes)}`, "ok");
     return;
@@ -742,18 +742,18 @@ function cmdTar(args) {
     // Sin `-C`, tar extrae donde estas parado.
     if (destino === null && cwd) destino = cwd;
 
-    // Con `-C`, tar exige que la carpeta ya exista: no la crea.
+    // Con `-C`, tar exige que el directorio ya exista: no la crea.
     if (destino) {
       const d = fs[destino];
       if (!d) return log(`tar: ${destino}: no existe (créala antes)`, "bad");
-      if (d.tipo !== "dir") return log(`tar: ${destino}: no es una carpeta`, "bad");
+      if (d.tipo !== "dir") return log(`tar: ${destino}: no es un directorio`, "bad");
     }
 
     a.extraido = true;
     const raiz = a.raiz;
 
-    // Un paquete con carpeta dentro, extraido en otro sitio, dejaria tres
-    // niveles y el modelo solo lleva dos. Se guarda la carpeta con su peso
+    // Un paquete con directorio dentro, extraido en otro sitio, dejaria tres
+    // niveles y el modelo solo lleva dos. Se guarda el directorio con su peso
     // —que es lo que se ve en un `ls`— sin desglosar sus hojas.
     if (raiz && destino) {
       const total = a.dentro.reduce((s, n) => s + ((a.pesos && a.pesos[n]) || 100_000), 0);
@@ -796,7 +796,7 @@ function cmdRm(args) {
   if (!e) return log(`rm: ${objetivo}: no existe`, "bad");
   if (e.tipo === "dir" && !recursivo) return log(`rm: ${objetivo}: es un directorio (usa -r)`, "bad");
   if (e.tipo === "dir") Object.keys(fs).forEach((k) => k.startsWith(clave + "/") && delete fs[k]);
-  // Si colgaba de una carpeta, esa carpeta deja de listarlo y de pesarlo: es lo
+  // Si colgaba de un directorio, ese directorio deja de listarlo y de pesarlo: es lo
   // que hace que volver a comprimirla de el resultado que se espera. El corte
   // va por la ultima barra: con `cd` las rutas pueden tener mas de un nivel.
   if (clave.includes("/")) {
@@ -874,17 +874,17 @@ function abrirPicker() {
     const b = document.createElement("button");
     b.className = "picker-it";
     b.innerHTML = `<span></span><small>${
-      fs[n].tipo === "dir" ? "carpeta" : tam(fs[n].bytes)
+      fs[n].tipo === "dir" ? "directorio" : tam(fs[n].bytes)
     }</small>`;
     b.querySelector("span").textContent = n;
     b.addEventListener("click", () => {
       $("picker").hidden = true;
-      // Adjuntar una carpeta es el rechazo que da sentido al primer desafio:
+      // Adjuntar un directorio es el rechazo que da sentido al primer desafio:
       // el correo no sabe de directorios, por eso hay que empaquetar.
       if (fs[n].tipo === "dir") {
         adjunto = null;
         pintarCorreo();
-        avisarCorreo(`No se pueden adjuntar carpetas. Comprime ${n}/ en un .tar.gz primero.`);
+        avisarCorreo(`No se pueden adjuntar directorios. Comprime ${n}/ en un .tar.gz primero.`);
         return;
       }
       adjunto = n;
@@ -1008,7 +1008,7 @@ function descargarPack() {
   fs[nombres.pack] = {
     tipo: "file",
     bytes: 310_000,
-    // Sin carpeta dentro: los mods van sueltos, que es como los reparte
+    // Sin directorio dentro: los mods van sueltos, que es como los reparte
     // cualquier pack de verdad y lo que hace util el `-C`.
     raiz: null,
     dentro: MODS.concat(["leeme.txt"]),
@@ -1109,7 +1109,7 @@ function pintar() {
 function pintarIconos() {
   const cont = $("icons");
   cont.innerHTML = "";
-  // La carpeta de mods es del juego, no del escritorio: no ocupa icono. El
+  // El directorio de mods es del juego, no del escritorio: no ocupa icono. El
   // paquete si aparece, pero solo cuando se descarga, que es cuando existe.
   // El tope da para todo lo que puede haber a la vez —lo del principio, lo
   // que se empaqueta, lo que se extrae y la descarga— sin que nada se caiga.
@@ -1118,7 +1118,7 @@ function pintarIconos() {
     const it = document.createElement("div");
     it.className = "icon";
     it.innerHTML =
-      `<div class="icon-art">${e.tipo === "dir" ? SVG.carpeta : SVG.paquete}</div>` +
+      `<div class="icon-art">${e.tipo === "dir" ? SVG.directorio : SVG.paquete}</div>` +
       `<div class="icon-name"></div><div class="icon-size">${tam(e.bytes)}</div>`;
     it.querySelector(".icon-name").textContent = n;
     cont.appendChild(it);
@@ -1127,7 +1127,7 @@ function pintarIconos() {
 
 function terminar() {
   $("fin-p").textContent =
-    `Empaquetaste una carpeta, miraste dentro de un paquete antes de abrirlo, ` +
+    `Empaquetaste un directorio, miraste dentro de un paquete antes de abrirlo, ` +
     `enviaste ${enviado.nombre} sin lo que no debía salir y dejaste los mods de ` +
     `${nombres.juego} instalados donde el juego los busca.`;
   $("fin").hidden = false;

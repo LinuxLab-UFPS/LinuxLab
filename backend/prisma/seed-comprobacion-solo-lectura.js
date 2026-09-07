@@ -17,7 +17,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea solo-lectura.txt en tu carpeta personal con al " +
+    "Abre la terminal y crea solo-lectura.txt en tu directorio personal con al " +
     "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
     "a los tres bloques, de forma que solo quede lectura para todos.",
 }

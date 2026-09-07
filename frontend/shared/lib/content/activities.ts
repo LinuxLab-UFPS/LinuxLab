@@ -62,7 +62,7 @@ const RAW = [
     slug: "limpieza",
     title: "Limpieza con comodines",
     description:
-      "Una carpeta con nueve archivos de tres tipos. Borra unos, reparte los otros.",
+      "Un directorio con nueve archivos de tres tipos. Borra unos, reparte los otros.",
     difficulty: "basic" as Difficulty,
     topicNumber: 4,
     checks: 5,
@@ -123,9 +123,9 @@ const RAW = [
   },
   {
     slug: "la-carpeta-del-equipo",
-    title: "La carpeta del equipo",
+    title: "El directorio del equipo",
     description:
-      "Monta una carpeta compartida con setgid para que lo que nazca dentro herede el grupo.",
+      "Monta un directorio compartido con setgid para que lo que nazca dentro herede el grupo.",
     difficulty: "intermediate" as Difficulty,
     topicNumber: 8,
     checks: 4,

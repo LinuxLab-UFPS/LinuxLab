@@ -148,7 +148,7 @@ async function createGroup(teacherUsername, groupDir, groupName) {
  * lo que el estudiante crea hereda el grupo del curso aunque no sea miembro, y
  * el trabajo del dia a dia funciona igual. Lo que no funciona sin la membresia
  * es `chgrp` hacia ese grupo: el kernel solo lo permite a quien pertenece a el.
- * Un estudiante que cambie el grupo de una carpeta por error no puede
+ * Un estudiante que cambie el grupo de un directorio por error no puede
  * devolverlo, e `id` tampoco lo lista, que es justo lo que piden las
  * actividades de gestion de usuarios.
  */
@@ -188,7 +188,7 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
 /**
  * Elimina del entorno lo que queda de un grupo archivado: los usuarios Linux
  * de los matriculados (los usernames vienen de la BD, nunca de listar el
- * directorio) y luego el grupo Unix y la carpeta, que se borra recursivamente
+ * directorio) y luego el grupo Unix y el directorio, que se borra recursivamente
  * por su ruta construida con el group_dir de la BD.
  */
 async function teardownGroup({ teacherUsername, groupDir, groupName, usernames }) {

@@ -10,7 +10,7 @@ import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { useEnLaCarpeta, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
+import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import {
@@ -49,12 +49,12 @@ export function ActivityPanel({
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
-  /* Comprobar exige estar parado en la carpeta de la actividad. La ruta la dice
+  /* Comprobar exige estar parado en el directorio de la actividad. La ruta la dice
      la propia shell en cada prompt, asi que vale tanto si se llego con el boton
      como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
      se sepa la ruta el boton queda activo: bloquear en esa espera seria repetir
      el falso negativo que tenia la version anterior. */
-  const enLaCarpeta = useEnLaCarpeta(data?.workdir)
+  const enElDirectorio = useEnElDirectorio(data?.workdir)
 
   /* Con `vi` abierto, lo que se manda a la terminal no se ejecuta: se teclea
      dentro del archivo, y en modo normal `c`, `d` y `~` son ordenes de edicion
@@ -66,8 +66,8 @@ export function ActivityPanel({
     sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
   }
 
-  /* Reiniciar borra la carpeta de la actividad y la vuelve a montar. Se
-     pregunta antes porque el boton vive al lado del de ir a la carpeta, y
+  /* Reiniciar borra el directorio de la actividad y lo vuelve a montar. Se
+     pregunta antes porque el boton vive al lado del de ir al directorio, y
      confundirlos costaria el trabajo hecho. */
   const [confirmando, setConfirmando] = useState(false)
 
@@ -153,7 +153,7 @@ export function ActivityPanel({
           <ActionButton
             tone={passed ? "emerald" : "amber"}
             onClick={check}
-            disabled={checking || loading || !enLaCarpeta}
+            disabled={checking || loading || !enElDirectorio}
           >
             {checking ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -163,13 +163,13 @@ export function ActivityPanel({
             {checking ? "Comprobando..." : "Comprobar actividad"}
           </ActionButton>
 
-          {/* Volver a la carpeta es lo que se hace muchas veces por sesion, asi
+          {/* Volver al directorio es lo que se hace muchas veces por sesion, asi
               que va como boton; rehacer los archivos se hace una vez y borra
               trabajo, asi que va como icono y pregunta antes. */}
           {data?.workdir && (
             <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
               <FolderOpen className="h-4 w-4" />
-              Ir a la carpeta
+              Ir al directorio
             </ActionButton>
           )}
 
@@ -189,10 +189,10 @@ export function ActivityPanel({
             Cierra el editor en la terminal para volver a usar estos botones.
           </p>
         ) : (
-          !enLaCarpeta &&
+          !enElDirectorio &&
           !loading && (
             <p className="text-xs text-muted-foreground">
-              Entra en la carpeta de la actividad para poder comprobarla.
+              Entra en el directorio de la actividad para poder comprobarla.
             </p>
           )
         )}
@@ -202,7 +202,7 @@ export function ActivityPanel({
         open={confirmando}
         onOpenChange={setConfirmando}
         title="¿Rehacer los archivos de la actividad?"
-        description="Lo que hayas escrito dentro de su carpeta se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
+        description="Lo que hayas escrito dentro de su directorio se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
         confirmLabel="Rehacer los archivos"
         confirmVariant="destructive"
         onConfirm={reset}
