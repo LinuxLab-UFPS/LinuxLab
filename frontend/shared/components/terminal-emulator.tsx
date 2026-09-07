@@ -32,6 +32,10 @@ interface Props {
 export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo, Monaco, 'Courier New', monospace" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
+  /* El addon vive en una referencia y no dentro del efecto de montaje porque lo
+     necesitan tambien los cambios de fuente: al cambiarla hay que volver a medir
+     cuantas columnas caben. */
+  const fitRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -85,6 +89,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     }
 
     const fitAddon = new FitAddon()
+    fitRef.current = fitAddon
     term.loadAddon(fitAddon)
     term.open(containerRef.current)
     fitAddon.fit()
@@ -126,19 +131,29 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Actualizar fontSize en vivo
-  useEffect(() => {
-    if (termRef.current) {
-      termRef.current.options.fontSize = fontSize
-    }
-  }, [fontSize])
+  /* La letra cambia de tamaño o de familia, y con ella el ancho del caracter:
+     hay que volver a contar cuantas columnas caben.
 
-  // Actualizar fontFamily en vivo
+     Sin esto la consola se quedaba con las columnas de antes y la shell seguia
+     partiendo la linea donde ya no toca: al subir la fuente, esas columnas no
+     caben en la caja y el texto se salia por la derecha.
+
+     El `fit()` no basta por si solo: quien decide donde parte la linea es la PTY
+     del contenedor, asi que el ancho nuevo tiene que viajar por el socket, que
+     es lo que hace `redimensionar`. Mismo freno que el observador del
+     contenedor: arrastrar la barra dispara un cambio por paso. */
   useEffect(() => {
-    if (termRef.current) {
-      termRef.current.options.fontFamily = fontFamily
-    }
-  }, [fontFamily])
+    const term = termRef.current
+    if (!term) return
+    term.options.fontSize = fontSize
+    term.options.fontFamily = fontFamily
+
+    const id = setTimeout(() => {
+      fitRef.current?.fit()
+      redimensionar(term.cols, term.rows)
+    }, 100)
+    return () => clearTimeout(id)
+  }, [fontSize, fontFamily])
 
   return (
     <div
