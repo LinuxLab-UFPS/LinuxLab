@@ -64,3 +64,7 @@ backend/prisma/respaldo/
 # red de Docker ni produccion. El despliegue real no lo usa, va con
 # deploy/compose.podman.yml.
 docker-compose.yml
+
+# Cache de Python: lo genera el interprete, no es fuente.
+__pycache__/
+*.pyc
