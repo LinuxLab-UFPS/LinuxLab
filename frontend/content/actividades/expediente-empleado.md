@@ -4,10 +4,10 @@ Lo único que sabes es lo que te dijo tu jefe antes de irse:
 
 > "Las fotos del equipo no pueden perderse, los contratos y presupuestos van juntos, y los archivos temporales hay que borrarlos todos. Lo viejo que sea importante lo mete en respaldos."
 
-Este es el estado en el que encontraste la carpeta del proyecto:
+Este es el estado en el que encontraste la carpeta `expediente-empleado/`:
 
 ```
-proyecto/
+expediente-empleado/
 ├── temporal/
 │   ├── cache_001.tmp
 │   ├── cache_002.tmp
@@ -40,7 +40,7 @@ proyecto/
 **Estructura final esperada:**
 
 ```
-proyecto/
+expediente-empleado/
 ├── archivos/
 │   ├── fotos/
 │   │   ├── foto_perfil.jpg

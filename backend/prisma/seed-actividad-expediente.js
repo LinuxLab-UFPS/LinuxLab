@@ -1,7 +1,7 @@
 const prisma = require("./client")
 
 const SLUG = "expediente-empleado"
-const RAIZ = "/home/$usuario/actividades/expediente"
+const RAIZ = "/home/$usuario/actividades/expediente-empleado"
 
 const SETUP = {
   dirs: [
@@ -29,56 +29,80 @@ const CHECKS = [
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos` },
-    points: 10,
+    points: 8,
     position: 0,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/fotos` },
-    points: 10,
+    points: 8,
     position: 1,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/documentos` },
-    points: 10,
+    points: 8,
     position: 2,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/respaldos/RESPALDO_VIEJO` },
-    points: 15,
+    points: 10,
     position: 3,
   },
   {
     type: "archivo_existe",
     params: { ruta: `${RAIZ}/archivos/fotos/foto_perfil.jpg` },
-    points: 10,
+    points: 8,
     position: 4,
   },
   {
     type: "archivo_existe",
     params: { ruta: `${RAIZ}/archivos/fotos/foto_equipo.jpg` },
-    points: 10,
+    points: 8,
     position: 5,
   },
   {
     type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/documentos/informe_final.csv` },
-    points: 15,
+    params: { ruta: `${RAIZ}/archivos/documentos/presupuesto.xlsx` },
+    points: 8,
     position: 6,
+  },
+  {
+    type: "archivo_existe",
+    params: { ruta: `${RAIZ}/archivos/documentos/notas_reunion.txt` },
+    points: 8,
+    position: 7,
+  },
+  {
+    type: "archivo_existe",
+    params: { ruta: `${RAIZ}/archivos/documentos/contrato.pdf` },
+    points: 8,
+    position: 8,
+  },
+  {
+    type: "archivo_existe",
+    params: { ruta: `${RAIZ}/archivos/documentos/informe_final.csv` },
+    points: 10,
+    position: 9,
+  },
+  {
+    type: "archivo_existe",
+    params: { ruta: `${RAIZ}/archivos/respaldos/RESPALDO_VIEJO/datos_2024.csv` },
+    points: 6,
+    position: 10,
   },
   {
     type: "archivo_no_existe",
     params: { ruta: `${RAIZ}/temporal` },
-    points: 10,
-    position: 7,
+    points: 5,
+    position: 11,
   },
   {
     type: "archivo_no_existe",
     params: { ruta: `${RAIZ}/mezclado` },
-    points: 10,
-    position: 8,
+    points: 5,
+    position: 12,
   },
 ]
 

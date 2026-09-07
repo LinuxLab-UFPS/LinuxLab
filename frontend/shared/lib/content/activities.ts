@@ -101,7 +101,7 @@ const RAW = [
       "Organiza el servidor desordenado del empleado anterior: crea estructura, mueve archivos con comodines, copia respaldos y limpia temporales.",
     difficulty: "intermediate" as Difficulty,
     topicNumber: 4,
-    checks: 9,
+    checks: 13,
   },
   {
     slug: "paquete-de-entrega",
