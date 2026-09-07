@@ -182,8 +182,8 @@ function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
           <div className="px-4 py-3 text-right text-sm text-muted-foreground">—</div>
         </div>
       ) : (
-        results.map((r) => (
-          <div key={r.id} className="grid grid-cols-[1fr_9rem] border-b border-border/50 last:border-0">
+         results.map((r) => (
+          <div key={r.id} className="grid grid-cols-[1fr_5rem] border-b border-border/50 last:border-0">
             <div className="px-4 py-3 text-left text-sm">
               <div className="flex items-start gap-2.5">
                 {r.passed ? (
@@ -191,12 +191,12 @@ function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
                 ) : (
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 )}
-                <span className="min-w-0 flex-1 break-words text-foreground">{r.detail}</span>
+                <span className="min-w-0 flex-1 break-words line-clamp-2 text-foreground">{r.detail}</span>
               </div>
             </div>
             <div className="px-4 py-3 text-right text-sm font-mono">
               <span className={r.passed ? "text-success" : "text-destructive"}>
-                {r.passed ? r.points : 0}/{r.points} pts.
+                {r.passed ? r.points : 0}/{r.points}
               </span>
             </div>
           </div>
@@ -241,11 +241,17 @@ export function AttemptsTable({ attempts, maxScore }: { attempts: AttemptRow[]; 
                 <td className="px-4 py-2.5 text-sm text-muted-foreground">
                   {formatBogotaDateTime(a.createdAt)}
                 </td>
-                <td className="px-4 py-2.5 text-center">
+                 <td className="px-4 py-2.5 text-center">
                   {a.passed ? (
-                    <CheckCircle2 className="inline h-4 w-4 text-success" />
+                    <span className="inline-flex items-center gap-1 text-success">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-xs">Aprobado</span>
+                    </span>
                   ) : (
-                    <XCircle className="inline h-4 w-4 text-destructive" />
+                    <span className="inline-flex items-center gap-1 text-destructive">
+                      <XCircle className="h-4 w-4" />
+                      <span className="text-xs">No aprobado</span>
+                    </span>
                   )}
                 </td>
                 <td className="px-4 py-2.5 text-center font-mono text-sm text-foreground">{a.score}/{maxScore} pts.</td>
