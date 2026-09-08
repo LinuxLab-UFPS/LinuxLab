@@ -6,9 +6,19 @@ const { groupNameOf } = require("../utils/groupName")
 
 const ACCOUNT_STORE = "/var/lib/linuxlab"
 
-//: Cuota de disco por estudiante (KB) y techo de CPU por cgroup (10% de 1 CPU).
+//: Cuota de disco por estudiante (KB), tope de inodos, techo de CPU por cgroup
+//: (10% de 1 CPU) y techos de RAM por cgroup. Medido con 40 sesiones reales:
+//: ~2 MB por shell y ~6 MB por estudiante con vim abierto. El soft (high)
+//: frena con throttling, el hard (max) mata SOLO procesos del propio
+//: estudiante: sin esto, el OOM killer del contenedor podria matar las
+//: sesiones ajenas. Los inodos tapan el `touch` infinito (agotamiento de
+//: inodos sin llenar bloques). Las cuotas dependen del FS del host: donde no
+//: hay soporte (overlay/rootless), setquota cae en gracil silencio.
 const QUOTA_KB = 20480
+const QUOTA_INODES = 3000
 const CPU_MAX = "10000 100000"
+const MEM_HIGH = "32M"
+const MEM_MAX = "64M"
 
 let snapshotQueue = Promise.resolve()
 
@@ -115,8 +125,8 @@ async function syncTeacherGroups(teacherUsername) {
 /**
  * Crea el directorio del grupo y el grupo Unix. El directorio nace directo del
  * docente (el worker garantiza que su cuenta existe antes del job de grupo):
- * es dueno y queda en el grupo Unix para poder leer el trabajo de sus
- * estudiantes. Idempotente: los comandos son seguros de repetir.
+ * es dueno y queda en el grupo Unix del curso. Idempotente: los comandos son
+ * seguros de repetir.
  */
 async function createGroup(teacherUsername, groupDir, groupName) {
   const path = `/home/${teacherUsername}/grupos/${groupDir}`
@@ -144,13 +154,14 @@ async function createGroup(teacherUsername, groupDir, groupName) {
  * Si el chown falla no se deja un home root:root colgado: el directorio vacio
  * se borra y el worker reintenta en el siguiente ciclo.
  *
- * El `usermod -aG` es facil de creer innecesario: el home lleva setgid, asi que
- * lo que el estudiante crea hereda el grupo del curso aunque no sea miembro, y
- * el trabajo del dia a dia funciona igual. Lo que no funciona sin la membresia
- * es `chgrp` hacia ese grupo: el kernel solo lo permite a quien pertenece a el.
- * Un estudiante que cambie el grupo de un directorio por error no puede
- * devolverlo, e `id` tampoco lo lista, que es justo lo que piden las
- * actividades de gestion de usuarios.
+ * El home va `2700`, sin entrada al grupo. El estudiante SI es miembro del
+ * grupo Unix del curso (ver abajo), asi que con `2750` cualquier companero
+ * del curso podria atravesar el home ajeno y leer sus archivos, que con el
+ * umask por defecto nacen 644. La membresia se mantiene por `chgrp`: el
+ * kernel solo deja cambiar el grupo a quien pertenece a el. Un estudiante
+ * que cambie el grupo de un directorio por error no puede devolverlo, e
+ * `id` tampoco lo lista, que es justo lo que piden las actividades de
+ * gestion de usuarios.
  */
 async function createStudent(teacherUsername, groupDir, groupName, studentUsername) {
   const home = `/home/${teacherUsername}/grupos/${groupDir}/${studentUsername}`
@@ -166,7 +177,7 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
         `(sudo useradd -M -d ${home} -s /bin/bash ${studentUsername} 2>/dev/null || true) && ` +
         `sudo usermod -aG ${groupName} ${studentUsername} && ` +
         `sudo chown ${studentUsername}:${groupName} ${home} && ` +
-        `sudo chmod 2750 ${home}`,
+        `sudo chmod 2700 ${home}`,
         `createStudent(${studentUsername})`,
       )
     } catch (err) {
@@ -178,7 +189,9 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
     await sshClient.execCommand(
       `sudo sh -c 'mkdir -p /sys/fs/cgroup/linuxlab/${studentUsername} 2>/dev/null; ` +
       `echo ${CPU_MAX} > /sys/fs/cgroup/linuxlab/${studentUsername}/cpu.max 2>/dev/null; ` +
-      `setquota -u ${studentUsername} 0 ${QUOTA_KB} 0 0 /home 2>/dev/null; true'`,
+      `echo ${MEM_HIGH} > /sys/fs/cgroup/linuxlab/${studentUsername}/memory.high 2>/dev/null; ` +
+      `echo ${MEM_MAX} > /sys/fs/cgroup/linuxlab/${studentUsername}/memory.max 2>/dev/null; ` +
+      `setquota -u ${studentUsername} 0 ${QUOTA_KB} 0 ${QUOTA_INODES} /home 2>/dev/null; true'`,
     )
   } finally {
     await snapshotAccounts()

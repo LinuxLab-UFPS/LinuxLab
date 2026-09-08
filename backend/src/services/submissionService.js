@@ -197,9 +197,13 @@ async function getFileContent(submissionId, filePath, userId, role) {
       id: true,
       manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
+      enrollment: { select: { student_id: true } },
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
+  if (role === "student" && submission.enrollment?.student_id !== userId) {
+    throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
+  }
   if (role === "teacher") {
     await accessService.ensureGroupAccess({
       groupId: submission.groupActivity.group_id,
@@ -285,9 +289,13 @@ async function getFileBuffer(submissionId, filePath, userId, role) {
       id: true,
       manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
+      enrollment: { select: { student_id: true } },
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
+  if (role === "student" && submission.enrollment?.student_id !== userId) {
+    throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
+  }
   if (role === "teacher") {
     await accessService.ensureGroupAccess({
       groupId: submission.groupActivity.group_id,
@@ -382,9 +390,13 @@ async function getDownloadUrl(submissionId, userId, role) {
       id: true,
       manualDetail: { select: { evidence: true } },
       groupActivity: { select: { group_id: true } },
+      enrollment: { select: { student_id: true } },
     },
   })
   if (!submission) throw new NotFoundError("Entrega no encontrada")
+  if (role === "student" && submission.enrollment?.student_id !== userId) {
+    throw new AuthorizationError("No puedes ver entregas de otros estudiantes")
+  }
   if (role === "teacher") {
     await accessService.ensureGroupAccess({
       groupId: submission.groupActivity.group_id,

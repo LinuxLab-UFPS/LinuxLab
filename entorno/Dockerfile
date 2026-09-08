@@ -52,7 +52,11 @@ RUN chmod 755 /usr/local/bin/tree && chown root:root /usr/local/bin/tree
 # TMOUT cierra las terminales inactivas a los 15 minutos. Va `readonly` para que
 # no se pueda desactivar, y es lo que hace que el cupo de sesiones rinda: quien
 # se va a almorzar libera su sitio sin tener que cerrar nada.
-RUN printf '\nulimit -u 16\nulimit -f 15360\nulimit -v 262144\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
+#
+# `ulimit -n 256` es el de descriptores de archivos: vim, zip, pipes y el
+# checker abren menos de 100; 256 sobra y atrapa un bucle de FDs
+# (`while :; do exec 3<>...`), que compite por descriptores con sshd.
+RUN printf '\nulimit -u 16\nulimit -f 15360\nulimit -v 262144\nulimit -n 256\n# Cierre por inactividad: 15 minutos\nTMOUT=900\nreadonly TMOUT\nexport TMOUT\n' >> /etc/bash.bashrc
 
 # Identidad LinuxLab en la terminal (prompt rojo + saludo ambar).
 COPY scripts/linuxlab-shell.sh /etc/linuxlab-shell.sh

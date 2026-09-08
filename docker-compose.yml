@@ -25,8 +25,8 @@ services:
     image: postgres:16-alpine
     mem_limit: 256m
     cpu_shares: 1024
-    # Solo la red interna: la base no se alcanza desde fuera ni publica puertos.
-    # Su unico cliente es el backend, que si esta en las dos redes.
+    # Solo la red de base de datos: no publica puertos ni sale al host.
+    # Su unico cliente es el backend (el entorno vive en la red `lab`).
     networks:
       - internal
     environment:
@@ -60,10 +60,16 @@ services:
     # laboratorio, el cgroup por usuario (10%) y el ulimit -u 16 reparten.
     cpus: 0.5
     cpu_shares: 512
-    cap_add:
-      - SYS_ADMIN
-    security_opt:
-      - apparmor=unconfined
+    # Techo de procesos del contenedor: aunque alguien evite el `ulimit -u 16`
+    # del bashrc (bash --norc, un canal que no pasa por el login), no puede
+    # exceder el presupuesto de procesos de todo el proyecto. El uso normal
+    # (~3 procesos por estudiante) queda muy por debajo de 512.
+    pids_limit: 512
+    # Sin cap_add ni apparmor=unconfined: SYS_ADMIN era la llave por la que un
+    # root dentro del contenedor podia remontar /proc/sys y escapar al host
+    # (core_pattern). Con esto se iguala dev a prod rootless: hidepid y los
+    # cgroups por usuario caen al fallback (nice + ulimit), igual que en el
+    # servidor, asi que lo que se prueba en dev es lo que corre en prod.
     restart: unless-stopped
     depends_on:
       init:
@@ -72,8 +78,16 @@ services:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
       - entorno_etc:/var/lib/linuxlab
+    # /tmp sobre tmpfs: el disco del host deja de estar a merced de N archivos
+    # de 15 MB (ulimit -f) escritos en la capa del contenedor. Si el runtime no
+    # soporta tmpfs, la limpieza del entrypoint al arrancar queda de red.
+    tmpfs:
+      - /tmp:size=96m,mode=1777
+    # Red propia del laboratorio: solo el entorno y el backend (que la comparte
+    # para el SSH). Aislada de `internal`: desde una terminal de estudiante no
+    # hay ruta hacia postgres.
     networks:
-      - internal
+      - lab
     logging:
       driver: json-file
       options:
@@ -111,6 +125,7 @@ services:
       - ssh_keys:/ssh:ro
     networks:
       - internal
+      - lab
       - external
     logging:
       driver: json-file
@@ -143,7 +158,12 @@ services:
         max-file: "3"
 
 networks:
+  # Base de datos: postgres, migrate y backend.
   internal:
+    internal: true
+  # Laboratorio: entorno y backend. Separada de `internal` para que ninguna
+  # terminal de estudiante alcance la base de datos.
+  lab:
     internal: true
   external:
     internal: false

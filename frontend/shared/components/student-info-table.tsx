@@ -191,7 +191,7 @@ function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
                 ) : (
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 )}
-                <span className="min-w-0 flex-1 break-words line-clamp-2 text-foreground">{r.detail}</span>
+                <span className="min-w-0 flex-1 break-words line-clamp-4 text-foreground">{r.detail}</span>
               </div>
             </div>
             <div className="px-4 py-3 text-right text-sm font-mono">

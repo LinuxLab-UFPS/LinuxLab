@@ -53,18 +53,28 @@ chmod 440 /etc/sudoers.d/labadmin
 echo "[entrypoint] Configurando aislamiento de procesos..."
 mount -o remount,hidepid=2 /proc 2>/dev/null || true
 
-echo "[entrypoint] Habilitando limites de CPU por estudiante (cgroups v2)..."
+echo "[entrypoint] Habilitando limites de CPU y RAM por estudiante (cgroups v2)..."
 
-# El techo de CPU por estudiante (10% de 1 CPU) vive en un cgroup por usuario.
-# Docker monta /sys/fs/cgroup como read-only por defecto; con CAP_SYS_ADMIN se
-# puede remontar como rw, pero ademas el controlador "cpu" debe estar delegado
-# al contenedor (cgroup.subtree_control del padre). Si el host no lo permite,
-# se cae gracilmente y el fallback nice+ulimit del Nivel 1 protege igual.
+# El techo de CPU por estudiante (10% de 1 CPU) y su techo de RAM viven en un
+# cgroup por usuario. Docker monta /sys/fs/cgroup como read-only por defecto;
+# con CAP_SYS_ADMIN se puede remontar como rw, pero ademas los controladores
+# "cpu"/"memory" deben estar delegados al contenedor (cgroup.subtree_control
+# del padre). Si el host no lo permite, se cae gracilmente y el fallback
+# nice+ulimit del Nivel 1 protege igual.
+#
+# El de RAM (medido: ~6 MB por sesion con vim abierto) aterriza al devorador
+# de memoria en SU burbuja: sin esto, el OOM killer del contenedor puede matar
+# las sesiones ajenas cuando alguien consume toda la RAM del contenedor.
+#
+# OJO: cada write a cgroup.subtree_control reemplaza la lista COMPLETA de
+# controladores, por eso "+cpu +memory" va en una sola escritura; si el host
+# no delega memoria, caemos a "+cpu" a secas.
+MEM_HIGH=32M
+MEM_MAX=64M
 if mount -o remount,rw /sys/fs/cgroup 2>/dev/null; then
   mkdir -p /sys/fs/cgroup/linuxlab
-  # Habilitar el controlador cpu; si no esta delegado, la escritura falla y
-  # grep detecta que no quedo activo (evita loguear "activos" en falso).
-  { echo "+cpu" > /sys/fs/cgroup/cgroup.subtree_control; } 2>/dev/null || true
+  { echo "+cpu +memory" > /sys/fs/cgroup/cgroup.subtree_control; } 2>/dev/null \
+    || { echo "+cpu" > /sys/fs/cgroup/cgroup.subtree_control; } 2>/dev/null || true
   if grep -qw cpu /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null; then
     # Cgroups para los docentes y usuarios de nivel superior.
     for d in /home/*/; do
@@ -72,6 +82,8 @@ if mount -o remount,rw /sys/fs/cgroup 2>/dev/null; then
       u=$(basename "$d")
       mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
       { echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max"; } 2>/dev/null || true
+      { echo "$MEM_HIGH" > "/sys/fs/cgroup/linuxlab/$u/memory.high"; } 2>/dev/null || true
+      { echo "$MEM_MAX" > "/sys/fs/cgroup/linuxlab/$u/memory.max"; } 2>/dev/null || true
     done
     # Cgroups para los estudiantes que ya existen (los nuevos los crea
     # createStudent al aprovisionar).
@@ -80,8 +92,14 @@ if mount -o remount,rw /sys/fs/cgroup 2>/dev/null; then
       u=$(basename "$d")
       mkdir -p "/sys/fs/cgroup/linuxlab/$u" 2>/dev/null || true
       { echo "10000 100000" > "/sys/fs/cgroup/linuxlab/$u/cpu.max"; } 2>/dev/null || true
+      { echo "$MEM_HIGH" > "/sys/fs/cgroup/linuxlab/$u/memory.high"; } 2>/dev/null || true
+      { echo "$MEM_MAX" > "/sys/fs/cgroup/linuxlab/$u/memory.max"; } 2>/dev/null || true
     done
-    echo "[entrypoint] cgroups v2 rw: limites de CPU por usuario activos"
+    if grep -qw memory /sys/fs/cgroup/cgroup.subtree_control 2>/dev/null; then
+      echo "[entrypoint] cgroups v2 rw: limites de CPU y RAM por usuario activos"
+    else
+      echo "[entrypoint] cgroups v2 rw: limites de CPU por usuario activos (RAM queda a nivel de contenedor)"
+    fi
   else
     echo "[entrypoint] cgroups v2 sin permisos: fallback a nice + ulimit"
   fi
@@ -98,6 +116,14 @@ if quotacheck -cum /home 2>/dev/null && quotaon /home 2>/dev/null; then
 else
   echo "[entrypoint] cuotas de disco no disponibles (host sin soporte)"
 fi
+
+echo "[entrypoint] Limpiando residuos de /tmp..."
+
+# Zips de entregas y temporales que quedaron de sesiones anteriores (el rm que
+# hace el backend sobre el zip de entrega falla por el sticky bit de /tmp).
+# Solo borra lo que lleva mas de un dia sin modificarse: una entrega en curso
+# no llega a vivir un dia.
+find /tmp -mindepth 1 -maxdepth 1 -mtime +1 -delete 2>/dev/null || true
 
 echo "[entrypoint] Iniciando SSH..."
 mkdir -p /run/sshd

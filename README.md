@@ -48,40 +48,42 @@ LinuxLab/
    │  └──────────────┘                      │    │              │
    └────────────────────────────────────────┼────┼──────────────┘
                                             │    │
-   RED INTERNA (solo contenedores, sin      │    │
-   salida al host; el backend está en       │    │
-   ambas redes)                             ▼    │
+   RED DE BASE DE DATOS (sin salida)        ▼    │
    ┌─────────────────────────────────────────────┼──────────────┐
    │  ┌──────────────┐      ┌────────────────────┼────────────┐ │
    │  │   postgres   │◄─────│      backend       │◄───────────┘ │
-   │  │ PostgreSQL16 │Prisma│ Express + WS +     │  (WS del     │
-   │  └──────────────┘      │ worker aprovision. │  navegador)  │
+   │  │ PostgreSQL16 │Prisma│ Express + WS +     │              │
+   │  └──────────────┘      │ worker aprovision. │              │
    │                        └─────────┬──────────┘              │
-   │                                  │  SSH interno (ssh2)     │
-   │                                  │  clave RSA en volumen   │
-   │  ┌───────────────────────────────▼───────────────────────┐ │
-   │  │                        entorno                        │ │
-   │  │  Ubuntu 22.04 · sshd · checker.py · setup.py          │ │
-   │  │  /home (entorno_home) · /var/lib/linuxlab (etc)       │ │
-   │  └───────────────────────────────────────────────────────┘ │
+   └──────────────────────────────────┼─────────────────────────┘
+                                      │  SSH interno (ssh2)
+                                      │  clave RSA en volumen
+   RED DEL LABORATORIO (sin salida)   │
+   ┌──────────────────────────────────▼─────────────────────────┐
+   │                        entorno                              │
+   │  Ubuntu 22.04 · sshd · checker.py · setup.py                │
+   │  /home (entorno_home) · /var/lib/linuxlab (etc)             │
    └─────────────────────────────────────────────────────────────┘
 ```
 
 - **El backend es el puente.** Es el único cliente de `postgres` (Prisma) y el
-  único cliente del `entorno` (SSH interno). Por eso vive en las dos redes:
-  recibe al navegador por la externa y opera sobre la base y el entorno por la
-  interna.
+  único cliente del `entorno` (SSH interno). Por eso vive en las tres redes:
+  recibe al navegador por la externa y opera sobre la base y el entorno por
+  cada red interna de su lado.
+- **`entorno` y `postgres` viven en redes internas separadas** (`lab` y
+  `internal`). El firewall entre redes de Docker/Podman bloquea el tráfico
+  entre ellas: desde una terminal de estudiante no hay ruta ni resolución de
+  nombre hacia la base de datos. La aislación frente al exterior por `internal`
+  además impide la salida a internet.
 - **El entorno no expone su SSH.** El puerto 22 no se publica al host: la única
-  puerta es la conexión `ssh2` del backend por la red interna, autenticada con
+  puerta es la conexión `ssh2` del backend por la red `lab`, autenticada con
   una clave RSA de 4096 bits que el sidecar `init` genera en el volumen
   `ssh_keys` en el primer arranque.
-- **`entorno` y `postgres` no tienen salida al host.** Ningún servicio de la
-  red interna publica puertos (excepto el backend, que publica `:3000`).
 
 Servicios (`docker-compose.yml`): `frontend` (Next.js, red externa, :3001) ·
-`backend` (Express + WS + worker, ambas redes, :3000) · `entorno` (estudiantes,
-red interna) · `postgres` (red interna) · `migrate` (aplica migraciones de
-Prisma al arrancar) · `init` (genera las claves SSH).
+`backend` (Express + WS + worker, las tres redes, :3000) · `entorno`
+(estudiantes, red `lab`) · `postgres` (red `internal`) · `migrate` (aplica
+migraciones de Prisma al arrancar) · `init` (genera las claves SSH).
 
 ## El contenedor del entorno
 
@@ -103,8 +105,10 @@ procps, sudo, quota) y un `systemctl` simulado para el tema de servicios.
   - **Reescribe `/etc/sudoers.d/labadmin`**: cualquier cambio hecho solo en el
     Dockerfile no tiene efecto — hay que tocar el entrypoint.
   - Habilita cgroups v2 (`/sys/fs/cgroup` como rw) con un cgroup por usuario
-    para el techo de CPU, y quotas en `/home`. Ambos con fallback silencioso
-    si el host no los soporta.
+    para el techo de CPU (10%) y el techo de RAM (32 MB suave / 64 MB duro:
+    el que devora memoria muere en su burbuja, no estorba el OOM del
+    contenedor), y cuotas en `/home`. Ambos con fallback silencioso si el
+    host no delega los controladores.
 
 Volúmenes: `entorno_home` (`/home` — los archivos de los estudiantes y
 docentes) e `entorno_etc` (`/var/lib/linuxlab` — el snapshot de las cuentas).
@@ -119,7 +123,7 @@ Ambos sobreviven a `stop`, `restart` y al reinicio del host.
     ├── home/                   → 750 (home personal del docente)
     └── grupos/                 → 751
         └── <grp_dir>/          → 2751 docente:grp_xxx (setgid)
-            └── <estudiante>/   → 2750 estudiante:grp_xxx (setgid)
+            └── <estudiante>/   → 2700 estudiante:grp_xxx (setgid)
 ```
 
 | Rol            | Cómo se crea                                | Directorio                          | Permisos      |
@@ -127,18 +131,22 @@ Ambos sobreviven a `stop`, `restart` y al reinicio del host.
 | **labadmin**   | Imagen + entrypoint (authorized_keys)       | `/home/labadmin/`                   | 700           |
 | **docente**    | `provisionTeacherAccount` → `createTeacher` | `/home/<docente>/{home,grupos}`     | 751/750       |
 | **grupo**      | `createGroup` (job con prioridad)           | `/home/<docente>/grupos/<grp_dir>/` | 2751 (setgid) |
-| **estudiante** | `provisionStudentAccount` → `createStudent` | `.../grupos/<grp_dir>/<usuario>/`   | 2750 (setgid) |
+| **estudiante** | `provisionStudentAccount` → `createStudent` | `.../grupos/<grp_dir>/<usuario>/`   | 2700 (setgid) |
 
 - **Setgid (`2xxx`)**: los archivos creados dentro heredan el grupo del curso
   (`grp_xxx`), no el grupo primario de quien los crea.
-- **Aislamiento entre estudiantes**: sus homes son `2750` — solo el dueño y el
-  grupo del curso entran. Un estudiante no está en el grupo Unix de su curso,
-  así que el acceso de "other" es `---`. `/home` en `711` impide listar homes
-  ajenos, y `hidepid=2` oculta procesos de otros.
-- **El docente supervisa**: al crear un grupo se agrega al grupo Unix del curso
-  y su directorio pasa a ser suyo (`syncTeacherGroups`), de modo que puede
-  leer (`r-x`) el trabajo de sus estudiantes sin poder modificarlo (`2750`
-  no da `w` al grupo).
+- **Aislamiento entre estudiantes**: sus homes son `2700` — ni el grupo ni
+  `other` entran. El estudiante SÍ es miembro del grupo Unix de su curso (la
+  membresía la exige el `chgrp` de las actividades), y por eso el acceso de
+  grupo va a `0`: sin él, cualquier compañero del curso podría atravesar el
+  home ajeno y leer sus archivos. `/home` en `711` impide listar homes ajenos
+  y `hidepid=2` oculta procesos de otros.
+- **El docente supervisa por la plataforma** (resultados del checker y
+  entregas), no por el filesystem: el home `2700` del estudiante no le da
+  entrada al trabajo directo. Al crear un grupo se agrega al grupo Unix del
+  curso y es dueño del directorio del curso (`syncTeacherGroups`), con lo que
+  gestiona su estructura; la calificación nunca depende de leer el home del
+  estudiante.
 
 ## Cuentas y aprovisionamiento
 
@@ -155,7 +163,7 @@ el orden del código: `claimJobs` ordena `ORDER BY priority DESC, created_at ASC
    el docente exista (nace `root:grp`); al terminar, `syncTeacherGroups` hace al
    docente dueño de sus grupos y miembro del grupo Unix.
 3. **Estudiantes** → `createStudent`: verifica el grupo Unix, crea home +
-   usuario + `chown estudiante:grp` + `chmod 2750`, aplica cuota de disco
+   usuario + `chown estudiante:grp` + `chmod 2700`, aplica cuota de disco
    (20 MB) y cgroup de CPU (10%). Es idempotente: si un intento previo dejó el
    home roto, lo repara. Si el chown falla, borra el home vacío en vez de dejar
    uno `root:root` colgado. Antes de marcar `provisioned`, `provisionStudentAccount`
@@ -226,24 +234,31 @@ nunca se interpolan en la línea de comandos.
 
 | Límite                        | Valor                      | Frena                                          |
 | ----------------------------- | -------------------------- | ---------------------------------------------- |
-| `mem_limit` del entorno       | 512 MB                     | ~48 estudiantes simultáneos                    |
+| `mem_limit` del entorno       | 512 MB (dev) / 448 (prod) | ~44-48 simultáneos (medido: ~6 MB por cabeza)  |
 | `cpus` del entorno            | 0.5 núcleos                | un `while true` no degrada al backend/frontend |
 | CPU por usuario (cgroup v2)   | 10% de 1 CPU               | un estudiante no acapara el laboratorio        |
-| Cuota de disco por estudiante | 20 MB (`setquota`)         | llenar el disco del curso                      |
+| RAM por usuario (cgroup v2)   | 32 MB suave / 64 MB duro   | el OOM de un devorador no mata sesiones ajenas |
+| Cuota por estudiante (`setquota`) | 20 MB bloques / 3000 inodos | llenar el disco del curso; `touch` infinito sin llenar bloques |
+| `/tmp` (tmpfs en dev)         | 96 MB                      | montón de archivos de 15 MB en la capa del host |
 | `MaxSessions` del sshd        | 100                        | techo de terminales abiertas                   |
 | `ulimit -u`                   | 16 procesos                | fork bombs y acaparamiento de CPU              |
 | `ulimit -f`                   | 15 MB                      | archivos individuales enormes                  |
-| `ulimit -v`                   | 256 MB                     | un proceso que se coma la RAM                  |
-| `TMOUT`                       | 900 s, readonly            | sesiones abiertas para siempre                 |
+| `ulimit -n`                   | 256 descriptores           | bucles de FDs que compitan con sshd            |
+| `ulimit -v`                    | 256 MB                     | un proceso que se coma la RAM                  |
+| `pids_limit` del contenedor    | 512 procesos               | fork bombs que eviten el ulimit del bashrc     |
+| Limpieza de `/tmp`             | al arrancar (>1 día)       | residuos de entregas acumulándose en disco     |
+| `TMOUT`                        | 900 s, readonly            | sesiones abiertas para siempre                 |
 | `pkill -u`                    | al cerrar la terminal      | procesos huérfanos                             |
 | `restart: unless-stopped`     | backend, entorno, frontend | el laboratorio vuelve solo tras reinicio       |
 
 La CPU se reparte en tres capas: el `cpus` del contenedor aísla el laboratorio
 de los demás servicios; el cgroup por usuario da a cada estudiante un techo
-propio; y el `nice 10` + `ulimit -u 16` funcionan como respaldo universal. Si
-el host no soporta cgroups por usuario o cuotas de disco, el entorno sigue
-operando con el `cpus` del contenedor y los ulimits (las cuotas simplemente no
-se aplican).
+propio; y el `nice 10` + `ulimit -u 16` funcionan como respaldo universal. La
+RAM sigue la misma idea en dos capas: el `mem_limit` del contenedor aísla el
+laboratorio, y el cgroup por usuario (32 MB suave / 64 MB duro, medidos con 40
+sesiones reales de ~6 MB) contiene al devorador en su propia burbuja. Si el
+host no delega cgroups o cuotas, el entorno sigue operando con los techos del
+contenedor y los ulimits (lo que se pierde es el reparto fino por usuario).
 
 ## Tecnologías
 

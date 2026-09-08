@@ -128,18 +128,20 @@ Secretos/variables a crear en **Settings → Secrets and variables → Actions**
 - `export DB_PASSWORD=<clave>` antes de `deploy-server.sh` (el compose la lee
   del entorno; debe coincidir con la de `DATABASE_URL`). Para `update.sh`, la
   clave va en `deploy/.deploy.env` (local, gitignoreado).
-- Red interna: `deploy-server.sh` la crea con `--internal` si no existe.
+- Redes internas: `deploy-server.sh` las crea con `--internal` si no existen
+  (`linuxlab_internal` para la base de datos y `linuxlab_lab` para el entorno;
+  separadas para que ninguna terminal de estudiante alcance la BD).
 
 ## Memoria (presupuesto del servidor: 1 GB)
 
 | Servicio | Límite |
 |---|---|
-| `entorno` | 384 MB |
+| `entorno` | 448 MB |
 | `backend` | 192 MB |
 | `postgres` | 192 MB |
 | `frontend` | 96 MB |
 | `proxy` | 64 MB |
-| **Total** | **928 MB** (margen ~96 MB para el host) |
+| **Total** | **992 MB** (margen ~32 MB para el host) |
 
 ## Operación diaria
 
@@ -164,10 +166,19 @@ volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 |---|---|
 | Egress bloqueado | `podman run --rm --network linuxlab_internal alpine:3 sh -c "wget -q -T 5 http://example.com && echo SALIDA_HAY \|\| echo SIN_EGRESS"` → `SIN_EGRESS` |
 | Entorno/postgres sin puertos | `podman ps --format "{{.Names}} {{.Ports}}"` → sin mapeos en `linuxlab-entorno`/`linuxlab-postgres` |
-| Permisos de filesystem | En el entorno: `/home` 711, homes `2750 estudiante:grp_xxx`, dir de grupo `2751 docente:grp_xxx`, setgid |
+| Estudiante sin ruta a postgres | Desde una terminal de estudiante: `python3 -c "import socket; socket.create_connection(('postgres',5432),3)"` → debe fallar (sin resolución o timeout) |
+| Permisos de filesystem | En el entorno: `/home` 711, homes `2700 estudiante:grp_xxx`, dir de grupo `2751 docente:grp_xxx`, setgid |
+| Techo de procesos del entorno | `podman exec linuxlab-entorno cat /sys/fs/cgroup/pids.max` → `512` |
 | Límites por sesión | Como estudiante: `ulimit -u` 16, `ulimit -f` 15360, `ulimit -v` 262144, `TMOUT` 900 |
 | Checker como estudiante | Abrir una actividad y validar: el resultado refleja el entorno del estudiante |
 | Terminal end-to-end | Login → Terminal → comandos → actividad → "Comprobar" → nota parcial |
+
+Nota: los homes de estudiantes creados antes del cambio quedaron en `2750`.
+Reparación opcional para los ya existentes:
+
+```bash
+podman exec linuxlab-entorno sudo chmod 2700 /home/*/grupos/*/*/
+```
 
 ## Solución de problemas
 
@@ -182,7 +193,12 @@ volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 - **La terminal no abre (401)**: revisar HTTPS/URLs (cookie `secure` +
   `SameSite: lax`) y que `NEXT_PUBLIC_BACKEND_URL` se haya fijado con
   `--url` antes del build (reconstruir con `build-local.sh`).
-- **Backend no lee `/ssh/ssh_key`**: `podman exec -it linuxlab-init chmod 644 /ssh/ssh_key`.
+- **Backend no lee `/ssh/ssh_key`**: NO uses `chmod 644` sobre `/ssh/ssh_key`:
+  ese volumen está montado también solo-lectura en el contenedor de
+  estudiantes, y la clave world-readable le daría a cualquier estudiante la
+  identidad de `labadmin` (root de facto en el entorno). La clave debe quedar
+  `600` y legible solo para el proceso del backend (ajustar owner/uid del
+  montaje, no los permisos a otros).
 - **Tras un reinicio del host el stack no vuelve solo**: coordinar con el
   administrador (linger o un unit systemd a nivel sistema).
 
@@ -190,9 +206,13 @@ volúmenes, el reconcile reconstruye las cuentas del entorno desde la base.
 
 | Garantía | Rootless |
 |---|---|
-| Permisos de filesystem (711/2750/setgid), identidad por cuenta, sin sudo | ✅ |
+| Permisos de filesystem (711/2700/setgid), identidad por cuenta, sin sudo | ✅ |
 | Red cerrada (sin egress ni puertos publicados) | ✅ |
 | `ulimit`, `TMOUT`, `pkill -u` | ✅ |
 | Checker con identidad del estudiante, params por stdin | ✅ |
+| Techos por contenedor (`mem_limit`, `pids_limit`, `cpus`) | ✅ — aplicados por Podman desde el host y verificados in vivo |
 | `hidepid=2` | ❌ — paridad con cualquier servidor compartido de la U |
-| Cgroup de CPU por usuario (10%) | ❌ → fallback `nice 10` + `ulimit -u 16` |
+| Cgroup de CPU por usuario (10%) | ❌ **confirmado en servidor (2026-09)**: cgroup2 montado `ro,nsdelegate,memory_recursiveprot` → la activación de controladores desde dentro del contenedor es inalcanzable en rootless. Fallback: `nice 10` + `ulimit -u 16` |
+| Cgroup de RAM por usuario (32 suave / 64 duro) | ❌ ídem — la RAM queda acotada por `memory.max` del contenedor (448 MB) + `ulimit -v 256 MB` por proceso; un OOM del contenedor puede matar sesiones ajenas (el kernel elige al mayor consumidor, normalmente el abusador) |
+| Cuotas de disco (bloques/inodos) | ❌ — `quotactl` no accesible rootless; compensan `ulimit -f` por archivo (15 MB) y la limpieza de `/tmp` al arrancar |
+| `/tmp` sobre tmpfs | ⏳ por verificar tras el próximo deploy: `findmnt /tmp` (si el runtime lo ignora, queda la limpieza del arranque como red) |

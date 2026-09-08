@@ -23,6 +23,15 @@ const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
 
+/**
+ * Tras el proxy (Caddy) todas las peticiones llegan con la IP del proxy: sin
+ * esto, express-rate-limit metia a TODOS los usuarios en un solo bucket (30
+ * req/min compartidos) y un grupo entero de estudiantes bloqueaba la
+ * evaluacion al darle "Comprobar" en bloque. Con `1` se confia en el primer
+ * salto de la cadena X-Forwarded-For y cada cliente pesa por su IP.
+ */
+app.set('trust proxy', 1);
+
 app.use(helmet());
 
 /**

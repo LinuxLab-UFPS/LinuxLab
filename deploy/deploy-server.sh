@@ -25,6 +25,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT="linuxlab"
 COMPOSE="-p $PROJECT -f $REPO/deploy/compose.podman.yml"
 INTERNAL_NET="linuxlab_internal"
+LAB_NET="linuxlab_lab"
 IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno)
 
 ADMIN_EMAIL=""
@@ -116,13 +117,17 @@ for img in "${IMAGES[@]}"; do
   fi
 done
 
-# ---- 4. Red interna aislada -----------------------------------------------
-if podman network inspect "$INTERNAL_NET" >/dev/null 2>&1; then
-  log "Red interna '$INTERNAL_NET' ya existe."
-else
-  log "Creando red interna aislada '$INTERNAL_NET' (--internal)..."
-  run "podman network create --internal $INTERNAL_NET"
-fi
+# ---- 4. Redes internas aisladas --------------------------------------------
+# Dos redes sin salida: la de la base de datos (postgres) y la del laboratorio
+# (entorno). Separadas para que ninguna terminal de estudiante alcance la BD.
+for net in "$INTERNAL_NET" "$LAB_NET"; do
+  if podman network inspect "$net" >/dev/null 2>&1; then
+    log "Red interna aislada '$net' ya existe."
+  else
+    log "Creando red interna aislada '$net' (--internal)..."
+    run "podman network create --internal $net"
+  fi
+done
 
 # ---- 5. Bajar lo existente -------------------------------------------------
 # down antes de up: recrea el conjunto completo con las imagenes recien
@@ -135,6 +140,13 @@ run "podman-compose $COMPOSE down"
 # ---- 6. Up -----------------------------------------------------------------
 log "Levantando el stack..."
 run "podman-compose $COMPOSE up -d"
+
+# Techo de procesos del entorno: podman-compose 1.0.6 puede ignorar la clave
+# pids_limit del compose; este update la aplica sobre el contenedor ya creado.
+if ! $DRY_RUN; then
+  podman update --pids-limit 512 linuxlab-entorno >/dev/null 2>&1 \
+    || warn "No se pudo aplicar pids_limit a linuxlab-entorno (el techo de procesos queda en los ulimits)."
+fi
 
 # ---- 7. Espera de salud ----------------------------------------------------
 if ! $DRY_RUN; then
