@@ -30,8 +30,8 @@ expediente-empleado/
 1. Crea la estructura `archivos/` con tres subdirectorios: `fotos`, `documentos` y `respaldos`.
 2. Mueve todos los archivos de imagen (`.jpg`) a `archivos/fotos/`.
 3. Mueve los documentos (`.txt`, `.pdf`, `.xlsx`) a `archivos/documentos/`.
-4. Copia el respaldo viejo completo dentro de `archivos/respaldos/` con `cp -r`. Ojo: `cp` duplica, no mueve — la copia queda en `respaldos/` y el `RESPALDO_VIEJO` original sigue en la raíz.
-5. Después del paso 4, toma el `datos_2024.csv` del `RESPALDO_VIEJO` **original** (no del de la copia) y muévelo ya renombrado en un solo `mv`: `mv RESPALDO_VIEJO/datos_2024.csv archivos/documentos/informe_final.csv`. El orden importa: al mover el original, el `RESPALDO_VIEJO` queda vacío, mientras la copia del paso 4 conserva su `datos_2024.csv`.
+4. Copia el respaldo viejo completo dentro de `archivos/respaldos/`. Ojo: la copia solo **duplica** — la copia queda en `respaldos/` intacta y el `RESPALDO_VIEJO` original sigue donde estaba.
+5. Solo después, muévelo y renómbralo **en una sola operación**: toma el `datos_2024.csv` del `RESPALDO_VIEJO` **original** (no del de la copia) y aterrízalo en `documentos/` con el nombre que la estructura final espera. El orden importa: al mover el original, el `RESPALDO_VIEJO` queda vacío (útil en el paso 8) y la copia del paso 4 conserva su `datos_2024.csv`.
 6. Elimina todos los archivos temporales (`.tmp` y `.bak`) del directorio `temporal/`.
 7. Elimina el `borrador.txt` de su nueva ubicación en `documentos/`: no sirve, era solo un borrador.
 8. Elimina los directorios que quedaron vacíos (el `temporal/`, el `mezclado/` y el `RESPALDO_VIEJO` original) con el comando adecuado.
@@ -59,7 +59,7 @@ expediente-empleado/
 **Hints:**
 
 - Los comodines le permiten operar sobre muchos archivos de una vez: `*.jpg`, `*.tmp`.
-- El orden es parte del ejercicio: primero la copia con `cp -r` (paso 4); después el `mv` sobre el original (paso 5).
+- El orden es parte del ejercicio: primero la copia (paso 4), después mover el original (paso 5). Fíjate: la lección acaba de mostrar el comando que mueve **y** renombra en una sola pasada.
 - `rmdir` solo elimina directorios que están vacíos; si tienen contenido, use `rm -r`.
 - `cp -r` copia directorios con todo lo que llevan dentro.
 - `mv` sirve tanto para mover como para renombrar.
