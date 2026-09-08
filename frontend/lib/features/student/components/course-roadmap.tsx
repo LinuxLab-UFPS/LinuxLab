@@ -40,24 +40,34 @@ function Punto({ hecho }: { hecho: boolean }) {
  * Se puede terminar el tema 5 con el 3 a medias.
  */
 export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, TopicLessons> }) {
-  const { lessonTotal, doneCount, activityTotal, activitiesDone, isTopicDone, isLessonDone } =
-    useCourseProgress(topicLessons)
+  const {
+    lessonTotal,
+    doneCount,
+    activityTotal,
+    activitiesDone,
+    isTopicDone,
+    isLessonDone,
+    cursoPct,
+    temasCompletos,
+  } = useCourseProgress(topicLessons)
   const { passed } = usePassedActivities()
   const [abierto, setAbierto] = useState<number | null>(null)
 
-  const temasHechos = syllabus.filter((t) => isTopicDone(t.number)).length
-  const pctGeneral = Math.round((temasHechos / syllabus.length) * 100)
+  const temasHechos = temasCompletos
+  const pctGeneral = cursoPct
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-card p-5">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="font-mono text-4xl font-bold text-foreground">{pctGeneral}%</p>
+            <p className="text-4xl font-bold tracking-tight tabular-nums text-foreground">
+              {pctGeneral}%
+            </p>
             <p className="text-sm text-muted-foreground">del curso completado</p>
           </div>
           <p className="text-sm text-muted-foreground">
-            {temasHechos} de {syllabus.length} temas
+            {temasHechos} de {syllabus.length} temas completos
           </p>
         </div>
         <NeonProgress value={pctGeneral} className="mt-4 h-1.5" />

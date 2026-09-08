@@ -37,10 +37,12 @@ export function PanelContenidos({
   topicLessons,
   groupName,
 }: GroupSidebarProps) {
-  const { isLessonDone, isTopicDone } = useCourseProgress(topicLessons)
-
-  const doneCount = syllabus.filter((t) => isTopicDone(t.number)).length
-  const overallPct = Math.round((doneCount / syllabus.length) * 100)
+  const {
+    isLessonDone,
+    isTopicDone,
+    cursoPct: overallPct,
+    temasCompletos: doneCount,
+  } = useCourseProgress(topicLessons)
 
   return (
     /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
