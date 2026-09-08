@@ -92,6 +92,7 @@ enum EventType {
   group_archived
   group_deleted
   student_registered
+  student_joined
   csv_imported
 }
 
