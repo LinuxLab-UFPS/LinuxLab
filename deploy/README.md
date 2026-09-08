@@ -210,6 +210,9 @@ podman exec linuxlab-entorno sudo chmod 2700 /home/*/grupos/*/*/
 | Red cerrada (sin egress ni puertos publicados) | ✅ |
 | `ulimit`, `TMOUT`, `pkill -u` | ✅ |
 | Checker con identidad del estudiante, params por stdin | ✅ |
+| Techos por contenedor (`mem_limit`, `pids_limit`, `cpus`) | ✅ — aplicados por Podman desde el host y verificados in vivo |
 | `hidepid=2` | ❌ — paridad con cualquier servidor compartido de la U |
-| Cgroup de CPU por usuario (10%) | ❌ → fallback `nice 10` + `ulimit -u 16` |
-| Cgroup de RAM por usuario (32 suave / 64 duro) | ❌ — sin delegación cgroup la RAM queda a nivel del contenedor (448 MB); un OOM del contenedor puede matar sesiones ajenas |
+| Cgroup de CPU por usuario (10%) | ❌ **confirmado en servidor (2026-09)**: cgroup2 montado `ro,nsdelegate,memory_recursiveprot` → la activación de controladores desde dentro del contenedor es inalcanzable en rootless. Fallback: `nice 10` + `ulimit -u 16` |
+| Cgroup de RAM por usuario (32 suave / 64 duro) | ❌ ídem — la RAM queda acotada por `memory.max` del contenedor (448 MB) + `ulimit -v 256 MB` por proceso; un OOM del contenedor puede matar sesiones ajenas (el kernel elige al mayor consumidor, normalmente el abusador) |
+| Cuotas de disco (bloques/inodos) | ❌ — `quotactl` no accesible rootless; compensan `ulimit -f` por archivo (15 MB) y la limpieza de `/tmp` al arrancar |
+| `/tmp` sobre tmpfs | ⏳ por verificar tras el próximo deploy: `findmnt /tmp` (si el runtime lo ignora, queda la limpieza del arranque como red) |

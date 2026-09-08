@@ -238,10 +238,12 @@ nunca se interpolan en la línea de comandos.
 | `cpus` del entorno            | 0.5 núcleos                | un `while true` no degrada al backend/frontend |
 | CPU por usuario (cgroup v2)   | 10% de 1 CPU               | un estudiante no acapara el laboratorio        |
 | RAM por usuario (cgroup v2)   | 32 MB suave / 64 MB duro   | el OOM de un devorador no mata sesiones ajenas |
-| Cuota de disco por estudiante | 20 MB (`setquota`)         | llenar el disco del curso                      |
+| Cuota por estudiante (`setquota`) | 20 MB bloques / 3000 inodos | llenar el disco del curso; `touch` infinito sin llenar bloques |
+| `/tmp` (tmpfs en dev)         | 96 MB                      | montón de archivos de 15 MB en la capa del host |
 | `MaxSessions` del sshd        | 100                        | techo de terminales abiertas                   |
 | `ulimit -u`                   | 16 procesos                | fork bombs y acaparamiento de CPU              |
 | `ulimit -f`                   | 15 MB                      | archivos individuales enormes                  |
+| `ulimit -n`                   | 256 descriptores           | bucles de FDs que compitan con sshd            |
 | `ulimit -v`                    | 256 MB                     | un proceso que se coma la RAM                  |
 | `pids_limit` del contenedor    | 512 procesos               | fork bombs que eviten el ulimit del bashrc     |
 | Limpieza de `/tmp`             | al arrancar (>1 día)       | residuos de entregas acumulándose en disco     |

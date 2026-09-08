@@ -6,12 +6,16 @@ const { groupNameOf } = require("../utils/groupName")
 
 const ACCOUNT_STORE = "/var/lib/linuxlab"
 
-//: Cuota de disco por estudiante (KB), techo de CPU por cgroup (10% de 1 CPU)
-//: y techos de RAM por cgroup. Medido con 40 sesiones reales: ~2 MB por shell
-//: y ~6 MB por estudiante con vim abierto. El soft (high) frena con
-//: throttling, el hard (max) mata SOLO procesos del propio estudiante: sin
-//: esto, el OOM killer del contenedor podria matar las sesiones ajenas.
+//: Cuota de disco por estudiante (KB), tope de inodos, techo de CPU por cgroup
+//: (10% de 1 CPU) y techos de RAM por cgroup. Medido con 40 sesiones reales:
+//: ~2 MB por shell y ~6 MB por estudiante con vim abierto. El soft (high)
+//: frena con throttling, el hard (max) mata SOLO procesos del propio
+//: estudiante: sin esto, el OOM killer del contenedor podria matar las
+//: sesiones ajenas. Los inodos tapan el `touch` infinito (agotamiento de
+//: inodos sin llenar bloques). Las cuotas dependen del FS del host: donde no
+//: hay soporte (overlay/rootless), setquota cae en gracil silencio.
 const QUOTA_KB = 20480
+const QUOTA_INODES = 3000
 const CPU_MAX = "10000 100000"
 const MEM_HIGH = "32M"
 const MEM_MAX = "64M"
@@ -187,7 +191,7 @@ async function createStudent(teacherUsername, groupDir, groupName, studentUserna
       `echo ${CPU_MAX} > /sys/fs/cgroup/linuxlab/${studentUsername}/cpu.max 2>/dev/null; ` +
       `echo ${MEM_HIGH} > /sys/fs/cgroup/linuxlab/${studentUsername}/memory.high 2>/dev/null; ` +
       `echo ${MEM_MAX} > /sys/fs/cgroup/linuxlab/${studentUsername}/memory.max 2>/dev/null; ` +
-      `setquota -u ${studentUsername} 0 ${QUOTA_KB} 0 0 /home 2>/dev/null; true'`,
+      `setquota -u ${studentUsername} 0 ${QUOTA_KB} 0 ${QUOTA_INODES} /home 2>/dev/null; true'`,
     )
   } finally {
     await snapshotAccounts()

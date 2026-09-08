@@ -78,6 +78,11 @@ services:
       - ssh_keys:/ssh:ro
       - entorno_home:/home
       - entorno_etc:/var/lib/linuxlab
+    # /tmp sobre tmpfs: el disco del host deja de estar a merced de N archivos
+    # de 15 MB (ulimit -f) escritos en la capa del contenedor. Si el runtime no
+    # soporta tmpfs, la limpieza del entrypoint al arrancar queda de red.
+    tmpfs:
+      - /tmp:size=96m,mode=1777
     # Red propia del laboratorio: solo el entorno y el backend (que la comparte
     # para el SSH). Aislada de `internal`: desde una terminal de estudiante no
     # hay ruta hacia postgres.
