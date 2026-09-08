@@ -9,6 +9,7 @@ import { Button } from "@shared/components/ui/button"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { notify } from "@shared/lib/toast"
+import { passwordError } from "@shared/lib/password"
 import { mapFirebaseError, errorCodeOf } from "@/lib/features/auth/errors"
 
 function ResetPasswordInner() {
@@ -55,8 +56,9 @@ function ResetPasswordInner() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newPass.length < 6) {
-      notify.error(null, "La contraseña debe tener al menos 6 caracteres.")
+    const fallaPass = passwordError(newPass)
+    if (fallaPass) {
+      notify.error(null, fallaPass)
       return
     }
     if (newPass !== confirmPass) {

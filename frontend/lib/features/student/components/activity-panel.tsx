@@ -115,6 +115,22 @@ export function ActivityPanel({
       </header>
 
       <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2", DENSE_PROSE)}>
+        {/* El aviso va arriba del enunciado a proposito: el texto al pie
+            pasaba desapercibido y los estudiantes empezaban a trabajar en su
+            home, fuera del directorio que se evalua. */}
+        {data?.workdir && !enElDirectorio && !loading ? (
+          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+            <FolderOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-xs leading-relaxed text-foreground">
+              Antes de empezar, pulsa{" "}
+              <span className="font-medium">&laquo;Ir al directorio&raquo;</span>: la actividad se
+              resuelve dentro de{" "}
+              <span className="font-mono text-[11px]">~/actividades/{data.workdir}</span> y solo ahí
+              se puede comprobar.
+            </p>
+          </div>
+        ) : null}
+
         <div className="lesson-prose [&>*:first-child]:mt-0">
           <Markdown>{statement}</Markdown>
         </div>
