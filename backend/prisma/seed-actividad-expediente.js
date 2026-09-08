@@ -26,72 +26,85 @@ const SETUP = {
 }
 
 const CHECKS = [
+  // Estructura: mkdir para la jaula nueva. El dir de respaldos vale mas: es el
+  // que mas pasos exige (cp -r de un directorio).
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos` },
-    points: 8,
+    points: 6,
     position: 0,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/fotos` },
-    points: 8,
+    points: 6,
     position: 1,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/documentos` },
-    points: 8,
+    points: 6,
     position: 2,
   },
   {
     type: "directorio_existe",
     params: { ruta: `${RAIZ}/archivos/respaldos/RESPALDO_VIEJO` },
-    points: 10,
+    points: 8,
     position: 3,
   },
+  // Los archivos van con su CONTENIDO (archivo_contiene), no con archivo_existe:
+  // en un ejercicio de mover, un `touch` de un archivo vacio aprobaria la
+  // excistencia sin haber movido nada. Los patrones son el contenido exacto
+  // que setup.py deja en cada original.
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/fotos/foto_perfil.jpg` },
-    points: 8,
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/fotos/foto_perfil.jpg`, patron: "(imagen de perfil)" },
+    points: 7,
     position: 4,
   },
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/fotos/foto_equipo.jpg` },
-    points: 8,
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/fotos/foto_equipo.jpg`, patron: "(imagen del equipo)" },
+    points: 7,
     position: 5,
   },
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/documentos/presupuesto.xlsx` },
-    points: 8,
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/documentos/presupuesto.xlsx`, patron: "(hoja de calculo)" },
+    points: 7,
     position: 6,
   },
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/documentos/notas_reunion.txt` },
-    points: 8,
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/documentos/notas_reunion.txt`, patron: "Notas de la reunion del 15 de enero" },
+    points: 7,
     position: 7,
   },
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/documentos/contrato.pdf` },
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/documentos/contrato.pdf`, patron: "(documento de contrato)" },
     points: 8,
     position: 8,
   },
+  // El informe lleva el dato del CSV original: comprueba a la vez el renombre y
+  // el mv (si el estudiante monto un archivo vacio a mano, no pasa).
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/documentos/informe_final.csv` },
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/documentos/informe_final.csv`, patron: "enero,100" },
     points: 10,
     position: 9,
   },
+  // La copia del paso 4 debe conservar su datos_2024.csv: el que hace el mv
+  // antes de copiar entrega respaldos vacios y no pasa. Es el orden del
+  // enunciado hecho asercion.
   {
-    type: "archivo_existe",
-    params: { ruta: `${RAIZ}/archivos/respaldos/RESPALDO_VIEJO/datos_2024.csv` },
-    points: 6,
+    type: "archivo_contiene",
+    params: { ruta: `${RAIZ}/archivos/respaldos/RESPALDO_VIEJO/datos_2024.csv`, patron: "febrero,200" },
+    points: 8,
     position: 10,
   },
+  // Limpieza: temporal/ y mezclado/ se van por completo, el borrador muere en
+  // documentos y el RESPALDO_VIEJO original queda vacio y se elimina.
   {
     type: "archivo_no_existe",
     params: { ruta: `${RAIZ}/temporal` },
@@ -103,6 +116,18 @@ const CHECKS = [
     params: { ruta: `${RAIZ}/mezclado` },
     points: 5,
     position: 12,
+  },
+  {
+    type: "archivo_no_existe",
+    params: { ruta: `${RAIZ}/archivos/documentos/borrador.txt` },
+    points: 5,
+    position: 13,
+  },
+  {
+    type: "archivo_no_existe",
+    params: { ruta: `${RAIZ}/RESPALDO_VIEJO` },
+    points: 5,
+    position: 14,
   },
 ]
 
@@ -116,8 +141,9 @@ const DATOS = {
   instructions:
     "Organiza el servidor desordenado del empleado anterior. Crea una nueva " +
     "estructura con archivos/fotos, archivos/documentos y archivos/respaldos. " +
-    "Mueve los archivos a su lugar, copia el respaldo viejo, renombra el CSV " +
-    "como informe_final.csv y elimina temporales y directorios vacios.",
+    "Mueve los archivos a su lugar; copia el respaldo viejo (sin mover el original) " +
+    "y SOLO despues renombra y mueve el CSV del original con un solo mv; elimina " +
+    "temporales, el borrador y los directorios vacios.",
   setup: SETUP,
 }
 

@@ -159,7 +159,8 @@ def check_archivo_existe(params, home, base=""):
     if not os.path.exists(path):
         raise CheckError(
             f"Busqué el archivo '{name}' en tu directorio de trabajo, pero todavía no existe. "
-            "Puedes crearlo con touch o con tu editor de texto, y luego volver a comprobar."
+            "Hazlo llegar ahí como pida el enunciado (mv, cp o touch, según el caso) y "
+            "vuelve a comprobar."
         )
     if os.path.isdir(path):
         raise CheckError(
@@ -326,7 +327,7 @@ def check_archivo_contiene(params, home, base=""):
     if not os.path.isfile(path):
         raise CheckError(
             f"Quería revisar el contenido de '{name}', pero todavía no existe. "
-            "Créalo y escribe el texto que pide el enunciado."
+            "Hazlo aparecer donde pida el enunciado y vuelve a comprobar."
         )
     needle = params.get("patron") or ""
     if not needle:
