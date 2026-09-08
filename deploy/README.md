@@ -185,6 +185,12 @@ podman exec linuxlab-entorno sudo chmod 2700 /home/*/grupos/*/*/
 - **Seeds fallan con "Can't reach database server"**: `DATABASE_URL` en
   `backend/.env` **sin comillas** (podman `--env-file` no las procesa como
   docker-compose); verificar con `podman exec linuxlab-backend env | grep DATABASE_URL`.
+- **Reaplicar los seeds a mano** (upserts, idempotente — un `up` del stack no
+  los corre; los lleva el despliegue, en contenedor de una pasada):
+  ```bash
+  podman run --rm --network linuxlab_internal --memory 256m \
+    --env-file ~/LinuxLab/backend/.env linuxlab-backend:latest node prisma/seed.js
+  ```
 - **`migrate` reintenta hasta 20 veces**: si falla, revisar `backend/.env`
   (`DATABASE_URL` y `DB_PASSWORD` deben coincidir) y que postgres esté arriba.
 - **El entorno no crea cuentas**: `podman logs linuxlab-backend` (worker de

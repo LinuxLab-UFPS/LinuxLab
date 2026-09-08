@@ -185,17 +185,25 @@ else
     warn "No se pudo confirmar que las migraciones terminaran; se omiten las seeds."
   else
   # Se delega en `backend/prisma/seed.js`, que es el indice que se mantiene
-  # junto al codigo y corre las semillas en orden. Tener la lista escrita a mano
-  # aqui ya costo un despliegue: seguia nombrando
-  # `seed-actividad-cerrar-proyecto`, borrado hace tiempo, y como el bucle usaba
-  # `run` —que aborta— el fallo mataba el script sin llegar a decir por que.
+  # junto al codigo y corre las semillas en orden. Las semillas son `upsert`:
+  # repetirlas no duplica nada y repone lo borrado.
   #
-  # Las semillas son `upsert`: repetirlas no duplica nada y repone lo borrado.
+  # Corren en un CONTENEDOR de una pasada, no con `podman exec` sobre el
+  # backend: compartian cgroup y el OOM killer mataba al sembrador mientras
+  # el backend acababa de arrancar (se lo comio el limite de memoria del
+  # contenedor en el CI). Ahora llevan techo propio y no tocan el backend.
   log "Sembrando las actividades del temario..."
-  if intentar "podman exec linuxlab-backend node prisma/seed.js"; then
+  seed_cmd="podman run --rm --network $INTERNAL_NET --memory 256m --env-file $REPO/backend/.env linuxlab-backend:latest node prisma/seed.js"
+  if intentar "$seed_cmd"; then
     log "  Semillas aplicadas."
   else
-    warn "  Fallo el sembrado (arriba esta el detalle); el resto del despliegue sigue."
+    warn "  Reintento en 10 s..."
+    sleep 10
+    if intentar "$seed_cmd"; then
+      log "  Semillas aplicadas al reintento."
+    else
+      warn "  Fallo el sembrado (arriba esta el detalle); el resto del despliegue sigue."
+    fi
   fi
   fi
 fi
