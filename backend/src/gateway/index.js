@@ -171,6 +171,16 @@ function setupGateway(server) {
           return
         }
 
+        // La cuenta se crea asincrono (lotes del worker cada 5 s): en una
+        // avalancha de matriculas —todo el aula entrando a la vez por el
+        // enlace— la terminal puede pedirse antes de que el entorno tenga la
+        // cuenta. Mensaje amable con la salida, en vez del error anonimo de
+        // `su` contra un usuario que todavia no existe.
+        if (!user.linuxAccount.linux_provisioned) {
+          ws.close(4001, "Tu cuenta del entorno se está creando; espera un momento y vuelve a conectar (o usa 'Reiniciar terminal')")
+          return
+        }
+
         // El estudiante pierde la terminal en cuanto se archiva su grupo: su
         // usuario se elimina del entorno y la sesion JWT (7 dias) puede seguir
         // viva, asi que la puerta de entrada a la consola tambien valida.
