@@ -5,6 +5,7 @@ const cors = require("cors")
 const helmet = require("helmet")
 const morgan = require("morgan")
 const config = require("./config/env")
+const prisma = require("../prisma/client")
 const authRoutes = require("./routes/authRoutes")
 const adminRoutes = require("./routes/adminRoutes")
 const groupRoutes = require("./routes/groupRoutes")
@@ -93,8 +94,16 @@ app.get('/', (_req, res) => {
     res.json({ message: 'LinuxLab API' });
 });
 
-app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok' });
+// Comprueba la base, no solo que el proceso responda: un backend que sigue en
+// pie pero sin base no sirve de nada, y devolver 'ok' ahi impide que el
+// orquestador lo reinicie. La consulta es la mas barata que existe.
+app.get('/api/health', async (_req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.json({ status: 'ok', db: 'up' });
+    } catch (err) {
+        res.status(503).json({ status: 'error', db: 'down', message: err.message });
+    }
 });
 
 app.use((_req, res) => {

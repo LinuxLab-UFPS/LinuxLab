@@ -9,6 +9,15 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
 });
+// Un cliente inactivo emite 'error' cuando la base se reinicia o corta la
+// conexion. Sin este manejador, node lo trata como excepcion no capturada y
+// tumba el proceso: un reinicio de un segundo de Postgres dejaba el backend
+// muerto hasta que alguien lo reiniciaba a mano. El pool descarta el cliente
+// roto y abre otro en la siguiente consulta, asi que basta con registrarlo.
+pool.on('error', (err) => {
+  console.error('[db] cliente inactivo perdido, el pool lo repondra:', err.message);
+});
+
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

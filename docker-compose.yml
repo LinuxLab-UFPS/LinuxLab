@@ -127,6 +127,14 @@ services:
       - internal
       - lab
       - external
+    # /api/health consulta la base: si esta cae y el backend queda inservible,
+    # el contenedor se marca unhealthy en vez de seguir en pie sin servir.
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
     logging:
       driver: json-file
       options:
