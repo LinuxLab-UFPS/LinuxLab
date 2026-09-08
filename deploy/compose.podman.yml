@@ -2,7 +2,8 @@
 #
 # Adaptado a podman-compose 1.0.6 rootless:
 #  · puertos publicos via PORT_0..PORT_9 (asignados por la infraestructura)
-#  · red interna pre-creada con `podman network create --internal linuxlab_internal`
+#  · dos redes internas pre-creadas con `podman network create --internal`:
+#    linuxlab_internal (postgres/migrate) y linuxlab_lab (entorno)
 #  · sin cap_add/security_opt (rootless no los permite; los fallbacks del
 #    entrypoint del entorno cubren hidepid/cgroups)
 #  · depends_on simple (sin condition: service_healthy): migrate con retry
@@ -11,6 +12,7 @@
 #
 # Uso (desde la raiz del repo, en el servidor):
 #   podman network create --internal linuxlab_internal
+#   podman network create --internal linuxlab_lab
 #   podman-compose -p linuxlab -f deploy/compose.podman.yml up -d
 
 x-logging: &logging
@@ -78,10 +80,17 @@ services:
     image: linuxlab-entorno:latest
     hostname: linuxlab
     container_name: linuxlab-entorno
-    networks: [internal]
-    mem_limit: 384m
+    # Red propia del laboratorio: sin postgres ni DNS de la red de base de
+    # datos. Desde una terminal de estudiante no hay ruta hacia postgres.
+    networks: [lab]
+    # Medido con 40 sesiones reales (~6 MB por estudiante): 448 MB cubren 40
+    # estudiantes con vim y picos de evaluacion; 384 quedaba al limite.
+    mem_limit: 448m
     cpus: 0.5
     cpu_shares: 512
+    # Techo de procesos del contenedor. Si podman-compose ignora esta clave,
+    # update-server.sh la aplica de todos modos con `podman update`.
+    pids_limit: 512
     depends_on:
       - init
     volumes:
@@ -94,8 +103,10 @@ services:
   backend:
     image: linuxlab-backend:latest
     container_name: linuxlab-backend
-    networks: [internal, external]
-    mem_limit: 256m
+    # internal (postgres) + lab (SSH al entorno) + external (proxy/Caddy).
+    networks: [internal, lab, external]
+    # El +64 del entorno se financia recortando el backend a 192 (pesa ~100).
+    mem_limit: 192m
     cpu_shares: 1024
     # Loopback y no 0.0.0.0: el proxy lo alcanza por la red de contenedores y
     # deploy-server.sh sigue pudiendo consultar /api/health, pero desde fuera
@@ -158,11 +169,15 @@ services:
     logging: *logging
 
 networks:
-  # Pre-creada con --internal: sin egress ni puertos publicados. Solo viven
-  # aqui postgres y el entorno; el backend (en ambas redes) es su unico cliente.
+  # Pre-creadas con --internal: sin egress ni puertos publicados. `internal`
+  # aloja postgres y migrate; `lab` aloja el entorno. El backend vive en las
+  # tres redes y es el unico puente entre ellas.
   internal:
     external: true
     name: linuxlab_internal
+  lab:
+    external: true
+    name: linuxlab_lab
   external:
     name: linuxlab_external
 
