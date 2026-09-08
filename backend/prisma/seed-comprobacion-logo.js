@@ -27,10 +27,10 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal, presiona el botón 'Copiar el logo' y guarda su salida en " +
-    "un archivo llamado logo.txt, dentro de tu directorio personal. Puedes usar " +
-    "cat > logo.txt para escribir algo directamente en el archivo; cuando " +
-    "termines, presiona Ctrl+D.",
+    "En tu directorio personal, abre la terminal y escribe cat > logo.txt para " +
+    "empezar a llenar el archivo. Con el archivo abierto, presiona el botón " +
+    "'Escribir el logo en la terminal': el logo se escribirá dentro. Cuando " +
+    "termines, presiona Ctrl+D para guardar y cerrar.",
 }
 
 async function main() {

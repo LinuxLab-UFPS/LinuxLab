@@ -10,7 +10,7 @@
  */
 export interface Snippet {
   id: string
-  /** What the button says it will copy, without revealing it. */
+  /** What the button says it will send, without revealing it. */
   label: string
   content: string
 }
@@ -29,7 +29,7 @@ const LOGO_UFPS = [
 ].join("\n")
 
 const SNIPPETS: Snippet[] = [
-  { id: "logo-ufps", label: "Copiar el logo", content: LOGO_UFPS },
+  { id: "logo-ufps", label: "Escribir el logo en la terminal", content: LOGO_UFPS },
 ]
 
 export function getSnippet(id: string): Snippet | undefined {
