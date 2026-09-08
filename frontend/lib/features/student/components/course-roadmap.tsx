@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { LessonLink } from "@shared/components/lesson-loading"
 import { syllabus } from "@shared/lib/content/temario"
@@ -10,20 +10,18 @@ import { useCourseProgress } from "@/lib/features/student/course-progress"
 import { activities } from "@shared/lib/content/activities"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { conOrigen } from "@shared/lib/next-url"
+import { simulators } from "@shared/lib/content/simulators"
+import {
+  BurbujaTema,
+  EtiquetaTipo,
+  VinetaActividad,
+  VinetaLeccion,
+  VinetaSimulador,
+  filaHija,
+} from "./marcas-temario"
 import type { TopicLessons } from "@shared/lib/content/lessons"
 
 /** Un punto verde si la pieza esta hecha, hueco si no. */
-function Punto({ hecho }: { hecho: boolean }) {
-  return (
-    <span
-      className={cn(
-        "h-1.5 w-1.5 shrink-0 rounded-full",
-        hecho ? "bg-emerald-500" : "border border-muted-foreground/40",
-      )}
-    />
-  )
-}
-
 /**
  * El mapa del curso: los diez temas con lo que llevas hecho en cada uno.
  *
@@ -89,18 +87,7 @@ export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, T
                 onClick={() => setAbierto(desplegado ? null : topic.number)}
                 className="flex w-full items-center gap-4 p-4 text-left transition-colors hover:bg-foreground/[0.03]"
               >
-                {/* Mismo lenguaje que el panel lateral: verde cuando esta hecho,
-                    neutro cuando queda trabajo. */}
-                <span
-                  className={cn(
-                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-medium",
-                    completo
-                      ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-                      : "bg-secondary text-muted-foreground",
-                  )}
-                >
-                  {completo ? <Check className="h-4 w-4" /> : topic.number}
-                </span>
+                <BurbujaTema numero={topic.number} hecho={completo} grande />
 
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-foreground">{topic.title}</p>
@@ -127,9 +114,9 @@ export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, T
                     <li key={id}>
                       <LessonLink
                         href={`/curso?tema=${topic.slug}&sub=${id}`}
-                        className="flex items-center gap-2 rounded px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+                        className={filaHija(false, isLessonDone(topic.number, id))}
                       >
-                        <Punto hecho={isLessonDone(topic.number, id)} />
+                        <VinetaLeccion hecha={isLessonDone(topic.number, id)} />
                         <span className="truncate">{leccionesDelTema?.titles[id] ?? id}</span>
                       </LessonLink>
                     </li>
@@ -143,13 +130,26 @@ export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, T
                       <li key={a.slug} className="hidden md:list-item">
                         <LessonLink
                           href={conOrigen(a.href, "/curso")}
-                          className="flex items-center gap-2 rounded px-1 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground"
+                          className={filaHija(false, passed.has(a.slug))}
                         >
-                          <Punto hecho={passed.has(a.slug)} />
+                          <VinetaActividad hecha={passed.has(a.slug)} />
                           <span className="truncate">{a.title}</span>
-                          <span className="ml-auto shrink-0 text-[10px] uppercase tracking-wide opacity-70">
-                            Actividad
-                          </span>
+                          <EtiquetaTipo>Actividad</EtiquetaTipo>
+                        </LessonLink>
+                      </li>
+                    ))}
+
+                  {/* Los simuladores no llevan vineta de estado: se juegan las
+                      veces que haga falta y no cuentan para el progreso, asi
+                      que marcarlos como hechos prometeria algo que no pasa. */}
+                  {simulators
+                    .filter((sim) => sim.topicNumber === topic.number)
+                    .map((sim) => (
+                      <li key={sim.id} className="hidden md:list-item">
+                        <LessonLink href={sim.href} className={filaHija(false, false)}>
+                          <VinetaSimulador />
+                          <span className="truncate">{sim.title}</span>
+                          <EtiquetaTipo>Simulador</EtiquetaTipo>
                         </LessonLink>
                       </li>
                     ))}
