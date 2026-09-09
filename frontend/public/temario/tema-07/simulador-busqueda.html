@@ -1513,14 +1513,27 @@ function enfocar() {
   if (t && t.focus) t.focus({ preventScroll: true });
 }
 
+const hist = Barra.historial();
+
 document.addEventListener("keydown", (ev) => {
   if (ocupado()) return;
   if (document.activeElement && document.activeElement.tagName === "INPUT") return;
   if (ev.key === "Enter") {
     const linea = tecleado;
+    hist.recordar(linea);
     tecleado = "";
     $("tecleado").textContent = "";
     ejecutar(linea);
+    return;
+  }
+  // Flecha arriba y abajo, el historial de la shell: repetir un comando largo
+  // obligaba a escribirlo entero otra vez.
+  if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
+    ev.preventDefault();
+    const previa = hist.mover(ev.key === "ArrowUp" ? 1 : -1);
+    if (previa === null) return;
+    tecleado = previa;
+    $("tecleado").textContent = tecleado;
     return;
   }
   if (ev.key === "Backspace") tecleado = tecleado.slice(0, -1);

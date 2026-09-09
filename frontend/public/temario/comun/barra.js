@@ -208,5 +208,46 @@
     };
   }
 
-  window.Barra = { montar, salir };
+  /**
+   * El historial de comandos de una terminal de simulador.
+   *
+   * Las shells de los simuladores no son shells: cada una acumula lo tecleado
+   * en una variable y lo ejecuta al pulsar Enter, asi que la flecha arriba no
+   * hacia nada y repetir un comando largo obligaba a escribirlo entero otra
+   * vez. Esto vive aqui y no copiado en cada archivo porque las cuatro
+   * terminales lo necesitan igual.
+   *
+   * `recordar` guarda una linea al enviarla; `mover` devuelve la linea que toca
+   * al pulsar arriba (-1) o abajo (+1), o null si no hay que cambiar nada. El
+   * indice -1 es "no estoy navegando", y volver a el deja la linea vacia, como
+   * en bash.
+   */
+  function historial(tope = 50) {
+    const lineas = [];
+    let idx = -1;
+    return {
+      recordar(linea) {
+        const limpia = (linea || "").trim();
+        idx = -1;
+        if (!limpia) return;
+        // Repetir el mismo comando no llena el historial de copias.
+        if (lineas[0] === limpia) return;
+        lineas.unshift(limpia);
+        if (lineas.length > tope) lineas.pop();
+      },
+      mover(paso) {
+        if (lineas.length === 0) return null;
+        const siguiente = idx + paso;
+        if (siguiente < -1 || siguiente >= lineas.length) return null;
+        idx = siguiente;
+        return idx === -1 ? "" : lineas[idx];
+      },
+      reiniciar() {
+        lineas.length = 0;
+        idx = -1;
+      },
+    };
+  }
+
+  window.Barra = { montar, salir, historial };
 })();
