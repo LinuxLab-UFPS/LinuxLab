@@ -26,3 +26,17 @@ export function passwordError(password: string, tocado = true): string | null {
 
 /** El texto de ayuda que acompana al campo antes de que haya error. */
 export const PASSWORD_HINT = `Mínimo ${PASSWORD_MIN} caracteres.`
+
+/**
+ * Devuelve el error de la confirmacion, o null si coincide.
+ *
+ * Mientras la contraseña este a medias no se dice nada: escribir seis caracteres
+ * en el primer campo y ver "no coinciden" en el segundo es un error que se
+ * corrige solo al seguir escribiendo.
+ */
+export function confirmError(password: string, confirm: string, tocado = true): string | null {
+  if (!tocado && confirm.length === 0) return null
+  if (confirm.length === 0) return "Repite la contraseña."
+  if (password !== confirm) return "Las contraseñas no coinciden."
+  return null
+}
