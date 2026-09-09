@@ -52,6 +52,11 @@ const ESTADO_ACTIVIDAD: Record<GradebookCellStatus, { label: string; text: strin
   },
 }
 
+/** El lado de una dona. `ResponsiveContainer` mide a su padre, así que el padre
+ *  necesita un ancho de verdad: en una columna de rejilla `auto` medía cero y el
+ *  anillo no llegaba a dibujarse. */
+const DONA = 120
+
 /** Una dona con su cifra en el centro. Las dos de la cabecera son iguales. */
 function Dona({
   data,
@@ -63,15 +68,15 @@ function Dona({
   pie: string
 }) {
   return (
-    <div className="relative h-[150px]">
+    <div className="relative shrink-0" style={{ width: DONA, height: DONA }}>
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
-            innerRadius={46}
-            outerRadius={64}
+            innerRadius={38}
+            outerRadius={54}
             paddingAngle={2}
             startAngle={90}
             endAngle={-270}
@@ -84,8 +89,8 @@ function Dona({
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-bold tabular-nums text-foreground">{valor}</span>
-        <span className="text-xs text-muted-foreground">{pie}</span>
+        <span className="text-xl font-bold tabular-nums text-foreground">{valor}</span>
+        <span className="text-[10px] leading-tight text-muted-foreground">{pie}</span>
       </div>
     </div>
   )
@@ -98,10 +103,10 @@ function Cifras({
   filas: { label: string; value: string; text: string }[]
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="min-w-0 flex-1 space-y-1.5">
       {filas.map((f) => (
-        <div key={f.label} className="flex items-baseline justify-between gap-3 text-sm">
-          <span className="text-muted-foreground">{f.label}</span>
+        <div key={f.label} className="flex items-baseline justify-between gap-2 text-xs">
+          <span className="min-w-0 truncate text-muted-foreground">{f.label}</span>
           <span className={cn("font-medium tabular-nums", f.text)}>{f.value}</span>
         </div>
       ))}
@@ -227,11 +232,15 @@ export function StudentProgressDialog({
         {/* Dos donas, cada una con sus cifras al lado y a la misma altura.
             Antes solo estaba la de temas, y las actividades no se contaban en
             ninguna parte. */}
-        <div className="grid grid-cols-1 items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_1fr_auto_1fr]">
-          <Dona data={donutTemas} valor={`${progress}%`} pie="del curso" />
-          <Cifras filas={cifrasTemas} />
-          <Dona data={donutActividades} valor={`${actPct}%`} pie="actividades" />
-          <Cifras filas={cifrasActividades} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex items-center gap-3">
+            <Dona data={donutTemas} valor={`${progress}%`} pie="del curso" />
+            <Cifras filas={cifrasTemas} />
+          </div>
+          <div className="flex items-center gap-3">
+            <Dona data={donutActividades} valor={`${actPct}%`} pie="actividades" />
+            <Cifras filas={cifrasActividades} />
+          </div>
         </div>
 
         {/* Desglose por tema, desplegable */}

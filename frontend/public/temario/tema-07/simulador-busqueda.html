@@ -1157,6 +1157,14 @@ const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuest
 /** Lo que Laura sabe explicar. Se cierra en los terminos que este
  *  simulador usa: preguntar por otra cosa recibe un "no se" honesto en vez
  *  de una respuesta inventada. */
+/* Como se escribe una opcion, y que hace.
+ *
+ * Los burbujas del chat se pintan con `innerHTML`, asi que un `<patron>` a pelo
+ * se parsea como una etiqueta desconocida y desaparece sin dejar rastro: por eso
+ * los argumentos van escapados. La linea del comando va en <code>, que ya tiene
+ * estilo propio en la hoja, y la explicacion debajo. */
+const uso = (comando, que) => `<code>${comando}</code><br>${que}`;
+
 /* Las opciones, por comando.
  *
  * `-n` no quiere decir lo mismo en `grep` que en `sort` que en `head`, asi que
@@ -1165,35 +1173,35 @@ const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuest
  * formato de la hoja de comandos esenciales del curso: el comando, la opcion,
  * el argumento y una frase. */
 const OPCIONES = {
-  "grep -r": "`grep -r <patron> <directorio>` — Busca el patrón dentro de los archivos del directorio y de todos los que cuelgan de él.",
-  "grep -i": "`grep -i <patron> <archivo>` — Busca sin distinguir mayúsculas de minúsculas: «ERROR» y «error» cuentan lo mismo.",
-  "grep -e": "`grep -E <patron> <archivo>` — Deja describir la FORMA del texto con una expresión regular: llaves, grupos y rangos.",
-  "grep -c": "`grep -c <patron> <archivo>` — En vez de las líneas, dice cuántas coinciden.",
-  "grep -l": "`grep -l <patron> <archivos>` — En vez de las líneas, dice en qué archivos hay coincidencia.",
-  "grep -n": "`grep -n <patron> <archivo>` — Antepone a cada línea el número que ocupa dentro del archivo.",
-  "grep -v": "`grep -v <patron> <archivo>` — Le da la vuelta: enseña las líneas que NO contienen el patrón.",
-  "grep -w": "`grep -w <patron> <archivo>` — Exige que el patrón sea una palabra entera y no parte de otra.",
-  "grep -o": "`grep -o <patron> <archivo>` — Enseña solo lo que coincide, no la línea completa.",
-  "grep -h": "`grep -h <patron> <archivos>` — Quita el nombre del archivo del principio de cada línea.",
+  "grep -r": uso("grep -r &lt;patron&gt; &lt;directorio&gt;", "Busca el patrón dentro de los archivos del directorio y de todos los que cuelgan de él."),
+  "grep -i": uso("grep -i &lt;patron&gt; &lt;archivo&gt;", "Busca sin distinguir mayúsculas de minúsculas: «ERROR» y «error» cuentan lo mismo."),
+  "grep -e": uso("grep -E &lt;patron&gt; &lt;archivo&gt;", "Deja describir la FORMA del texto con una expresión regular: llaves, grupos y rangos."),
+  "grep -c": uso("grep -c &lt;patron&gt; &lt;archivo&gt;", "En vez de las líneas, dice cuántas coinciden."),
+  "grep -l": uso("grep -l &lt;patron&gt; &lt;archivos&gt;", "En vez de las líneas, dice en qué archivos hay coincidencia."),
+  "grep -n": uso("grep -n &lt;patron&gt; &lt;archivo&gt;", "Antepone a cada línea el número que ocupa dentro del archivo."),
+  "grep -v": uso("grep -v &lt;patron&gt; &lt;archivo&gt;", "Le da la vuelta: enseña las líneas que NO contienen el patrón."),
+  "grep -w": uso("grep -w &lt;patron&gt; &lt;archivo&gt;", "Exige que el patrón sea una palabra entera y no parte de otra."),
+  "grep -o": uso("grep -o &lt;patron&gt; &lt;archivo&gt;", "Enseña solo lo que coincide, no la línea completa."),
+  "grep -h": uso("grep -h &lt;patron&gt; &lt;archivos&gt;", "Quita el nombre del archivo del principio de cada línea."),
 
-  "find -name": "`find <ruta> -name <patron>` — Filtra por el nombre del archivo, y acepta comodines: `-name '.*'` son los que empiezan por punto.",
-  "find -iname": "`find <ruta> -iname <patron>` — Como `-name`, pero sin distinguir mayúsculas de minúsculas.",
-  "find -type": "`find <ruta> -type <f|d>` — Filtra por lo que es: `f` para archivos, `d` para directorios.",
-  "find -mmin": "`find <ruta> -mmin <±N>` — Filtra por minutos desde la última modificación. `-mmin -60` es lo tocado en la última hora.",
-  "find -mtime": "`find <ruta> -mtime <±N>` — Filtra por días desde la última modificación. `-mtime +30` es lo que lleva más de un mes.",
-  "find -size": "`find <ruta> -size <±N>` — Filtra por tamaño. Aquí se mide en líneas.",
+  "find -name": uso("find &lt;ruta&gt; -name &lt;patron&gt;", "Filtra por el nombre del archivo, y acepta comodines: los que empiezan por punto son <code>-name '.*'</code>."),
+  "find -iname": uso("find &lt;ruta&gt; -iname &lt;patron&gt;", "Como -name, pero sin distinguir mayúsculas de minúsculas."),
+  "find -type": uso("find &lt;ruta&gt; -type &lt;f|d&gt;", "Filtra por lo que es: f para archivos, d para directorios."),
+  "find -mmin": uso("find &lt;ruta&gt; -mmin &lt;±N&gt;", "Filtra por minutos desde la última modificación. Con -60 sale lo tocado en la última hora."),
+  "find -mtime": uso("find &lt;ruta&gt; -mtime &lt;±N&gt;", "Filtra por días desde la última modificación. Con +30 sale lo que lleva más de un mes."),
+  "find -size": uso("find &lt;ruta&gt; -size &lt;±N&gt;", "Filtra por tamaño. Aquí se mide en líneas."),
 
-  "sort -n": "`sort -n <archivo>` — Ordena por valor numérico y no alfabéticamente, así el 10 va después del 9 y no antes.",
-  "sort -r": "`sort -r <archivo>` — Le da la vuelta al orden: de mayor a menor.",
-  "sort -t": "`sort -t<separador> <archivo>` — Dice qué separa las columnas. En un CSV, `-t,`.",
-  "sort -k": "`sort -k<N> <archivo>` — Ordena por la columna N en vez de por la línea entera. Va con `-t`.",
+  "sort -n": uso("sort -n &lt;archivo&gt;", "Ordena por valor numérico y no alfabéticamente, así el 10 va después del 9 y no antes."),
+  "sort -r": uso("sort -r &lt;archivo&gt;", "Le da la vuelta al orden: de mayor a menor."),
+  "sort -t": uso("sort -t&lt;separador&gt; &lt;archivo&gt;", "Dice qué separa las columnas. En un CSV, una coma."),
+  "sort -k": uso("sort -k&lt;N&gt; &lt;archivo&gt;", "Ordena por la columna N en vez de por la línea entera. Va acompañado de -t."),
 
-  "head -n": "`head -n <N> <archivo>` — Cuántas líneas del principio se enseñan. Sin la opción, diez.",
-  "tail -n": "`tail -n <N> <archivo>` — Cuántas líneas del final se enseñan. Sin la opción, diez.",
-  "wc -l": "`wc -l <archivo>` — Cuenta las líneas del archivo.",
-  "ls -l": "`ls -l <ruta>` — Añade el tamaño y la fecha de cada nombre.",
-  "ls -a": "`ls -a <ruta>` — Incluye lo que empieza por punto, que por defecto no sale.",
-  "uniq -c": "`uniq -c` — Colapsa las líneas repetidas seguidas y dice cuántas eran de cada una.",
+  "head -n": uso("head -n &lt;N&gt; &lt;archivo&gt;", "Cuántas líneas del principio se enseñan. Sin la opción, diez."),
+  "tail -n": uso("tail -n &lt;N&gt; &lt;archivo&gt;", "Cuántas líneas del final se enseñan. Sin la opción, diez."),
+  "wc -l": uso("wc -l &lt;archivo&gt;", "Cuenta las líneas del archivo."),
+  "ls -l": uso("ls -l &lt;ruta&gt;", "Añade el tamaño y la fecha de cada nombre."),
+  "ls -a": uso("ls -a &lt;ruta&gt;", "Incluye lo que empieza por punto, que por defecto no sale."),
+  "uniq -c": uso("uniq -c", "Colapsa las líneas repetidas seguidas y dice cuántas eran de cada una."),
 };
 
 const GLOSARIO = {
