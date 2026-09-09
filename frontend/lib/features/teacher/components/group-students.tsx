@@ -27,10 +27,12 @@ const PAGE_SIZE = 10
  * detalle (dona + desglose por tema).
  */
 export function GroupStudents({
+  groupId,
   students,
   rows,
   query,
 }: {
+  groupId: string
   students: EnrollmentStudent[]
   rows: StudentProgress[]
   query: string
@@ -137,6 +139,7 @@ export function GroupStudents({
       )}
 
       <StudentProgressDialog
+        groupId={groupId}
         student={selected}
         topics={topics}
         open={!!selected}

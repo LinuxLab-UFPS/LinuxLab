@@ -10,12 +10,16 @@ import {
   DialogDescription,
 } from "@shared/components/ui/dialog"
 import { ProgressBar } from "@shared/components/progress-indicators"
+import { Skeleton } from "@shared/components/skeleton"
 import { cn } from "@shared/lib/utils"
 import { timeAgo } from "@/lib/utils/dates"
+import { useStudentPerformance } from "@/lib/api/queries"
 import type { ProgressStatus, StudentProgress } from "@/lib/features/teacher/types"
+import type { GradebookCellStatus } from "@/lib/models/groups"
 import type { Topic } from "@/lib/features/student/types"
 
 interface StudentProgressDialogProps {
+  groupId: string
   student: StudentProgress | null
   topics: Topic[]
   open: boolean
@@ -33,7 +37,20 @@ function metaFor(status: ProgressStatus) {
   return STATUS_META[status] ?? STATUS_META["not-started"]
 }
 
+/** El estado de una actividad, con las mismas palabras que el cuaderno de notas. */
+const ESTADO_ACTIVIDAD: Record<GradebookCellStatus, { label: string; text: string; dot: string }> = {
+  completed: { label: "Completada", text: "text-success", dot: "bg-success" },
+  "under-review": { label: "En revisión", text: "text-warning", dot: "bg-warning" },
+  overdue: { label: "Vencida", text: "text-danger", dot: "bg-danger" },
+  "not-started": {
+    label: "Sin iniciar",
+    text: "text-muted-foreground",
+    dot: "bg-muted-foreground",
+  },
+}
+
 export function StudentProgressDialog({
+  groupId,
   student,
   topics,
   open,
@@ -43,6 +60,13 @@ export function StudentProgressDialog({
     () => new Map((student?.topicProgress ?? []).map((t) => [t.topicNumber, t])),
     [student],
   )
+
+  /* Las actividades vienen del mismo sitio que el cajon de rendimiento, que ya
+     las tenia: la ficha de progreso solo hablaba de lecciones, y la pregunta
+     que trae aqui al docente —que ha resuelto y con que nota— se contestaba
+     dando un rodeo por la pestaña de calificaciones. La consulta se queda
+     quieta mientras no haya nadie seleccionado (`enabled` en el hook). */
+  const rendimiento = useStudentPerformance(groupId, student?.student.id ?? "")
 
   if (!student) return null
 
@@ -162,6 +186,68 @@ export function StudentProgressDialog({
               )
             })}
           </div>
+        </div>
+
+        {/* Actividades: que ha resuelto y con que nota. */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Actividades
+            </h4>
+            {rendimiento.data && (
+              <span className="text-xs text-muted-foreground">
+                {rendimiento.data.summary.completed}/{rendimiento.data.summary.total} completadas
+                {rendimiento.data.summary.average != null && (
+                  <>
+                    {" · "}promedio{" "}
+                    <span className="font-medium text-foreground">
+                      {rendimiento.data.summary.average}
+                    </span>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+
+          {rendimiento.isLoading ? (
+            <div className="space-y-1.5">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-10" />
+              ))}
+            </div>
+          ) : !rendimiento.data || rendimiento.data.series.length === 0 ? (
+            <p className="rounded-md border border-border bg-secondary/30 px-3 py-2.5 text-sm text-muted-foreground">
+              Este curso todavía no tiene actividades asignadas.
+            </p>
+          ) : (
+            <div className="space-y-1.5">
+              {rendimiento.data.series.map((a) => {
+                const meta = ESTADO_ACTIVIDAD[a.status] ?? ESTADO_ACTIVIDAD["not-started"]
+                return (
+                  <div
+                    key={a.activityId}
+                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <span className="block truncate text-sm text-foreground">{a.title}</span>
+                      <span className={cn("flex items-center gap-1.5 text-xs", meta.text)}>
+                        <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
+                        {meta.label}
+                        {a.attempts > 0 && (
+                          <span className="text-muted-foreground">
+                            · {a.attempts} {a.attempts === 1 ? "intento" : "intentos"}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-sm tabular-nums text-foreground">
+                      {a.score != null ? `${a.score}/100` : "—"}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
