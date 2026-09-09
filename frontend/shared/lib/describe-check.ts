@@ -30,10 +30,17 @@ export function permsToSentence(modo: string): string {
     .join(", ")
 }
 
-/** Último segmento de una ruta; si queda vacío, un sustantivo genérico. */
+/**
+ * La ruta tal como la escribió el docente, sin barras sobrantes.
+ *
+ * Antes se quedaba con el último segmento, y una aserción sobre `dir1/dir2` se
+ * describía como «el directorio 'dir2'»: dos aserciones sobre directorios
+ * anidados distintos con el mismo nombre final se leían idénticas, y no había
+ * forma de ver dónde esperaba cada una que estuviera la carpeta.
+ */
 function fileBasename(ruta: string): string {
-  const name = String(ruta ?? "").split("/").filter(Boolean).pop()
-  return name ?? "el archivo"
+  const limpia = String(ruta ?? "").split("/").filter(Boolean).join("/")
+  return limpia || "el archivo"
 }
 
 /**

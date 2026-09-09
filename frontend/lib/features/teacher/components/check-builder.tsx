@@ -267,6 +267,12 @@ export function CheckBuilder({
                     </Select>
                   </div>
 
+                  {/* Que comprueba este tipo. El texto ya venia del catalogo
+                      y no se pintaba en ninguna parte. */}
+                  {entry.hint ? (
+                    <p className="text-xs leading-relaxed text-muted-foreground">{entry.hint}</p>
+                  ) : null}
+
                   {/* Params */}
                   <div className="grid gap-3 sm:grid-cols-2">
                     {entry.fields.map((field) => (
@@ -278,6 +284,16 @@ export function CheckBuilder({
                           placeholder={field.placeholder}
                           className="h-9 w-full rounded-md border border-table-line bg-card px-2.5 font-mono text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                         />
+                        {/* Lo que mas se pregunta: como se comprueba algo que
+                            esta dentro de otro directorio. La ruta se escribe
+                            entera desde el directorio de trabajo. */}
+                        {field.key === "ruta" ? (
+                          <p className="text-[11px] leading-relaxed text-muted-foreground">
+                            Ruta desde el directorio de trabajo, sin barra inicial. Para algo
+                            anidado, escribe el camino completo:{" "}
+                            <span className="font-mono">dir1/dir2</span>.
+                          </p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
