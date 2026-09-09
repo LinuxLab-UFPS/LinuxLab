@@ -5,7 +5,7 @@ const seeds = [
   "seed-temario.js",
   "seed-comprobacion-solo-lectura.js",
   "seed-comprobacion-ficha.js",
-  "seed-comprobacion-logo.js",
+  "seed-comprobacion-primeras-lineas.js",
   "seed-comprobacion-permisos-informe.js",
   "seed-comprobacion-comprimir.js",
   "seed-comprobacion-procesos.js",

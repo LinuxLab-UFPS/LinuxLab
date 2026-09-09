@@ -188,7 +188,7 @@ ls existe noexiste > todo.txt 2>&1
 
 El orden importa. `2>&1` significa "manda el canal 2 adonde ya va el 1", así que tiene que ir después de haber decidido adónde va el 1.
 
-<!-- EJERCICIO: logo-ufps | logo-ufps -->
+<!-- EJERCICIO: primeras-lineas -->
 
 <!-- ACTIVIDAD: mensaje-oculto -->
 

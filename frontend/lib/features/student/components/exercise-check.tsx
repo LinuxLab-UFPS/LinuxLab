@@ -1,20 +1,40 @@
 "use client"
 
+import { useState } from "react"
 import { Loader2, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { CheckList } from "@/lib/features/student/components/check-list"
-import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
+import { useTerminalUI } from "@shared/components/terminal-ui"
+import { escribirAviso } from "@shared/lib/terminal-session"
+
+const GRIS = "\x1b[90m"
+const NEGRITA = "\x1b[1m"
+const FIN = "\x1b[0m"
 
 /**
  * A *comprobación* inside a lesson: the fixed check that measures progress
  * through the course. It is not an activity — activities live outside the
  * syllabus and are solved next to the terminal.
+ *
+ * Arranca plegada, con el título y un solo botón. Antes se abría con todo a la
+ * vista —enunciado, lista de condiciones y botón de comprobar— y la mitad de la
+ * gente no entendía qué se esperaba de ella ni dónde hacerlo: leía el enunciado
+ * en la página, no encontraba la terminal y se quedaba ahí. «Empezar» la abre,
+ * abre la terminal, y escribe el enunciado dentro de ella, de modo que lo que
+ * hay que hacer y el sitio donde se hace quedan a la vista a la vez.
  */
-export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: string }) {
+export function ExerciseCheck({ slug }: { slug: string }) {
   const { activity, rows, evaluated, passed, loading, checking, check } =
     useActivityCheck(slug)
+  const { setOpen } = useTerminalUI()
+  const [abierta, setAbierta] = useState(false)
+
+  /* Quien ya la intentó no vuelve a pulsar «Empezar»: la tarjeta sale abierta
+     con lo que hizo la última vez. El botón es para la primera. Se deriva y no
+     se guarda en un efecto: `evaluated` ya lo dice. */
+  const empezada = abierta || evaluated
 
   if (loading) {
     return (
@@ -30,6 +50,19 @@ export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: strin
 
   const edge = passed ? "border-success/40" : "border-amber-500/30"
 
+  const empezar = () => {
+    setAbierta(true)
+    setOpen(true)
+    /* El enunciado, también dentro de la terminal. Es texto, no un comando: se
+       pinta y no se envía a la shell. Sin las condiciones, que son la lista de
+       la tarjeta y aquí solo serían ruido. */
+    if (activity.instructions) {
+      escribirAviso(
+        `\r\n${NEGRITA}${activity.title}${FIN}\r\n${GRIS}${activity.instructions}${FIN}\r\n\r\n`,
+      )
+    }
+  }
+
   return (
     <section className={cn("my-8 rounded-xl border transition-colors", edge)}>
       <header className={cn("flex items-center gap-2.5 border-b px-5 py-3.5", edge)}>
@@ -42,32 +75,36 @@ export function ExerciseCheck({ slug, snippet }: { slug: string; snippet?: strin
         )}
       </header>
 
-      <div className="space-y-4 px-5 py-4">
-        {activity.instructions && (
-          <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
-        )}
-
-        {/* El texto que reparte la comprobacion, si lo lleva. Va aqui dentro
-            porque es parte del enunciado: fuera quedaba suelto en la leccion,
-            lejos de lo que pide usarlo. */}
-        {snippet && <CopySnippet id={snippet} className="" />}
-
-        <CheckList rows={rows} evaluated={evaluated} />
-
-        <div className="flex items-center gap-3">
-          <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking}>
-            {checking ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ShieldCheck className="h-4 w-4" />
-            )}
-            {checking ? "Comprobando..." : "Comprobar"}
+      {!empezada ? (
+        <div className="flex justify-center px-5 py-6">
+          <ActionButton tone="amber" onClick={empezar}>
+            <ShieldCheck className="h-4 w-4" />
+            Empezar
           </ActionButton>
-          <p className="text-xs text-muted-foreground">
-            Se revisa tu propio directorio dentro del laboratorio.
-          </p>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-4 px-5 py-4">
+          {activity.instructions && (
+            <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
+          )}
+
+          <CheckList rows={rows} evaluated={evaluated} />
+
+          <div className="flex items-center gap-3">
+            <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking}>
+              {checking ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              {checking ? "Comprobando..." : "Comprobar"}
+            </ActionButton>
+            <p className="text-xs text-muted-foreground">
+              Se revisa tu propio directorio dentro del laboratorio.
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

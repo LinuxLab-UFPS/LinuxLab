@@ -20,7 +20,7 @@ En LinuxLab trabajas desde la terminal integrada en la plataforma, que funciona 
 
 ## Tu primer comando
 
-Abre la terminal del laboratorio, escribe esto y pulsa <kbd>Enter</kbd>:
+En la terminal del laboratorio, escribe esto y pulsa <kbd>Enter</kbd>:
 
 ```bash
 echo "Hello World!"

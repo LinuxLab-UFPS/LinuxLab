@@ -7,7 +7,6 @@ import { FilesystemHierarchy } from "@shared/components/filesystem-hierarchy"
 import { ExerciseCheck } from "@/lib/features/student/components/exercise-check"
 import { ExampleCheck } from "@/lib/features/student/components/example-check"
 import { LessonActivity } from "@/lib/features/student/components/lesson-activity"
-import { CopySnippet } from "@/lib/features/student/components/copy-snippet"
 import { SoloEnEscritorio } from "@/lib/features/student/components/solo-en-escritorio"
 import { LESSON_ILLUSTRATIONS } from "@shared/components/lesson-illustrations"
 import { getSimulator } from "@shared/lib/content/simulators"
@@ -148,7 +147,7 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
             return (
               <div key={i}>
                 <div className="hidden md:block">
-                  <ExerciseCheck slug={block.slug} snippet={block.snippet} />
+                  <ExerciseCheck slug={block.slug} />
                 </div>
                 <SoloEnEscritorio que="Esta comprobación" />
               </div>
@@ -168,13 +167,6 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
                   <LessonActivity slugs={block.slugs} />
                 </div>
                 <SoloEnEscritorio que="La actividad de este tema" />
-              </div>
-            )
-
-          case "snippet":
-            return (
-              <div key={i} className="hidden md:block">
-                <CopySnippet id={block.id} />
               </div>
             )
 
