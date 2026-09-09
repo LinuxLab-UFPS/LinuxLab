@@ -8,6 +8,7 @@ import { BackButton } from "@shared/components/back-button"
 import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
+import { ResultadoDialog } from "@shared/components/resultado-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
@@ -20,7 +21,8 @@ import {
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import { notify } from "@shared/lib/toast"
-import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
+import { StudentInfoTable } from "@shared/components/student-info-table"
+import { avisarResultado } from "@/lib/features/student/terminal-aviso"
 
 
 /**
@@ -43,6 +45,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   const [submitting, setSubmitting] = useState(false)
   const [resetting, setResetting] = useState(false)
   const [confirmando, setConfirmando] = useState(false)
+  const [resultado, setResultado] = useState(false)
   const [submitted, setSubmitted] = useState(!!detail.submission)
   const [submission, setSubmission] = useState(detail.submission)
 
@@ -69,6 +72,10 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
   }
 
+  /* El resultado se enseña en un modal, igual que en las del temario: debajo
+     del enunciado quedaba a un scroll del boton que acababa de pulsarse. Y el
+     veredicto se escribe ademas en la terminal, que es donde el estudiante esta
+     mirando; esta pantalla no escribia nada. */
   const check = async () => {
     setChecking(true)
     try {
@@ -78,6 +85,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       setFinalScore(outcome.finalScore)
       setAttemptsCount(outcome.attemptsCount)
       setAttempts(outcome.attempts)
+      const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
+      avisarResultado(outcome.passed, outcome.finalScore, total)
+      setResultado(true)
     } catch (e) {
       notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
@@ -162,7 +172,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2", DENSE_PROSE)}>
+      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
         {detail.instructions ? (
           <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {detail.instructions}
@@ -199,14 +209,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
                 : undefined
             }
             checks={isManual ? undefined : (results ?? detail.lastAttempt?.results ?? [])}
+            checksInline={false}
           />
         </div>
-
-        {detail.evaluationType === "atomic" && attempts.length > 0 && (
-          <div className="mt-4">
-            <AttemptsTable attempts={attempts} maxScore={detail.maxScore} />
-          </div>
-        )}
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
@@ -283,6 +288,15 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           </p>
         ) : null}
       </footer>
+
+      <ResultadoDialog
+        open={resultado && !checking}
+        onOpenChange={setResultado}
+        passed={passed}
+        results={results ?? []}
+        attempts={attempts}
+        maxScore={detail.maxScore}
+      />
 
       <ConfirmDialog
         open={confirmando}

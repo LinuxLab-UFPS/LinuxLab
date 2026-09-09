@@ -9,6 +9,7 @@ import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
+import { ResultadoDialog } from "@shared/components/resultado-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
@@ -20,7 +21,7 @@ import {
 } from "@shared/lib/content/activities"
 import { Tag } from "@shared/components/tag"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
-import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
+import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
 
@@ -48,6 +49,15 @@ export function ActivityPanel({
 }) {
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
+
+  /* El resultado se enseña en un modal en cuanto termina la comprobacion. Vivia
+     debajo del enunciado, o sea a un scroll del boton que acababa de pulsarse, y
+     con un enunciado largo no se veia nunca. */
+  const [resultado, setResultado] = useState(false)
+  const comprobar = () => {
+    check()
+    setResultado(true)
+  }
 
   /* Comprobar exige estar parado en el directorio de la actividad. La ruta la dice
      la propia shell en cada prompt, asi que vale tanto si se llego con el boton
@@ -120,7 +130,7 @@ export function ActivityPanel({
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2", DENSE_PROSE)}>
+      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
         {/* El aviso va arriba del enunciado a proposito: el texto al pie
             pasaba desapercibido y los estudiantes empezaban a trabajar en su
             home, fuera del directorio que se evalua. */}
@@ -161,11 +171,8 @@ export function ActivityPanel({
               maxScore={data.maxScore}
               feedbackVariant="automatic"
               checks={data.lastAttempt?.results ?? []}
+              checksInline={false}
             />
-
-            {data.attempts.length > 0 && (
-              <AttemptsTable attempts={data.attempts} maxScore={data.maxScore} />
-            )}
           </div>
         ) : null}
       </div>
@@ -174,7 +181,7 @@ export function ActivityPanel({
         <div className="flex items-center gap-2">
           <ActionButton
             tone={passed ? "emerald" : "amber"}
-            onClick={check}
+            onClick={comprobar}
             disabled={checking || loading || !enElDirectorio}
           >
             {checking ? (
@@ -219,6 +226,15 @@ export function ActivityPanel({
           )
         )}
       </footer>
+
+      <ResultadoDialog
+        open={resultado && !checking}
+        onOpenChange={setResultado}
+        passed={data?.lastAttempt?.passed ?? false}
+        results={data?.lastAttempt?.results ?? []}
+        attempts={data?.attempts ?? []}
+        maxScore={data?.maxScore ?? 100}
+      />
 
       <ConfirmDialog
         open={confirmando}

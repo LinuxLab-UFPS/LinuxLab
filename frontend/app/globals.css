@@ -451,3 +451,25 @@
     animation: none;
   }
 }
+
+/* La barra de scroll siempre a la vista.
+ *
+ * En la columna del enunciado el navegador la esconde hasta que se mueve la
+ * rueda, asi que nada dice que abajo hay mas texto y los estudiantes se quedaban
+ * a medio enunciado. `scrollbar-gutter` reserva su sitio para que aparecer no
+ * mueva el texto de lado. */
+.scrollbar-siempre {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.scrollbar-siempre::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollbar-siempre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-siempre::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 999px;
+}

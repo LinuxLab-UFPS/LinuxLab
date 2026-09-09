@@ -50,6 +50,14 @@ interface StudentInfoTableProps {
   feedbackNode?: React.ReactNode
   /** Resultados de cada aserción (modo automático). */
   checks?: CheckFeedback[]
+  /**
+   * Si las aserciones se pintan aquí debajo.
+   *
+   * En las vistas de calificación del docente sí: la tabla es todo lo que hay.
+   * En el panel del estudiante no, porque desde que comprobar abre un modal con
+   * el resultado, dejarlas también aquí las mostraba dos veces.
+   */
+  checksInline?: boolean
   /** Presente solo cuando el docente puede calificar la entrega. */
   gradeForm?: GradeFormValue
 }
@@ -77,6 +85,7 @@ export function StudentInfoTable({
   feedbackVariant,
   feedbackNode,
   checks,
+  checksInline = true,
   gradeForm,
 }: StudentInfoTableProps) {
   const isAutomatic = feedbackVariant === "automatic" && !gradeForm
@@ -156,7 +165,7 @@ export function StudentInfoTable({
         </tbody>
       </table>
 
-      {isAutomatic && <AutomaticFeedbackColumns results={checks ?? []} />}
+      {isAutomatic && checksInline && <AutomaticFeedbackColumns results={checks ?? []} />}
     </div>
   )
 }
@@ -167,7 +176,7 @@ export function StudentInfoTable({
  * puntaje. El texto lo construye el checker (backend), así que aquí solo se
  * muestra `detail` tal cual viene.
  */
-function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
+export function AutomaticFeedbackColumns({ results }: { results: CheckFeedback[] }) {
   return (
     <div className="border-t border-border">
       {/* La columna de resultado es fija y angosta: el detalle de la aserción

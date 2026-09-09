@@ -2,8 +2,7 @@
 
 import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { avisarAsercion, avisarComprobando, avisarResultado } from "./terminal-aviso"
-import { describeCheckForStudent } from "@shared/lib/describe-check"
+import { avisarResultado } from "./terminal-aviso"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
 import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
@@ -44,22 +43,15 @@ export function useActivityCheck(slug: string) {
   })
 
   const checkMutation = useMutation({
-    onMutate: () => {
-      avisarComprobando()
-    },
     mutationFn: () =>
       apiFetch<{ passed: boolean; score: number; results: ActivityCheckResult[] }>(
         `/api/activities/${slug}/check`,
         { method: "POST" },
       ),
     onSuccess: (outcome) => {
-      // El resultado tambien se escribe en la terminal: es donde el estudiante
-      // esta mirando mientras trabaja, y hasta ahora solo aparecia en el panel
-      // de abajo. El texto sale del tipo de asercion, nunca de sus params, que
-      // el servidor no envia porque contienen la respuesta.
-      outcome.results.forEach((row, i) => {
-        avisarAsercion(i + 1, row.detail || describeCheckForStudent(row.type), row.passed)
-      })
+      // El veredicto tambien se escribe en la terminal: es donde el estudiante
+      // esta mirando mientras trabaja. El detalle de cada asercion se queda en
+      // el panel, que es donde se lee sin enterrar la consola.
       const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
       avisarResultado(outcome.passed, outcome.score, total)
 
