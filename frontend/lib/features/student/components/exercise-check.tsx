@@ -6,30 +6,33 @@ import { cn } from "@shared/lib/utils"
 import { ActionButton } from "@shared/components/action-button"
 import { CheckList } from "@/lib/features/student/components/check-list"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
+import { avisarEnunciado } from "@/lib/features/student/terminal-aviso"
 import { useTerminalUI } from "@shared/components/terminal-ui"
-import { escribirAviso } from "@shared/lib/terminal-session"
-
-const GRIS = "\x1b[90m"
-const NEGRITA = "\x1b[1m"
-const FIN = "\x1b[0m"
+import { useAuth } from "@/lib/features/auth/context"
 
 /**
  * A *comprobación* inside a lesson: the fixed check that measures progress
  * through the course. It is not an activity — activities live outside the
  * syllabus and are solved next to the terminal.
  *
- * Arranca plegada, con el título y un solo botón. Antes se abría con todo a la
- * vista —enunciado, lista de condiciones y botón de comprobar— y la mitad de la
- * gente no entendía qué se esperaba de ella ni dónde hacerlo: leía el enunciado
- * en la página, no encontraba la terminal y se quedaba ahí. «Empezar» la abre,
- * abre la terminal, y escribe el enunciado dentro de ella, de modo que lo que
- * hay que hacer y el sitio donde se hace quedan a la vista a la vez.
+ * Arranca plegada, con el título y un solo botón al lado. Antes se abría con
+ * todo a la vista —enunciado, lista de condiciones y botón de comprobar— y la
+ * mitad de la gente no entendía qué se esperaba de ella ni dónde hacerlo: leía
+ * el enunciado en la página, no encontraba la terminal y se quedaba ahí.
+ * «Empezar» la abre, abre la terminal, y escribe el enunciado dentro de ella, de
+ * modo que lo que hay que hacer y el sitio donde se hace quedan a la vista a la
+ * vez.
  */
 export function ExerciseCheck({ slug }: { slug: string }) {
   const { activity, rows, evaluated, passed, loading, checking, check } =
-    useActivityCheck(slug)
+    useActivityCheck(slug, "comprobacion")
   const { setOpen } = useTerminalUI()
+  const { user } = useAuth()
   const [abierta, setAbierta] = useState(false)
+
+  /* El docente entra a repasar el material, no a resolverlo: no tiene entorno
+     contra el que comprobar y la petición volvería sin matrícula. */
+  const soloLectura = user?.role === "teacher" || user?.role === "admin"
 
   /* Quien ya la intentó no vuelve a pulsar «Empezar»: la tarjeta sale abierta
      con lo que hizo la última vez. El botón es para la primera. Se deriva y no
@@ -57,32 +60,43 @@ export function ExerciseCheck({ slug }: { slug: string }) {
        pinta y no se envía a la shell. Sin las condiciones, que son la lista de
        la tarjeta y aquí solo serían ruido. */
     if (activity.instructions) {
-      escribirAviso(
-        `\r\n${NEGRITA}${activity.title}${FIN}\r\n${GRIS}${activity.instructions}${FIN}\r\n\r\n`,
-      )
+      avisarEnunciado("Comprobación", activity.instructions)
     }
   }
 
   return (
     <section className={cn("my-8 rounded-xl border transition-colors", edge)}>
-      <header className={cn("flex items-center gap-2.5 border-b px-5 py-3.5", edge)}>
-        <ShieldCheck className={cn("h-4 w-4", passed ? "text-success" : "text-amber-500")} />
-        <h3 className="text-sm font-semibold text-foreground">Comprobación: {activity.title}</h3>
+      <header
+        className={cn(
+          "flex items-center gap-2.5 px-5 py-3.5",
+          // Plegada la cabecera es la tarjeta entera, así que no lleva línea
+          // debajo: separaría el título de nada.
+          empezada && "border-b",
+          empezada && edge,
+        )}
+      >
+        <ShieldCheck className={cn("h-4 w-4 shrink-0", passed ? "text-success" : "text-amber-500")} />
+        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+          Comprobación: {activity.title}
+        </h3>
+
         {passed && (
-          <span className="ml-auto rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
+          <span className="shrink-0 rounded-full border border-success/30 bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
             Completada
           </span>
         )}
-      </header>
 
-      {!empezada ? (
-        <div className="flex justify-center px-5 py-6">
+        {/* Plegada, el botón vive aquí: una tarjeta con un título y un botón
+            suelto debajo ocupaba el triple para decir lo mismo. */}
+        {!empezada && (
           <ActionButton tone="amber" onClick={empezar}>
             <ShieldCheck className="h-4 w-4" />
             Empezar
           </ActionButton>
-        </div>
-      ) : (
+        )}
+      </header>
+
+      {empezada && (
         <div className="space-y-4 px-5 py-4">
           {activity.instructions && (
             <p className="text-sm leading-relaxed text-foreground">{activity.instructions}</p>
@@ -91,7 +105,11 @@ export function ExerciseCheck({ slug }: { slug: string }) {
           <CheckList rows={rows} evaluated={evaluated} />
 
           <div className="flex items-center gap-3">
-            <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking}>
+            <ActionButton
+              tone={passed ? "emerald" : "amber"}
+              onClick={check}
+              disabled={checking || soloLectura}
+            >
               {checking ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -100,7 +118,9 @@ export function ExerciseCheck({ slug }: { slug: string }) {
               {checking ? "Comprobando..." : "Comprobar"}
             </ActionButton>
             <p className="text-xs text-muted-foreground">
-              Se revisa tu propio directorio dentro del laboratorio.
+              {soloLectura
+                ? "Así la ve el estudiante. La resuelve él, en su propio entorno."
+                : "Se revisa tu propio directorio dentro del laboratorio."}
             </p>
           </div>
         </div>

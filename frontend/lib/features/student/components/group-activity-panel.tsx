@@ -86,7 +86,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       setAttemptsCount(outcome.attemptsCount)
       setAttempts(outcome.attempts)
       const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
-      avisarResultado(outcome.passed, outcome.finalScore, total)
+      avisarResultado("actividad", outcome.passed, outcome.finalScore, total)
       setResultado(true)
     } catch (e) {
       notify.error(e, "No se pudo comprobar tu entorno")

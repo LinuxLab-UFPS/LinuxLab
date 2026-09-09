@@ -25,7 +25,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y guarda en un archivo llamado procesos.txt, en tu " +
+    "Guarda en un archivo llamado procesos.txt, en tu " +
     "directorio personal, la lista de procesos con su consumo de CPU y memoria. " +
     "Usa una redirección: el archivo tiene que quedar con la salida del " +
     "comando, cabecera incluida. Verás pocas líneas, y está bien: en este " +

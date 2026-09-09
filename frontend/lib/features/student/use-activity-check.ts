@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { avisarResultado } from "./terminal-aviso"
+import { avisarResultado, type TipoDeReto } from "./terminal-aviso"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { apiFetch } from "@/lib/api/client"
 import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
@@ -21,7 +21,7 @@ export { describeCheck }
  * server answers what passed and what did not. The student is always taken from
  * the session, never from the request.
  */
-export function useActivityCheck(slug: string) {
+export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
   const queryClient = useQueryClient()
   const queryKey = ["lesson-activity", slug] as const
 
@@ -53,7 +53,7 @@ export function useActivityCheck(slug: string) {
       // esta mirando mientras trabaja. El detalle de cada asercion se queda en
       // el panel, que es donde se lee sin enterrar la consola.
       const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
-      avisarResultado(outcome.passed, outcome.score, total)
+      avisarResultado(tipo, outcome.passed, outcome.score, total)
 
       // El ultimo intento visto por la pantalla pasa a ser el de esta
       // comprobacion, sin recargar la actividad.

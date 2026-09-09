@@ -17,7 +17,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea informe.txt en tu directorio personal con al menos " +
+    "Crea informe.txt en tu directorio personal con al menos " +
     "una línea escrita. Déjalo de forma que puedas leerlo y escribirlo tú, que " +
     "tu grupo solo pueda leerlo, y que los demás no puedan hacer nada con él.",
 }
