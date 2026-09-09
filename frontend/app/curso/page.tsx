@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { SiteHeader } from "@/lib/features/student/components/site-header"
 import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
 import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
@@ -32,8 +31,8 @@ export default async function GroupPage({
 }: {
   searchParams: Promise<{ tema?: string; sub?: string }>
 }) {
-  /* El docente entra al mismo material desde `/temario`: lee las lecciones que
-     van a leer sus estudiantes, pero sin progreso propio que apuntar. */
+  /* El docente entra al mismo material que el estudiante: lee las lecciones que
+     van a leer ellos, pero sin progreso propio que apuntar. */
   const session = await requireServerRole(["student", "teacher", "admin"])
   const soloLectura = session.user.role !== "student"
   const { tema, sub } = await searchParams
@@ -46,12 +45,6 @@ export default async function GroupPage({
   ) : (
     <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
   )
-
-  /* El mapa del docente vive en `/temario`, no en la pagina de bienvenida: son
-     el mismo componente, y dos puertas a lo mismo son dos cosas que mantener. */
-  if (soloLectura && esBienvenida(tema) && sub === "roadmap") {
-    redirect("/temario")
-  }
 
   /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo
      lo que viene despues (directorio `tema-NN`, assets, vecinos) se construye a

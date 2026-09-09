@@ -18,10 +18,4 @@ if [ -n "$PS1" ]; then
   # archivos en el disco, no donde esta la shell.
   PROMPT_COMMAND='printf "\033]7;file://%s\033\\" "$PWD"'
   export PROMPT_COMMAND
-
-  # Saludo en ambar, una sola vez por sesion (no en cada subshell).
-  if [ -z "$LINUXLAB_WELCOMED" ]; then
-    export LINUXLAB_WELCOMED=1
-    printf '\e[1;38;2;245;158;11m¡Bienvenido a LinuxLab!\e[0m\n'
-  fi
 fi

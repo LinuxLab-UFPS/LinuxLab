@@ -27,7 +27,7 @@ const ACTIVO = "bg-primary/15 text-primary"
 
 const NAV = [
   { label: "Grupos", href: "/inicio", icon: BookOpen },
-  { label: "Contenidos", href: "/temario", icon: Map },
+  { label: "Contenidos", href: "/curso?tema=bienvenida&sub=roadmap", icon: Map },
   { label: "Terminal", href: "/terminal", icon: TerminalSquare },
 ]
 

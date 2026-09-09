@@ -67,9 +67,9 @@ export function PanelContenidos({
       {/* Nav: home + title */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
         <Link
-          href={soloLectura ? "/temario" : "/inicio"}
-          title={soloLectura ? "Volver al temario" : "Volver al inicio"}
-          aria-label={soloLectura ? "Volver al temario" : "Volver al inicio"}
+          href="/inicio"
+          title="Volver al inicio"
+          aria-label="Volver al inicio"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <Home className="h-4 w-4" />
@@ -107,14 +107,7 @@ export function PanelContenidos({
             return (
               <li key={pagina.id}>
                 <Link
-                  /* Al docente, el mapa le vive en `/temario`: es el mismo
-                     componente sin las cifras de progreso, y tener dos puertas
-                     a lo mismo obliga a mantener las dos. */
-                  href={
-                    soloLectura && pagina.kind === "roadmap"
-                      ? "/temario"
-                      : `/curso?tema=${bienvenida.slug}&sub=${pagina.id}`
-                  }
+                  href={`/curso?tema=${bienvenida.slug}&sub=${pagina.id}`}
                   className={cn(
                     "flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
                     activa ? "bg-primary/10" : "hover:bg-secondary",

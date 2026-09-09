@@ -161,32 +161,35 @@ export function MapaTemario({
                   })}
 
                   {/* Las actividades se resuelven contra la matricula de un
-                      grupo, asi que fuera del curso no hay ninguna que abrir:
-                      el docente las revisa desde el grupo donde las puso. */}
-                  {progreso ? (
-                    progreso.actividadesDelTema(topic.number).map((a) => (
-                      // Las actividades se resuelven en la terminal, que en
-                      // movil no existe: el enlace llevaria a una pantalla que
-                      // no se puede usar.
-                      <li key={a.clave} className="hidden md:list-item">
-                        <LessonLink href={a.href} className={filaHija(false, a.hecha)}>
-                          <VinetaActividad hecha={a.hecha} />
-                          <span className="truncate">{a.title}</span>
-                          <EtiquetaTipo>Actividad</EtiquetaTipo>
-                        </LessonLink>
-                      </li>
-                    ))
-                  ) : activities.some((a) => a.topicNumber === topic.number) ? (
-                    <li className="hidden md:list-item">
-                      <span className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground">
-                        <VinetaActividad />
-                        <span className="truncate">
-                          Las actividades de este tema se revisan en cada grupo
-                        </span>
-                        <EtiquetaTipo>Actividad</EtiquetaTipo>
-                      </span>
-                    </li>
-                  ) : null}
+                      grupo, asi que quien no cursa las ve pero no las abre: el
+                      docente las revisa desde el grupo donde las puso. Se
+                      listan igual para que sepa que existen y en que tema
+                      caen. Las lecciones y los simuladores si abren: son
+                      material de lectura y no dependen de nadie. */}
+                  {progreso
+                    ? progreso.actividadesDelTema(topic.number).map((a) => (
+                        // Las actividades se resuelven en la terminal, que en
+                        // movil no existe: el enlace llevaria a una pantalla que
+                        // no se puede usar.
+                        <li key={a.clave} className="hidden md:list-item">
+                          <LessonLink href={a.href} className={filaHija(false, a.hecha)}>
+                            <VinetaActividad hecha={a.hecha} />
+                            <span className="truncate">{a.title}</span>
+                            <EtiquetaTipo>Actividad</EtiquetaTipo>
+                          </LessonLink>
+                        </li>
+                      ))
+                    : activities
+                        .filter((a) => a.topicNumber === topic.number)
+                        .map((a) => (
+                          <li key={a.slug} className="hidden md:list-item">
+                            <span className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground/70">
+                              <VinetaActividad />
+                              <span className="truncate">{a.title}</span>
+                              <EtiquetaTipo>Actividad</EtiquetaTipo>
+                            </span>
+                          </li>
+                        ))}
 
                   {/* Los simuladores no llevan vineta de estado: se juegan las
                       veces que haga falta y no cuentan para el progreso, asi

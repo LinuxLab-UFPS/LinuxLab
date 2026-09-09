@@ -5,7 +5,8 @@ import type { RouteRule } from "@/lib/models/content"
  * El **material de lectura** —el temario y los simuladores— lo comparten los
  * tres roles: el docente tiene que poder repasar lo que van a leer sus
  * estudiantes, y hasta ahora la unica forma era pedir prestada una cuenta. Entra
- * por `/temario`, que es su mapa del curso sin cifras de progreso.
+ * por la misma ruta de aprendizaje que ellos, que se dibuja sin cifras cuando
+ * quien mira no cursa.
  *
  * Lo que sigue siendo **solo del estudiante** es lo que no existe sin matricula:
  * `/contenidos`, `/actividades` y `/estudiante/grupo` se abren dando por hecho
@@ -27,7 +28,6 @@ export const ROUTE_RULES: RouteRule[] = [
   { path: "/admin", roles: ["admin"] },
   { path: "/admin/bitacora", roles: ["admin"], exact: true },
   { path: "/grupos", roles: ["teacher", "admin"] },
-  { path: "/temario", roles: ["teacher", "admin"], exact: true },
   { path: "/grupos/crear", roles: ["teacher", "admin"], exact: true },
   { path: "/terminal", roles: ["student", "teacher", "admin"], exact: true, requiresEnrollment: true },
   { path: "/contenidos", roles: ["student"], requiresEnrollment: true },
