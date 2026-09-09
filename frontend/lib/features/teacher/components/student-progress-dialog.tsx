@@ -91,6 +91,24 @@ function Dona({
   )
 }
 
+/** Las dos cifras que acompañan a una dona. */
+function Cifras({
+  filas,
+}: {
+  filas: { label: string; value: string; text: string }[]
+}) {
+  return (
+    <div className="space-y-1.5">
+      {filas.map((f) => (
+        <div key={f.label} className="flex items-baseline justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">{f.label}</span>
+          <span className={cn("font-medium tabular-nums", f.text)}>{f.value}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** Una actividad dentro del desglose, con su estado y su nota. */
 function FilaActividad({ a }: { a: GradeSeriesPoint }) {
   const meta = ESTADO_ACTIVIDAD[a.status] ?? ESTADO_ACTIVIDAD["not-started"]
@@ -179,9 +197,13 @@ export function StudentProgressDialog({
     { name: "Pendientes", value: Math.max(0, actTotal - actHechas), color: "var(--muted-foreground)" },
   ].filter((d) => d.value > 0)
 
-  const legend = [
+  /* Cada dona con sus dos cifras al lado. Juntas y con las cuatro líneas
+     amontonadas a la derecha no se veía qué número pertenecía a qué círculo. */
+  const cifrasTemas = [
     { label: "Temas completados", value: `${completados}/${topics.length}`, text: "text-success" },
     { label: "Temas en progreso", value: String(enProgreso), text: "text-warning" },
+  ]
+  const cifrasActividades = [
     { label: "Actividades", value: `${actHechas}/${actTotal}`, text: "text-foreground" },
     {
       label: "Promedio",
@@ -202,20 +224,14 @@ export function StudentProgressDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Dos donas: los temas y las actividades. Antes solo estaba la de
-            temas, y las actividades no se contaban en ninguna parte. */}
-        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
+        {/* Dos donas, cada una con sus cifras al lado y a la misma altura.
+            Antes solo estaba la de temas, y las actividades no se contaban en
+            ninguna parte. */}
+        <div className="grid grid-cols-1 items-center gap-x-4 gap-y-2 sm:grid-cols-[auto_1fr_auto_1fr]">
           <Dona data={donutTemas} valor={`${progress}%`} pie="del curso" />
+          <Cifras filas={cifrasTemas} />
           <Dona data={donutActividades} valor={`${actPct}%`} pie="actividades" />
-
-          <div className="space-y-2">
-            {legend.map((item) => (
-              <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">{item.label}</span>
-                <span className={cn("font-medium tabular-nums", item.text)}>{item.value}</span>
-              </div>
-            ))}
-          </div>
+          <Cifras filas={cifrasActividades} />
         </div>
 
         {/* Desglose por tema, desplegable */}
