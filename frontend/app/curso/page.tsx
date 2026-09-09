@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation"
 import { SiteHeader } from "@/lib/features/student/components/site-header"
+import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
 import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
 import { GroupBody } from "@/lib/features/student/components/group-body"
 import { ContentArea } from "@/lib/features/student/components/content-area"
@@ -36,6 +38,21 @@ export default async function GroupPage({
   const soloLectura = session.user.role !== "student"
   const { tema, sub } = await searchParams
 
+  /* Su barra es la suya siempre, tambien dentro de una leccion. Antes se montaba
+     la del estudiante para todo el mundo, y el docente se encontraba a mitad de
+     camino con una barra que no era la suya y con enlaces que no podia abrir. */
+  const cabecera = soloLectura ? (
+    <TeacherHeader />
+  ) : (
+    <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+  )
+
+  /* El mapa del docente vive en `/temario`, no en la pagina de bienvenida: son
+     el mismo componente, y dos puertas a lo mismo son dos cosas que mantener. */
+  if (soloLectura && esBienvenida(tema) && sub === "roadmap") {
+    redirect("/temario")
+  }
+
   /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo
      lo que viene despues (directorio `tema-NN`, assets, vecinos) se construye a
      partir de ese numero. */
@@ -49,11 +66,7 @@ export default async function GroupPage({
           <LessonLoadingProvider>
             <div className="flex h-screen flex-col overflow-hidden bg-background">
               <div className="z-40 shrink-0 bg-background">
-                <SiteHeader
-                  simulators={getSimulators()}
-                  searchItems={getSearchIndex()}
-                  soloLectura={soloLectura}
-                />
+                {cabecera}
               </div>
               <main className="flex-1 overflow-y-auto">
                 <GroupBody>
@@ -118,11 +131,7 @@ export default async function GroupPage({
               cabecera, que es este `<main>`. */}
           <div className="flex h-screen flex-col overflow-hidden bg-background">
             <div className="z-40 shrink-0 bg-background">
-              <SiteHeader
-                  simulators={getSimulators()}
-                  searchItems={getSearchIndex()}
-                  soloLectura={soloLectura}
-                />
+              {cabecera}
               <ReadingProgressBar />
             </div>
             <main className="flex-1 overflow-y-auto">

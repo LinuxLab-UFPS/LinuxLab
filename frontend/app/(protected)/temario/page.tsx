@@ -23,10 +23,6 @@ export default async function TemarioDocentePage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Contenidos del curso
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          El temario tal como lo recorren tus estudiantes. Abre un tema para ver sus lecciones
-          y sus simuladores.
-        </p>
       </header>
 
       <MapaTemario topicLessons={getTopicLessons()} progreso={null} />

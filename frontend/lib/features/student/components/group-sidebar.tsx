@@ -112,7 +112,14 @@ export function PanelContenidos({
             return (
               <li key={pagina.id}>
                 <Link
-                  href={`/curso?tema=${bienvenida.slug}&sub=${pagina.id}`}
+                  /* Al docente, el mapa le vive en `/temario`: es el mismo
+                     componente sin las cifras de progreso, y tener dos puertas
+                     a lo mismo obliga a mantener las dos. */
+                  href={
+                    soloLectura && pagina.kind === "roadmap"
+                      ? "/temario"
+                      : `/curso?tema=${bienvenida.slug}&sub=${pagina.id}`
+                  }
                   className={cn(
                     "flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
                     activa ? "bg-primary/10" : "hover:bg-secondary",

@@ -2,6 +2,7 @@ import { getActivities } from "@shared/lib/content/activities"
 import { ActivityBrowser } from "@/lib/features/student/components/activity-browser"
 import { listMyGroupActivities } from "@/lib/features/student/group-activities"
 import { requireServerRole } from "@/lib/features/auth/session"
+import { TituloDeSeccion } from "@shared/components/titulo-de-seccion"
 
 export default async function ActivitiesPage() {
   await requireServerRole(["student"])
@@ -13,12 +14,7 @@ export default async function ActivitiesPage() {
   return (
     <div className="min-h-full pb-24">
       <section className="mx-auto max-w-7xl px-6 pt-16 pb-8">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">
-          <span className="bg-gradient-to-r from-[#ff5470] via-[#f43f5e] to-[#C41E3A] bg-clip-text text-transparent">
-            Actividades
-          </span>
-        </h1>
-        <span className="mt-3 block h-1 w-24 rounded-full bg-gradient-to-r from-[#ff5470] to-[#C41E3A]" />
+        <TituloDeSeccion>Actividades</TituloDeSeccion>
         <p className="mt-5 text-lg text-muted-foreground">
           Pon en practica lo aprendido con estas actividades y demuestra tus habilidades en la terminal real.
         </p>

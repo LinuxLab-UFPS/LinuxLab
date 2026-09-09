@@ -52,16 +52,9 @@ const SIMULATOR_ICONS: Record<string, React.ComponentType<{ className?: string }
 export function SiteHeader({
   simulators,
   searchItems,
-  soloLectura = false,
 }: {
   simulators: Simulator[]
   searchItems: SearchItem[]
-  /**
-   * El docente leyendo el temario. Se le quitan los enlaces que solo existen
-   * con matricula —las actividades y su rendimiento—, que a el lo rebotarian a
-   * `/inicio`, y el logo lo devuelve a su mapa en vez de al inicio del alumno.
-   */
-  soloLectura?: boolean
 }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -72,10 +65,7 @@ export function SiteHeader({
     <header className="h-16 shrink-0 border-b border-white/10 bg-[#0a0a0a] text-white">
       <div className="mx-auto flex h-full max-w-7xl items-center gap-4 px-4 sm:px-6">
         {/* Logo */}
-        <Link
-          href={soloLectura ? "/temario" : "/inicio"}
-          className="shrink-0 text-xl font-extrabold tracking-tight"
-        >
+        <Link href="/inicio" className="shrink-0 text-xl font-extrabold tracking-tight">
           <span className="text-primary [text-shadow:0_0_18px_rgba(196,30,58,0.55)]">Linux</span>
           <span className="text-white">Lab</span>
         </Link>
@@ -93,20 +83,18 @@ export function SiteHeader({
             Terminal
           </Link>
 
-          {!soloLectura && (
-            <NavDropdown
-              href="/actividades"
-              label="Actividades"
-              icon={Target}
-              itemIcon={Target}
-              entries={getActivities().map((a) => ({
-                key: a.slug,
-                title: a.title,
-                href: a.href,
-              }))}
-              pathname={pathname}
-            />
-          )}
+          <NavDropdown
+            href="/actividades"
+            label="Actividades"
+            icon={Target}
+            itemIcon={Target}
+            entries={getActivities().map((a) => ({
+              key: a.slug,
+              title: a.title,
+              href: a.href,
+            }))}
+            pathname={pathname}
+          />
 
           <NavDropdown
             href="/simuladores"
@@ -122,20 +110,18 @@ export function SiteHeader({
             pathname={pathname}
           />
 
-          {!soloLectura && (
-            <Link
-              href="/estudiante/grupo"
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                pathname.startsWith("/estudiante/grupo")
-                  ? NAV_ACTIVE
-                  : NAV_IDLE,
-              )}
-            >
-              <BarChart3 className="h-4 w-4" />
-              Rendimiento
-            </Link>
-          )}
+          <Link
+            href="/estudiante/grupo"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              pathname.startsWith("/estudiante/grupo")
+                ? NAV_ACTIVE
+                : NAV_IDLE,
+            )}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Rendimiento
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">

@@ -4,7 +4,7 @@ import { LessonHeader } from "@shared/components/lesson-header"
 import { LessonContainer } from "@shared/components/terminal-ui"
 import { SidebarMovil } from "@/lib/features/student/components/sidebar-movil"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
-import { CourseRoadmap, MapaTemario } from "@/lib/features/student/components/course-roadmap"
+import { CourseRoadmap } from "@/lib/features/student/components/course-roadmap"
 import { bienvenida, type PaginaBienvenida } from "@shared/lib/content/bienvenida"
 import { syllabus } from "@shared/lib/content/temario"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -85,11 +85,7 @@ export function WelcomeArea({
         />
 
         {page?.kind === "roadmap" ? (
-          soloLectura ? (
-            <MapaTemario topicLessons={topicLessons} progreso={null} />
-          ) : (
-            <CourseRoadmap topicLessons={topicLessons} />
-          )
+          <CourseRoadmap topicLessons={topicLessons} />
         ) : blocks && blocks.length > 0 ? (
           <LessonBody blocks={blocks} />
         ) : (
