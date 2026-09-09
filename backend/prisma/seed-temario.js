@@ -94,7 +94,18 @@ const TOPICS = [
   {
     number: 10, slug: "shell-scripting", title: "Shell scripting",
     description: "Variables, condicionales, ciclos y funciones en Bash.",
-    subtopics: [],
+    // Estos cinco existen en `content/temario/tema-10/` desde que se escribio el
+    // tema, pero aqui figuraba una lista vacia. El estudiante los leia y no se
+    // apuntaba nada: `recordLessonView` busca el subtema por slug y devolvia 404,
+    // asi que el tema 10 no sumaba nunca, ni para el ni para su docente. Los ids
+    // son los de `meta.json`, que es lo que manda la URL de la leccion.
+    subtopics: [
+      { id: "primer-script", title: "Tu primer script", file: "01-primer-script.md" },
+      { id: "variables", title: "Variables y argumentos", file: "02-variables.md" },
+      { id: "condicionales", title: "Tomar decisiones", file: "03-condicionales.md" },
+      { id: "ciclos", title: "Repetir trabajo", file: "04-ciclos.md" },
+      { id: "scripting", title: "Funciones y un script completo", file: "05-funciones.md" },
+    ],
   },
 ]
 
