@@ -12,6 +12,14 @@ export interface Snippet {
   id: string
   /** What the button says it will send, without revealing it. */
   label: string
+  /**
+   * Lo que se escribe en la terminal, entero y listo para ejecutarse.
+   *
+   * No es solo el bloque de texto: es el comando que lo deja donde tiene que
+   * quedar. Antes era el texto pelado y el enunciado mandaba abrir `cat >
+   * archivo` primero; quien pulsaba el boton antes de eso mandaba ocho lineas de
+   * emoji a bash, que las tomaba por ordenes. El orden dejo de importar.
+   */
   content: string
 }
 
@@ -28,8 +36,21 @@ const LOGO_UFPS = [
   "🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥🟥",
 ].join("\n")
 
+/**
+ * El logo, con el comando que lo guarda.
+ *
+ * `cd ~` porque la comprobacion busca el archivo en el directorio personal y el
+ * estudiante puede estar en cualquier otro. Heredoc con el delimitador entre
+ * comillas para que la shell no toque nada de lo que va dentro, y con eso se
+ * acaban tanto el paso previo como el Ctrl+D del final: el archivo queda escrito
+ * y cerrado de una vez.
+ */
 const SNIPPETS: Snippet[] = [
-  { id: "logo-ufps", label: "Escribir el logo en la terminal", content: LOGO_UFPS },
+  {
+    id: "logo-ufps",
+    label: "Escribir el logo en la terminal",
+    content: `cd ~ && cat > logo.txt <<'FIN'\n${LOGO_UFPS}\nFIN\n`,
+  },
 ]
 
 export function getSnippet(id: string): Snippet | undefined {

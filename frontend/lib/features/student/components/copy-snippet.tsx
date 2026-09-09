@@ -16,9 +16,10 @@ import { sendToTerminal } from "../terminal-input"
  * desactivado —se practica escribiendo—, asi que el bloque se escribe
  * directamente en ella. Va por el mismo canal que el `cd` de las actividades.
  *
- * OJO: el texto entra donde este el cursor. El enunciado manda abrir antes
- * `cat > logo.txt`, de modo que los saltos de linea caen dentro del archivo y
- * no los ejecuta la shell.
+ * Lo que se manda es un comando completo (ver `snippets.ts`), no el texto suelto:
+ * asi da igual en que punto de la sesion se pulse el boton. Antes hacia falta
+ * haber abierto `cat > logo.txt` justo antes, y pulsarlo fuera de ese momento
+ * mandaba el bloque a bash linea por linea.
  *
  * `className` replaces the standalone spacing, so a check can embed the button
  * inside its own card instead of leaving it loose in the lesson.
@@ -29,8 +30,6 @@ export function CopySnippet({ id, className }: { id: string; className?: string 
 
   const enviar = useCallback(() => {
     if (!snippet) return
-    // Sin salto final: lo pone el estudiante al cerrar con Ctrl+D, y asi el
-    // archivo no acaba con una linea de mas que rompa la comprobacion.
     sendToTerminal(snippet.content)
     setEnviado(true)
     setTimeout(() => setEnviado(false), 2000)

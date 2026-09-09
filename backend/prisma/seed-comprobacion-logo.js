@@ -27,10 +27,9 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "En tu directorio personal, abre la terminal y escribe cat > logo.txt para " +
-    "empezar a llenar el archivo. Con el archivo abierto, presiona el botón " +
-    "'Escribir el logo en la terminal': el logo se escribirá dentro. Cuando " +
-    "termines, presiona Ctrl+D para guardar y cerrar.",
+    "Presiona el botón 'Escribir el logo en la terminal': el logo se guardará en " +
+    "logo.txt, dentro de tu directorio personal. Después comprueba con cat logo.txt " +
+    "que quedó completo y comprueba el ejercicio.",
 }
 
 async function main() {
