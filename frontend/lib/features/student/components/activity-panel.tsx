@@ -61,9 +61,15 @@ export function ActivityPanel({
      que lo estropean. Asi que el boton se apaga mientras dure. */
   const aPantallaCompleta = useProgramaAPantallaCompleta()
 
+  /* `mkdir -p` antes del `cd`, como hace el panel de las actividades del
+     docente. El directorio lo monta `setup.py` al abrir la actividad, pero solo
+     si esta trae archivos de partida: sin ellos el `cd` fallaba en silencio y el
+     estudiante se quedaba en su home creyendo que ya estaba dentro, resolvia
+     todo alli y la comprobacion no encontraba nada. `-p` no toca el directorio
+     si ya existe, asi que en el caso normal no cambia nada. */
   const goToWorkdir = () => {
     if (!data?.workdir || aPantallaCompleta) return
-    sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
+    sendToTerminal(`mkdir -p ~/actividades/${data.workdir} && cd ~/actividades/${data.workdir}\n`)
   }
 
   /* Reiniciar borra el directorio de la actividad y lo vuelve a montar. Se
@@ -218,7 +224,10 @@ export function ActivityPanel({
         open={confirmando}
         onOpenChange={setConfirmando}
         title="¿Rehacer los archivos de la actividad?"
-        description="Lo que hayas escrito dentro de su directorio se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
+        description={
+          `Se borra todo lo que haya en ~/actividades/${data?.workdir ?? ""} y se vuelven a ` +
+          "crear los archivos de partida. Tu directorio personal y el resto de tu entorno no se tocan."
+        }
         confirmLabel="Rehacer los archivos"
         confirmVariant="destructive"
         onConfirm={reset}
