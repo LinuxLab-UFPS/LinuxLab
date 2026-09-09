@@ -1,15 +1,18 @@
 "use client"
 
 import { useState } from "react"
-import { FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
+import { FolderOpen, Loader2, RotateCcw, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { BackButton } from "@shared/components/back-button"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
+import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
+  resetGroupActivity,
   submitGroupActivity,
   type GroupActivityDetail,
   type GroupCheckResult,
@@ -38,6 +41,8 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
   const [attempts, setAttempts] = useState(detail.attempts)
   const [submitting, setSubmitting] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
   const [submitted, setSubmitted] = useState(!!detail.submission)
   const [submission, setSubmission] = useState(detail.submission)
 
@@ -77,6 +82,26 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
       setChecking(false)
+    }
+  }
+
+  /* Rehacer los archivos del taller. Solo toca `~/actividades/<workdir>`: lo
+     borra y lo vuelve a montar desde el `setup` que dejo el docente. El script
+     no sabe salir de ese directorio —rechaza `..`, las rutas absolutas y los
+     enlaces que apunten fuera—, asi que la carpeta personal del estudiante no
+     esta a su alcance por mucho que se pulse. */
+  const reset = async () => {
+    setResetting(true)
+    try {
+      await resetGroupActivity(detail.id)
+      // La shell que estuviera dentro se quedo en el directorio viejo, que ya no
+      // figura en ningun sitio. Ctrl+U limpia lo que hubiera escrito a medias.
+      sendToTerminal("\x15cd ~\n")
+      notify.success("Archivos reiniciados")
+    } catch (e) {
+      notify.error(e, "No se pudieron reiniciar los archivos")
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -185,7 +210,11 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Los botones van juntos a la izquierda, como en las actividades del
+            temario. Con `justify-between` el de ir al directorio se disparaba
+            solo al otro extremo de la fila y las dos pantallas, que hacen lo
+            mismo, no se parecian. */}
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             {isManual ? (
               !submitted && (
@@ -222,6 +251,18 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             <FolderOpen className="h-4 w-4" />
             Ir al directorio
           </ActionButton>
+
+          {/* Ir al directorio se hace muchas veces por sesion, asi que va como
+              boton; rehacer los archivos borra trabajo, asi que va como icono y
+              pregunta antes. Igual que en las del temario. */}
+          {detail.hasSetup && (
+            <IconAction
+              label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
+              icon={resetting ? Loader2 : RotateCcw}
+              onClick={() => setConfirmando(true)}
+              disabled={resetting || aPantallaCompleta}
+            />
+          )}
         </div>
 
         {aPantallaCompleta ? (
@@ -242,6 +283,19 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           </p>
         ) : null}
       </footer>
+
+      <ConfirmDialog
+        open={confirmando}
+        onOpenChange={setConfirmando}
+        title="¿Rehacer los archivos de la actividad?"
+        description={
+          `Se borra todo lo que haya en ~/actividades/${detail.workdir} y se vuelven a ` +
+          "crear los archivos de partida. Tu directorio personal y el resto de tu entorno no se tocan."
+        }
+        confirmLabel="Rehacer los archivos"
+        confirmVariant="destructive"
+        onConfirm={reset}
+      />
     </div>
   )
 }

@@ -11,7 +11,7 @@ const { finalScore } = require("../utils/finalScore")
 const { bankSlugOf, bankActivityId, workdirOf } = require("../dtos/activityDtos")
 const { audit } = require("./auditService")
 
-const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
+const { personalize, CHECKER, SETUP, EVAL_TIMEOUT_MS } = lessonEvaluatorService
 
 function resolveRuta(params, workdir) {
   const output = {}
@@ -130,6 +130,7 @@ async function getForStudent(studentUserId, groupActivityId) {
       checks: true,
       attempt_limit: true,
       enabled: true,
+      setup: true,
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
@@ -171,6 +172,9 @@ async function getForStudent(studentUserId, groupActivityId) {
     activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
     maxScore: ga.max_score,
     checksCount: (ga.checks ?? []).length,
+    // Solo con archivos de partida tiene sentido ofrecer rehacerlos: sin ellos
+    // el boton dejaria el directorio vacio y nada que empezar de nuevo.
+    hasSetup: Boolean(ga.setup),
     attemptLimit: ga.attempt_limit,
     attemptsCount: autoSubs.length,
     finalScore: ga.evaluation_type === "manual"
@@ -507,4 +511,58 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
   }
 }
 
-module.exports = { listMine, getForStudent, checkForStudent, getStudentActivityDetail }
+/**
+ * Rehace el directorio de trabajo de una actividad del docente.
+ *
+ * Espejo de `resetSandbox` para las del temario: mismo script, mismo contrato.
+ * Lo que cambia es de donde sale el `setup` y como se llama el directorio —el
+ * codigo del taller (`T-0005`) y no un slug—, y que aqui hay que comprobar la
+ * matricula, porque una actividad de curso pertenece a un grupo.
+ *
+ * `setup.py` borra `~/actividades/<workdir>` y lo reconstruye, y no sabe salir de
+ * ahi: rechaza `..`, las rutas absolutas y los enlaces que apunten fuera. El
+ * directorio personal del estudiante no esta a su alcance.
+ */
+async function resetForStudent(studentUserId, groupActivityId) {
+  const ga = await prisma.groupActivity.findUnique({
+    where: { id: groupActivityId },
+    select: { id: true, group_id: true, workdir: true, setup: true, enabled: true },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  if (!(await accessService.hasEnrollmentInGroup(studentUserId, ga.group_id))) {
+    throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
+  }
+  if (!ga.enabled) throw new AppError("La actividad está deshabilitada", 409, "CONFLICT")
+  if (!ga.setup) {
+    throw new AppError("Esta actividad no tiene archivos que preparar", 409, "CONFLICT")
+  }
+
+  const account = await linuxAccountService.getStudentAccount(studentUserId)
+  const payload = JSON.stringify({ ...ga.setup, slug: ga.workdir, force: true })
+
+  const { stdout, stderr, code } = await sshClient.execCommand(
+    `sudo -u ${account.linux_username} ${SETUP}`,
+    { stdin: payload, timeoutMs: EVAL_TIMEOUT_MS },
+  )
+
+  let parsed
+  try {
+    parsed = JSON.parse(stdout)
+  } catch {
+    logger.error({ code, stderr, workdir: ga.workdir }, "Setup output was not JSON")
+    throw new AppError("No se pudo preparar la actividad, inténtalo de nuevo", 502, "INTERNAL_ERROR")
+  }
+  if (!parsed.ok) {
+    logger.error({ workdir: ga.workdir, error: parsed.error }, "Group activity setup rejected")
+    throw new AppError(parsed.error || "No se pudo preparar la actividad", 409, "CONFLICT")
+  }
+
+  logger.info(
+    { workdir: ga.workdir, username: account.linux_username, creados: parsed.creados },
+    "Group activity sandbox ready",
+  )
+  return { root: parsed.root, creados: parsed.creados }
+}
+
+module.exports = { listMine, getForStudent, checkForStudent, resetForStudent, getStudentActivityDetail }
+

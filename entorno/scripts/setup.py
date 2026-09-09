@@ -48,7 +48,10 @@ MAX_BYTES_TOTAL = 4 * 1024 * 1024
 MAX_LINEAS = 5000
 
 #: Nombres de actividad y rutas admitidos. Sin `..`, sin rutas absolutas.
-SLUG_OK = set("abcdefghijklmnopqrstuvwxyz0123456789-")
+# Mayusculas incluidas: las actividades del temario usan el slug en minuscula
+# (`expediente-empleado`), pero las del docente usan su codigo de taller
+# (`T-0005`, `Q-0012`), y sin las mayusculas su directorio se rechazaba.
+SLUG_OK = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")
 RUTA_OK = SLUG_OK | set("._/ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 

@@ -60,6 +60,10 @@ const checkGroupActivity = asyncHandler(async (req, res) => {
   res.json(await studentActivityService.checkForStudent(req.user.id, req.params.id))
 })
 
+const resetGroupActivity = asyncHandler(async (req, res) => {
+  res.json(await studentActivityService.resetForStudent(req.user.id, req.params.id))
+})
+
 const submitGroupActivity = asyncHandler(async (req, res) => {
   const result = await submissionService.createSubmission(req.user.id, req.params.id)
   res.status(201).json(result)
@@ -178,6 +182,7 @@ module.exports = {
   getMyGrades,
   getGroupActivityForStudent,
   checkGroupActivity,
+  resetGroupActivity,
   listGroupActivities,
   createGroupActivity,
   getGroupActivity,
