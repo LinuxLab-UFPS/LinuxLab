@@ -22,19 +22,15 @@ export function BurbujaTema({
   numero,
   activo,
   hecho,
-  grande,
 }: {
   numero: number
   activo?: boolean
   hecho?: boolean
-  /** El mapa la pinta mas grande porque ahi el tema es la unidad principal. */
-  grande?: boolean
 }) {
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-medium",
-        grande ? "h-8 w-8 text-sm" : "h-6 w-6 text-xs",
+        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
         activo
           ? "bg-primary text-primary-foreground"
           : hecho
@@ -42,7 +38,7 @@ export function BurbujaTema({
             : "bg-secondary text-muted-foreground",
       )}
     >
-      {hecho && !activo ? <CheckCircle2 className={grande ? "h-4 w-4" : "h-3.5 w-3.5"} /> : numero}
+      {hecho && !activo ? <CheckCircle2 className="h-3.5 w-3.5" /> : numero}
     </span>
   )
 }

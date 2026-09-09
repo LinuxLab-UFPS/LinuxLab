@@ -31,6 +31,12 @@ interface GroupSidebarProps {
   /** Lessons per topic and which of them carry a check, for the completion state. */
   topicLessons: Record<number, TopicLessons>
   groupName?: string
+  /**
+   * Quien navega el temario sin cursarlo: el docente. Se pinta la misma lista,
+   * pero sin barra de progreso ni marcas de completado, porque no hay avance
+   * suyo que contar y las cifras vacias se leerian como un cero real.
+   */
+  soloLectura?: boolean
 }
 
 /**
@@ -48,14 +54,15 @@ export function PanelContenidos({
   contentSubtopics,
   topicLessons,
   groupName,
+  soloLectura = false,
 }: GroupSidebarProps) {
-  const { passed } = usePassedActivities()
+  const { passed } = usePassedActivities(!soloLectura)
   const {
     isLessonDone,
     isTopicDone,
     cursoPct: overallPct,
     temasCompletos: doneCount,
-  } = useCourseProgress(topicLessons)
+  } = useCourseProgress(topicLessons, !soloLectura)
 
   return (
     /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
@@ -65,9 +72,9 @@ export function PanelContenidos({
       {/* Nav: home + title */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
         <Link
-          href="/inicio"
-          title="Volver al inicio"
-          aria-label="Volver al inicio"
+          href={soloLectura ? "/temario" : "/inicio"}
+          title={soloLectura ? "Volver al temario" : "Volver al inicio"}
+          aria-label={soloLectura ? "Volver al temario" : "Volver al inicio"}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
         >
           <Home className="h-4 w-4" />
@@ -79,18 +86,20 @@ export function PanelContenidos({
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
           abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
-      <LessonLink
-        href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
-        className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
-      >
-        <div className="mb-1.5 flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Tu progreso</span>
-          <span className="font-mono tabular-nums text-foreground">
-            {doneCount}/{syllabus.length}
-          </span>
-        </div>
-        <NeonProgress value={overallPct} className="h-1" />
-      </LessonLink>
+      {!soloLectura && (
+        <LessonLink
+          href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
+          className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
+        >
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Tu progreso</span>
+            <span className="tabular-nums text-foreground">
+              {doneCount}/{syllabus.length}
+            </span>
+          </div>
+          <NeonProgress value={overallPct} className="h-1" />
+        </LessonLink>
+      )}
 
       {/* Module list */}
       <nav className="no-scrollbar min-h-0 overflow-y-auto p-2">
@@ -202,7 +211,7 @@ export function PanelContenidos({
                     {getActivitiesForTopic(topic.number).map((a) => {
                       const hecha = passed.has(a.slug)
                       return (
-                        <li key={a.slug}>
+                        <li key={a.slug} className="hidden md:list-item">
                           <LessonLink
                             href={conOrigenActividad(a.href, "/curso")}
                             className={filaHija(false, hecha)}
@@ -218,7 +227,7 @@ export function PanelContenidos({
                     {simulators
                       .filter((sim) => sim.topicNumber === topic.number)
                       .map((sim) => (
-                        <li key={sim.id}>
+                        <li key={sim.id} className="hidden md:list-item">
                           <LessonLink href={sim.href} className={filaHija(false, false)}>
                             <VinetaSimulador />
                             <span className="min-w-0 truncate">{sim.title}</span>
