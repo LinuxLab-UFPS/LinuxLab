@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import { ChevronDown, Circle, CheckCircle2 } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import {
   Dialog,
@@ -15,13 +16,15 @@ import { cn } from "@shared/lib/utils"
 import { timeAgo } from "@/lib/utils/dates"
 import { useStudentPerformance } from "@/lib/api/queries"
 import type { ProgressStatus, StudentProgress } from "@/lib/features/teacher/types"
-import type { GradebookCellStatus } from "@/lib/models/groups"
+import type { GradebookCellStatus, GradeSeriesPoint, TopicSubtopics } from "@/lib/models/groups"
 import type { Topic } from "@/lib/features/student/types"
 
 interface StudentProgressDialogProps {
   groupId: string
   student: StudentProgress | null
   topics: Topic[]
+  /** El índice de lecciones del temario, del mismo endpoint que las filas. */
+  topicSubtopics: TopicSubtopics[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }
@@ -49,24 +52,109 @@ const ESTADO_ACTIVIDAD: Record<GradebookCellStatus, { label: string; text: strin
   },
 }
 
+/** Una dona con su cifra en el centro. Las dos de la cabecera son iguales. */
+function Dona({
+  data,
+  valor,
+  pie,
+}: {
+  data: { name: string; value: number; color: string }[]
+  valor: string
+  pie: string
+}) {
+  return (
+    <div className="relative h-[150px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="name"
+            innerRadius={46}
+            outerRadius={64}
+            paddingAngle={2}
+            startAngle={90}
+            endAngle={-270}
+            stroke="none"
+          >
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.color} />
+            ))}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold tabular-nums text-foreground">{valor}</span>
+        <span className="text-xs text-muted-foreground">{pie}</span>
+      </div>
+    </div>
+  )
+}
+
+/** Una actividad dentro del desglose, con su estado y su nota. */
+function FilaActividad({ a }: { a: GradeSeriesPoint }) {
+  const meta = ESTADO_ACTIVIDAD[a.status] ?? ESTADO_ACTIVIDAD["not-started"]
+  return (
+    <div className="flex items-center justify-between gap-3 py-1">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", meta.dot)} />
+        <span className="truncate text-xs text-foreground">{a.title}</span>
+        <span className={cn("shrink-0 text-[10px] uppercase tracking-wide", meta.text)}>
+          {meta.label}
+        </span>
+      </span>
+      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+        {a.score != null ? `${a.score}/100` : "—"}
+      </span>
+    </div>
+  )
+}
+
+/**
+ * La ficha de progreso de un estudiante.
+ *
+ * El desglose por tema se despliega: dentro van sus lecciones una por una y las
+ * actividades de ese tema, las del temario y las que el docente le asoció. Antes
+ * las actividades iban en una lista plana al final, donde no había forma de
+ * saber a qué tema pertenecía cada una.
+ *
+ * Las que el docente creó sin tema no tienen de dónde colgar, así que van
+ * aparte al final. En el cuaderno de notas viajan con `topicNumber: 0`.
+ */
 export function StudentProgressDialog({
   groupId,
   student,
   topics,
+  topicSubtopics,
   open,
   onOpenChange,
 }: StudentProgressDialogProps) {
+  const [abierto, setAbierto] = useState<number | null>(null)
+
   const topicProgressById = useMemo(
     () => new Map((student?.topicProgress ?? []).map((t) => [t.topicNumber, t])),
     [student],
   )
+  const subtopicsById = useMemo(
+    () => new Map(topicSubtopics.map((t) => [t.topicNumber, t.subtopics])),
+    [topicSubtopics],
+  )
 
-  /* Las actividades vienen del mismo sitio que el cajon de rendimiento, que ya
-     las tenia: la ficha de progreso solo hablaba de lecciones, y la pregunta
-     que trae aqui al docente —que ha resuelto y con que nota— se contestaba
-     dando un rodeo por la pestaña de calificaciones. La consulta se queda
-     quieta mientras no haya nadie seleccionado (`enabled` en el hook). */
+  /* Las actividades salen del mismo sitio que el cajón de rendimiento, que ya
+     las tenía: la ficha de progreso solo hablaba de lecciones, y la pregunta que
+     trae aquí al docente —qué ha resuelto y con qué nota— se contestaba dando un
+     rodeo por la pestaña de calificaciones. La consulta se queda quieta mientras
+     no haya nadie seleccionado (`enabled` en el hook). */
   const rendimiento = useStudentPerformance(groupId, student?.student.id ?? "")
+  const series = useMemo(() => rendimiento.data?.series ?? [], [rendimiento.data])
+  const actividadesPorTema = useMemo(() => {
+    const mapa = new Map<number, GradeSeriesPoint[]>()
+    for (const a of series) {
+      if (!mapa.has(a.topicNumber)) mapa.set(a.topicNumber, [])
+      mapa.get(a.topicNumber)!.push(a)
+    }
+    return mapa
+  }, [series])
 
   if (!student) return null
 
@@ -76,17 +164,33 @@ export function StudentProgressDialog({
   const enProgreso = statuses.filter((s) => s === "in-progress").length
   const sinIniciar = statuses.filter((s) => s === "not-started").length
 
-  const donutData = [
+  const donutTemas = [
     { name: "Completado", value: completados, color: "var(--success)" },
     { name: "En progreso", value: enProgreso, color: "var(--warning)" },
     { name: "Sin iniciar", value: sinIniciar, color: "var(--muted-foreground)" },
   ].filter((d) => d.value > 0)
 
+  const resumen = rendimiento.data?.summary
+  const actTotal = resumen?.total ?? 0
+  const actHechas = resumen?.completed ?? 0
+  const actPct = actTotal > 0 ? Math.round((actHechas / actTotal) * 100) : 0
+  const donutActividades = [
+    { name: "Completadas", value: actHechas, color: "var(--success)" },
+    { name: "Pendientes", value: Math.max(0, actTotal - actHechas), color: "var(--muted-foreground)" },
+  ].filter((d) => d.value > 0)
+
   const legend = [
-    { label: "Completados", value: completados, text: "text-success", dot: "bg-success" },
-    { label: "En progreso", value: enProgreso, text: "text-warning", dot: "bg-warning" },
-    { label: "Sin iniciar", value: sinIniciar, text: "text-muted-foreground", dot: "bg-muted-foreground" },
+    { label: "Temas completados", value: `${completados}/${topics.length}`, text: "text-success" },
+    { label: "Temas en progreso", value: String(enProgreso), text: "text-warning" },
+    { label: "Actividades", value: `${actHechas}/${actTotal}`, text: "text-foreground" },
+    {
+      label: "Promedio",
+      value: resumen?.average != null ? String(resumen.average) : "—",
+      text: "text-foreground",
+    },
   ]
+
+  const sueltas = actividadesPorTema.get(0) ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,54 +202,25 @@ export function StudentProgressDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Dona + leyenda */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-          <div className="relative h-[180px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={donutData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={58}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  startAngle={90}
-                  endAngle={-270}
-                  stroke="none"
-                >
-                  {donutData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-3xl font-bold font-mono text-foreground">{progress}%</span>
-              <span className="text-xs text-muted-foreground">progreso total</span>
-            </div>
-          </div>
+        {/* Dos donas: los temas y las actividades. Antes solo estaba la de
+            temas, y las actividades no se contaban en ninguna parte. */}
+        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-3">
+          <Dona data={donutTemas} valor={`${progress}%`} pie="del curso" />
+          <Dona data={donutActividades} valor={`${actPct}%`} pie="actividades" />
 
           <div className="space-y-2">
             {legend.map((item) => (
-              <div key={item.label} className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2 text-muted-foreground">
-                  <span className={cn("w-2.5 h-2.5 rounded-full", item.dot)} />
-                  {item.label}
-                </span>
-                <span className={cn("font-mono font-medium", item.text)}>{item.value}</span>
+              <div key={item.label} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">{item.label}</span>
+                <span className={cn("font-medium tabular-nums", item.text)}>{item.value}</span>
               </div>
             ))}
-            <div className="flex items-center justify-between text-sm pt-2 mt-2 border-t border-border">
-              <span className="text-muted-foreground">Total de temas</span>
-              <span className="font-mono font-medium text-foreground">{topics.length}</span>
-            </div>
           </div>
         </div>
 
-        {/* Desglose por tema con barra de progreso */}
+        {/* Desglose por tema, desplegable */}
         <div className="space-y-2">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Desglose por tema
           </h4>
           <div className="space-y-2">
@@ -156,31 +231,99 @@ export function StudentProgressDialog({
               const done = detail?.completed ?? 0
               const total = detail?.total ?? 0
               const percent = total > 0 ? Math.round((done / total) * 100) : 0
+              const hechos = new Set(detail?.doneSubtopics ?? [])
+              const lecciones = subtopicsById.get(topic.number) ?? []
+              const actividades = actividadesPorTema.get(topic.number) ?? []
+              const desplegado = abierto === topic.number
+
               return (
                 <div
                   key={topic.number}
-                  className="bg-secondary/30 border border-border rounded-md px-3 py-2.5"
+                  className="rounded-md border border-border bg-secondary/30"
                 >
-                  <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <span className="text-sm text-foreground truncate">
-                      {topic.number}. {topic.title}
-                    </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-medium shrink-0",
-                        meta.text,
-                      )}
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full"
-                        style={{ background: meta.color }}
-                      />
-                      {meta.label}
-                    </span>
-                  </div>
-                  <ProgressBar value={percent} />
-                  <div className="mt-1 text-[10px] font-mono text-muted-foreground">
-                    {done}/{total} lecciones
+                  <button
+                    type="button"
+                    onClick={() => setAbierto(desplegado ? null : topic.number)}
+                    className="w-full px-3 py-2.5 text-left transition-colors hover:bg-foreground/[0.03]"
+                  >
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <span className="truncate text-sm text-foreground">
+                        {topic.number}. {topic.title}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 text-xs font-medium",
+                            meta.text,
+                          )}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ background: meta.color }}
+                          />
+                          {meta.label}
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 text-muted-foreground transition-transform",
+                            desplegado && "rotate-180",
+                          )}
+                        />
+                      </span>
+                    </div>
+                    <ProgressBar value={percent} />
+                    <div className="mt-1 text-[10px] tabular-nums text-muted-foreground">
+                      {done}/{total} lecciones
+                      {actividades.length > 0 && ` · ${actividades.length} actividades`}
+                    </div>
+                  </button>
+
+                  {/* `grid-rows-[0fr] → [1fr]`, el mismo plegado que la barra de
+                      contenidos en móvil. */}
+                  <div
+                    className={cn(
+                      "grid transition-all duration-200 ease-out",
+                      desplegado ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="space-y-0.5 border-t border-border px-3 py-2">
+                        {lecciones.length === 0 ? (
+                          <p className="py-1 text-xs text-muted-foreground">
+                            Este tema todavía no tiene lecciones publicadas.
+                          </p>
+                        ) : (
+                          lecciones.map((sub) => {
+                            const leida = hechos.has(sub.id)
+                            return (
+                              <div key={sub.id} className="flex items-center gap-2 py-1">
+                                {leida ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />
+                                ) : (
+                                  <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                )}
+                                <span
+                                  className={cn(
+                                    "min-w-0 truncate text-xs",
+                                    leida ? "text-muted-foreground" : "text-foreground",
+                                  )}
+                                >
+                                  {sub.title}
+                                </span>
+                              </div>
+                            )
+                          })
+                        )}
+
+                        {actividades.length > 0 && (
+                          <div className="mt-1.5 border-t border-border/60 pt-1.5">
+                            {actividades.map((a) => (
+                              <FilaActividad key={a.activityId} a={a} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )
@@ -188,67 +331,27 @@ export function StudentProgressDialog({
           </div>
         </div>
 
-        {/* Actividades: que ha resuelto y con que nota. */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between gap-3">
+        {/* Las que el docente creó sin tema: no hay desglose del que colgarlas. */}
+        {sueltas.length > 0 && (
+          <div className="space-y-2">
             <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Actividades
+              Sin tema asociado
             </h4>
-            {rendimiento.data && (
-              <span className="text-xs text-muted-foreground">
-                {rendimiento.data.summary.completed}/{rendimiento.data.summary.total} completadas
-                {rendimiento.data.summary.average != null && (
-                  <>
-                    {" · "}promedio{" "}
-                    <span className="font-medium text-foreground">
-                      {rendimiento.data.summary.average}
-                    </span>
-                  </>
-                )}
-              </span>
-            )}
-          </div>
-
-          {rendimiento.isLoading ? (
-            <div className="space-y-1.5">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-10" />
+            <div className="rounded-md border border-border bg-secondary/30 px-3 py-2">
+              {sueltas.map((a) => (
+                <FilaActividad key={a.activityId} a={a} />
               ))}
             </div>
-          ) : !rendimiento.data || rendimiento.data.series.length === 0 ? (
-            <p className="rounded-md border border-border bg-secondary/30 px-3 py-2.5 text-sm text-muted-foreground">
-              Este curso todavía no tiene actividades asignadas.
-            </p>
-          ) : (
-            <div className="space-y-1.5">
-              {rendimiento.data.series.map((a) => {
-                const meta = ESTADO_ACTIVIDAD[a.status] ?? ESTADO_ACTIVIDAD["not-started"]
-                return (
-                  <div
-                    key={a.activityId}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 px-3 py-2"
-                  >
-                    <div className="min-w-0">
-                      <span className="block truncate text-sm text-foreground">{a.title}</span>
-                      <span className={cn("flex items-center gap-1.5 text-xs", meta.text)}>
-                        <span className={cn("h-1.5 w-1.5 rounded-full", meta.dot)} />
-                        {meta.label}
-                        {a.attempts > 0 && (
-                          <span className="text-muted-foreground">
-                            · {a.attempts} {a.attempts === 1 ? "intento" : "intentos"}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-sm tabular-nums text-foreground">
-                      {a.score != null ? `${a.score}/100` : "—"}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {rendimiento.isLoading && (
+          <div className="space-y-1.5">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-8" />
+            ))}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

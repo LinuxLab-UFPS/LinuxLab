@@ -37,7 +37,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
       select: {
         order_number: true,
         title: true,
-        subtopics: { select: { id: true } },
+        subtopics: { select: { id: true, title: true, order_number: true } },
         activities: { select: { id: true, kind: true, subtopic_id: true } },
       },
     }),
@@ -154,15 +154,20 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
         }
       }
 
-      let subtopicsDone = 0
       let touched = 0
+      // Cuales, y no solo cuantos: la ficha del estudiante lista sus lecciones
+      // una por una, y un conteo no dice cual le falta. Misma regla que el
+      // conteo (visto y con sus checks aprobados), asi que la lista y la cifra
+      // de al lado no se pueden contradecir.
+      const hechos = []
       for (const sub of topic.subtopics) {
         if (!viewed.has(sub.id)) continue
         touched++
         const acts = activitiesBySubtopic.get(sub.id)
         if (acts && acts.some((id) => !passed.has(id))) continue
-        subtopicsDone++
+        hechos.push(sub.id)
       }
+      const subtopicsDone = hechos.length
 
       // Las actividades sueltas del tema (las del banco, `kind: "activity"`)
       // son trabajo del tema igual que sus lecciones, asi que cuentan como una
@@ -174,6 +179,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
       perTopic.set(topic.order_number, {
         completed: subtopicsDone,
         total: topic.subtopics.length,
+        hechos,
         touched,
         piezasHechas: subtopicsDone + propuestasHechas,
         piezasTotal: topic.subtopics.length + propuestas.length,
@@ -201,7 +207,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     const topicProgress = []
     for (const topic of topicsOrdered) {
       const n = topic.order_number
-      const d = perTopic.get(n) ?? { completed: 0, total: 0, touched: 0, piezasHechas: 0 }
+      const d = perTopic.get(n) ?? { completed: 0, total: 0, touched: 0, piezasHechas: 0, hechos: [] }
       topicStatus[n] = completed.has(n)
         ? "completed"
         : d.touched > 0
@@ -212,6 +218,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
         title: topic.title,
         completed: d.completed,
         total: d.total,
+        doneSubtopics: d.hechos,
       })
     }
 
@@ -260,6 +267,16 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     averageProgress,
     completedToday,
     activeNow,
+    /* Los nombres de las lecciones, en la raiz y no en cada fila: son los mismos
+       para todo el grupo, y repetirlos por estudiante multiplicaba el tamano de
+       la respuesta por el numero de matriculados sin decir nada nuevo. */
+    topics: topicsOrdered.map((t) => ({
+      topicNumber: t.order_number,
+      title: t.title,
+      subtopics: [...t.subtopics]
+        .sort((a, b) => a.order_number - b.order_number)
+        .map((sub) => ({ id: sub.id, title: sub.title })),
+    })),
     rows,
   }
 }
