@@ -9,6 +9,7 @@ import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { SubmissionsTable } from "@/lib/features/teacher/components/submissions-table"
+import { StatementDialog } from "@/lib/features/teacher/components/statement-dialog"
 import { ExtendDueDateButton } from "@/lib/features/teacher/components/extend-due-date-button"
 
 const ROW =
@@ -90,6 +91,11 @@ function ActivityDetail({
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-card">
+            {/* El enunciado es lo primero que el docente quiere repasar y no
+                estaba en ninguna parte de esta pantalla. */}
+            <DetailRow label="Enunciado">
+              <StatementDialog title={activity.title} statement={activity.instructions} />
+            </DetailRow>
             <DetailRow label="Modalidad">
               {activity.evaluationType === "manual" ? "Revision manual" : "Autoevaluacion"}
             </DetailRow>
@@ -110,17 +116,6 @@ function ActivityDetail({
               </span>
             </DetailRow>
           </div>
-
-          {activity.instructions && (
-            <section>
-              <h2 className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Instrucciones
-              </h2>
-              <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {activity.instructions}
-              </div>
-            </section>
-          )}
 
           {activity.evaluationType !== "manual" && (
           <section>
