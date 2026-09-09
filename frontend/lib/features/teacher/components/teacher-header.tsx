@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { BookOpen, LogOut, TerminalSquare } from "lucide-react"
+import { BookOpen, LogOut, Map, TerminalSquare } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { notify } from "@shared/lib/toast"
 import { Avatar, AvatarFallback } from "@shared/components/ui/avatar"
@@ -26,6 +26,13 @@ const NAV = [
     icon: BookOpen,
     hover: "hover:bg-primary/15 hover:text-primary",
     active: "bg-primary/15 text-primary",
+  },
+  {
+    label: "Contenidos",
+    href: "/temario",
+    icon: Map,
+    hover: "hover:bg-sky-500/15 hover:text-sky-400",
+    active: "bg-sky-500/15 text-sky-400",
   },
   {
     label: "Terminal",

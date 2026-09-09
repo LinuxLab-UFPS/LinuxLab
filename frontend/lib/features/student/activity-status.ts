@@ -26,7 +26,7 @@ export const ESTADO_ACTIVIDADES_KEY = ["activities-status"] as const
  * pagina. Con una clave compartida, quien la resuelve invalida y todas se
  * enteran a la vez (ver `useActivityCheck`).
  */
-export function usePassedActivities(): {
+export function usePassedActivities(activo = true): {
   passed: Set<string>
   scores: Record<string, ActivityScore>
   loading: boolean
@@ -37,11 +37,14 @@ export function usePassedActivities(): {
       apiFetch<{ passed: string[]; scores?: Record<string, ActivityScore> }>(
         "/api/activities/mine/status",
       ),
+    // El docente ve el mismo temario pero no cursa nada: la peticion sale sin
+    // matricula, vuelve vacia y no hay progreso que pintar con ella.
+    enabled: activo,
   })
 
   return {
     passed: new Set(data?.passed ?? []),
     scores: data?.scores ?? {},
-    loading: isLoading,
+    loading: activo && isLoading,
   }
 }

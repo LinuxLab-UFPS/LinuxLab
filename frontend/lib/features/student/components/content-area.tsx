@@ -21,6 +21,8 @@ interface ContentAreaProps {
   next: LessonRef | null
   /** Para el panel de contenidos plegado, que en movil vive aqui dentro. */
   topicLessons: Record<number, TopicLessons>
+  /** Sin progreso: el docente repasando el material. */
+  soloLectura?: boolean
 }
 
 /**
@@ -39,6 +41,7 @@ export function ContentArea({
   prev,
   next,
   topicLessons,
+  soloLectura = false,
 }: ContentAreaProps) {
   // The bibliography is rendered after the nav, not inline with the lesson.
   const sources = blocks?.find(
@@ -69,6 +72,7 @@ export function ContentArea({
               activeSubtopicId={activeSubtopic?.id}
               contentSubtopics={meta?.subtopics}
               topicLessons={topicLessons}
+              soloLectura={soloLectura}
               topicTitle={`${topic.number}. ${topic.title}`}
               lessonTitle={activeSubtopic?.title}
             />

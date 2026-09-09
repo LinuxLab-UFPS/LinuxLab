@@ -20,9 +20,9 @@ import { syllabus } from "@shared/lib/content/temario"
  * resuelto nada de lo que propone: las actividades son el trabajo del tema, no
  * un extra.
  */
-export function useCourseProgress(lessons: Record<number, TopicLessons>) {
+export function useCourseProgress(lessons: Record<number, TopicLessons>, activo = true) {
   const { isRead } = useLessonProgress()
-  const { passed } = usePassedActivities()
+  const { passed } = usePassedActivities(activo)
 
   const isLessonDone = useCallback(
     (topicNumber: number, subtopicId: string) => {
