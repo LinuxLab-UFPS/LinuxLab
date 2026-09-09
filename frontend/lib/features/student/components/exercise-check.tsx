@@ -117,11 +117,11 @@ export function ExerciseCheck({ slug }: { slug: string }) {
               )}
               {checking ? "Comprobando..." : "Comprobar"}
             </ActionButton>
-            <p className="text-xs text-muted-foreground">
-              {soloLectura
-                ? "Así la ve el estudiante. La resuelve él, en su propio entorno."
-                : "Se revisa tu propio directorio dentro del laboratorio."}
-            </p>
+            {!soloLectura && (
+              <p className="text-xs text-muted-foreground">
+                Se revisa tu propio directorio dentro del laboratorio.
+              </p>
+            )}
           </div>
         </div>
       )}
