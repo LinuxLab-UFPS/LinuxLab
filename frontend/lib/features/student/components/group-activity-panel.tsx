@@ -95,11 +95,11 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     }
   }
 
-  /* Rehacer los archivos del taller. Solo toca `~/actividades/<workdir>`: lo
-     borra y lo vuelve a montar desde el `setup` que dejo el docente. El script
-     no sabe salir de ese directorio —rechaza `..`, las rutas absolutas y los
-     enlaces que apunten fuera—, asi que la carpeta personal del estudiante no
-     esta a su alcance por mucho que se pulse. */
+  /* Vaciar el directorio del taller. Solo toca `~/actividades/<workdir>`: el
+     script compone esa ruta con un nombre que no admite `/` ni `.`, y comprueba
+     antes de borrar que lo que va a borrar cuelga de `~/actividades` y es un
+     solo nivel. La carpeta personal del estudiante no esta a su alcance por
+     mucho que se pulse. */
   const reset = async () => {
     setResetting(true)
     try {
@@ -107,9 +107,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       // La shell que estuviera dentro se quedo en el directorio viejo, que ya no
       // figura en ningun sitio. Ctrl+U limpia lo que hubiera escrito a medias.
       sendToTerminal("\x15cd ~\n")
-      notify.success("Archivos reiniciados")
+      notify.success("Directorio vaciado")
     } catch (e) {
-      notify.error(e, "No se pudieron reiniciar los archivos")
+      notify.error(e, "No se pudo vaciar el directorio")
     } finally {
       setResetting(false)
     }
@@ -258,16 +258,15 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           </ActionButton>
 
           {/* Ir al directorio se hace muchas veces por sesion, asi que va como
-              boton; rehacer los archivos borra trabajo, asi que va como icono y
-              pregunta antes. Igual que en las del temario. */}
-          {detail.hasSetup && (
-            <IconAction
-              label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
-              icon={resetting ? Loader2 : RotateCcw}
-              onClick={() => setConfirmando(true)}
-              disabled={resetting || aPantallaCompleta}
-            />
-          )}
+              boton; vaciar el directorio borra trabajo, asi que va como icono y
+              pregunta antes. Igual que en las del temario, salvo que estas no
+              traen archivos de partida: lo que queda es un directorio vacio. */}
+          <IconAction
+            label={resetting ? "Vaciando..." : "Vaciar el directorio (borra tu trabajo)"}
+            icon={resetting ? Loader2 : RotateCcw}
+            onClick={() => setConfirmando(true)}
+            disabled={resetting || aPantallaCompleta}
+          />
         </div>
 
         {aPantallaCompleta ? (
@@ -301,12 +300,13 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       <ConfirmDialog
         open={confirmando}
         onOpenChange={setConfirmando}
-        title="¿Rehacer los archivos de la actividad?"
+        title="¿Vaciar el directorio de la actividad?"
         description={
-          `Se borra todo lo que haya en ~/actividades/${detail.workdir} y se vuelven a ` +
-          "crear los archivos de partida. Tu directorio personal y el resto de tu entorno no se tocan."
+          `Se borra todo lo que haya dentro de ~/actividades/${detail.workdir} y el directorio ` +
+          "queda vacío para empezar de nuevo. Solo se toca esa carpeta: tu directorio personal y " +
+          "el resto de tu entorno quedan igual."
         }
-        confirmLabel="Rehacer los archivos"
+        confirmLabel="Vaciar el directorio"
         confirmVariant="destructive"
         onConfirm={reset}
       />

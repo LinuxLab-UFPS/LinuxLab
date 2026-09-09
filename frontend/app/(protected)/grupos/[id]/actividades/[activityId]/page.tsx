@@ -81,7 +81,11 @@ function ActivityDetail({
                 {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
-            {hasEntregas ? (
+            {/* Las del temario no llevan ninguno de los dos: son iguales en
+                todos los grupos, no tienen fecha de cierre que extender, y el
+                backend rechaza editarlas y reprogramarlas. Eran dos botones que
+                solo podian terminar en un error. */}
+            {activity.source === "bank" ? null : hasEntregas ? (
               <ExtendDueDateButton
                 groupId={groupId}
                 activityId={activity.id}

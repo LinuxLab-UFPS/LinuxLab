@@ -130,7 +130,6 @@ async function getForStudent(studentUserId, groupActivityId) {
       checks: true,
       attempt_limit: true,
       enabled: true,
-      setup: true,
     },
   })
   if (!ga) throw new NotFoundError("Actividad no encontrada")
@@ -172,9 +171,6 @@ async function getForStudent(studentUserId, groupActivityId) {
     activityType: ga.activity_type === "quiz" ? "quiz" : "workshop",
     maxScore: ga.max_score,
     checksCount: (ga.checks ?? []).length,
-    // Solo con archivos de partida tiene sentido ofrecer rehacerlos: sin ellos
-    // el boton dejaria el directorio vacio y nada que empezar de nuevo.
-    hasSetup: Boolean(ga.setup),
     attemptLimit: ga.attempt_limit,
     attemptsCount: autoSubs.length,
     finalScore: ga.evaluation_type === "manual"
@@ -512,17 +508,26 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
 }
 
 /**
- * Rehace el directorio de trabajo de una actividad del docente.
+ * Vacia el directorio de trabajo de una actividad del docente.
  *
  * Espejo de `resetSandbox` para las del temario: mismo script, mismo contrato.
- * Lo que cambia es de donde sale el `setup` y como se llama el directorio —el
- * codigo del taller (`T-0005`) y no un slug—, y que aqui hay que comprobar la
- * matricula, porque una actividad de curso pertenece a un grupo.
+ * Lo que cambia es como se llama el directorio —el codigo del taller (`T-0005`)
+ * y no un slug— y que aqui hay que comprobar la matricula, porque una actividad
+ * de curso pertenece a un grupo.
  *
- * `setup.py` borra `~/actividades/<workdir>` y lo reconstruye, y no sabe salir de
- * ahi: rechaza `..`, las rutas absolutas y los enlaces que apunten fuera. El
- * directorio personal del estudiante no esta a su alcance.
+ * A diferencia de las del temario, estas **no traen archivos de partida**: el
+ * asistente del docente no los pide, asi que `setup` siempre es nulo y lo que
+ * hace el boton es dejar el directorio vacio. Si alguna llegara a traerlos, se
+ * rehacen, que es el mismo contrato de siempre.
+ *
+ * Solo puede tocar `~/actividades/<workdir>`: `setup.py` compone esa ruta con
+ * `valida_slug`, que rechaza todo lo que no sea `[a-zA-Z0-9-]`, de modo que el
+ * nombre no puede ser `..` ni una ruta ni nada absoluto. El directorio personal
+ * del estudiante queda fuera de alcance por construccion. `workdir` se valida
+ * igual aqui para fallar con un mensaje claro y no dentro del script.
  */
+const WORKDIR_OK = /^[A-Za-z0-9-]{1,64}$/
+
 async function resetForStudent(studentUserId, groupActivityId) {
   const ga = await prisma.groupActivity.findUnique({
     where: { id: groupActivityId },
@@ -533,12 +538,12 @@ async function resetForStudent(studentUserId, groupActivityId) {
     throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
   }
   if (!ga.enabled) throw new AppError("La actividad está deshabilitada", 409, "CONFLICT")
-  if (!ga.setup) {
-    throw new AppError("Esta actividad no tiene archivos que preparar", 409, "CONFLICT")
+  if (!WORKDIR_OK.test(ga.workdir ?? "")) {
+    throw new AppError("La actividad no tiene un directorio válido", 409, "CONFLICT")
   }
 
   const account = await linuxAccountService.getStudentAccount(studentUserId)
-  const payload = JSON.stringify({ ...ga.setup, slug: ga.workdir, force: true })
+  const payload = JSON.stringify({ ...(ga.setup ?? {}), slug: ga.workdir, force: true })
 
   const { stdout, stderr, code } = await sshClient.execCommand(
     `sudo -u ${account.linux_username} ${SETUP}`,

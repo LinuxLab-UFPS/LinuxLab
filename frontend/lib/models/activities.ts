@@ -202,8 +202,6 @@ export interface GroupActivityDetail {
   instructions: string
   difficulty: Difficulty
   workdir: string
-  /** Si trae archivos de partida, y por tanto se pueden rehacer. */
-  hasSetup: boolean
   dueAt: string | null
   evaluationType: EvaluationType
   /** Null en las del curso: esas se clasifican por dificultad, no por taller/quiz. */
