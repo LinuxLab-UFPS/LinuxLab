@@ -14,6 +14,8 @@ interface SidebarMovilProps {
   contentSubtopics?: LessonSubtopic[]
   topicLessons: Record<number, TopicLessons>
   groupName?: string
+  /** Sin progreso: quien lee el temario sin cursarlo. Ver `PanelContenidos`. */
+  soloLectura?: boolean
   /** Lo que dice la barra cuando esta cerrada: donde esta el lector. */
   topicTitle: string
   lessonTitle?: string

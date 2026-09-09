@@ -3,12 +3,14 @@ import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { getGroupActivity, listActivitySubmissions, listManualSubmissions } from "@/lib/features/teacher/data"
 import { getTopic } from "@shared/lib/content/temario"
+import { getActivityStatement } from "@shared/lib/content/activity-content"
 import { DIFFICULTY_LABEL } from "@shared/lib/content/activities"
 import { describeCheck } from "@shared/lib/describe-check"
 import { requireServerRole } from "@/lib/features/auth/session"
 import type { Activity } from "@/lib/features/teacher/types"
 import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { SubmissionsTable } from "@/lib/features/teacher/components/submissions-table"
+import { StatementDialog } from "@/lib/features/teacher/components/statement-dialog"
 import { ExtendDueDateButton } from "@/lib/features/teacher/components/extend-due-date-button"
 
 const ROW =
@@ -26,12 +28,15 @@ function DetailRow({ label, children }: { label: string; children: React.ReactNo
 function ActivityDetail({
   groupId,
   activity,
+  statement,
   submissions,
   manualSubmissions,
   backTab,
 }: {
   groupId: string
   activity: Activity
+  /** El enunciado que lee el estudiante. Ver `ActivityDetailPage`. */
+  statement: string
   submissions: { studentId: string; studentName: string; studentEmail: string; studentCode: string | null; attemptsCount: number; lastAttemptDate: string | null; finalScore: number }[]
   manualSubmissions: { submissionId: string; studentId: string; studentName: string; studentEmail: string; studentCode: string | null; status: string; score: number | null; submittedAt: string; files: number }[]
   backTab: string
@@ -76,7 +81,11 @@ function ActivityDetail({
                 {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
-            {hasEntregas ? (
+            {/* Las del temario no llevan ninguno de los dos: son iguales en
+                todos los grupos, no tienen fecha de cierre que extender, y el
+                backend rechaza editarlas y reprogramarlas. Eran dos botones que
+                solo podian terminar en un error. */}
+            {activity.source === "bank" ? null : hasEntregas ? (
               <ExtendDueDateButton
                 groupId={groupId}
                 activityId={activity.id}
@@ -90,6 +99,11 @@ function ActivityDetail({
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border bg-card">
+            {/* El enunciado es lo primero que el docente quiere repasar y no
+                estaba en ninguna parte de esta pantalla. */}
+            <DetailRow label="Enunciado">
+              <StatementDialog title={activity.title} statement={statement} />
+            </DetailRow>
             <DetailRow label="Modalidad">
               {activity.evaluationType === "manual" ? "Revision manual" : "Autoevaluacion"}
             </DetailRow>
@@ -110,17 +124,6 @@ function ActivityDetail({
               </span>
             </DetailRow>
           </div>
-
-          {activity.instructions && (
-            <section>
-              <h2 className="mb-2 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Instrucciones
-              </h2>
-              <div className="rounded-xl border border-border bg-card p-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                {activity.instructions}
-              </div>
-            </section>
-          )}
 
           {activity.evaluationType !== "manual" && (
           <section>
@@ -212,5 +215,24 @@ export default async function ActivityDetailPage({
     )
   }
 
-  return <ActivityDetail groupId={id} activity={activity} submissions={submissions} manualSubmissions={manualSubmissions} backTab={backTab} />
+  /* El enunciado de una actividad del curso es el markdown que lee el
+     estudiante (`content/actividades/<slug>.md`), no la columna `instructions`,
+     que es un resumen de dos lineas para las tarjetas. Las del docente no tienen
+     archivo: ahi `instructions` ES el enunciado, y ademas tienen boton de
+     editar, que es por donde su autor lo repasa. */
+  const statement =
+    (activity.source === "bank" && activity.slug
+      ? getActivityStatement(activity.slug)
+      : null) ?? activity.instructions
+
+  return (
+    <ActivityDetail
+      groupId={id}
+      activity={activity}
+      statement={statement}
+      submissions={submissions}
+      manualSubmissions={manualSubmissions}
+      backTab={backTab}
+    />
+  )
 }

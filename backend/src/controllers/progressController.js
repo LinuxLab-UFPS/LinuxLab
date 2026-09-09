@@ -7,12 +7,18 @@ const asyncHandler = require("../utils/asyncHandler")
 const recordView = asyncHandler(async (req, res) => {
   const { topicSlug, subtopicId } = req.params
 
-  const [subtopic, enrollment] = await Promise.all([
+  /* Todas las matriculas activas, no solo la primera.
+     El temario es el mismo para todos los grupos, asi que leer una leccion es
+     avance en cualquier curso donde el estudiante este inscrito. Antes se
+     apuntaba solo en la matricula mas antigua: quien estaba en dos grupos
+     mandaba toda su lectura al primero, y el docente del segundo lo veia en
+     cero sin que hubiera nada que arreglar del lado del estudiante. */
+  const [subtopic, enrollments] = await Promise.all([
     prisma.subtopic.findFirst({
       where: { slug: subtopicId },
       include: { topic: { select: { slug: true } } },
     }),
-    prisma.enrollment.findFirst({
+    prisma.enrollment.findMany({
       where: { student_id: req.user.id, status: "active", group: { status: "active" } },
       orderBy: { created_at: "asc" },
       select: { id: true },
@@ -26,14 +32,16 @@ const recordView = asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Subtema no encontrado en este tema", code: "NOT_FOUND" })
     return
   }
-  if (!enrollment) {
+  if (enrollments.length === 0) {
     res.status(409).json({ error: "No hay matrícula activa", code: "NO_ENROLLMENT" })
     return
   }
 
-  await runInTransaction((tx) =>
-    progressService.recordLessonView(tx, enrollment.id, subtopic.id),
-  )
+  await runInTransaction(async (tx) => {
+    for (const enrollment of enrollments) {
+      await progressService.recordLessonView(tx, enrollment.id, subtopic.id)
+    }
+  })
 
   res.status(204).end()
 })

@@ -18,7 +18,7 @@ const DATOS = {
   kind: "check",
   difficulty: "basic",
   instructions:
-    "Abre la terminal y crea, en tu directorio personal, un archivo que tenga " +
+    "Crea, en tu directorio personal, un archivo que tenga " +
     "como nombre tu código estudiantil con la extensión .txt. Escribe adentro " +
     "cinco líneas: en la primera tu nombre, en las siguientes 3, 3 comandos que " +
     "hayas aprendido y en la última tu correo institucional. Recuerda que para " +

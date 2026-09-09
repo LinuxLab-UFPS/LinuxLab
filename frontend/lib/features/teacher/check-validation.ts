@@ -37,8 +37,6 @@ export function checkError(check: ActivityCheck): string | null {
         return "El modo debe ser octal (ej: 755)"
       }
       return null
-    case "propietario_es":
-      return value(check.params, "usuario") ? null : "Falta el usuario esperado"
     case "archivo_contiene":
       return value(check.params, "patron") ? null : "Falta el patrón a buscar"
     case "minimo_lineas":
@@ -48,9 +46,15 @@ export function checkError(check: ActivityCheck): string | null {
     case "archivo_es":
     case "ultima_linea_es":
       return value(check.params, "valor") ? null : "Falta el valor esperado"
+    // Estas no piden mas que la ruta. `propietario_es` esta aqui y no aparte
+    // porque el propietario siempre es el estudiante que resuelve: el backend
+    // lo fija en `normalizeParams` y el catalogo ya no expone el campo. Cuando
+    // se exigia un `usuario` que el formulario no podia escribir, la aserción
+    // quedaba con un error imposible de quitar.
     case "directorio_existe":
     case "archivo_existe":
     case "archivo_no_existe":
+    case "propietario_es":
       return null
     default:
       return null

@@ -1173,13 +1173,26 @@ document.addEventListener("paste", (ev) => {
   if (t) t.value = "";
 });
 
+const hist = Barra.historial();
+
 document.addEventListener("keydown", (ev) => {
   if (!$("fin").hidden || !$("picker").hidden || !$("portada").classList.contains("hide")) return;
   if (ev.key === "Enter") {
     const linea = tecleado;
+    hist.recordar(linea);
     tecleado = "";
     $("typed").textContent = "";
     ejecutar(linea);
+    return;
+  }
+  // Flecha arriba y abajo, el historial de la shell: repetir un comando largo
+  // obligaba a escribirlo entero otra vez.
+  if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
+    ev.preventDefault();
+    const previa = hist.mover(ev.key === "ArrowUp" ? 1 : -1);
+    if (previa === null) return;
+    tecleado = previa;
+    $("typed").textContent = tecleado;
     return;
   }
   if (ev.key === "Backspace") {

@@ -15,7 +15,7 @@ import { syllabus } from "@shared/lib/content/temario"
 import { timeAgo } from "@/lib/utils/dates"
 import { StudentProgressDialog } from "@/lib/features/teacher/components/student-progress-dialog"
 import type { EnrollmentStudent } from "@/lib/features/auth/types"
-import type { StudentProgress } from "@/lib/models/groups"
+import type { StudentProgress, TopicSubtopics } from "@/lib/models/groups"
 import type { Topic } from "@/lib/features/student/types"
 
 const PAGE_SIZE = 10
@@ -27,12 +27,17 @@ const PAGE_SIZE = 10
  * detalle (dona + desglose por tema).
  */
 export function GroupStudents({
+  groupId,
   students,
   rows,
+  topicSubtopics,
   query,
 }: {
+  groupId: string
   students: EnrollmentStudent[]
   rows: StudentProgress[]
+  /** Los nombres de las lecciones, para el desglose de la ficha. */
+  topicSubtopics: TopicSubtopics[]
   query: string
 }) {
   const [page, setPage] = useState(1)
@@ -137,7 +142,9 @@ export function GroupStudents({
       )}
 
       <StudentProgressDialog
+        groupId={groupId}
         student={selected}
+        topicSubtopics={topicSubtopics}
         topics={topics}
         open={!!selected}
         onOpenChange={(open) => {

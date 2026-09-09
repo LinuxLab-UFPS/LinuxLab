@@ -22,6 +22,9 @@ const RETIRADAS = [
   "el-arbol-del-proyecto",
   // La comprobacion de la guia: ahora es un ejemplo pintado, sin nada detras.
   "primer-paso",
+  // Repartia el logo en emoji y no comprobaba nada de lo que enseña el subtema
+  // de pipes; la sustituye `primeras-lineas`.
+  "logo-ufps",
 ]
 
 async function main() {

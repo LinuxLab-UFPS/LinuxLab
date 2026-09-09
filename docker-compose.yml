@@ -25,6 +25,12 @@ services:
     image: postgres:16-alpine
     mem_limit: 256m
     cpu_shares: 1024
+    # Como el backend, el frontend y el entorno. Era el unico servicio de larga
+    # vida sin politica de reinicio: al parar la maquina o el stack, los otros
+    # tres volvian solos y la base se quedaba abajo. Quedaba en pie algo que
+    # parecia sano —tres contenedores arriba— pero sin base contra la que
+    # consultar, asi que ni el login funcionaba.
+    restart: unless-stopped
     # Solo la red de base de datos: no publica puertos ni sale al host.
     # Su unico cliente es el backend (el entorno vive en la red `lab`).
     networks:

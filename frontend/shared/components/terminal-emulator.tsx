@@ -39,6 +39,7 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
 
   useEffect(() => {
     if (!containerRef.current) return
+    const contenedor = containerRef.current
 
     const term = new Terminal({
       cursorBlink: true,
@@ -53,21 +54,33 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     })
     termRef.current = term
 
-    // En una terminal Ctrl+V no es pegar: es `lnext`, "toma la siguiente tecla
-    // literal". xterm lo traduce a \x16 y cancela el evento, así que el pegado
-    // del navegador nunca llega a ocurrir y el atajo de toda la vida no hace
-    // nada. Devolviendo false, xterm ni lo procesa ni lo cancela: el navegador
-    // dispara su propio evento de pegado, que xterm sí sabe atender.
+    // El pegado esta desactivado a proposito: la terminal se practica
+    // escribiendo, y copiar la solucion de un enunciado no ensena el comando.
     //
-    // Ctrl+Shift+V (el atajo de terminal) sigue funcionando por su cuenta.
+    // Devolviendo true, xterm procesa Ctrl+V como lo que es en una terminal de
+    // verdad —`lnext`, \x16— y cancela el evento del navegador, asi que el
+    // pegado no llega a ocurrir.
     term.attachCustomKeyEventHandler((event) => {
-      const isPaste =
+      const esPegar =
         event.type === "keydown" &&
         (event.ctrlKey || event.metaKey) &&
-        !event.altKey &&
         event.code === "KeyV"
-      return !isPaste
+      if (esPegar) {
+        event.preventDefault()
+        return false
+      }
+      return true
     })
+
+    // El atajo no es la unica via: Ctrl+Shift+V, el clic derecho y el clic
+    // central del raton disparan el evento de pegado sin pasar por el manejador
+    // de teclas. Se corta en el propio elemento.
+    const bloquearPegado = (e: Event) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    contenedor.addEventListener("paste", bloquearPegado, true)
+    contenedor.addEventListener("auxclick", bloquearPegado, true)
 
     /* `vi` y compañía preguntan de qué color son el texto y el fondo con OSC 10
        y OSC 11, para decidir su paleta. Sin nadie que las atienda, xterm no las
@@ -120,6 +133,8 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       // Se va la pantalla, no la sesion: el socket sigue abierto y la PTY con
       // lo que estuviera corriendo dentro.
       clearTimeout(resizeTimer)
+      contenedor.removeEventListener("paste", bloquearPegado, true)
+      contenedor.removeEventListener("auxclick", bloquearPegado, true)
       baja()
       unsubscribe()
       observer.disconnect()

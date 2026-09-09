@@ -4,7 +4,7 @@ import { LessonHeader } from "@shared/components/lesson-header"
 import { LessonContainer } from "@shared/components/terminal-ui"
 import { SidebarMovil } from "@/lib/features/student/components/sidebar-movil"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
-import { CourseRoadmap } from "@/lib/features/student/components/course-roadmap"
+import { CourseRoadmap, MapaTemario } from "@/lib/features/student/components/course-roadmap"
 import { bienvenida, type PaginaBienvenida } from "@shared/lib/content/bienvenida"
 import { syllabus } from "@shared/lib/content/temario"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -50,10 +50,13 @@ export function WelcomeArea({
   page,
   blocks,
   topicLessons,
+  soloLectura = false,
 }: {
   page: PaginaBienvenida | null
   blocks: LessonBlock[] | null
   topicLessons: Record<number, TopicLessons>
+  /** Sin progreso: el docente repasando el material. */
+  soloLectura?: boolean
 }) {
   const i = bienvenida.pages.findIndex((p) => p.id === page?.id)
   const anterior = i > 0 ? comoLeccion(bienvenida.pages[i - 1]) : null
@@ -69,6 +72,7 @@ export function WelcomeArea({
             activeTopicSlug={bienvenida.slug}
             activeSubtopicId={page?.id}
             topicLessons={topicLessons}
+            soloLectura={soloLectura}
             topicTitle={bienvenida.title}
             lessonTitle={page?.title}
           />
@@ -81,7 +85,13 @@ export function WelcomeArea({
         />
 
         {page?.kind === "roadmap" ? (
-          <CourseRoadmap topicLessons={topicLessons} />
+          /* El docente ve el mismo mapa sin cifras: no cursa, asi que un 0% se
+             leeria como que no ha hecho nada en vez de como que no aplica. */
+          soloLectura ? (
+            <MapaTemario topicLessons={topicLessons} progreso={null} />
+          ) : (
+            <CourseRoadmap topicLessons={topicLessons} />
+          )
         ) : blocks && blocks.length > 0 ? (
           <LessonBody blocks={blocks} />
         ) : (

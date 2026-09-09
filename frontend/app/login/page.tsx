@@ -11,6 +11,8 @@ import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Button } from "@shared/components/ui/button"
 import { ForgotPasswordDialog } from "@shared/components/forgot-password-dialog"
+import { PASSWORD_HINT, passwordError } from "@shared/lib/password"
+import { cn } from "@shared/lib/utils"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -24,6 +26,9 @@ export default function LoginPage() {
   const [name, setName] = useState("")
   const [code, setCode] = useState("")
   const [showPass, setShowPass] = useState(false)
+  // Solo al registrarse se valida en vivo: en el login la contrasena ya
+  // existe y avisar de su longitud ahi no ayuda a nadie.
+  const [passTocado, setPassTocado] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
 
@@ -68,6 +73,8 @@ export default function LoginPage() {
     }
   }
 
+  const errorPass = mode === "signup" ? passwordError(password, passTocado) : null
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const params = new URLSearchParams(window.location.search)
@@ -77,8 +84,10 @@ export default function LoginPage() {
       notify.error(null, "Ingresa un correo válido.")
       return
     }
-    if (password.length < 6) {
-      notify.error(null, "La contraseña debe tener al menos 6 caracteres.")
+    const fallaPass = passwordError(password)
+    if (fallaPass) {
+      setPassTocado(true)
+      notify.error(null, fallaPass)
       return
     }
     if (mode === "signup" && !name.trim()) {
@@ -190,7 +199,10 @@ export default function LoginPage() {
                 placeholder="********"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 pr-10"
+                onBlur={() => setPassTocado(true)}
+                aria-invalid={Boolean(errorPass)}
+                aria-describedby="password-ayuda"
+                className={cn("h-11 pr-10", errorPass && "border-danger")}
                 disabled={busy}
               />
               <button
@@ -203,6 +215,14 @@ export default function LoginPage() {
                 {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {mode === "signup" ? (
+              <p
+                id="password-ayuda"
+                className={cn("text-xs", errorPass ? "text-danger" : "text-muted-foreground")}
+              >
+                {errorPass ?? PASSWORD_HINT}
+              </p>
+            ) : null}
           </div>
           <Button type="submit" disabled={busy} className="h-11 w-full">
             {submitting ? (mode === "login" ? "Iniciando…" : "Creando…") : mode === "login" ? "Iniciar sesión" : "Crear cuenta"}

@@ -2,13 +2,13 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Eye, EyeOff, CheckCircle2, AlertTriangle, Mail, KeyRound } from "lucide-react"
+import { CheckCircle2, AlertTriangle, Mail, KeyRound } from "lucide-react"
 import { applyActionCode, confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
 import { Button } from "@shared/components/ui/button"
-import { Input } from "@shared/components/ui/input"
-import { Label } from "@shared/components/ui/label"
+import { PasswordFields } from "@shared/components/password-fields"
 import { notify } from "@shared/lib/toast"
+import { confirmError, passwordError } from "@shared/lib/password"
 import { destinoSeguro } from "@shared/lib/next-url"
 import { mapFirebaseError, errorCodeOf } from "@/lib/features/auth/errors"
 
@@ -33,7 +33,6 @@ function AuthAccionInner() {
   const [email, setEmail] = useState<string | null>(null)
   const [newPass, setNewPass] = useState("")
   const [confirmPass, setConfirmPass] = useState("")
-  const [show, setShow] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -139,12 +138,9 @@ function AuthAccionInner() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (newPass.length < 6) {
-      notify.error(null, "La contraseña debe tener al menos 6 caracteres.")
-      return
-    }
-    if (newPass !== confirmPass) {
-      notify.error(null, "Las contraseñas no coinciden.")
+    const falla = passwordError(newPass) ?? confirmError(newPass, confirmPass)
+    if (falla) {
+      notify.error(null, falla)
       return
     }
     setSubmitting(true)
@@ -191,41 +187,13 @@ function AuthAccionInner() {
             <h1 className="text-xl font-bold text-foreground">Restablecer contraseña</h1>
             {email ? <p className="mt-1 text-xs text-muted-foreground">{email}</p> : null}
             <form onSubmit={handleReset} className="mt-6 space-y-4 text-left">
-              <div className="space-y-2">
-                <Label htmlFor="newPass">Nueva contraseña</Label>
-                <div className="relative">
-                  <Input
-                    id="newPass"
-                    type={show ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={newPass}
-                    onChange={(e) => setNewPass(e.target.value)}
-                    className="h-11 pr-10"
-                    placeholder="Mínimo 6 caracteres"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShow((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    tabIndex={-1}
-                    aria-label={show ? "Ocultar" : "Mostrar"}
-                  >
-                    {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPass">Confirmar contraseña</Label>
-                <Input
-                  id="confirmPass"
-                  type={show ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={confirmPass}
-                  onChange={(e) => setConfirmPass(e.target.value)}
-                  className="h-11"
-                  placeholder="Repite la contraseña"
-                />
-              </div>
+              <PasswordFields
+                password={newPass}
+                confirm={confirmPass}
+                onPassword={setNewPass}
+                onConfirm={setConfirmPass}
+                disabled={submitting}
+              />
               <Button type="submit" disabled={submitting} className="h-11 w-full">
                 {submitting ? "Guardando…" : "Guardar nueva contraseña"}
               </Button>

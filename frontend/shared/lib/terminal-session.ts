@@ -154,6 +154,18 @@ function emitir(texto: string) {
   for (const oyente of oyentes) oyente(texto)
 }
 
+/**
+ * Escribe un aviso de la plataforma en la pantalla de la terminal.
+ *
+ * Va por `emitir` para que entre en el historial y lo vea un emulador que se
+ * monte despues, pero NO se envia a la shell: es texto, no un comando. Los
+ * detectores de `emitir` (cwd y pantalla alterna) leen secuencias OSC que un
+ * aviso nuestro no contiene, asi que pintarlo no altera ese estado.
+ */
+export function escribirAviso(texto: string): void {
+  emitir(texto)
+}
+
 function conectar() {
   if (typeof window === "undefined") return
   const socket = new WebSocket(`${WS_BASE}/terminal`)

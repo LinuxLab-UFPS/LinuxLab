@@ -253,7 +253,7 @@ button.win-dot::after{
   <h2>El despliegue del viernes</h2>
   <p>
     Un despliegue tumbó producción y alguien revirtió la rama a mano. Laura, la
-    SRE de guardia, necesita tres datos para cerrar el informe y te va a ir
+    SRE de guardia, necesita unos datos para cerrar el informe y te va a ir
     preguntando. Sácalos del proyecto con <b>grep</b>, <b>find</b> y <b>sort</b>,
     y respóndele por el teléfono.
   </p>
@@ -278,7 +278,7 @@ const barra = Barra.montar({
   titulo: 'El despliegue del viernes',
   ayuda: [
     { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver los comandos disponibles.' },
-    { clave: 'Laura',   tono: 'oro',  texto: 'Te pide un dato cada vez. Pregúntale <b>«¿Cómo hago eso?»</b> si no sabes por dónde empezar, o <b>«¿Qué es...?»</b> para que te explique un comando o una opción.' },
+    { clave: 'Laura',   tono: 'oro',  texto: 'Te pide un dato cada vez. Pregúntale <b>«¿Cómo hago eso?»</b> si no sabes por dónde empezar.' },
     { clave: 'Terminal', tono: 'azul', texto: 'Buscar no cambia nada en el disco. La terminal anuncia con qué herramienta se saca cada dato; la respuesta se escribe en el teléfono.' },
   ],
   onReiniciar: () => empezar(),
@@ -506,8 +506,8 @@ const PISTAS_FIND = [
   },
   {
     id: "oculto",
-    etiqueta: "Directorio oculta",
-    pista: "Hay un directorio que no sale al listar el proyecto. Dime cómo se llama: está <b>oculta</b>, y eso se nota en su nombre.",
+    etiqueta: "Directorio oculto",
+    pista: "Hay un directorio que no sale al listar el proyecto. Dime cómo se llama: está <b>oculto</b>, y eso se nota en su nombre.",
     terreno: "Los nombres que empiezan por punto están ocultos. Busca por tipo directorio y por esa forma de nombre.",
     terminal: "Hay un directorio oculto, de los que empiezan por punto. Búscalo con find -type d -name.",
     arma() {
@@ -1113,12 +1113,35 @@ const normal = (s) => (s || "").trim().toLowerCase().replace(/\s+/g, " ");
  *
  * Los limites evitan el falso positivo obvio: si el dato es "pagos", una
  * respuesta que diga "despagos" no cuenta. Y como el mensaje puede traer la
- * frase entera, basta con que el dato aparezca en alguna parte. */
+ * frase entera, basta con que el dato aparezca en alguna parte.
+ *
+ * Se acepta de varias formas, porque la respuesta buena escrita de otro modo
+ * seguia siendo la respuesta buena y aqui se estaba castigando la mecanografia
+ * en vez de la busqueda: sin tildes, con la ruta entera delante del nombre, y
+ * con o sin la extension del archivo. */
+function sinTildes(s) {
+  return normal(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 function contiene(mensaje, dato) {
-  const d = normal(dato);
+  const d = sinTildes(dato);
   if (!d) return false;
-  const escapado = d.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp("(^|[^a-z0-9])" + escapado + "($|[^a-z0-9])").test(normal(mensaje));
+  const m = sinTildes(mensaje);
+
+  const suelto = (aguja) => {
+    const escapado = aguja.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("(^|[^a-z0-9])" + escapado + "($|[^a-z0-9])").test(m);
+  };
+
+  if (suelto(d)) return true;
+  // La ruta entera vale cuando lo que se pide es el nombre: quien contesta
+  // copiando lo que le devolvio `find` acierta igual.
+  const hoja = d.split("/").pop();
+  if (hoja !== d && suelto(hoja)) return true;
+  // Y el nombre sin su extension, para no exigir el `.txt` de memoria.
+  const sinExt = hoja.replace(/\.[a-z0-9]+$/, "");
+  if (sinExt && sinExt !== hoja && suelto(sinExt)) return true;
+  return false;
 }
 const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuesta || "";
 
@@ -1134,6 +1157,53 @@ const respuestaDe = (id) => (caso.datos.find((d) => d.id === id) || {}).respuest
 /** Lo que Laura sabe explicar. Se cierra en los terminos que este
  *  simulador usa: preguntar por otra cosa recibe un "no se" honesto en vez
  *  de una respuesta inventada. */
+/* Como se escribe una opcion, y que hace.
+ *
+ * Los burbujas del chat se pintan con `innerHTML`, asi que un `<patron>` a pelo
+ * se parsea como una etiqueta desconocida y desaparece sin dejar rastro: por eso
+ * los argumentos van escapados. La linea del comando va en <code>, que ya tiene
+ * estilo propio en la hoja, y la explicacion debajo. */
+const uso = (comando, que) => `<code>${comando}</code><br>${que}`;
+
+/* Las opciones, por comando.
+ *
+ * `-n` no quiere decir lo mismo en `grep` que en `sort` que en `head`, asi que
+ * documentarlas sueltas —como estaban— condenaba a acertar solo una de las
+ * tres. Cada entrada dice como se escribe y que espera detras, con el mismo
+ * formato de la hoja de comandos esenciales del curso: el comando, la opcion,
+ * el argumento y una frase. */
+const OPCIONES = {
+  "grep -r": uso("grep -r &lt;patron&gt; &lt;directorio&gt;", "Busca el patrón dentro de los archivos del directorio y de todos los que cuelgan de él."),
+  "grep -i": uso("grep -i &lt;patron&gt; &lt;archivo&gt;", "Busca sin distinguir mayúsculas de minúsculas: «ERROR» y «error» cuentan lo mismo."),
+  "grep -e": uso("grep -E &lt;patron&gt; &lt;archivo&gt;", "Deja describir la FORMA del texto con una expresión regular: llaves, grupos y rangos."),
+  "grep -c": uso("grep -c &lt;patron&gt; &lt;archivo&gt;", "En vez de las líneas, dice cuántas coinciden."),
+  "grep -l": uso("grep -l &lt;patron&gt; &lt;archivos&gt;", "En vez de las líneas, dice en qué archivos hay coincidencia."),
+  "grep -n": uso("grep -n &lt;patron&gt; &lt;archivo&gt;", "Antepone a cada línea el número que ocupa dentro del archivo."),
+  "grep -v": uso("grep -v &lt;patron&gt; &lt;archivo&gt;", "Le da la vuelta: enseña las líneas que NO contienen el patrón."),
+  "grep -w": uso("grep -w &lt;patron&gt; &lt;archivo&gt;", "Exige que el patrón sea una palabra entera y no parte de otra."),
+  "grep -o": uso("grep -o &lt;patron&gt; &lt;archivo&gt;", "Enseña solo lo que coincide, no la línea completa."),
+  "grep -h": uso("grep -h &lt;patron&gt; &lt;archivos&gt;", "Quita el nombre del archivo del principio de cada línea."),
+
+  "find -name": uso("find &lt;ruta&gt; -name &lt;patron&gt;", "Filtra por el nombre del archivo, y acepta comodines: los que empiezan por punto son <code>-name '.*'</code>."),
+  "find -iname": uso("find &lt;ruta&gt; -iname &lt;patron&gt;", "Como -name, pero sin distinguir mayúsculas de minúsculas."),
+  "find -type": uso("find &lt;ruta&gt; -type &lt;f|d&gt;", "Filtra por lo que es: f para archivos, d para directorios."),
+  "find -mmin": uso("find &lt;ruta&gt; -mmin &lt;±N&gt;", "Filtra por minutos desde la última modificación. Con -60 sale lo tocado en la última hora."),
+  "find -mtime": uso("find &lt;ruta&gt; -mtime &lt;±N&gt;", "Filtra por días desde la última modificación. Con +30 sale lo que lleva más de un mes."),
+  "find -size": uso("find &lt;ruta&gt; -size &lt;±N&gt;", "Filtra por tamaño. Aquí se mide en líneas."),
+
+  "sort -n": uso("sort -n &lt;archivo&gt;", "Ordena por valor numérico y no alfabéticamente, así el 10 va después del 9 y no antes."),
+  "sort -r": uso("sort -r &lt;archivo&gt;", "Le da la vuelta al orden: de mayor a menor."),
+  "sort -t": uso("sort -t&lt;separador&gt; &lt;archivo&gt;", "Dice qué separa las columnas. En un CSV, una coma."),
+  "sort -k": uso("sort -k&lt;N&gt; &lt;archivo&gt;", "Ordena por la columna N en vez de por la línea entera. Va acompañado de -t."),
+
+  "head -n": uso("head -n &lt;N&gt; &lt;archivo&gt;", "Cuántas líneas del principio se enseñan. Sin la opción, diez."),
+  "tail -n": uso("tail -n &lt;N&gt; &lt;archivo&gt;", "Cuántas líneas del final se enseñan. Sin la opción, diez."),
+  "wc -l": uso("wc -l &lt;archivo&gt;", "Cuenta las líneas del archivo."),
+  "ls -l": uso("ls -l &lt;ruta&gt;", "Añade el tamaño y la fecha de cada nombre."),
+  "ls -a": uso("ls -a &lt;ruta&gt;", "Incluye lo que empieza por punto, que por defecto no sale."),
+  "uniq -c": uso("uniq -c", "Colapsa las líneas repetidas seguidas y dice cuántas eran de cada una."),
+};
+
 const GLOSARIO = {
   grep: "Busca texto DENTRO de los archivos y devuelve las líneas que lo contienen. Es para cuando sabes qué dice algo pero no dónde está escrito.",
   find: "Busca archivos POR SUS DATOS: el nombre, el tipo, el tamaño o la fecha. No mira lo que hay escrito dentro.",
@@ -1179,7 +1249,7 @@ const ALIAS = {
   "hexadecimal": "commit", "branch": "rama",
   "servidor": "nodo", "maquina": "nodo",
   "base de datos": "volcado", "backup": "volcado", "respaldo": "volcado",
-  "archivo oculto": "oculto", "directorio oculta": "oculto",
+  "archivo oculto": "oculto", "directorio oculto": "oculto", "directorio oculta": "oculto",
   "recursivo": "-r", "recursiva": "-r",
 };
 
@@ -1206,7 +1276,16 @@ function terminoDe(m) {
                  .replace(/\b(un|una|el|la|los|las|lo|de)\b/g, " ")
                  .replace(/\s+/g, " ").trim();
   if (!resto) return "";
-  // Primero los sinonimos de varias palabras, despues las claves sueltas.
+  /* Primero la pareja comando+opcion: "que es grep -r" tiene que dar lo de -r
+     en grep y no la explicacion de grep a secas, que es lo que pasaba cuando
+     solo se miraban las claves sueltas en su orden de declaracion. */
+  for (const pareja of Object.keys(OPCIONES)) {
+    const [cmd, opcion] = pareja.split(" ");
+    if (resto.includes(cmd) && new RegExp("(^|[^a-z0-9-])" + opcion + "($|[^a-z0-9])").test(resto)) {
+      return pareja;
+    }
+  }
+  // Despues los sinonimos de varias palabras, y al final las claves sueltas.
   for (const [frase, clave] of Object.entries(ALIAS)) {
     if (resto.includes(frase)) return clave;
   }
@@ -1239,6 +1318,10 @@ function responderAyuda() {
 function responderTermino(clave) {
   if (clave === "") {
     di("ella", "No te sigo. Dime «¿Qué es grep?», «¿Qué es -r?» o el término que sea, y te lo explico si lo conozco.");
+    return;
+  }
+  if (OPCIONES[clave]) {
+    di("ella", OPCIONES[clave]);
     return;
   }
   if (!GLOSARIO[clave]) {
@@ -1392,8 +1475,12 @@ let ultimoAnuncio = -1;
 
 function pintar() {
   const lista = objetivos();
+  /* Este texto no cambia en toda la partida —lo unico que se mueve es el numero
+     de objetivo—, asi que es el sitio donde decir con que se trabaja. El
+     objetivo concreto no nombra la herramienta a proposito: eso se lo dice
+     Laura a quien se lo pregunte. */
   barra.objetivo(paso < lista.length
-    ? "Reúne los datos que pide Laura para el informe"
+    ? "Usa grep, find y sort para buscar los datos que Laura necesita"
     : "Informe cerrado", Math.min(paso, lista.length - 1), lista.length);
   // El objetivo no tiene ventana propia: se anuncia en la terminal cuando
   // cambia, que es donde el estudiante ya esta mirando.
@@ -1426,14 +1513,27 @@ function enfocar() {
   if (t && t.focus) t.focus({ preventScroll: true });
 }
 
+const hist = Barra.historial();
+
 document.addEventListener("keydown", (ev) => {
   if (ocupado()) return;
   if (document.activeElement && document.activeElement.tagName === "INPUT") return;
   if (ev.key === "Enter") {
     const linea = tecleado;
+    hist.recordar(linea);
     tecleado = "";
     $("tecleado").textContent = "";
     ejecutar(linea);
+    return;
+  }
+  // Flecha arriba y abajo, el historial de la shell: repetir un comando largo
+  // obligaba a escribirlo entero otra vez.
+  if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
+    ev.preventDefault();
+    const previa = hist.mover(ev.key === "ArrowUp" ? 1 : -1);
+    if (previa === null) return;
+    tecleado = previa;
+    $("tecleado").textContent = tecleado;
     return;
   }
   if (ev.key === "Backspace") tecleado = tecleado.slice(0, -1);
@@ -1487,7 +1587,7 @@ function preparar() {
     $(v).hidden = false;
     $(d).dataset.abierta = "true";
   }
-  log("Copia local del proyecto lista.");
+  log("Copia local del repositorio lista. Usa grep, find y sort para ubicar los datos en ella.");
   log(`Laura necesita ${caso.datos.length} datos para cerrar el informe del incidente:`);
   log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
   pintar();
@@ -1500,7 +1600,7 @@ function empezar() {
   barra.jugando(true);
   di("ella", "Buenas. El despliegue del viernes tumbó producción y me toca cerrar el informe antes del lunes.");
   di("ella", "Te voy a pedir unos datos. Tú los buscas en el proyecto y me los envías sin errores.");
-  di("ella", "Si necesitas ayuda con la búsqueda, pregúntame «¿Cómo hago eso?». Y si tienes dudas de algo, dime «¿Qué es...?».");
+  di("ella", "Si necesitas ayuda con la búsqueda, pregúntame «¿Cómo hago eso?». Y si tienes dudas de algo, dime «¿Qué es...?». Estoy para ayudarte.");
   pedir();
   enfocar();
 }

@@ -5,6 +5,7 @@ import { useLessonProgress } from "@/lib/features/student/progress"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { activities } from "@shared/lib/content/activities"
 import type { TopicLessons } from "@shared/lib/content/lessons"
+import { syllabus } from "@shared/lib/content/temario"
 
 /**
  * How far the student actually got through the course.
@@ -19,9 +20,9 @@ import type { TopicLessons } from "@shared/lib/content/lessons"
  * resuelto nada de lo que propone: las actividades son el trabajo del tema, no
  * un extra.
  */
-export function useCourseProgress(lessons: Record<number, TopicLessons>) {
+export function useCourseProgress(lessons: Record<number, TopicLessons>, activo = true) {
   const { isRead } = useLessonProgress()
-  const { passed } = usePassedActivities()
+  const { passed } = usePassedActivities(activo)
 
   const isLessonDone = useCallback(
     (topicNumber: number, subtopicId: string) => {
@@ -63,6 +64,27 @@ export function useCourseProgress(lessons: Record<number, TopicLessons>) {
     [lessonTotal, doneCount, topicActivities, activitiesDone],
   )
 
+  /**
+   * El avance del curso, contando piezas y no temas enteros.
+   *
+   * Antes era `temasCompletos / 10`, y como un tema solo cuenta cuando estan
+   * todas sus lecciones Y todas sus actividades, leer cuatro de cinco
+   * lecciones daba exactamente 0%. Con diez temas, cualquier avance real
+   * redondeaba a cero y la barra parecia rota.
+   *
+   * `isTopicDone` no cambia: el tema sigue poniendose verde solo cuando esta
+   * entero, que es lo que decide la certificacion.
+   */
+  const cursoTotal = syllabus.reduce(
+    (suma, t) => suma + lessonTotal(t.number) + topicActivities(t.number).length,
+    0,
+  )
+  const cursoHecho = syllabus.reduce(
+    (suma, t) => suma + doneCount(t.number) + activitiesDone(t.number),
+    0,
+  )
+  const cursoPct = cursoTotal > 0 ? Math.round((cursoHecho / cursoTotal) * 100) : 0
+
   return {
     isLessonDone,
     lessonTotal,
@@ -70,5 +92,9 @@ export function useCourseProgress(lessons: Record<number, TopicLessons>) {
     isTopicDone,
     activityTotal: useCallback((n: number) => topicActivities(n).length, [topicActivities]),
     activitiesDone,
+    cursoPct,
+    cursoHecho,
+    cursoTotal,
+    temasCompletos: syllabus.filter((t) => isTopicDone(t.number)).length,
   }
 }

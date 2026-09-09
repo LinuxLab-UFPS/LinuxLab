@@ -19,28 +19,16 @@ import { RoleTag } from "@shared/components/role-tag"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 
+/* Un solo color para toda la barra: el de la marca.
+   Cada pestaña llevaba el suyo —azul, verde— y la barra se leia como tres
+   productos distintos pegados. */
+const IDLE = "text-white/60 hover:bg-primary/15 hover:text-primary"
+const ACTIVO = "bg-primary/15 text-primary"
+
 const NAV = [
-  {
-    label: "Gestión de Docentes",
-    href: "/admin/docentes",
-    icon: Users,
-    hover: "hover:bg-primary/15 hover:text-primary",
-    active: "bg-primary/15 text-primary",
-  },
-  {
-    label: "Entorno",
-    href: "/admin/entorno",
-    icon: TerminalSquare,
-    hover: "hover:bg-emerald-500/15 hover:text-emerald-400",
-    active: "bg-emerald-500/15 text-emerald-400",
-  },
-  {
-    label: "Bitácora",
-    href: "/admin/bitacora",
-    icon: ScrollText,
-    hover: "hover:bg-sky-500/15 hover:text-sky-400",
-    active: "bg-sky-500/15 text-sky-400",
-  },
+  { label: "Gestión de Docentes", href: "/admin/docentes", icon: Users },
+  { label: "Entorno", href: "/admin/entorno", icon: TerminalSquare },
+  { label: "Bitácora", href: "/admin/bitacora", icon: ScrollText },
 ]
 
 /** Top header for the admin experience: same black bar as student/teacher, with
@@ -73,7 +61,7 @@ export function AdminHeader() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active ? item.active : cn("text-white/60", item.hover),
+                  active ? ACTIVO : IDLE,
                 )}
               >
                 <item.icon className="h-4 w-4" />

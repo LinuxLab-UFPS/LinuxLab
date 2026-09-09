@@ -48,7 +48,10 @@ MAX_BYTES_TOTAL = 4 * 1024 * 1024
 MAX_LINEAS = 5000
 
 #: Nombres de actividad y rutas admitidos. Sin `..`, sin rutas absolutas.
-SLUG_OK = set("abcdefghijklmnopqrstuvwxyz0123456789-")
+# Mayusculas incluidas: las actividades del temario usan el slug en minuscula
+# (`expediente-empleado`), pero las del docente usan su codigo de taller
+# (`T-0005`, `Q-0012`), y sin las mayusculas su directorio se rechazaba.
+SLUG_OK = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-")
 RUTA_OK = SLUG_OK | set("._/ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 
@@ -175,6 +178,22 @@ def reparte(spec):
     return archivos
 
 
+def solo_una_actividad(raiz):
+    """Comprueba que la ruta a borrar es el directorio de UNA actividad.
+
+    `valida_slug` ya lo garantiza —su juego de caracteres no admite `/` ni `.`,
+    asi que el nombre no puede ser `..` ni una ruta—, pero eso hay que deducirlo
+    leyendo otra funcion. Aqui se borra de verdad, y lo que se borra tiene que
+    poder leerse en el mismo sitio: debajo de `~/actividades/`, un nivel, y
+    nunca ese directorio ni el home.
+    """
+    padre = os.path.realpath(os.path.join(home(), BASE))
+    real = os.path.realpath(raiz)
+    if os.path.dirname(real) != padre or real == padre:
+        raise SetupError("La ruta a preparar no es el directorio de una actividad")
+    return real
+
+
 def construye(spec):
     raiz = os.path.join(home(), BASE, valida_slug(spec.get("slug", "")))
 
@@ -183,7 +202,7 @@ def construye(spec):
     if os.path.exists(raiz):
         if not spec.get("force"):
             return {"ok": True, "root": raiz, "creados": 0, "yaEstaba": True}
-        shutil.rmtree(raiz)
+        shutil.rmtree(solo_una_actividad(raiz))
     os.makedirs(raiz, mode=0o700, exist_ok=True)
 
     archivos = list(spec.get("files") or []) + reparte(spec)

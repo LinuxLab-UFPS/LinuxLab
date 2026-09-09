@@ -9,6 +9,7 @@ import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
+import { ResultadoDialog } from "@shared/components/resultado-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
@@ -20,7 +21,7 @@ import {
 } from "@shared/lib/content/activities"
 import { Tag } from "@shared/components/tag"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
-import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
+import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 
 
@@ -49,6 +50,15 @@ export function ActivityPanel({
   const { activity: data, passed, loading, checking, check, reset, resetting } =
     useActivityCheck(activity.slug)
 
+  /* El resultado se enseña en un modal en cuanto termina la comprobacion. Vivia
+     debajo del enunciado, o sea a un scroll del boton que acababa de pulsarse, y
+     con un enunciado largo no se veia nunca. */
+  const [resultado, setResultado] = useState(false)
+  const comprobar = () => {
+    check()
+    setResultado(true)
+  }
+
   /* Comprobar exige estar parado en el directorio de la actividad. La ruta la dice
      la propia shell en cada prompt, asi que vale tanto si se llego con el boton
      como escribiendo `cd` a mano, y sobrevive a recargar la pagina. Mientras no
@@ -61,9 +71,15 @@ export function ActivityPanel({
      que lo estropean. Asi que el boton se apaga mientras dure. */
   const aPantallaCompleta = useProgramaAPantallaCompleta()
 
+  /* `mkdir -p` antes del `cd`, como hace el panel de las actividades del
+     docente. El directorio lo monta `setup.py` al abrir la actividad, pero solo
+     si esta trae archivos de partida: sin ellos el `cd` fallaba en silencio y el
+     estudiante se quedaba en su home creyendo que ya estaba dentro, resolvia
+     todo alli y la comprobacion no encontraba nada. `-p` no toca el directorio
+     si ya existe, asi que en el caso normal no cambia nada. */
   const goToWorkdir = () => {
     if (!data?.workdir || aPantallaCompleta) return
-    sendToTerminal(`cd ~/actividades/${data.workdir}\n`)
+    sendToTerminal(`mkdir -p ~/actividades/${data.workdir} && cd ~/actividades/${data.workdir}\n`)
   }
 
   /* Reiniciar borra el directorio de la actividad y lo vuelve a montar. Se
@@ -114,7 +130,23 @@ export function ActivityPanel({
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2", DENSE_PROSE)}>
+      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
+        {/* El aviso va arriba del enunciado a proposito: el texto al pie
+            pasaba desapercibido y los estudiantes empezaban a trabajar en su
+            home, fuera del directorio que se evalua. */}
+        {data?.workdir && !enElDirectorio && !loading ? (
+          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
+            <FolderOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <p className="text-xs leading-relaxed text-foreground">
+              Antes de empezar, pulsa{" "}
+              <span className="font-medium">&laquo;Ir al directorio&raquo;</span>: la actividad se
+              resuelve dentro de{" "}
+              <span className="font-mono text-[11px]">~/actividades/{data.workdir}</span> y solo ahí
+              se puede comprobar.
+            </p>
+          </div>
+        ) : null}
+
         <div className="lesson-prose [&>*:first-child]:mt-0">
           <Markdown>{statement}</Markdown>
         </div>
@@ -139,11 +171,8 @@ export function ActivityPanel({
               maxScore={data.maxScore}
               feedbackVariant="automatic"
               checks={data.lastAttempt?.results ?? []}
+              checksInline={false}
             />
-
-            {data.attempts.length > 0 && (
-              <AttemptsTable attempts={data.attempts} maxScore={data.maxScore} />
-            )}
           </div>
         ) : null}
       </div>
@@ -152,7 +181,7 @@ export function ActivityPanel({
         <div className="flex items-center gap-2">
           <ActionButton
             tone={passed ? "emerald" : "amber"}
-            onClick={check}
+            onClick={comprobar}
             disabled={checking || loading || !enElDirectorio}
           >
             {checking ? (
@@ -198,11 +227,23 @@ export function ActivityPanel({
         )}
       </footer>
 
+      <ResultadoDialog
+        open={resultado && !checking}
+        onOpenChange={setResultado}
+        passed={data?.lastAttempt?.passed ?? false}
+        results={data?.lastAttempt?.results ?? []}
+        attempts={data?.attempts ?? []}
+        maxScore={data?.maxScore ?? 100}
+      />
+
       <ConfirmDialog
         open={confirmando}
         onOpenChange={setConfirmando}
         title="¿Rehacer los archivos de la actividad?"
-        description="Lo que hayas escrito dentro de su directorio se pierde y vuelve a quedar como al principio. El resto de tu entorno no se toca."
+        description={
+          `Se borra todo lo que haya en ~/actividades/${data?.workdir ?? ""} y se vuelven a ` +
+          "crear los archivos de partida. Tu directorio personal y el resto de tu entorno no se tocan."
+        }
         confirmLabel="Rehacer los archivos"
         confirmVariant="destructive"
         onConfirm={reset}

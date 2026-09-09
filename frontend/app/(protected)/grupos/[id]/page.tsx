@@ -333,7 +333,13 @@ function GroupDetailContent() {
             </div>
           </SkeletonScreen>
         ) : (
-          <GroupStudents students={studentsQuery.data ?? []} rows={progressQuery.data?.rows ?? []} query={query} />
+          <GroupStudents
+            groupId={id}
+            students={studentsQuery.data ?? []}
+            rows={progressQuery.data?.rows ?? []}
+            topicSubtopics={progressQuery.data?.topics ?? []}
+            query={query}
+          />
         )
       ) : tab === "actividades" ? (
         <div>

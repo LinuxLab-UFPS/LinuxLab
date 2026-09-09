@@ -1,4 +1,5 @@
 import { SiteHeader } from "@/lib/features/student/components/site-header"
+import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
 import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
 import { GroupBody } from "@/lib/features/student/components/group-body"
 import { ContentArea } from "@/lib/features/student/components/content-area"
@@ -30,8 +31,20 @@ export default async function GroupPage({
 }: {
   searchParams: Promise<{ tema?: string; sub?: string }>
 }) {
-  await requireServerRole(["student"])
+  /* El docente entra al mismo material que el estudiante: lee las lecciones que
+     van a leer ellos, pero sin progreso propio que apuntar. */
+  const session = await requireServerRole(["student", "teacher", "admin"])
+  const soloLectura = session.user.role !== "student"
   const { tema, sub } = await searchParams
+
+  /* Su barra es la suya siempre, tambien dentro de una leccion. Antes se montaba
+     la del estudiante para todo el mundo, y el docente se encontraba a mitad de
+     camino con una barra que no era la suya y con enlaces que no podia abrir. */
+  const cabecera = soloLectura ? (
+    <TeacherHeader />
+  ) : (
+    <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+  )
 
   /* La bienvenida se resuelve antes que nada: no tiene numero de tema, y todo
      lo que viene despues (directorio `tema-NN`, assets, vecinos) se construye a
@@ -41,12 +54,12 @@ export default async function GroupPage({
     const markdown = pagina?.file ? getBienvenidaMarkdown(pagina.file) : null
     const blocks = markdown ? parseLessonBlocks(markdown, 0, pagina?.title) : null
     return (
-      <LessonProgressProvider>
+      <LessonProgressProvider soloLectura={soloLectura}>
         <TerminalUIProvider>
           <LessonLoadingProvider>
             <div className="flex h-screen flex-col overflow-hidden bg-background">
               <div className="z-40 shrink-0 bg-background">
-                <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+                {cabecera}
               </div>
               <main className="flex-1 overflow-y-auto">
                 <GroupBody>
@@ -54,8 +67,14 @@ export default async function GroupPage({
                     activeTopicSlug={bienvenida.slug}
                     activeSubtopicId={pagina?.id}
                     topicLessons={getTopicLessons()}
+                    soloLectura={soloLectura}
                   />
-                  <WelcomeArea page={pagina} blocks={blocks} topicLessons={getTopicLessons()} />
+                  <WelcomeArea
+                    page={pagina}
+                    blocks={blocks}
+                    topicLessons={getTopicLessons()}
+                    soloLectura={soloLectura}
+                  />
                   <GroupTerminal />
                 </GroupBody>
               </main>
@@ -88,7 +107,7 @@ export default async function GroupPage({
   const { prev, next } = getLessonNeighbours(topic.number, activeSubtopic?.id ?? null)
 
   return (
-    <LessonProgressProvider>
+    <LessonProgressProvider soloLectura={soloLectura}>
       <ReadingProgressProvider>
         <TerminalUIProvider>
          <LessonLoadingProvider>
@@ -105,7 +124,7 @@ export default async function GroupPage({
               cabecera, que es este `<main>`. */}
           <div className="flex h-screen flex-col overflow-hidden bg-background">
             <div className="z-40 shrink-0 bg-background">
-              <SiteHeader simulators={getSimulators()} searchItems={getSearchIndex()} />
+              {cabecera}
               <ReadingProgressBar />
             </div>
             <main className="flex-1 overflow-y-auto">
@@ -115,6 +134,7 @@ export default async function GroupPage({
                 activeSubtopicId={activeSubtopic?.id}
                 contentSubtopics={meta?.subtopics}
                 topicLessons={getTopicLessons()}
+                soloLectura={soloLectura}
               />
               <ContentArea
                 topic={topic}
@@ -124,6 +144,7 @@ export default async function GroupPage({
                 prev={prev}
                 next={next}
                 topicLessons={getTopicLessons()}
+                soloLectura={soloLectura}
               />
               <GroupTerminal />
             </GroupBody>

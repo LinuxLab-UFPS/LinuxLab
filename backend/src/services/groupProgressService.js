@@ -12,15 +12,22 @@ function formatDate(value) {
 /**
  * Progreso de contenidos de los estudiantes de un grupo.
  *
- * La fuente de verdad del "avance" es el temario estatico (12 temas). Un tema
- * cuenta completado cuando se aplica la regla de progressService: todos sus
- * subtemas leidos (LessonView) con sus actividades del banco aprobadas
- * (TopicSubmission) y las actividades independientes (kind=activity) aprobadas.
+ * El porcentaje cuenta **piezas**: cada subtema leido y cada actividad del banco
+ * aprobada suma una, sobre el total de piezas del temario. Antes contaba temas
+ * enteros, y como un tema solo esta completo cuando estan TODOS sus subtemas y
+ * TODAS sus actividades, el estudiante que habia leido cuatro lecciones de cinco
+ * en tres temas distintos salia con un 0% redondo. El docente lo leia como que
+ * no habia entrado nunca.
  *
- * El % total siempre se calcula contra los 12 temas del temario, no contra los
- * temas que un estudiante toco, para que las barras de la vista docente sean
- * comparables entre estudiantes. Ademas de topicStatus se devuelve un desglose
- * por tema (subtemas completados/total) para el modal de detalle.
+ * Es la misma cuenta que hace `course-progress.ts` del lado del estudiante, a
+ * proposito: el numero que ve el docente en la fila y el que ve el estudiante en
+ * su mapa tienen que ser el mismo, o uno de los dos esta mintiendo.
+ *
+ * `topicStatus` no cambia: un tema sigue poniendose en verde solo cuando esta
+ * entero, que es lo que decide la certificacion.
+ *
+ * El total se calcula siempre contra el temario completo y no contra lo que un
+ * estudiante toco, para que las barras sean comparables entre estudiantes.
  */
 async function getGroupProgress({ groupId, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
@@ -30,7 +37,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
       select: {
         order_number: true,
         title: true,
-        subtopics: { select: { id: true } },
+        subtopics: { select: { id: true, title: true, order_number: true } },
         activities: { select: { id: true, kind: true, subtopic_id: true } },
       },
     }),
@@ -147,20 +154,35 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
         }
       }
 
-      let subtopicsDone = 0
       let touched = 0
+      // Cuales, y no solo cuantos: la ficha del estudiante lista sus lecciones
+      // una por una, y un conteo no dice cual le falta. Misma regla que el
+      // conteo (visto y con sus checks aprobados), asi que la lista y la cifra
+      // de al lado no se pueden contradecir.
+      const hechos = []
       for (const sub of topic.subtopics) {
         if (!viewed.has(sub.id)) continue
         touched++
         const acts = activitiesBySubtopic.get(sub.id)
         if (acts && acts.some((id) => !passed.has(id))) continue
-        subtopicsDone++
+        hechos.push(sub.id)
       }
+      const subtopicsDone = hechos.length
+
+      // Las actividades sueltas del tema (las del banco, `kind: "activity"`)
+      // son trabajo del tema igual que sus lecciones, asi que cuentan como una
+      // pieza cada una. Las de `kind: "check"` no: esas van pegadas a un
+      // subtema y ya se exigen arriba para darlo por leido.
+      const propuestas = topic.activities.filter((a) => a.kind === "activity")
+      const propuestasHechas = propuestas.filter((a) => passed.has(a.id)).length
 
       perTopic.set(topic.order_number, {
         completed: subtopicsDone,
         total: topic.subtopics.length,
+        hechos,
         touched,
+        piezasHechas: subtopicsDone + propuestasHechas,
+        piezasTotal: topic.subtopics.length + propuestas.length,
       })
     }
     perTopicByEnrollment.set(enrollment.id, perTopic)
@@ -171,6 +193,10 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
   const activeWindow = 5 * 60 * 1000
 
   const totalTopics = topicsOrdered.length
+  const piezasDelCurso = topicsOrdered.reduce(
+    (suma, t) => suma + t.subtopics.length + t.activities.filter((a) => a.kind === "activity").length,
+    0,
+  )
 
   const rows = enrollments.map((e) => {
     const studentUserId = e.student.user.id
@@ -181,7 +207,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     const topicProgress = []
     for (const topic of topicsOrdered) {
       const n = topic.order_number
-      const d = perTopic.get(n) ?? { completed: 0, total: 0, touched: 0 }
+      const d = perTopic.get(n) ?? { completed: 0, total: 0, touched: 0, piezasHechas: 0, hechos: [] }
       topicStatus[n] = completed.has(n)
         ? "completed"
         : d.touched > 0
@@ -192,11 +218,16 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
         title: topic.title,
         completed: d.completed,
         total: d.total,
+        doneSubtopics: d.hechos,
       })
     }
 
     const lastActivity = lastActivityByEnrollment.get(e.id)
-    const progress = Math.round((completed.size / totalTopics) * 100)
+    const piezasHechas = topicsOrdered.reduce(
+      (suma, t) => suma + (perTopic.get(t.order_number)?.piezasHechas ?? 0),
+      0,
+    )
+    const progress = piezasDelCurso > 0 ? Math.round((piezasHechas / piezasDelCurso) * 100) : 0
 
     const scores = scoreBuckets.get(e.id) ?? []
     const averageScore = scores.length > 0 ? round1(scores.reduce((a, b) => a + b, 0) / scores.length) : undefined
@@ -236,6 +267,16 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     averageProgress,
     completedToday,
     activeNow,
+    /* Los nombres de las lecciones, en la raiz y no en cada fila: son los mismos
+       para todo el grupo, y repetirlos por estudiante multiplicaba el tamano de
+       la respuesta por el numero de matriculados sin decir nada nuevo. */
+    topics: topicsOrdered.map((t) => ({
+      topicNumber: t.order_number,
+      title: t.title,
+      subtopics: [...t.subtopics]
+        .sort((a, b) => a.order_number - b.order_number)
+        .map((sub) => ({ id: sub.id, title: sub.title })),
+    })),
     rows,
   }
 }

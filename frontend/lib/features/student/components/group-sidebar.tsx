@@ -2,8 +2,16 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Circle, Hand, Home, Map } from "lucide-react"
+import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
+import { simulators } from "@shared/lib/content/simulators"
+import {
+  BurbujaTema,
+  EtiquetaTipo,
+  VinetaLeccion,
+  VinetaSimulador,
+  filaHija,
+} from "./marcas-temario"
 import { syllabus } from "@shared/lib/content/temario"
 import { bienvenida } from "@shared/lib/content/bienvenida"
 import { NeonProgress } from "@shared/components/neon-progress"
@@ -19,6 +27,12 @@ interface GroupSidebarProps {
   /** Lessons per topic and which of them carry a check, for the completion state. */
   topicLessons: Record<number, TopicLessons>
   groupName?: string
+  /**
+   * Quien navega el temario sin cursarlo: el docente. Se pinta la misma lista,
+   * pero sin barra de progreso ni marcas de completado, porque no hay avance
+   * suyo que contar y las cifras vacias se leerian como un cero real.
+   */
+  soloLectura?: boolean
 }
 
 /**
@@ -36,11 +50,14 @@ export function PanelContenidos({
   contentSubtopics,
   topicLessons,
   groupName,
+  soloLectura = false,
 }: GroupSidebarProps) {
-  const { isLessonDone, isTopicDone } = useCourseProgress(topicLessons)
-
-  const doneCount = syllabus.filter((t) => isTopicDone(t.number)).length
-  const overallPct = Math.round((doneCount / syllabus.length) * 100)
+  const {
+    isLessonDone,
+    isTopicDone,
+    cursoPct: overallPct,
+    temasCompletos: doneCount,
+  } = useCourseProgress(topicLessons, !soloLectura)
 
   return (
     /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
@@ -64,18 +81,20 @@ export function PanelContenidos({
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
           abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
-      <LessonLink
-        href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
-        className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
-      >
-        <div className="mb-1.5 flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Tu progreso</span>
-          <span className="font-mono tabular-nums text-foreground">
-            {doneCount}/{syllabus.length}
-          </span>
-        </div>
-        <NeonProgress value={overallPct} className="h-1" />
-      </LessonLink>
+      {!soloLectura && (
+        <LessonLink
+          href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
+          className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
+        >
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Tu progreso</span>
+            <span className="tabular-nums text-foreground">
+              {doneCount}/{syllabus.length}
+            </span>
+          </div>
+          <NeonProgress value={overallPct} className="h-1" />
+        </LessonLink>
+      )}
 
       {/* Module list */}
       <nav className="no-scrollbar min-h-0 overflow-y-auto p-2">
@@ -138,22 +157,7 @@ export function PanelContenidos({
                     isActive ? "bg-secondary/70" : "hover:bg-secondary/40",
                   )}
                 >
-                  {/* Tres estados con lectura propia: el activo en el rojo de
-                      la marca, lo terminado en verde y tachado, y lo pendiente
-                      neutro y en el color de texto pleno, que es lo que queda
-                      por hacer. */}
-                  <span
-                    className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : done
-                          ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-                          : "bg-secondary text-muted-foreground",
-                    )}
-                  >
-                    {topic.number}
-                  </span>
+                  <BurbujaTema numero={topic.number} activo={isActive} hecho={done} />
                   <span
                     className={cn(
                       "flex-1 truncate text-sm",
@@ -184,20 +188,9 @@ export function PanelContenidos({
                         <li key={sub.id}>
                           <LessonLink
                             href={`/curso?tema=${topic.slug}&sub=${sub.id}`}
-                            className={cn(
-                              "flex items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors",
-                              activeSub
-                                ? "font-medium text-primary"
-                                : read
-                                  ? "text-muted-foreground hover:text-foreground"
-                                  : "text-foreground hover:text-primary",
-                            )}
+                            className={filaHija(activeSub, read)}
                           >
-                            {read ? (
-                              <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-                            ) : (
-                              <Circle className="h-3.5 w-3.5 shrink-0" />
-                            )}
+                            <VinetaLeccion hecha={read} />
                             {/* `min-w-0` para que el nombre largo se corte en
                                 vez de estirar el panel. */}
                             <span className="min-w-0 truncate">{sub.title}</span>
@@ -205,6 +198,23 @@ export function PanelContenidos({
                         </li>
                       )
                     })}
+
+                    {/* Los simuladores del tema, si tiene. Las actividades NO:
+                        hay varias por tema y estiraban tanto la lista que el
+                        tema siguiente quedaba fuera de alcance del raton. Estan
+                        en el mapa del curso, que es donde se abarcan de un
+                        vistazo. */}
+                    {simulators
+                      .filter((sim) => sim.topicNumber === topic.number)
+                      .map((sim) => (
+                        <li key={sim.id} className="hidden md:list-item">
+                          <LessonLink href={sim.href} className={filaHija(false, false)}>
+                            <VinetaSimulador />
+                            <span className="min-w-0 truncate">{sim.title}</span>
+                            <EtiquetaTipo>Simulador</EtiquetaTipo>
+                          </LessonLink>
+                        </li>
+                      ))}
                   </ul>
                 )}
               </li>

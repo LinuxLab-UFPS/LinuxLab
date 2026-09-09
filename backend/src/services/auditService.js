@@ -15,8 +15,13 @@ const MESSAGE_BUILDERS = {
 
   // --- Actividades (entrega, validacion y gestion) ---
   activity_submitted: ({ target }) => `Entregó la actividad '${target}'.`,
+  // Las comprobaciones de las lecciones y las actividades entran por el mismo
+  // evento, pero no son lo mismo: una mide la lectura del tema y la otra es el
+  // trabajo que lo cierra. `kind` viene del evaluador; sin el —las del docente,
+  // que no lo mandan— se llama actividad, que es lo que son.
   activity_checked: ({ target, metadata }) =>
-    `Validó la actividad '${target}' (${metadata?.passed ? "aprobó" : "no aprobó"}, ${metadata?.score ?? 0} pts).`,
+    `Validó la ${metadata?.kind === "check" ? "comprobación" : "actividad"} '${target}' ` +
+    `(${metadata?.passed ? "aprobó" : "no aprobó"}, ${metadata?.score ?? 0} pts).`,
   activity_graded: async ({ target, metadata }) => {
     const studentName = await userNameOf(metadata?.studentId)
     return `Calificó la entrega de ${studentName} en '${target}' con ${metadata?.score ?? 0} pts.`

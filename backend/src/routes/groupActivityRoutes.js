@@ -22,6 +22,9 @@ router.get("/mine", authMiddleware, requireEnrollment, activityController.getMyG
 router.get("/mine/grades", authMiddleware, requireEnrollment, activityController.getMyGrades)
 router.get("/:id", authMiddleware, requireEnrollment, activityController.getGroupActivityForStudent)
 router.post("/:id/check", authMiddleware, requireEnrollment, checkLimiter, activityController.checkGroupActivity)
+// Rehacer los archivos tambien entra al entorno por SSH: mismo techo que
+// comprobar.
+router.post("/:id/reset", authMiddleware, requireEnrollment, checkLimiter, activityController.resetGroupActivity)
 router.post("/:id/submit", authMiddleware, requireEnrollment, activityController.submitGroupActivity)
 
 module.exports = router

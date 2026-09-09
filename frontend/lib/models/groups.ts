@@ -127,6 +127,15 @@ export interface StudentTopicProgress {
   title: string
   completed: number
   total: number
+  /** Qué lecciones tiene hechas, no solo cuántas: la ficha las lista una a una. */
+  doneSubtopics: string[]
+}
+
+/** El índice de lecciones del temario, común a todo el grupo. */
+export interface TopicSubtopics {
+  topicNumber: number
+  title: string
+  subtopics: { id: string; title: string }[]
 }
 
 export interface GroupProgressSummary {
@@ -134,6 +143,8 @@ export interface GroupProgressSummary {
   averageProgress: number
   completedToday: number
   activeNow: number
+  /** Los nombres de las lecciones, una vez para todo el grupo. */
+  topics: TopicSubtopics[]
   rows: StudentProgress[]
 }
 export interface TopicProgress {

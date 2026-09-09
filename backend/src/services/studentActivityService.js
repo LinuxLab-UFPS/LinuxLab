@@ -11,7 +11,7 @@ const { finalScore } = require("../utils/finalScore")
 const { bankSlugOf, bankActivityId, workdirOf } = require("../dtos/activityDtos")
 const { audit } = require("./auditService")
 
-const { personalize, CHECKER, EVAL_TIMEOUT_MS } = lessonEvaluatorService
+const { personalize, CHECKER, SETUP, EVAL_TIMEOUT_MS } = lessonEvaluatorService
 
 function resolveRuta(params, workdir) {
   const output = {}
@@ -507,4 +507,67 @@ async function getStudentActivityDetail(groupId, activityId, studentId, userId, 
   }
 }
 
-module.exports = { listMine, getForStudent, checkForStudent, getStudentActivityDetail }
+/**
+ * Vacia el directorio de trabajo de una actividad del docente.
+ *
+ * Espejo de `resetSandbox` para las del temario: mismo script, mismo contrato.
+ * Lo que cambia es como se llama el directorio —el codigo del taller (`T-0005`)
+ * y no un slug— y que aqui hay que comprobar la matricula, porque una actividad
+ * de curso pertenece a un grupo.
+ *
+ * A diferencia de las del temario, estas **no traen archivos de partida**: el
+ * asistente del docente no los pide, asi que `setup` siempre es nulo y lo que
+ * hace el boton es dejar el directorio vacio. Si alguna llegara a traerlos, se
+ * rehacen, que es el mismo contrato de siempre.
+ *
+ * Solo puede tocar `~/actividades/<workdir>`: `setup.py` compone esa ruta con
+ * `valida_slug`, que rechaza todo lo que no sea `[a-zA-Z0-9-]`, de modo que el
+ * nombre no puede ser `..` ni una ruta ni nada absoluto. El directorio personal
+ * del estudiante queda fuera de alcance por construccion. `workdir` se valida
+ * igual aqui para fallar con un mensaje claro y no dentro del script.
+ */
+const WORKDIR_OK = /^[A-Za-z0-9-]{1,64}$/
+
+async function resetForStudent(studentUserId, groupActivityId) {
+  const ga = await prisma.groupActivity.findUnique({
+    where: { id: groupActivityId },
+    select: { id: true, group_id: true, workdir: true, setup: true, enabled: true },
+  })
+  if (!ga) throw new NotFoundError("Actividad no encontrada")
+  if (!(await accessService.hasEnrollmentInGroup(studentUserId, ga.group_id))) {
+    throw new AuthorizationError("No estás inscrito en el curso de esta actividad")
+  }
+  if (!ga.enabled) throw new AppError("La actividad está deshabilitada", 409, "CONFLICT")
+  if (!WORKDIR_OK.test(ga.workdir ?? "")) {
+    throw new AppError("La actividad no tiene un directorio válido", 409, "CONFLICT")
+  }
+
+  const account = await linuxAccountService.getStudentAccount(studentUserId)
+  const payload = JSON.stringify({ ...(ga.setup ?? {}), slug: ga.workdir, force: true })
+
+  const { stdout, stderr, code } = await sshClient.execCommand(
+    `sudo -u ${account.linux_username} ${SETUP}`,
+    { stdin: payload, timeoutMs: EVAL_TIMEOUT_MS },
+  )
+
+  let parsed
+  try {
+    parsed = JSON.parse(stdout)
+  } catch {
+    logger.error({ code, stderr, workdir: ga.workdir }, "Setup output was not JSON")
+    throw new AppError("No se pudo preparar la actividad, inténtalo de nuevo", 502, "INTERNAL_ERROR")
+  }
+  if (!parsed.ok) {
+    logger.error({ workdir: ga.workdir, error: parsed.error }, "Group activity setup rejected")
+    throw new AppError(parsed.error || "No se pudo preparar la actividad", 409, "CONFLICT")
+  }
+
+  logger.info(
+    { workdir: ga.workdir, username: account.linux_username, creados: parsed.creados },
+    "Group activity sandbox ready",
+  )
+  return { root: parsed.root, creados: parsed.creados }
+}
+
+module.exports = { listMine, getForStudent, checkForStudent, resetForStudent, getStudentActivityDetail }
+

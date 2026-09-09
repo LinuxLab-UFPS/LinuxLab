@@ -22,8 +22,10 @@ const CATALOG = [
   {
     type: "directorio_existe",
     label: "El directorio existe",
-    hint: "Verifica que exista un directorio dentro del directorio de trabajo de la actividad.",
-    fields: [field("ruta", "Directorio", "directorio")],
+    hint:
+      "Verifica que exista un directorio dentro del directorio de trabajo de la actividad. " +
+      "Para uno anidado se escribe el camino entero, no solo el ultimo nombre.",
+    fields: [field("ruta", "Directorio", "dir1/dir2")],
     validate: ({ ruta }) => (ruta ? null : "Falta la ruta"),
   },
   {

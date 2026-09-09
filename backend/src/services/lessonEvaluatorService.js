@@ -173,7 +173,7 @@ async function evaluate({ slug, studentUserId }) {
     groupId: submission.group_id,
     eventType: "activity_checked",
     target: activity.title,
-    metadata: { topicActivityId: activity.id, slug, passed, score },
+    metadata: { topicActivityId: activity.id, slug, kind: activity.kind, passed, score },
   })
 
   logger.info({ slug, username: account.linux_username, passed, score }, "Activity evaluated")

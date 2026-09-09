@@ -1,15 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { FolderOpen, Loader2, Send, ShieldCheck } from "lucide-react"
+import { FolderOpen, Loader2, RotateCcw, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
 import { BackButton } from "@shared/components/back-button"
 import { ActionButton } from "@shared/components/action-button"
+import { IconAction } from "@shared/components/icon-action"
+import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
+import { ResultadoDialog } from "@shared/components/resultado-dialog"
 import { sendToTerminal } from "@/lib/features/student/terminal-input"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
+  resetGroupActivity,
   submitGroupActivity,
   type GroupActivityDetail,
   type GroupCheckResult,
@@ -17,7 +21,8 @@ import {
 import { DENSE_PROSE } from "@shared/lib/content/prose"
 import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activities"
 import { notify } from "@shared/lib/toast"
-import { StudentInfoTable, AttemptsTable } from "@shared/components/student-info-table"
+import { StudentInfoTable } from "@shared/components/student-info-table"
+import { avisarResultado } from "@/lib/features/student/terminal-aviso"
 
 
 /**
@@ -38,6 +43,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   const [attemptsCount, setAttemptsCount] = useState(detail.attemptsCount)
   const [attempts, setAttempts] = useState(detail.attempts)
   const [submitting, setSubmitting] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [resultado, setResultado] = useState(false)
   const [submitted, setSubmitted] = useState(!!detail.submission)
   const [submission, setSubmission] = useState(detail.submission)
 
@@ -64,6 +72,10 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
   }
 
+  /* El resultado se enseña en un modal, igual que en las del temario: debajo
+     del enunciado quedaba a un scroll del boton que acababa de pulsarse. Y el
+     veredicto se escribe ademas en la terminal, que es donde el estudiante esta
+     mirando; esta pantalla no escribia nada. */
   const check = async () => {
     setChecking(true)
     try {
@@ -73,10 +85,33 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       setFinalScore(outcome.finalScore)
       setAttemptsCount(outcome.attemptsCount)
       setAttempts(outcome.attempts)
+      const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
+      avisarResultado("actividad", outcome.passed, outcome.finalScore, total)
+      setResultado(true)
     } catch (e) {
       notify.error(e, "No se pudo comprobar tu entorno")
     } finally {
       setChecking(false)
+    }
+  }
+
+  /* Vaciar el directorio del taller. Solo toca `~/actividades/<workdir>`: el
+     script compone esa ruta con un nombre que no admite `/` ni `.`, y comprueba
+     antes de borrar que lo que va a borrar cuelga de `~/actividades` y es un
+     solo nivel. La carpeta personal del estudiante no esta a su alcance por
+     mucho que se pulse. */
+  const reset = async () => {
+    setResetting(true)
+    try {
+      await resetGroupActivity(detail.id)
+      // La shell que estuviera dentro se quedo en el directorio viejo, que ya no
+      // figura en ningun sitio. Ctrl+U limpia lo que hubiera escrito a medias.
+      sendToTerminal("\x15cd ~\n")
+      notify.success("Directorio vaciado")
+    } catch (e) {
+      notify.error(e, "No se pudo vaciar el directorio")
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -137,7 +172,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2", DENSE_PROSE)}>
+      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
         {detail.instructions ? (
           <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
             {detail.instructions}
@@ -174,18 +209,17 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
                 : undefined
             }
             checks={isManual ? undefined : (results ?? detail.lastAttempt?.results ?? [])}
+            checksInline={false}
           />
         </div>
-
-        {detail.evaluationType === "atomic" && attempts.length > 0 && (
-          <div className="mt-4">
-            <AttemptsTable attempts={attempts} maxScore={detail.maxScore} />
-          </div>
-        )}
       </div>
 
       <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Los botones van juntos a la izquierda, como en las actividades del
+            temario. Con `justify-between` el de ir al directorio se disparaba
+            solo al otro extremo de la fila y las dos pantallas, que hacen lo
+            mismo, no se parecian. */}
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2">
             {isManual ? (
               !submitted && (
@@ -222,6 +256,17 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             <FolderOpen className="h-4 w-4" />
             Ir al directorio
           </ActionButton>
+
+          {/* Ir al directorio se hace muchas veces por sesion, asi que va como
+              boton; vaciar el directorio borra trabajo, asi que va como icono y
+              pregunta antes. Igual que en las del temario, salvo que estas no
+              traen archivos de partida: lo que queda es un directorio vacio. */}
+          <IconAction
+            label={resetting ? "Vaciando..." : "Vaciar el directorio (borra tu trabajo)"}
+            icon={resetting ? Loader2 : RotateCcw}
+            onClick={() => setConfirmando(true)}
+            disabled={resetting || aPantallaCompleta}
+          />
         </div>
 
         {aPantallaCompleta ? (
@@ -242,6 +287,29 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
           </p>
         ) : null}
       </footer>
+
+      <ResultadoDialog
+        open={resultado && !checking}
+        onOpenChange={setResultado}
+        passed={passed}
+        results={results ?? []}
+        attempts={attempts}
+        maxScore={detail.maxScore}
+      />
+
+      <ConfirmDialog
+        open={confirmando}
+        onOpenChange={setConfirmando}
+        title="¿Vaciar el directorio de la actividad?"
+        description={
+          `Se borra todo lo que haya dentro de ~/actividades/${detail.workdir} y el directorio ` +
+          "queda vacío para empezar de nuevo. Solo se toca esa carpeta: tu directorio personal y " +
+          "el resto de tu entorno quedan igual."
+        }
+        confirmLabel="Vaciar el directorio"
+        confirmVariant="destructive"
+        onConfirm={reset}
+      />
     </div>
   )
 }
