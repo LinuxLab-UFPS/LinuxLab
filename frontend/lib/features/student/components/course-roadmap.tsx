@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { LessonLink } from "@shared/components/lesson-loading"
 import { syllabus } from "@shared/lib/content/temario"
 import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
+import { useLessonProgress } from "@/lib/features/student/progress"
 import { activities } from "@shared/lib/content/activities"
 import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { conOrigen } from "@shared/lib/next-url"
@@ -29,6 +30,14 @@ import type { TopicLessons } from "@shared/lib/content/lessons"
  * y no lo calcula: quien no tiene matricula —el docente— pasa `null` y el mapa
  * se dibuja sin una sola cifra.
  */
+/** Una actividad del tema, venga del temario o del docente. */
+interface FilaActividad {
+  clave: string
+  title: string
+  href: string
+  hecha: boolean
+}
+
 export interface ProgresoTemario {
   lessonTotal: (topicNumber: number) => number
   doneCount: (topicNumber: number) => number
@@ -39,6 +48,8 @@ export interface ProgresoTemario {
   cursoPct: number
   temasCompletos: number
   passed: Set<string>
+  /** Las del docente, ya resueltas a filas: el mapa no sabe de dónde salen. */
+  actividadesDelTema: (topicNumber: number) => FilaActividad[]
 }
 
 /**
@@ -153,23 +164,18 @@ export function MapaTemario({
                       grupo, asi que fuera del curso no hay ninguna que abrir:
                       el docente las revisa desde el grupo donde las puso. */}
                   {progreso ? (
-                    activities
-                      .filter((a) => a.topicNumber === topic.number)
-                      .map((a) => (
-                        // Las actividades se resuelven en la terminal, que en
-                        // movil no existe: el enlace llevaria a una pantalla que
-                        // no se puede usar.
-                        <li key={a.slug} className="hidden md:list-item">
-                          <LessonLink
-                            href={conOrigen(a.href, "/curso")}
-                            className={filaHija(false, progreso.passed.has(a.slug))}
-                          >
-                            <VinetaActividad hecha={progreso.passed.has(a.slug)} />
-                            <span className="truncate">{a.title}</span>
-                            <EtiquetaTipo>Actividad</EtiquetaTipo>
-                          </LessonLink>
-                        </li>
-                      ))
+                    progreso.actividadesDelTema(topic.number).map((a) => (
+                      // Las actividades se resuelven en la terminal, que en
+                      // movil no existe: el enlace llevaria a una pantalla que
+                      // no se puede usar.
+                      <li key={a.clave} className="hidden md:list-item">
+                        <LessonLink href={a.href} className={filaHija(false, a.hecha)}>
+                          <VinetaActividad hecha={a.hecha} />
+                          <span className="truncate">{a.title}</span>
+                          <EtiquetaTipo>Actividad</EtiquetaTipo>
+                        </LessonLink>
+                      </li>
+                    ))
                   ) : activities.some((a) => a.topicNumber === topic.number) ? (
                     <li className="hidden md:list-item">
                       <span className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground">
@@ -216,6 +222,39 @@ export function MapaTemario({
 export function CourseRoadmap({ topicLessons }: { topicLessons: Record<number, TopicLessons> }) {
   const progreso = useCourseProgress(topicLessons)
   const { passed } = usePassedActivities()
+  const { groupActivities } = useLessonProgress()
 
-  return <MapaTemario topicLessons={topicLessons} progreso={{ ...progreso, passed }} />
+  /* Las del temario y las que publicó el docente, en una sola lista por tema.
+     Para el estudiante son lo mismo —trabajo del tema— y tenerlas en dos sitios
+     distintos obligaba a salir del mapa para saber que existían. Las que el
+     docente dejó sin tema no salen aquí: no hay tema del que colgarlas, y viven
+     en su catálogo. */
+  const actividadesDelTema = useCallback(
+    (topicNumber: number): FilaActividad[] => [
+      ...activities
+        .filter((a) => a.topicNumber === topicNumber)
+        .map((a) => ({
+          clave: a.slug,
+          title: a.title,
+          href: conOrigen(a.href, "/curso"),
+          hecha: passed.has(a.slug),
+        })),
+      ...groupActivities
+        .filter((a) => a.topicNumber === topicNumber && a.enabled)
+        .map((a) => ({
+          clave: a.id,
+          title: a.title,
+          href: conOrigen(`/terminal?ga=${a.id}`, "/curso"),
+          hecha: a.passed,
+        })),
+    ],
+    [passed, groupActivities],
+  )
+
+  return (
+    <MapaTemario
+      topicLessons={topicLessons}
+      progreso={{ ...progreso, passed, actividadesDelTema }}
+    />
+  )
 }

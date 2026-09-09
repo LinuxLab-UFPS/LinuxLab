@@ -4,14 +4,10 @@ import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
 import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
-import { getActivitiesForTopic } from "@shared/lib/content/activities"
-import { conOrigen as conOrigenActividad } from "@shared/lib/next-url"
-import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { simulators } from "@shared/lib/content/simulators"
 import {
   BurbujaTema,
   EtiquetaTipo,
-  VinetaActividad,
   VinetaLeccion,
   VinetaSimulador,
   filaHija,
@@ -56,7 +52,6 @@ export function PanelContenidos({
   groupName,
   soloLectura = false,
 }: GroupSidebarProps) {
-  const { passed } = usePassedActivities(!soloLectura)
   const {
     isLessonDone,
     isTopicDone,
@@ -211,26 +206,11 @@ export function PanelContenidos({
                       )
                     })}
 
-                    {/* Las actividades y los simuladores del tema viven aqui
-                        tambien: son parte de lo que hay que hacer, y tenerlos
-                        solo en el mapa obligaba a salir de la leccion para
-                        saber que existian. */}
-                    {getActivitiesForTopic(topic.number).map((a) => {
-                      const hecha = passed.has(a.slug)
-                      return (
-                        <li key={a.slug} className="hidden md:list-item">
-                          <LessonLink
-                            href={conOrigenActividad(a.href, "/curso")}
-                            className={filaHija(false, hecha)}
-                          >
-                            <VinetaActividad hecha={hecha} />
-                            <span className="min-w-0 truncate">{a.title}</span>
-                            <EtiquetaTipo>Actividad</EtiquetaTipo>
-                          </LessonLink>
-                        </li>
-                      )
-                    })}
-
+                    {/* Los simuladores del tema, si tiene. Las actividades NO:
+                        hay varias por tema y estiraban tanto la lista que el
+                        tema siguiente quedaba fuera de alcance del raton. Estan
+                        en el mapa del curso, que es donde se abarcan de un
+                        vistazo. */}
                     {simulators
                       .filter((sim) => sim.topicNumber === topic.number)
                       .map((sim) => (

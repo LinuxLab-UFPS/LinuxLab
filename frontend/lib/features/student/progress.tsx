@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { fetchProgress, recordLessonView } from "@/lib/data/progress"
 import { syllabus } from "@shared/lib/content/temario"
+import type { GroupActivitySummary } from "@/lib/models/activities"
 
 function lessonKey(topicNumber: number, subtopicId: string): string {
   return `${topicNumber}/${subtopicId}`
@@ -10,6 +11,14 @@ function lessonKey(topicNumber: number, subtopicId: string): string {
 
 interface LessonProgressValue {
   isRead: (topicNumber: number, subtopicId: string) => boolean
+  /**
+   * Las actividades que el docente publicó en el grupo.
+   *
+   * Viajaban ya en `/api/progress` y se tiraban aquí mismo. El mapa del curso
+   * las necesita para colgarlas del tema al que su autor las asoció, junto a
+   * las del temario: hasta ahora el estudiante solo las veía en su catálogo.
+   */
+  groupActivities: GroupActivitySummary[]
   markRead: (topicNumber: number, subtopicId: string) => void
   readKeys: string[]
   /** How many lessons of a topic have been read. */
@@ -35,6 +44,7 @@ export function LessonProgressProvider({
   soloLectura?: boolean
 }) {
   const [readKeys, setReadKeys] = useState<string[]>([])
+  const [groupActivities, setGroupActivities] = useState<GroupActivitySummary[]>([])
   const [loading, setLoading] = useState(!soloLectura)
   // Guarda los subtemas cuya vista ya se informó al backend, para que cada
   // lección genere una sola petición aunque markRead se dispare muchas veces
@@ -48,6 +58,7 @@ export function LessonProgressProvider({
       .then((data) => {
         if (cancelled) return
         setReadKeys(data.readKeys ?? [])
+        setGroupActivities(data.activities ?? [])
       })
       .catch(() => {
         /* sin conexión: empieza vacío */
@@ -91,8 +102,8 @@ export function LessonProgressProvider({
   const reset = useCallback(() => setReadKeys([]), [])
 
   const value = useMemo<LessonProgressValue>(
-    () => ({ isRead, markRead, readKeys, readCountForTopic, reset, loading }),
-    [isRead, markRead, readKeys, readCountForTopic, reset, loading],
+    () => ({ isRead, markRead, readKeys, groupActivities, readCountForTopic, reset, loading }),
+    [isRead, markRead, readKeys, groupActivities, readCountForTopic, reset, loading],
   )
 
   return (
