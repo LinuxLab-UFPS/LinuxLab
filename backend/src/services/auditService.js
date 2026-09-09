@@ -43,6 +43,9 @@ const MESSAGE_BUILDERS = {
   // --- Matriculas ---
   student_registered: ({ target, group, metadata }) =>
     `Matriculó a '${metadata?.studentName ?? target}'${group ? ` en el curso ${group.name}` : ""}.`,
+  // El estudiante se matricula solo con el vinculo: el actor es el, no el docente.
+  student_joined: ({ group, metadata }) =>
+    `Se matriculó por vínculo${group ? ` en el curso ${group.name}` : metadata?.groupName ? ` en el curso ${metadata.groupName}` : ""}.`,
   csv_imported: ({ metadata }) =>
     `Importó ${metadata?.registered ?? 0} estudiante(s) vía CSV${metadata?.skipped ? ` (${metadata.skipped} omitidos)` : ""}.`,
 }
