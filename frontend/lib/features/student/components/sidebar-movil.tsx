@@ -58,6 +58,20 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
 
   return (
     <div className={cn("sticky top-0 z-30 -mx-4 mb-6 flex items-center gap-2 bg-background px-4 py-2", barra)}>
+      {/* Devolverla a su columna, en el mismo borde por el que se plego. Solo
+          donde hay columna a la que volver: por debajo de `xl` no cabe. La
+          barra sigue abriendo el modal al pulsarla; esto es lo unico que hace
+          otra cosa, y por eso va fuera de ella. */}
+      <button
+        type="button"
+        onClick={() => plegar(false)}
+        title="Mostrar los contenidos en su columna"
+        aria-label="Mostrar los contenidos en su columna"
+        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/15 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground dark:border-border xl:flex"
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+      </button>
+
       <button
         type="button"
         onClick={() => setEstado({ clave, abierto: true })}
@@ -76,20 +90,6 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
           )}
         </span>
         <span className="shrink-0 text-xs text-muted-foreground">Contenidos</span>
-      </button>
-
-      {/* Devolverla a su columna. Solo donde hay columna a la que volver: por
-          debajo de `xl` no cabe, y ahi este boton no llevaria a ninguna parte.
-          La barra sigue abriendo el modal al pulsarla; esto es lo unico que
-          hace otra cosa, y por eso va fuera de ella. */}
-      <button
-        type="button"
-        onClick={() => plegar(false)}
-        title="Mostrar los contenidos en su columna"
-        aria-label="Mostrar los contenidos en su columna"
-        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/15 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground dark:border-border xl:flex"
-      >
-        <PanelLeftOpen className="h-4 w-4" />
       </button>
 
       <Dialog

@@ -85,8 +85,10 @@ export function PanelContenidos({
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {groupName ?? "Contenidos del curso"}
         </h2>
-        {/* Plegar la columna. Va en su cabecera porque es donde se mira cuando
-            estorba, y no se pinta dentro del modal, que no tiene columna. */}
+        {/* Plegar la columna, en el borde por el que se va: la columna esta a la
+            izquierda de la leccion y se retira hacia ese lado, asi que el boton
+            queda en el canto contrario, apuntando la salida. No se pinta dentro
+            del modal, que no tiene columna a la que volver. */}
         {plegable && (
           <button
             type="button"
