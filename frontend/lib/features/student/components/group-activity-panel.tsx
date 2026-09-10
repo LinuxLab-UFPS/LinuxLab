@@ -265,7 +265,8 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             label={resetting ? "Vaciando..." : "Vaciar el directorio (borra tu trabajo)"}
             icon={resetting ? Loader2 : RotateCcw}
             onClick={() => setConfirmando(true)}
-            disabled={resetting || aPantallaCompleta}
+            // Igual que comprobar: solo tiene sentido dentro del directorio.
+            disabled={resetting || aPantallaCompleta || !enElDirectorio}
           />
         </div>
 
@@ -302,9 +303,10 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         onOpenChange={setConfirmando}
         title="¿Vaciar el directorio de la actividad?"
         description={
-          `Se borra todo lo que haya dentro de ~/actividades/${detail.workdir} y el directorio ` +
-          "queda vacío para empezar de nuevo. Solo se toca esa carpeta: tu directorio personal y " +
-          "el resto de tu entorno quedan igual."
+          // Estas no traen archivos de partida, asi que aqui no se recrea nada:
+          // el directorio queda vacio. Decir lo contrario seria mentir.
+          `Se borra todo lo que haya en ~/actividades/${detail.workdir} y el directorio queda ` +
+          "vacío para empezar de nuevo. Tu directorio personal y el resto de tu entorno no se tocan."
         }
         confirmLabel="Vaciar el directorio"
         confirmVariant="destructive"

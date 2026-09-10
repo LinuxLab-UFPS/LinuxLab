@@ -207,7 +207,9 @@ export function ActivityPanel({
               label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
               icon={resetting ? Loader2 : RotateCcw}
               onClick={() => setConfirmando(true)}
-              disabled={resetting || loading || aPantallaCompleta}
+              // Rehacer los archivos desde fuera del directorio deja al
+              // estudiante mirando una carpeta que no es la que cambio.
+              disabled={resetting || loading || aPantallaCompleta || !enElDirectorio}
             />
           )}
         </div>
@@ -242,7 +244,8 @@ export function ActivityPanel({
         title="¿Rehacer los archivos de la actividad?"
         description={
           `Se borra todo lo que haya en ~/actividades/${data?.workdir ?? ""} y se vuelven a ` +
-          "crear los archivos de partida. Tu directorio personal y el resto de tu entorno no se tocan."
+          "crear de nuevo los archivos de la actividad. Tu directorio personal y el resto de tu " +
+          "entorno no se tocan."
         }
         confirmLabel="Rehacer los archivos"
         confirmVariant="destructive"
