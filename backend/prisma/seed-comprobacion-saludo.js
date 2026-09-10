@@ -21,7 +21,7 @@ const DATOS = {
     "personal. La primera línea tiene que ser el shebang de bash y la segunda " +
     "un echo con el saludo que quieras. Déjalo con permisos 755, puestos con el " +
     "número y no con +x, para poder ejecutarlo con ./saludo.sh." +
-    "Cuando termines, pulsa el botón de comprobar.",
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

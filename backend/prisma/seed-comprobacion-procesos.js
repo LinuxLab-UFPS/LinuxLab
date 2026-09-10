@@ -30,7 +30,7 @@ const DATOS = {
     "Usa una redirección: el archivo tiene que quedar con la salida del " +
     "comando, cabecera incluida. Verás pocas líneas, y está bien: en este " +
     "laboratorio cada cuenta solo ve sus propios procesos." +
-    "Cuando termines, pulsa el botón de comprobar.",
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

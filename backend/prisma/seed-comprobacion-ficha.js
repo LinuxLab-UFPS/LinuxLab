@@ -24,7 +24,7 @@ const DATOS = {
     "hayas aprendido y en la última tu correo institucional. Recuerda que para " +
     "insertar texto en el editor debes presionar i, y luego Esc + escribir :wq " +
     "para guardar los cambios y salir." +
-    "Cuando termines, pulsa el botón de comprobar.",
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {
