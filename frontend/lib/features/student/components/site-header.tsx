@@ -72,7 +72,7 @@ export function SiteHeader({
         </Link>
 
         {/* Primary nav, with the AlgoMaster-style rounded hover pill */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           <Link
             href="/terminal"
             className={cn(

@@ -53,7 +53,7 @@ export function AdminHeader() {
           <RoleTag variant="admin" />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {NAV.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/")
             return (

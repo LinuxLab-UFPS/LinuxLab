@@ -15,6 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
+import { cn } from "@shared/lib/utils"
 
 /**
  * Las graficas de calificaciones, una sola vez.
@@ -84,8 +85,15 @@ export function GraficaNotas({
   etiquetaPropia?: string
   className?: string
 }) {
+  /* Con muchas actividades, `ResponsiveContainer` las mete todas en el ancho
+     que haya y recharts va tirando etiquetas hasta que no se lee ninguna. Se le
+     da al lienzo un ancho minimo por punto y se desplaza el contenedor: mejor
+     arrastrar que adivinar de que actividad es cada punto. */
+  const anchoMinimo = Math.max(datos.length * 64, 320)
+
   return (
-    <div className={className}>
+    <div className={cn("overflow-x-auto", className)}>
+      <div className="h-full" style={{ minWidth: anchoMinimo }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={datos} margin={{ top: 8, right: 16, bottom: 4, left: -12 }}>
           <defs>
@@ -134,6 +142,7 @@ export function GraficaNotas({
           />
         </AreaChart>
       </ResponsiveContainer>
+      </div>
     </div>
   )
 }

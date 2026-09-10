@@ -43,7 +43,7 @@ export function NavMenuMovil({
         aria-label="Abrir el menú"
         className={cn(
           "flex h-10 w-10 items-center justify-center rounded-md text-white/70 outline-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/40",
-          className ?? "md:hidden",
+          className ?? "xl:hidden",
         )}
       >
         <Menu className="h-5 w-5" />
