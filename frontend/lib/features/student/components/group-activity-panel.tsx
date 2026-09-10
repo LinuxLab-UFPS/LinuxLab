@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { FolderOpen, Loader2, RotateCcw, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
@@ -24,6 +24,7 @@ import { notify } from "@shared/lib/toast"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import { avisarResultado } from "@/lib/features/student/terminal-aviso"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
+import { AvisoDirectorio } from "@/lib/features/student/components/aviso-directorio"
 
 
 /**
@@ -69,16 +70,19 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
      que lo estropean. Asi que el boton se apaga mientras dure. */
   const aPantallaCompleta = useProgramaAPantallaCompleta()
 
-  const goToWorkdir = () => {
+  /* Memorizados los dos porque el efecto que publica los botones al modal de la
+     terminal depende de ellos: sin identidad estable el efecto se disparaba en
+     cada render y el ciclo publicar → estado → render tumbaba la pestaña. */
+  const goToWorkdir = useCallback(() => {
     if (aPantallaCompleta) return
     sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
-  }
+  }, [detail.workdir, aPantallaCompleta])
 
   /* El resultado se enseña en un modal, igual que en las del temario: debajo
      del enunciado quedaba a un scroll del boton que acababa de pulsarse. Y el
      veredicto se escribe ademas en la terminal, que es donde el estudiante esta
      mirando; esta pantalla no escribia nada. */
-  const check = async () => {
+  const check = useCallback(async () => {
     setChecking(true)
     try {
       const outcome = await checkGroupActivity(detail.id)
@@ -95,7 +99,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     } finally {
       setChecking(false)
     }
-  }
+  }, [detail.id])
 
   /* Vaciar el directorio del taller. Solo toca `~/actividades/<workdir>`: el
      script compone esa ruta con un nombre que no admite `/` ni `.`, y comprueba
@@ -201,122 +205,139 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
-        {detail.instructions ? (
-          <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-            {detail.instructions}
+      {/* `relative` para el aviso de directorio, que se pone encima del
+          enunciado y de los botones. Ver `AvisoDirectorio`. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
+          {detail.instructions ? (
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+              {detail.instructions}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sin instrucciones.</p>
+          )}
+
+          <div className="mt-6">
+            <StudentInfoTable
+              showIdentity={false}
+              submittedAt={
+                isManual
+                  ? (submission?.submittedAt ?? null)
+                  : (attempts.length > 0 ? attempts[0].createdAt : null)
+              }
+              statusNode={
+                closed && !hasEntrega
+                  ? <Tag tone="rose">Vencida</Tag>
+                  : !hasEntrega
+                    ? <Tag tone="muted">Pendiente de entrega</Tag>
+                    : isManual
+                      ? submission?.status === "graded"
+                        ? <Tag tone="emerald">Calificada</Tag>
+                        : <Tag tone="amber">Pendiente de revisión</Tag>
+                      : <Tag tone="emerald">Calificada</Tag>
+              }
+              score={isManual ? (submission?.score ?? null) : (attempts.length > 0 ? finalScore : null)}
+              maxScore={detail.maxScore}
+              feedbackVariant={isManual ? "manual" : "automatic"}
+              feedbackNode={
+                isManual && submission?.feedback
+                  ? <p className="whitespace-pre-wrap text-muted-foreground">{submission.feedback}</p>
+                  : undefined
+              }
+              checks={isManual ? undefined : (results ?? detail.lastAttempt?.results ?? [])}
+              checksInline={false}
+            />
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Sin instrucciones.</p>
-        )}
-
-        <div className="mt-6">
-          <StudentInfoTable
-            showIdentity={false}
-            submittedAt={
-              isManual
-                ? (submission?.submittedAt ?? null)
-                : (attempts.length > 0 ? attempts[0].createdAt : null)
-            }
-            statusNode={
-              closed && !hasEntrega
-                ? <Tag tone="rose">Vencida</Tag>
-                : !hasEntrega
-                  ? <Tag tone="muted">Pendiente de entrega</Tag>
-                  : isManual
-                    ? submission?.status === "graded"
-                      ? <Tag tone="emerald">Calificada</Tag>
-                      : <Tag tone="amber">Pendiente de revisión</Tag>
-                    : <Tag tone="emerald">Calificada</Tag>
-            }
-            score={isManual ? (submission?.score ?? null) : (attempts.length > 0 ? finalScore : null)}
-            maxScore={detail.maxScore}
-            feedbackVariant={isManual ? "manual" : "automatic"}
-            feedbackNode={
-              isManual && submission?.feedback
-                ? <p className="whitespace-pre-wrap text-muted-foreground">{submission.feedback}</p>
-                : undefined
-            }
-            checks={isManual ? undefined : (results ?? detail.lastAttempt?.results ?? [])}
-            checksInline={false}
-          />
         </div>
-      </div>
 
-      <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        {/* Los botones van juntos a la izquierda, como en las actividades del
-            temario. Con `justify-between` el de ir al directorio se disparaba
-            solo al otro extremo de la fila y las dos pantallas, que hacen lo
-            mismo, no se parecian. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2">
-            {isManual ? (
-              !submitted && (
+        <footer className="shrink-0 space-y-3 border-t border-border pt-4">
+          {/* Los botones van juntos a la izquierda, como en las actividades del
+              temario. Con `justify-between` el de ir al directorio se disparaba
+              solo al otro extremo de la fila y las dos pantallas, que hacen lo
+              mismo, no se parecian. */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
+              {isManual ? (
+                !submitted && (
+                <ActionButton
+                  tone="amber"
+                  onClick={handle_submit}
+                  disabled={submitting || !canSubmit}
+                >
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  {submitting ? "Entregando..." : "Entregar actividad"}
+                </ActionButton>
+              )
+            ) : (
               <ActionButton
-                tone="amber"
-                onClick={handle_submit}
-                disabled={submitting || !canSubmit}
+                tone={passed ? "emerald" : "amber"}
+                onClick={check}
+                disabled={checking || !canCheck}
               >
-                {submitting ? (
+                {checking ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <ShieldCheck className="h-4 w-4" />
                 )}
-                {submitting ? "Entregando..." : "Entregar actividad"}
+                {checking ? "Comprobando..." : "Comprobar actividad"}
               </ActionButton>
-            )
-          ) : (
-            <ActionButton
-              tone={passed ? "emerald" : "amber"}
-              onClick={check}
-              disabled={checking || !canCheck}
-            >
-              {checking ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ShieldCheck className="h-4 w-4" />
-              )}
-              {checking ? "Comprobando..." : "Comprobar actividad"}
+            )}
+            </div>
+
+            <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+              <FolderOpen className="h-4 w-4" />
+              Ir al directorio
             </ActionButton>
-          )}
+
+            {/* Ir al directorio se hace muchas veces por sesion, asi que va como
+                boton; vaciar el directorio borra trabajo, asi que va como icono y
+                pregunta antes. Igual que en las del temario, salvo que estas no
+                traen archivos de partida: lo que queda es un directorio vacio. */}
+            <IconAction
+              label={resetting ? "Vaciando..." : "Vaciar el directorio (borra tu trabajo)"}
+              icon={resetting ? Loader2 : RotateCcw}
+              onClick={() => setConfirmando(true)}
+              // Igual que comprobar: solo tiene sentido dentro del directorio.
+              disabled={resetting || aPantallaCompleta || !enElDirectorio}
+            />
           </div>
 
-          <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
-            <FolderOpen className="h-4 w-4" />
-            Ir al directorio
-          </ActionButton>
+          {aPantallaCompleta ? (
+            <p className="text-xs text-muted-foreground">
+              Cierra el editor en la terminal para volver a usar estos botones.
+            </p>
+          ) : detail.evaluationType === "atomic" && !canCheck ? (
+            <p className="text-xs text-muted-foreground">
+                {/* El directorio va al final: si la actividad esta vencida o
+                  deshabilitada, ese es el motivo que hay que dar. Lo de entrar
+                  al directorio ya lo dice el aviso que tapa la pantalla. */}
+              {!detail.enabled
+                ? "Esta actividad está deshabilitada por ahora. Habla con tu docente si crees que es un error."
+                : closed
+                  ? "El plazo de esta actividad ya venció y no admite más comprobaciones. Habla con tu docente si necesitas una extensión."
+                  : limitReached
+                    ? "Ya usaste todos los intentos que permitía esta actividad. Si crees que mereces una oportunidad más, habla con tu docente."
+                    : !enElDirectorio
+                      ? "Entra en el directorio de la actividad para poder comprobarla: la revisión corre dentro de ella."
+                      : null}
+            </p>
+          ) : null}
+        </footer>
 
-          {/* Ir al directorio se hace muchas veces por sesion, asi que va como
-              boton; vaciar el directorio borra trabajo, asi que va como icono y
-              pregunta antes. Igual que en las del temario, salvo que estas no
-              traen archivos de partida: lo que queda es un directorio vacio. */}
-          <IconAction
-            label={resetting ? "Vaciando..." : "Vaciar el directorio (borra tu trabajo)"}
-            icon={resetting ? Loader2 : RotateCcw}
-            onClick={() => setConfirmando(true)}
-            // Igual que comprobar: solo tiene sentido dentro del directorio.
-            disabled={resetting || aPantallaCompleta || !enElDirectorio}
+        {/* Solo mientras se pueda trabajar: si esta vencida o deshabilitada, lo
+           que hay que leer es el motivo, no como entrar al directorio. */}
+        {!enElDirectorio && detail.enabled && !closed ? (
+          <AvisoDirectorio
+            workdir={detail.workdir}
+            onIr={goToWorkdir}
+            deshabilitado={aPantallaCompleta}
           />
-        </div>
-
-        {aPantallaCompleta ? (
-          <p className="text-xs text-muted-foreground">
-            Cierra el editor en la terminal para volver a usar estos botones.
-          </p>
-        ) : detail.evaluationType === "atomic" && !canCheck ? (
-          <p className="text-xs text-muted-foreground">
-              {!enElDirectorio
-               ? "Entra en el directorio de la actividad para poder comprobarla: la revisión corre dentro de ella."
-               : !detail.enabled
-               ? "Esta actividad está deshabilitada por ahora. Habla con tu docente si crees que es un error."
-              : closed
-                ? "El plazo de esta actividad ya venció y no admite más comprobaciones. Habla con tu docente si necesitas una extensión."
-                : limitReached
-                  ? "Ya usaste todos los intentos que permitía esta actividad. Si crees que mereces una oportunidad más, habla con tu docente."
-                  : null}
-          </p>
         ) : null}
-      </footer>
+      </div>
 
       <ResultadoDialog
         open={resultado && !checking}

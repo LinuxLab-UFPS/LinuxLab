@@ -65,8 +65,10 @@ export function TerminalModal({
         </div>
 
         {/* `min-h-0` para que xterm pueda medirse: sin el, el flex le da la
-            altura del contenido y la consola se sale del modal. */}
-        <div className="min-h-0 flex-1">
+            altura del contenido y la consola se sale del modal. El padding es
+            para que el texto no salga pegado al borde de la pantalla: sin marco
+            alrededor, la primera columna quedaba literalmente en el filo. */}
+        <div className="min-h-0 flex-1 px-3 py-2">
           <TerminalEmulator className="h-full" fontSize={fontSize} fontFamily={fontFamily} />
         </div>
 

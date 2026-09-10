@@ -22,6 +22,7 @@ import {
   AccionesActividadProvider,
   useAccionesActividad,
 } from "@/lib/features/student/acciones-actividad"
+import { useDirectorioAutomatico } from "@/lib/features/student/use-directorio-automatico"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
@@ -97,6 +98,15 @@ export function TerminalWorkspace({
   }, [])
 
   const isStudent = user?.role === "student"
+
+  /* La terminal sigue a la pantalla: entra sola en el directorio de la actividad
+     que se abre y vuelve al home al salir de ella. */
+  useDirectorioAutomatico({
+    activo: isStudent,
+    slug: activity?.slug ?? null,
+    workdirDeGrupo: groupActivity?.workdir ?? null,
+  })
+
   const open = Boolean(isStudent && ((activity && statement) || groupActivity))
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)

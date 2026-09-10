@@ -1,4 +1,5 @@
 import { escribirAviso } from "@shared/lib/terminal-session"
+import { sendToTerminal } from "@/lib/features/student/terminal-input"
 
 /**
  * Los avisos de la plataforma dentro de la terminal.
@@ -16,7 +17,6 @@ import { escribirAviso } from "@shared/lib/terminal-session"
 const AMBAR = "\x1b[1;38;2;245;158;11m"
 const VERDE = "\x1b[32m"
 const ROJO = "\x1b[31m"
-const BLANCO = "\x1b[97m"
 const NEGRITA = "\x1b[1m"
 const FIN = "\x1b[0m"
 
@@ -24,14 +24,31 @@ const FIN = "\x1b[0m"
 export type TipoDeReto = "actividad" | "comprobacion"
 
 /**
+ * Devuelve el prompt a la línea siguiente.
+ *
+ * El aviso se pinta en la pantalla de xterm sin pasar por el socket, así que la
+ * shell no se entera de nada: sigue creyendo que su prompt está donde lo dejó y
+ * el estudiante tenía que pulsar Enter para recuperarlo. Un comando vacío la
+ * obliga a dibujarlo de nuevo debajo del aviso.
+ *
+ * El `\x15` (Ctrl+U) delante es por lo mismo que en el reinicio de archivos: si
+ * había algo escrito a medias, un Enter suelto lo ejecutaría.
+ */
+function devolverPrompt() {
+  sendToTerminal("\x15\n")
+}
+
+/**
  * El enunciado, al abrir una comprobación.
  *
- * El título va en el ámbar de la marca y el enunciado en blanco. En gris tenue
- * —como estaba— se perdía contra el fondo justo cuando es lo único que hay que
- * leer.
+ * Todo en el ámbar de la marca y en una sola línea. Iba el título arriba y el
+ * enunciado debajo en blanco, separados por líneas en blanco: tres renglones
+ * para lo que es una frase, y el blanco lo hacía indistinguible de la salida de
+ * cualquier comando.
  */
 export function avisarEnunciado(titulo: string, enunciado: string) {
-  escribirAviso(`\r\n${AMBAR}${titulo}${FIN}\r\n${BLANCO}${enunciado}${FIN}\r\n\r\n`)
+  escribirAviso(`${AMBAR}${titulo}: ${enunciado}${FIN}\r\n`)
+  devolverPrompt()
 }
 
 /** El veredicto del intento. */
@@ -44,7 +61,6 @@ export function avisarResultado(
   const color = aprobada ? VERDE : ROJO
   const nombre = tipo === "comprobacion" ? "Comprobación" : "Actividad"
   const texto = `${nombre} ${aprobada ? "aprobada" : "no aprobada"}`
-  escribirAviso(
-    `\r\n${NEGRITA}${color}${texto}${FIN} ${BLANCO}(${puntaje}/${total} pts)${FIN}\r\n\r\n`,
-  )
+  escribirAviso(`${NEGRITA}${color}${texto} (${puntaje}/${total} pts)${FIN}\r\n`)
+  devolverPrompt()
 }

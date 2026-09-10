@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
@@ -24,6 +24,7 @@ import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
+import { AvisoDirectorio } from "@/lib/features/student/components/aviso-directorio"
 
 
 /**
@@ -55,10 +56,13 @@ export function ActivityPanel({
      debajo del enunciado, o sea a un scroll del boton que acababa de pulsarse, y
      con un enunciado largo no se veia nunca. */
   const [resultado, setResultado] = useState(false)
-  const comprobar = () => {
+  /* Memorizado porque el efecto que publica los botones al modal de la terminal
+     depende de el: sin identidad estable el efecto se disparaba en cada render
+     y el ciclo publicar → estado → render tumbaba la pestaña. */
+  const comprobar = useCallback(() => {
     check()
     setResultado(true)
-  }
+  }, [check])
 
   /* Comprobar exige estar parado en el directorio de la actividad. La ruta la dice
      la propia shell en cada prompt, asi que vale tanto si se llego con el boton
@@ -83,10 +87,11 @@ export function ActivityPanel({
      estudiante se quedaba en su home creyendo que ya estaba dentro, resolvia
      todo alli y la comprobacion no encontraba nada. `-p` no toca el directorio
      si ya existe, asi que en el caso normal no cambia nada. */
-  const goToWorkdir = () => {
-    if (!data?.workdir || aPantallaCompleta) return
-    sendToTerminal(`mkdir -p ~/actividades/${data.workdir} && cd ~/actividades/${data.workdir}\n`)
-  }
+  const workdir = data?.workdir ?? null
+  const goToWorkdir = useCallback(() => {
+    if (!workdir || aPantallaCompleta) return
+    sendToTerminal(`mkdir -p ~/actividades/${workdir} && cd ~/actividades/${workdir}\n`)
+  }, [workdir, aPantallaCompleta])
 
   /* Reiniciar borra el directorio de la actividad y lo vuelve a montar. Se
      pregunta antes porque el boton vive al lado del de ir al directorio, y
@@ -170,104 +175,95 @@ export function ActivityPanel({
         </div>
       </header>
 
-      <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
-        {/* El aviso va arriba del enunciado a proposito: el texto al pie
-            pasaba desapercibido y los estudiantes empezaban a trabajar en su
-            home, fuera del directorio que se evalua. */}
-        {data?.workdir && !enElDirectorio && !loading ? (
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5">
-            <FolderOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-xs leading-relaxed text-foreground">
-              Antes de empezar, pulsa{" "}
-              <span className="font-medium">&laquo;Ir al directorio&raquo;</span>: la actividad se
-              resuelve dentro de{" "}
-              <span className="font-mono text-[11px]">~/actividades/{data.workdir}</span> y solo ahí
-              se puede comprobar.
-            </p>
+      {/* `relative` para el aviso de directorio, que se pone encima del
+          enunciado y de los botones. Ver `AvisoDirectorio`. */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
+          <div className="lesson-prose [&>*:first-child]:mt-0">
+            <Markdown>{statement}</Markdown>
           </div>
-        ) : null}
 
-        <div className="lesson-prose [&>*:first-child]:mt-0">
-          <Markdown>{statement}</Markdown>
+          {loading ? (
+            <SkeletonScreen className="mt-6 space-y-3">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-10 w-40" />
+            </SkeletonScreen>
+          ) : data ? (
+            <div className="mt-6 space-y-4">
+              <StudentInfoTable
+                showIdentity={false}
+                submittedAt={data.lastAttempt?.at ?? null}
+                statusNode={
+                  !data.lastAttempt
+                    ? <Tag tone="muted">Pendiente de entrega</Tag>
+                    : <Tag tone="emerald">Calificada</Tag>
+                }
+                score={data.lastAttempt?.score ?? null}
+                maxScore={data.maxScore}
+                feedbackVariant="automatic"
+                checks={data.lastAttempt?.results ?? []}
+                checksInline={false}
+              />
+            </div>
+          ) : null}
         </div>
 
-        {loading ? (
-          <SkeletonScreen className="mt-6 space-y-3">
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-10 w-40" />
-          </SkeletonScreen>
-        ) : data ? (
-          <div className="mt-6 space-y-4">
-            <StudentInfoTable
-              showIdentity={false}
-              submittedAt={data.lastAttempt?.at ?? null}
-              statusNode={
-                !data.lastAttempt
-                  ? <Tag tone="muted">Pendiente de entrega</Tag>
-                  : <Tag tone="emerald">Calificada</Tag>
-              }
-              score={data.lastAttempt?.score ?? null}
-              maxScore={data.maxScore}
-              feedbackVariant="automatic"
-              checks={data.lastAttempt?.results ?? []}
-              checksInline={false}
-            />
+        <footer className="shrink-0 space-y-3 border-t border-border pt-4">
+          <div className="flex items-center gap-2">
+            <ActionButton
+              tone={passed ? "emerald" : "amber"}
+              onClick={comprobar}
+              disabled={checking || loading || !enElDirectorio}
+            >
+              {checking ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="h-4 w-4" />
+              )}
+              {checking ? "Comprobando..." : "Comprobar actividad"}
+            </ActionButton>
+
+            {/* Volver al directorio es lo que se hace muchas veces por sesion, asi
+                que va como boton; rehacer los archivos se hace una vez y borra
+                trabajo, asi que va como icono y pregunta antes. */}
+            {data?.workdir && (
+              <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+                <FolderOpen className="h-4 w-4" />
+                Ir al directorio
+              </ActionButton>
+            )}
+
+            {data?.hasSetup && data?.workdir && (
+              <IconAction
+                label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
+                icon={resetting ? Loader2 : RotateCcw}
+                onClick={() => setConfirmando(true)}
+                // Rehacer los archivos desde fuera del directorio deja al
+                // estudiante mirando una carpeta que no es la que cambio.
+                disabled={resetting || loading || aPantallaCompleta || !enElDirectorio}
+              />
+            )}
           </div>
+
+          {/* Un boton gris sin explicacion es peor que uno que no esta. Lo de
+              estar fuera del directorio lo dice el aviso de abajo, que tapa esto
+              entero. */}
+          {aPantallaCompleta ? (
+            <p className="text-xs text-muted-foreground">
+              Cierra el editor en la terminal para volver a usar estos botones.
+            </p>
+          ) : null}
+        </footer>
+
+        {data?.workdir && !enElDirectorio && !loading ? (
+          <AvisoDirectorio
+            workdir={data.workdir}
+            onIr={goToWorkdir}
+            deshabilitado={aPantallaCompleta}
+          />
         ) : null}
       </div>
-
-      <footer className="shrink-0 space-y-3 border-t border-border pt-4">
-        <div className="flex items-center gap-2">
-          <ActionButton
-            tone={passed ? "emerald" : "amber"}
-            onClick={comprobar}
-            disabled={checking || loading || !enElDirectorio}
-          >
-            {checking ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <ShieldCheck className="h-4 w-4" />
-            )}
-            {checking ? "Comprobando..." : "Comprobar actividad"}
-          </ActionButton>
-
-          {/* Volver al directorio es lo que se hace muchas veces por sesion, asi
-              que va como boton; rehacer los archivos se hace una vez y borra
-              trabajo, asi que va como icono y pregunta antes. */}
-          {data?.workdir && (
-            <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
-              <FolderOpen className="h-4 w-4" />
-              Ir al directorio
-            </ActionButton>
-          )}
-
-          {data?.hasSetup && data?.workdir && (
-            <IconAction
-              label={resetting ? "Preparando..." : "Reiniciar archivos (borra tu trabajo)"}
-              icon={resetting ? Loader2 : RotateCcw}
-              onClick={() => setConfirmando(true)}
-              // Rehacer los archivos desde fuera del directorio deja al
-              // estudiante mirando una carpeta que no es la que cambio.
-              disabled={resetting || loading || aPantallaCompleta || !enElDirectorio}
-            />
-          )}
-        </div>
-
-        {/* Un boton gris sin explicacion es peor que uno que no esta. */}
-        {aPantallaCompleta ? (
-          <p className="text-xs text-muted-foreground">
-            Cierra el editor en la terminal para volver a usar estos botones.
-          </p>
-        ) : (
-          !enElDirectorio &&
-          !loading && (
-            <p className="text-xs text-muted-foreground">
-              Entra en el directorio de la actividad para poder comprobarla.
-            </p>
-          )
-        )}
-      </footer>
 
       <ResultadoDialog
         open={resultado && !checking}
