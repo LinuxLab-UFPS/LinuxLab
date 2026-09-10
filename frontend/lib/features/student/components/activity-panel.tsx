@@ -10,7 +10,7 @@ import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { ResultadoDialog } from "@shared/components/resultado-dialog"
-import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { sendToTerminal } from "@shared/lib/terminal-session"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
@@ -24,7 +24,8 @@ import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
-import { AvisoDirectorio } from "@/lib/features/student/components/aviso-directorio"
+import { AvisoDirectorio, EsperaDirectorio } from "@/lib/features/student/components/aviso-directorio"
+import { useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
 
 
 /**
@@ -70,6 +71,10 @@ export function ActivityPanel({
      se sepa la ruta el boton queda activo: bloquear en esa espera seria repetir
      el falso negativo que tenia la version anterior. */
   const enElDirectorio = useEnElDirectorio(data?.workdir)
+
+  /* Mientras la shell va de camino no se decide nada: ni el enunciado ni el
+     aviso de estar fuera, que en ese hueco seria mentira a medias. */
+  const ubicando = useUbicandoDirectorio() !== null || loading
 
   /* Con la terminal como modal, estos botones quedan detras justo cuando hacen
      falta. Se publican para que el modal los pinte en su pie; son los mismos
@@ -258,7 +263,9 @@ export function ActivityPanel({
           ) : null}
         </footer>
 
-        {data?.workdir && !enElDirectorio && !loading ? (
+        {ubicando ? (
+          <EsperaDirectorio />
+        ) : data?.workdir && !enElDirectorio ? (
           <AvisoDirectorio
             workdir={data.workdir}
             onIr={goToWorkdir}

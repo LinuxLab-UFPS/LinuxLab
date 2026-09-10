@@ -1,6 +1,6 @@
 "use client"
 
-import { FolderOpen } from "lucide-react"
+import { FolderOpen, Loader2 } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 
 /**
@@ -52,6 +52,26 @@ export function AvisoDirectorio({
           Ir al directorio
         </ActionButton>
       )}
+    </div>
+  )
+}
+
+/**
+ * La espera mientras la shell entra en el directorio.
+ *
+ * Abrir una actividad manda un `cd` que tarda lo que tarde el viaje al
+ * contenedor. En ese hueco la shell sigue en el home, asi que `AvisoDirectorio`
+ * se daba por bueno y se pintaba: un parpadeo rojo de un instante cada vez que
+ * se abria una actividad, diciendo algo que dejaba de ser cierto solo.
+ *
+ * Con esto el enunciado no aparece hasta que la terminal esta en su sitio, que
+ * es tambien el orden en que conviene leerlo.
+ */
+export function EsperaDirectorio() {
+  return (
+    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background">
+      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      <p className="text-xs text-muted-foreground">Preparando la actividad...</p>
     </div>
   )
 }

@@ -1,16 +1,13 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { sendToTerminal } from "@/lib/features/student/terminal-input"
-import { useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
+import { useCwd, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { lessonActivityQuery } from "@/lib/features/student/use-activity-check"
-
-const HOME = "~"
+import { HOME, confirmarDirectorio, irA } from "@/lib/features/student/directorio-terminal"
 
 /**
- * La terminal entra sola en el directorio de la actividad, y vuelve al home al
- * salir de ella.
+ * La terminal entra sola en el directorio de la actividad abierta.
  *
  * Este era el tropiezo mas repetido de la primera clase: la actividad se
  * resuelve dentro de `~/actividades/<workdir>` y se comprueba ahi, pero nada
@@ -18,18 +15,15 @@ const HOME = "~"
  * pulsar. Quien no lo pulsaba trabajaba entero en su home y la comprobacion no
  * encontraba nada.
  *
- * Va aqui, un solo efecto en el espacio de trabajo, y no en cada panel a
+ * Va aqui, un solo efecto para la pantalla entera, y no en cada panel a
  * proposito. Con un efecto por panel el salto de una actividad a otra (el enlace
  * "siguiente tema") cruzaria dos ordenes: el `cd ~` de la que se desmonta y el
  * `cd` de la que se monta, en un orden que no controlamos. Aqui solo hay un
- * destino a la vez y las transiciones salen solas:
+ * destino a la vez y las transiciones salen solas.
  *
- *   terminal sin actividad → actividad     `cd` al directorio de la actividad
- *   actividad → sugerencias               `cd ~`
- *   actividad A → actividad B             `cd` directo al de B
- *
- * `sendToTerminal` encola hasta que abre el WebSocket, asi que dispararlo al
- * montar es seguro.
+ * La vuelta al home cuando no hay actividad NO esta aqui: la hace
+ * `DirectorioAutomatico` desde la raiz, porque salir de una actividad hacia el
+ * curso desmonta esta pantalla y su efecto ya no llegaria a correr.
  */
 export function useDirectorioAutomatico({
   activo,
@@ -54,37 +48,27 @@ export function useDirectorioAutomatico({
   /* Con `vi` o `top` abiertos lo que se manda no se ejecuta: se teclea dentro
      del programa. Se espera a que cierre. */
   const aPantallaCompleta = useProgramaAPantallaCompleta()
+  const ruta = useCwd()
 
-  /* `null` es "todavia no se sabe", que no es lo mismo que "el home": sin esta
-     distincion, abrir una actividad mandaba primero un `cd ~` y despues el de la
-     actividad, y la terminal aparecia con dos ordenes que nadie escribio. */
-  const destino: string | null = !activo
-    ? null
-    : workdirDeGrupo
-      ? `~/actividades/${workdirDeGrupo}`
-      : slug
-        ? data
-          // `universidad-facultades` no declara directorio: monta su arbol en el
-          // home a proposito, asi que ahi el home es el destino correcto.
-          ? (data.workdir ? `~/actividades/${data.workdir}` : HOME)
-          : null
-        : HOME
+  /* `universidad-facultades` no declara directorio: monta su arbol en el home a
+     proposito, asi que ahi el home es el destino correcto. */
+  const workdir = workdirDeGrupo ?? (slug ? (data?.workdir ?? null) : null)
+  const esperandoDatos = activo && Boolean(slug) && !workdirDeGrupo && !data
 
-  /* Arranca en el home porque es donde arranca la shell. Asi una carga directa
-     de la terminal sin actividad no escribe un `cd ~` que no hace nada. */
-  const ultimo = useRef(HOME)
+  const destino: string | null =
+    !activo || esperandoDatos ? null : workdir ? `~/actividades/${workdir}` : HOME
 
   useEffect(() => {
-    if (destino === null || aPantallaCompleta) return
-    if (ultimo.current === destino) return
-    ultimo.current = destino
-    // Ctrl+U primero: si habia algo escrito a medias, un Enter suelto lo
-    // ejecutaria. Y `mkdir -p` antes del `cd` porque el directorio solo lo monta
-    // `setup.py` cuando la actividad trae archivos de partida; sin el, el `cd`
-    // fallaba en silencio y el estudiante se quedaba en su home creyendo que ya
-    // estaba dentro.
-    sendToTerminal(
-      destino === HOME ? "\x15cd ~\n" : `\x15mkdir -p ${destino} && cd ${destino}\n`,
-    )
-  }, [destino, aPantallaCompleta])
+    if (aPantallaCompleta) return
+    irA(destino, workdir)
+  }, [destino, workdir, aPantallaCompleta])
+
+  /* La shell dice donde esta en cada prompt. Cuando lo que dice coincide con el
+     destino, el viaje termino y el panel deja de esperar. */
+  useEffect(() => {
+    if (!workdir || ruta === null) return
+    if (ruta.endsWith(`/actividades/${workdir}`) || ruta.includes(`/actividades/${workdir}/`)) {
+      confirmarDirectorio(workdir)
+    }
+  }, [ruta, workdir])
 }

@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
-import { onTerminalInput } from "@/lib/features/student/terminal-input"
 import {
   asegurarSesion,
   enviarEntrada,
@@ -117,7 +116,6 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(-
     redimensionar(term.cols, term.rows)
 
     term.onData(enviarEntrada)
-    const unsubscribe = onTerminalInput(enviarEntrada)
 
     let resizeTimer: ReturnType<typeof setTimeout>
     const observer = new ResizeObserver(() => {
@@ -136,7 +134,6 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(-
       contenedor.removeEventListener("paste", bloquearPegado, true)
       contenedor.removeEventListener("auxclick", bloquearPegado, true)
       baja()
-      unsubscribe()
       observer.disconnect()
       term.dispose()
       termRef.current = null

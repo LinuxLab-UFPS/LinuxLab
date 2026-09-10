@@ -9,7 +9,7 @@ import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { ResultadoDialog } from "@shared/components/resultado-dialog"
-import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { sendToTerminal } from "@shared/lib/terminal-session"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
@@ -24,7 +24,8 @@ import { notify } from "@shared/lib/toast"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import { avisarResultado } from "@/lib/features/student/terminal-aviso"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
-import { AvisoDirectorio } from "@/lib/features/student/components/aviso-directorio"
+import { AvisoDirectorio, EsperaDirectorio } from "@/lib/features/student/components/aviso-directorio"
+import { useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
 
 
 /**
@@ -60,6 +61,8 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
      se habia pulsado "ir al directorio" sacaba el boton gris tras cada recarga a
      quien ya estaba en el sitio correcto. */
   const enElDirectorio = useEnElDirectorio(detail.workdir)
+  /* Ver `activity-panel`: mientras la shell va de camino no se decide nada. */
+  const ubicando = useUbicandoDirectorio() !== null
   const { publicar } = useAccionesActividad()
   const canCheck =
     detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
@@ -335,7 +338,9 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
 
         {/* Solo mientras se pueda trabajar: si esta vencida o deshabilitada, lo
            que hay que leer es el motivo, no como entrar al directorio. */}
-        {!enElDirectorio && detail.enabled && !closed ? (
+        {ubicando ? (
+          <EsperaDirectorio />
+        ) : !enElDirectorio && detail.enabled && !closed ? (
           <AvisoDirectorio
             workdir={detail.workdir}
             onIr={goToWorkdir}

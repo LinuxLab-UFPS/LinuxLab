@@ -11,8 +11,8 @@ import { createContext, useCallback, useContext, useMemo, useState } from "react
  * reinicios que mantener.
  *
  * Asi que el panel las publica aqui y el modal las consume. Es el mismo motivo
- * por el que existe `terminal-input.ts`: dos componentes hermanos que no
- * comparten mas ancestro util que la pagina entera.
+ * por el que `sendToTerminal` vive fuera de React: dos componentes hermanos que
+ * no comparten mas ancestro util que la pagina entera.
  */
 interface AccionesActividad {
   acciones: React.ReactNode | null

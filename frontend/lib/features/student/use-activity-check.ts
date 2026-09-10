@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { avisarResultado, type TipoDeReto } from "./terminal-aviso"
-import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { sendToTerminal } from "@shared/lib/terminal-session"
 import { apiFetch } from "@/lib/api/client"
 import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
 import { notify } from "@shared/lib/toast"

@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/features/auth/context'
 import { QueryProvider } from '@/lib/api/query-provider'
 import { Toaster } from '@shared/components/ui/sonner'
 import { TooltipProvider } from '@shared/components/ui/tooltip'
+import { DirectorioAutomatico } from '@/lib/features/student/components/directorio-automatico'
 import './globals.css'
 
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
@@ -83,6 +84,10 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <TooltipProvider delayDuration={150}>
+                {/* Vigila la ruta para devolver la shell al home al salir de una
+                    actividad. No pinta nada; va aqui porque tiene que seguir
+                    vivo entre paginas, igual que la sesion de terminal. */}
+                <DirectorioAutomatico />
                 {children}
                 <Toaster richColors position="top-right" />
               </TooltipProvider>
