@@ -192,7 +192,13 @@ export function TerminalWorkspace({
           hidden !== null && "transition-all duration-300 ease-out",
         )}
         style={{
-          gridTemplateColumns: `${showColumn ? track : "0rem"} ${TERMINAL_WIDTH}`,
+          /* `minmax(0, ...)` en las dos: son los anchos que se querrian, no los
+             que se exigen. Declarados a pelo, la suma de la columna y la consola
+             se pasaba del viewport (a 1440: 547 + 24 + 1024 = 1595) y como el
+             `max-w-full` recorta la caja pero no las columnas, la fila se salia
+             por los dos lados sin que hubiera barra que lo delatara. Con
+             `minmax` la consola cede lo que haga falta para que quepa. */
+          gridTemplateColumns: `minmax(0, ${showColumn ? track : "0rem"}) minmax(0, ${TERMINAL_WIDTH})`,
           columnGap: showColumn ? "1.5rem" : "0rem",
         }}
       >

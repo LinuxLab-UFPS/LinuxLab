@@ -27,7 +27,11 @@ export function Shell({ role, children }: { role: Role; children: ReactNode }) {
       ) : (
         <AdminHeader />
       )}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      {/* `overflow-x-hidden` y no solo `overflow-y-auto`: en CSS, poner un eje en
+          `auto` pone el otro tambien, y enfocar la consola (xterm pone su campo
+          oculto donde esta el cursor) deslizaba la maqueta entera 155px de lado.
+          Nada de esta aplicacion se lee en horizontal. */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
       <ProvisioningIndicator />
     </div>
   )

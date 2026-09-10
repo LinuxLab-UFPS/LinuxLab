@@ -61,7 +61,7 @@ export default async function GroupPage({
               <div className="z-40 shrink-0 bg-background">
                 {cabecera}
               </div>
-              <main className="flex-1 overflow-y-auto">
+              <main className="flex-1 overflow-y-auto overflow-x-hidden">
                 <GroupBody>
                   <GroupSidebar
                     activeTopicSlug={bienvenida.slug}
@@ -127,7 +127,7 @@ export default async function GroupPage({
               {cabecera}
               <ReadingProgressBar />
             </div>
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <GroupBody>
               <GroupSidebar
                 activeTopicSlug={topic.slug}
