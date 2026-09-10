@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { Menu } from "lucide-react"
+import Link from "next/link"
+import { Home, Menu } from "lucide-react"
 import { PanelContenidos } from "@/lib/features/student/components/group-sidebar"
 import { Dialog, DialogContent, DialogTitle } from "@shared/components/ui/dialog"
 import { Popover, PopoverContent, PopoverTrigger } from "@shared/components/ui/popover"
@@ -100,30 +101,42 @@ export function BarraContenidos({ topicTitle, lessonTitle, ...panel }: BarraCont
 
   return (
     <div className="sticky top-0 z-30 -mx-4 mb-6 flex items-center gap-2 bg-background px-4 py-2">
-      {/* Desde `xl` el indice se abre aqui. Debajo no se pinta: en un telefono
-          una capa anclada no cabe, y ahi la barra entera hace de disparador. */}
-      <Popover open={abierto && completa === true} onOpenChange={cambiar}>
-        <PopoverTrigger
-          aria-label="Abrir los contenidos del curso"
-          className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/15 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary data-[state=open]:text-foreground dark:border-border xl:flex"
-        >
-          <Menu className="h-4 w-4" />
-        </PopoverTrigger>
-        {/* Sin relleno y sin marco propio: el panel ya trae el suyo, asi que la
-            capa flotante ES el panel y no una caja con otra caja dentro. */}
-        <PopoverContent
-          align="start"
-          sideOffset={8}
-          className="h-[min(34rem,70vh)] w-80 overflow-hidden border-0 p-0 shadow-2xl"
-        >
-          <PanelContenidos {...panel} className="h-full max-h-full shadow-none" />
-        </PopoverContent>
-      </Popover>
+      {/* El atajo al inicio, fuera de la barra. Vivia en la cabecera del panel,
+          donde solo se veia con el indice abierto; aqui esta siempre. Solo en
+          escritorio: en movil ya esta el logo de la cabecera. */}
+      <Link
+        href="/inicio"
+        title="Volver al inicio"
+        aria-label="Volver al inicio"
+        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/15 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground dark:border-border xl:flex"
+      >
+        <Home className="h-4 w-4" />
+      </Link>
 
       {/* En escritorio es texto, no un boton: con el aspecto de boton invitaba a
-          un clic que ya no hace nada, y eso es peor que no tenerlo. Debajo de
-          `xl` si es el disparador del modal. */}
+          un clic que ya no hace nada, y eso es peor que no tenerlo. Lo unico
+          pulsable de dentro es el menu. Debajo de `xl` manda el boton de abajo,
+          que si abre el modal. */}
       <div className={`${marco} hidden xl:flex`}>
+        <Popover open={abierto && completa === true} onOpenChange={cambiar}>
+          <PopoverTrigger
+            aria-label="Abrir los contenidos del curso"
+            className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary data-[state=open]:text-foreground"
+          >
+            <Menu className="h-4 w-4" />
+          </PopoverTrigger>
+          {/* Sin relleno y sin marco propio: el panel ya trae el suyo, asi que
+              la capa flotante ES el panel y no una caja con otra caja dentro.
+              `max-h` y no `h`: se estira hasta donde pida la lista, con techo en
+              la pantalla, para que los diez temas salgan sin desplazar. */}
+          <PopoverContent
+            align="start"
+            sideOffset={12}
+            className="max-h-[86vh] w-80 overflow-hidden border-0 p-0 shadow-2xl"
+          >
+            <PanelContenidos {...panel} compacto className="max-h-[86vh] shadow-none" />
+          </PopoverContent>
+        </Popover>
         {donde}
         {progreso}
       </div>

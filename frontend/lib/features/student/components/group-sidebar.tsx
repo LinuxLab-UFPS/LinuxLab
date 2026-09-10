@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
+import { CheckCircle2, ChevronRight, Hand, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { simulators } from "@shared/lib/content/simulators"
 import {
@@ -35,6 +35,14 @@ interface GroupSidebarProps {
   soloLectura?: boolean
   /** Para ajustar el marco a la capa que lo contiene: flotante o modal. */
   className?: string
+  /**
+   * Sin titulo ni progreso: los pone ya la barra de la que cuelga.
+   *
+   * No es solo por no repetirse. Son 105px que, en un portatil de 800 de alto,
+   * eran la diferencia entre ver los diez temas y tener que desplazar la lista
+   * para llegar al ultimo.
+   */
+  compacto?: boolean
 }
 
 /**
@@ -54,6 +62,7 @@ export function PanelContenidos({
   groupName,
   soloLectura = false,
   className,
+  compacto = false,
 }: GroupSidebarProps) {
   const {
     isLessonDone,
@@ -72,24 +81,19 @@ export function PanelContenidos({
         className,
       )}
     >
-      {/* Nav: home + title */}
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
-        <Link
-          href="/inicio"
-          title="Volver al inicio"
-          aria-label="Volver al inicio"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <Home className="h-4 w-4" />
-        </Link>
-        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
-          {groupName ?? "Contenidos del curso"}
-        </h2>
-      </div>
+      {/* Solo el titulo: el atajo al inicio se mudo a la barra, donde esta a la
+          vista siempre y no solo con el indice abierto. */}
+      {!compacto && (
+        <div className="flex h-12 shrink-0 items-center border-b border-border px-4">
+          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+            {groupName ?? "Contenidos del curso"}
+          </h2>
+        </div>
+      )}
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
           abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
-      {!soloLectura && (
+      {!soloLectura && !compacto && (
         <LessonLink
           href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
           className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
