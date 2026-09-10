@@ -20,6 +20,7 @@ import { parseLessonBlocks } from "@shared/lib/content/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { requireServerRole } from "@/lib/features/auth/session"
 import { TerminalUIProvider } from "@shared/components/terminal-ui"
+import { ContenidosProvider } from "@/lib/features/student/contenidos-ui"
 import { LessonLoadingProvider } from "@shared/components/lesson-loading"
 import {
   ReadingProgressProvider,
@@ -56,6 +57,9 @@ export default async function GroupPage({
     return (
       <LessonProgressProvider soloLectura={soloLectura}>
         <TerminalUIProvider>
+          {/* Dentro de TerminalUIProvider: la barra de contenidos se pliega sola
+              cuando la consola se lleva la derecha, asi que necesita saberlo. */}
+          <ContenidosProvider>
           <LessonLoadingProvider>
             <div className="flex h-screen flex-col overflow-hidden bg-background">
               <div className="z-40 shrink-0 bg-background">
@@ -80,6 +84,7 @@ export default async function GroupPage({
               </main>
             </div>
           </LessonLoadingProvider>
+          </ContenidosProvider>
         </TerminalUIProvider>
       </LessonProgressProvider>
     )
@@ -110,6 +115,7 @@ export default async function GroupPage({
     <LessonProgressProvider soloLectura={soloLectura}>
       <ReadingProgressProvider>
         <TerminalUIProvider>
+         <ContenidosProvider>
          <LessonLoadingProvider>
           {/* El scroll lo tiene el `<main>`, no la ventana. Con el scroll en la
               ventana la barra del navegador es la del viewport entero y corria
@@ -151,6 +157,7 @@ export default async function GroupPage({
             </main>
           </div>
          </LessonLoadingProvider>
+         </ContenidosProvider>
         </TerminalUIProvider>
       </ReadingProgressProvider>
     </LessonProgressProvider>

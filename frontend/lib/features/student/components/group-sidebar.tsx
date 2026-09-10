@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
+import { CheckCircle2, ChevronRight, Hand, Home, Map, PanelLeftClose } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { simulators } from "@shared/lib/content/simulators"
 import {
@@ -18,6 +18,7 @@ import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
 import type { LessonSubtopic } from "@/lib/models/content"
 import type { TopicLessons } from "@shared/lib/content/lessons"
+import { useClasesContenidos, useContenidos } from "@/lib/features/student/contenidos-ui"
 
 interface GroupSidebarProps {
   activeTopicSlug: string
@@ -33,6 +34,11 @@ interface GroupSidebarProps {
    * suyo que contar y las cifras vacias se leerian como un cero real.
    */
   soloLectura?: boolean
+  /**
+   * Si lleva el boton de plegarse a la barra de arriba. Solo lo pide la columna
+   * de escritorio: dentro del modal el boton no tendria a donde plegar.
+   */
+  plegable?: boolean
 }
 
 /**
@@ -51,7 +57,9 @@ export function PanelContenidos({
   topicLessons,
   groupName,
   soloLectura = false,
+  plegable = false,
 }: GroupSidebarProps) {
+  const { plegar } = useContenidos()
   const {
     isLessonDone,
     isTopicDone,
@@ -74,9 +82,22 @@ export function PanelContenidos({
         >
           <Home className="h-4 w-4" />
         </Link>
-        <h2 className="truncate text-sm font-semibold text-foreground">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {groupName ?? "Contenidos del curso"}
         </h2>
+        {/* Plegar la columna. Va en su cabecera porque es donde se mira cuando
+            estorba, y no se pinta dentro del modal, que no tiene columna. */}
+        {plegable && (
+          <button
+            type="button"
+            onClick={() => plegar(true)}
+            title="Plegar los contenidos"
+            aria-label="Plegar los contenidos"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
@@ -239,10 +260,15 @@ export function PanelContenidos({
  * mismo panel se despliega desde `SidebarMovil`.
  */
 export function GroupSidebar(props: GroupSidebarProps) {
+  /* Cuando cabe en columna, va en columna; cuando no, la misma lista se pliega a
+     la barra de arriba. Las dos caras se deciden en un solo sitio para que no
+     puedan verse las dos a la vez ni ninguna. Ver `contenidos-ui.tsx`. */
+  const { columna } = useClasesContenidos()
+
   return (
-    <aside className="sticky top-0 hidden max-h-full w-80 shrink-0 pb-4 pt-16 xl:block">
+    <aside className={cn("sticky top-0 max-h-full w-80 shrink-0 pb-4 pt-16", columna)}>
       <div className="mt-2 flex max-h-full overflow-hidden">
-        <PanelContenidos {...props} />
+        <PanelContenidos {...props} plegable />
       </div>
     </aside>
   )

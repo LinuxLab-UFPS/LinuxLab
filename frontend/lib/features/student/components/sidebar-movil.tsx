@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { PanelLeft } from "lucide-react"
+import { PanelLeft, PanelLeftOpen } from "lucide-react"
 import { PanelContenidos } from "@/lib/features/student/components/group-sidebar"
 import { Dialog, DialogContent, DialogTitle } from "@shared/components/ui/dialog"
+import { cn } from "@shared/lib/utils"
+import { useClasesContenidos, useContenidos } from "@/lib/features/student/contenidos-ui"
 import type { LessonSubtopic } from "@/lib/models/content"
 import type { TopicLessons } from "@shared/lib/content/lessons"
 
@@ -22,10 +24,12 @@ interface SidebarMovilProps {
 }
 
 /**
- * El panel de contenidos en pantalla estrecha.
+ * El panel de contenidos plegado a una barra.
  *
- * En escritorio vive en su columna de 320px; aqui no cabe, asi que se pliega a
- * una barra que dice donde estas y abre el panel al pulsarla.
+ * Nacio para el movil, donde la columna de 320px no cabe, pero es la misma cara
+ * plegada que hace falta en escritorio cuando la consola se lleva la derecha y
+ * la leccion se queda sin ancho para leer. Quien decide cual de las dos caras se
+ * ve es `useClasesContenidos`, para que no puedan verse las dos ni ninguna.
  *
  * La barra va pegada al tope y se queda ahi mientras se lee. Antes iba suelta en
  * el flujo, arriba del texto: a dos pantallazos de leccion quedaba fuera de
@@ -41,6 +45,8 @@ interface SidebarMovilProps {
 export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovilProps) {
   const ruta = usePathname()
   const params = useSearchParams()
+  const { barra } = useClasesContenidos()
+  const { plegar } = useContenidos()
 
   /* Se cierra al llegar a otra leccion, y por eso la ruta forma parte del
      estado. La navegacion del panel es por URL, no por estado: sin esto el modal
@@ -51,12 +57,12 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
   const abierto = estado.clave === clave && estado.abierto
 
   return (
-    <div className="sticky top-0 z-30 -mx-4 mb-6 bg-background px-4 py-2 xl:hidden">
+    <div className={cn("sticky top-0 z-30 -mx-4 mb-6 flex items-center gap-2 bg-background px-4 py-2", barra)}>
       <button
         type="button"
         onClick={() => setEstado({ clave, abierto: true })}
         aria-expanded={abierto}
-        className="flex w-full items-center gap-3 rounded-xl border border-black/15 bg-background px-3 py-2.5 text-left shadow-sm transition-colors hover:bg-secondary dark:border-border"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-black/15 bg-background px-3 py-2.5 text-left shadow-sm transition-colors hover:bg-secondary dark:border-border"
       >
         <PanelLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1">
@@ -70,6 +76,20 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
           )}
         </span>
         <span className="shrink-0 text-xs text-muted-foreground">Contenidos</span>
+      </button>
+
+      {/* Devolverla a su columna. Solo donde hay columna a la que volver: por
+          debajo de `xl` no cabe, y ahi este boton no llevaria a ninguna parte.
+          La barra sigue abriendo el modal al pulsarla; esto es lo unico que
+          hace otra cosa, y por eso va fuera de ella. */}
+      <button
+        type="button"
+        onClick={() => plegar(false)}
+        title="Mostrar los contenidos en su columna"
+        aria-label="Mostrar los contenidos en su columna"
+        className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-black/15 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground dark:border-border xl:flex"
+      >
+        <PanelLeftOpen className="h-4 w-4" />
       </button>
 
       <Dialog
