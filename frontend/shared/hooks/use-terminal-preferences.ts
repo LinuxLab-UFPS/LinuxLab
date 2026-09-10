@@ -4,7 +4,7 @@ import { useCallback, useState } from "react"
 import { useAuth } from "@/lib/features/auth/context"
 import { apiFetch } from "@/lib/api/client"
 
-export const DEFAULT_TERMINAL_FONT_FAMILY = "Menlo, Monaco, 'Courier New', monospace"
+export const DEFAULT_TERMINAL_FONT_FAMILY = "var(--font-geist-mono), ui-monospace, monospace"
 
 /**
  * Preferencias de la terminal del usuario: tamaño y familia tipográfica.

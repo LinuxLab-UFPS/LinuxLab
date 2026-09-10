@@ -29,7 +29,7 @@ interface Props {
  * repinta lo dicho hasta ahora y sigue en directo, asi que la sesion tampoco se
  * pierde al navegar.
  */
-export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo, Monaco, 'Courier New', monospace" }: Props) {
+export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(--font-geist-mono), ui-monospace, monospace" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   /* El addon vive en una referencia y no dentro del efecto de montaje porque lo

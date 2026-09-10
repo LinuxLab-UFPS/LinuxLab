@@ -6,12 +6,19 @@ import { Button } from "@shared/components/ui/button"
 import { requestTerminalReset } from "@/lib/features/terminal/reset"
 import { notify } from "@shared/lib/toast"
 
+/* Solo se ofrece lo que la aplicacion carga de verdad.
+ *
+ * Antes habia cinco opciones de las que no se cargaba ninguna: el navegador
+ * caia en su monoespaciada generica y las cuatro ultimas se veian identicas,
+ * de ahi que pareciera que "solo funcionan las dos primeras". Las tres primeras
+ * de aqui llegan por next/font (app/layout.tsx), asi que se ven igual en
+ * cualquier equipo; la ultima es la del sistema, que si cambia entre maquinas y
+ * por eso se llama por lo que es. */
 const FONTS = [
-  { label: "Menlo (default)", value: "Menlo, Monaco, 'Courier New', monospace" },
-  { label: "Fira Code", value: "'Fira Code', 'Cascadia Code', monospace" },
-  { label: "JetBrains Mono", value: "'JetBrains Mono', monospace" },
-  { label: "Source Code Pro", value: "'Source Code Pro', monospace" },
-  { label: "Monospace", value: "monospace" },
+  { label: "Geist Mono", value: "var(--font-geist-mono), ui-monospace, monospace" },
+  { label: "JetBrains Mono", value: "var(--font-jetbrains-mono), ui-monospace, monospace" },
+  { label: "Fira Code", value: "var(--font-fira-code), ui-monospace, monospace" },
+  { label: "La del sistema", value: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" },
 ]
 
 interface Props {
@@ -41,7 +48,7 @@ export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, on
     // Colores fijos, no tokens del tema: esta barra vive dentro del marco de la
     // terminal, que siempre es oscuro, así que en modo claro no debe volverse
     // blanca. Aplica igual a la terminal del curso y a la pestaña Terminal.
-    <div className="flex items-center gap-4 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm">
       <div className="flex items-center gap-2">
         <label className="text-xs text-white/50">Tamaño:</label>
         <input
@@ -59,9 +66,9 @@ export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, on
       <div className="flex items-center gap-2">
         <label className="text-xs text-white/50">Fuente:</label>
         <select
-          value={fontFamily}
+          value={FONTS.some((f) => f.value === fontFamily) ? fontFamily : FONTS[0].value}
           onChange={(e) => onFontFamilyChange(e.target.value)}
-          className="rounded border border-white/10 bg-[#1a1d24] px-2 py-1 text-xs text-white/80 [color-scheme:dark]"
+          className="min-w-0 max-w-[9rem] rounded border border-white/10 bg-[#1a1d24] px-2 py-1 text-xs text-white/80 [color-scheme:dark]"
         >
           {FONTS.map((f) => (
             <option key={f.value} value={f.value}>
@@ -76,7 +83,7 @@ export function TerminalSettingsBar({ fontSize, fontFamily, onFontSizeChange, on
         size="sm"
         onClick={handleReset}
         disabled={resetting}
-        className="ml-auto gap-1.5 border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
+        className="ml-auto shrink-0 gap-1.5 border-white/10 bg-white/5 text-xs text-white/80 hover:bg-white/10 hover:text-white dark:bg-white/5 dark:hover:bg-white/10"
       >
         <RotateCcw className={`h-3.5 w-3.5 ${resetting ? "animate-spin" : ""}`} />
         {resetting ? "Reseteando..." : "Reset terminal"}

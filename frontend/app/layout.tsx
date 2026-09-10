@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Onest, Geist_Mono } from 'next/font/google'
+import { Onest, Geist_Mono, Fira_Code, JetBrains_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@shared/components/theme-provider'
 import { AuthProvider } from '@/lib/features/auth/context'
@@ -11,6 +11,18 @@ import './globals.css'
 // Onest para el cuerpo (look tipo AlgoMaster) y Geist Mono para terminal/codigo.
 const onest = Onest({ subsets: ["latin"], variable: "--font-onest", display: "swap" });
 const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", display: "swap" });
+
+/* Las dos que puede elegir el estudiante para su terminal. Hasta ahora el
+   selector ofrecia cinco fuentes de las que no se cargaba ninguna, asi que
+   todas menos la primera caian en la monoespaciada generica y se veian
+   identicas: de ahi que "solo funcionaran las dos primeras". Solo peso 400, que
+   es lo unico que una terminal usa. */
+const firaCode = Fira_Code({
+  subsets: ["latin"], weight: "400", variable: "--font-fira-code", display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"], weight: "400", variable: "--font-jetbrains-mono", display: "swap",
+});
 
 /* Sin esto el telefono simula una pantalla ancha y encoge la pagina entera, que
    es justo lo contrario de lo que hacen las vistas de movil. `width=device-width`
@@ -52,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${onest.variable} ${geistMono.variable} bg-background`} suppressHydrationWarning>
+    <html lang="es" className={`${onest.variable} ${geistMono.variable} ${firaCode.variable} ${jetbrainsMono.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         {/* `disableTransitionOnChange`: el cambio de tema es instantaneo. Habia
             un crossfade de 0.28s sobre todos los colores y se notaba como un
