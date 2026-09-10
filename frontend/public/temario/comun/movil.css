@@ -103,67 +103,10 @@
   }
 }
 
-/* ── La barra de escritura que inyecta movil.js ──────────────────────────
- * Solo aparece en pantallas donde no hay teclado fisico. Va fija abajo porque
- * es donde el teclado del sistema deja el hueco, y porque asi no se pierde al
- * desplazar el escenario.
- */
-#barra-teclado {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 70;
-  display: flex;
-  gap: 8px;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
-  background: #0d1117;
-  border-top: 1px solid rgba(255, 255, 255, .1);
-}
-
-#teclado-movil {
-  flex: 1;
-  min-width: 0;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, .12);
-  background: #1a1d24;
-  color: #e6edf3;
-  font-family: "Geist Mono", ui-monospace, monospace;
-  font-size: 16px; /* 16 o menos hace que iOS acerque la pagina al enfocar */
-}
-
-#teclado-movil:focus {
-  outline: none;
-  border-color: #C41E3A;
-}
-
-#barra-teclado button {
-  flex-shrink: 0;
-  width: 44px;
-  height: 40px;
-  border: 0;
-  border-radius: 8px;
-  background: #C41E3A;
-  color: #fff;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-/* El escenario deja sitio para la barra, si no la tapa. Mismo criterio que la
-   barra: donde hay dedo, no donde la ventana es estrecha. */
-@media (pointer: coarse) {
-  .stage,
-  .desk {
-    padding-bottom: 68px !important;
-  }
-}
-
 /* ── El aviso de los que necesitan teclado fisico ────────────────────────
  * Retos de vi se juega con teclas sueltas (h, j, k, l, dd, yy, p), no
- * escribiendo comandos: una barra de escritura no sirve de nada ahi. Antes que
- * ofrecer algo injugable, se dice.
+ * escribiendo comandos: el campo de texto que llevan los otros cinco no le
+ * sirve de nada. Antes que ofrecer algo injugable, se dice.
  *
  * Por tipo de puntero y no por ancho: en un computador con la ventana pequeña
  * hay teclado fisico, y ahi el cartel estaba mintiendo.
@@ -213,24 +156,5 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-  }
-}
-
-/* El unico simulador con campo propio es el del sistema de archivos (tema 3),
-   que por eso no lleva la barra inyectada. Su campo mide 13.5px, y iOS acerca la
-   pagina al enfocar cualquier cosa por debajo de 16: la deja ampliada y no se
-   vuelve sola. `html body` por lo mismo que arriba, que su <style> va despues de
-   este archivo. */
-@media (pointer: coarse) {
-  html body .inp {
-    font-size: 16px;
-  }
-}
-
-/* El dock de aplicaciones y la barra de escritura se disputaban el borde
-   inferior: el dock sube justo por encima de ella. */
-@media (pointer: coarse) {
-  .dock {
-    bottom: 76px !important;
   }
 }

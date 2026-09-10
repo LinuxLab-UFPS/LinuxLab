@@ -5,7 +5,9 @@
 <link rel="stylesheet" href="/temario/comun/barra.css">
 <link rel="stylesheet" href="/temario/comun/claro.css">
 <link rel="stylesheet" href="/temario/comun/movil.css">
+<link rel="stylesheet" href="/temario/comun/entrada.css">
 <script src="/temario/comun/barra.js"></script>
+<script src="/temario/comun/consola.js"></script>
 <style>
 :root {
   --bg:     #0D1117;
@@ -65,7 +67,6 @@ body{
 .entrada{display:flex;align-items:center}
 .ps1{color:var(--green);font-weight:700;flex-shrink:0}
 .typed{color:var(--bright);white-space:pre}
-.caret{display:inline-block;width:8px;height:16px;background:var(--bright);animation:blink 1.05s step-end infinite;vertical-align:-3px}
 @keyframes blink{50%{opacity:0}}
 
 /* ---------- ficha del archivo ---------- */
@@ -197,7 +198,9 @@ html.claro .card{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27
       <div class="console" id="console">
         <div class="prompt">
           <span class="ps1">$</span>
-          <span class="entrada"><span class="typed" id="typed"></span><span class="caret"></span></span>
+          <input class="typed" id="typed" type="text" autocomplete="off"
+               autocapitalize="none" autocorrect="off" spellcheck="false"
+               aria-label="Escribe un comando">
         </div>
       </div>
     </div>
@@ -400,7 +403,7 @@ const barra = Barra.montar({
 // cuenta, o lo pulsado ahi cae sobre el archivo recien puesto en la mesa.
 let transicion = false;
 
-let orden = [], ronda = 0, puntos = 0, tecleado = "";
+let orden = [], ronda = 0, puntos = 0;
 let actual = null, restante = 0, limite = 0, tick = null, jugando = false;
 
 /* Tres de chmod y dos de umask, en ese orden: la máscara sólo tiene sentido
@@ -513,10 +516,8 @@ function arrancarTiempo() {
 }
 
 /* ---------- resolución ---------- */
-function enviar() {
-  const linea = tecleado.trim().replace(/\s+/g, " ");
-  tecleado = "";
-  $("typed").textContent = "";
+function enviar(cruda) {
+  const linea = (cruda || "").trim().replace(/\s+/g, " ");
   if (!linea) return;
   escribir("$ " + linea, "echo");
 
@@ -626,8 +627,7 @@ function cargarRonda() {
   transicion = false;
   const r = orden[ronda];
   actual = r.tipo === "chmod" ? { modo: r.datos.modo } : { mascara: 0o022 };
-  tecleado = "";
-  $("typed").textContent = "";
+  if (consola) consola.limpiar();
   limpiarConsola();
   estado("espera");
   pintarCabecera();
@@ -650,6 +650,7 @@ function empezar() {
   $("portada").classList.add("hide");
   $("results-overlay").hidden = true;
   cargarRonda();
+  if (consola) consola.enfocar();
 }
 
 function volverAlInicio() {
@@ -662,28 +663,22 @@ function volverAlInicio() {
 
 const hist = Barra.historial();
 
+/* La consola lleva un campo de verdad (ver `comun/consola.js`): el teclado del
+   telefono sale al tocarlo, y pegar y borrar los resuelve el navegador. */
+const consola = Consola.montar({
+  campo: "typed",
+  historial: hist,
+  // Entre rondas la partida esta cambiando de pantalla: lo que se teclee ahi no
+  // es para la ronda que se va ni para la que aun no ha entrado.
+  ocupado: () => transicion || !jugando,
+  ejecutar: enviar,
+});
+
+/* Antes de empezar, Enter o espacio arrancan. Es lo unico que sigue leyendose
+   del documento: en ese momento no hay ronda ni consola a la que escribir. */
 document.addEventListener("keydown", (e) => {
-  if (transicion) { e.preventDefault(); return }
-  if (!jugando) {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
-    return;
-  }
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.key === "Enter") { e.preventDefault(); hist.recordar(tecleado); return enviar() }
-  // Flecha arriba y abajo, el historial de la shell: repetir un comando largo
-  // obligaba a escribirlo entero otra vez.
-  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-    e.preventDefault();
-    const previa = hist.mover(e.key === "ArrowUp" ? 1 : -1);
-    if (previa === null) return;
-    tecleado = previa;
-    $("typed").textContent = tecleado;
-    return;
-  }
-  if (e.key === "Backspace") { e.preventDefault(); tecleado = tecleado.slice(0, -1) }
-  else if (e.key.length === 1) { e.preventDefault(); tecleado += e.key }
-  else return;
-  $("typed").textContent = tecleado;
+  if (jugando || transicion) return;
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar() }
 });
 
 $("play").addEventListener("click", empezar);
@@ -695,6 +690,3 @@ pintarCabecera();
 barra.jugando(false);
 </script>
 
-<!-- El teclado en pantalla tactil: este simulador lee las teclas del
-     documento y no tiene campo propio donde escribir. -->
-<script src="/temario/comun/movil.js"></script>
