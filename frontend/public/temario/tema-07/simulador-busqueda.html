@@ -130,6 +130,10 @@ button.win-dot::after{
 .msg.yo{align-self:flex-end;border-bottom-right-radius:3px;
   background:var(--surf2);border:1px solid var(--border);color:var(--bright)}
 .msg.mal{background:rgba(255,59,87,.10);border-color:#7A2233;color:#FFB3C0}
+/* Lo que hay que hacer, en el ambar de la marca: los demas mensajes son azules
+   y este tiene que encontrarse de un vistazo al volver al chat. */
+.msg.objetivo{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.45);color:#FFE0A3}
+.msg.objetivo b{color:#FFC864}
 .msg code{background:rgba(0,0,0,.35);border-radius:3px;padding:0 3px;color:var(--azul-app)}
 /* Los tres puntos mientras escribe. Se turnan, no parpadean a la vez. */
 .msg.escribiendo{display:flex;gap:4px;align-items:center;padding:10px 12px}
@@ -1286,6 +1290,39 @@ function terminoDe(m) {
   return "";
 }
 
+/**
+ * El termino que se nombre, venga como venga la pregunta.
+ *
+ * `terminoDe` exige la forma «que es / que son / que significa / que hace», y
+ * fuera de ahi no reconoce nada: «como funciona grep», «explicame find» o «grep»
+ * a secas se colaban como intento de respuesta y Laura contestaba que no le
+ * cuadra. Regañar a quien pregunta es lo contrario de lo que queremos.
+ *
+ * Esto barre el mensaje entero buscando cualquier cosa del glosario. Se usa como
+ * ultimo recurso y DESPUES de comprobar si la respuesta es la correcta, para que
+ * un dato valido que por casualidad nombre una herramienta se confirme igual.
+ */
+function terminoSuelto(m) {
+  const s = pelado(m);
+  if (!s) return null;
+  // Primero la pareja comando+opcion, por lo mismo que en `terminoDe`: quien
+  // escribe «grep -r» pregunta por la opcion, no por grep.
+  for (const pareja of Object.keys(OPCIONES)) {
+    const [cmd, opcion] = pareja.split(" ");
+    if (s.includes(cmd) && new RegExp("(^|[^a-z0-9-])" + opcion + "($|[^a-z0-9])").test(s)) {
+      return pareja;
+    }
+  }
+  for (const [frase, clave] of Object.entries(ALIAS)) {
+    if (s.includes(frase)) return clave;
+  }
+  for (const clave of Object.keys(GLOSARIO)) {
+    const c = pelado(clave);
+    if (new RegExp("(^|[^a-z0-9-])" + c.replace("-", "\\-") + "($|[^a-z0-9])").test(s)) return clave;
+  }
+  return null;
+}
+
 /** Cuantas veces ha pedido ayuda con el dato en curso. */
 let ayudas = 0;
 
@@ -1338,13 +1375,15 @@ let tropiezos = 0;
    asi que la espera no bloquea al que ya sabe la siguiente respuesta. */
 let cola = [], escribiendo = false, temporizador = null;
 
-function di(de, texto, mal) {
+/* `tono` es la clase que lleva la burbuja: "mal" cuando la respuesta no cuadra,
+   "objetivo" para lo que Laura pide, y nada para el resto de la conversacion. */
+function di(de, texto, tono) {
   if (de === "yo") {
-    charla.push({ de, texto, mal: false });
+    charla.push({ de, texto, tono: "" });
     pintarChat();
     return;
   }
-  cola.push({ de, texto, mal: Boolean(mal) });
+  cola.push({ de, texto, tono: tono || "" });
   bombear();
 }
 
@@ -1376,7 +1415,7 @@ function pintarChat() {
   cont.innerHTML = "";
   for (const m of charla) {
     const d = document.createElement("div");
-    d.className = "msg " + m.de + (m.mal ? " mal" : "");
+    d.className = "msg " + m.de + (m.tono ? " " + m.tono : "");
     d.innerHTML = m.texto;
     cont.appendChild(d);
   }
@@ -1389,11 +1428,17 @@ function pintarChat() {
   cont.scrollTop = cont.scrollHeight;
 }
 
-/** Lo que Laura pide ahora. */
+/**
+ * Lo que Laura pide ahora.
+ *
+ * Va en ambar y rotulado, mientras el resto de su charla sigue azul: entre
+ * saludos, confirmaciones y explicaciones, la peticion es lo unico que hay que
+ * hacer, y salia igual que todo lo demas.
+ */
 function pedir() {
   const lista = objetivos();
   if (paso >= lista.length) return;
-  di("ella", lista[paso].pista);
+  di("ella", "<b>Objetivo:</b> " + lista[paso].pista, "objetivo");
 }
 
 /** La respuesta del estudiante, contra el dato en curso. */
@@ -1429,12 +1474,17 @@ function responderChat() {
     return;
   }
 
+  // No era la respuesta: antes de darlo por fallo, se mira si nombraba algo del
+  // glosario. «Como funciona grep» es una pregunta, no un intento.
+  const suelto = terminoSuelto(valor);
+  if (suelto !== null) { responderTermino(suelto); return; }
+
   tropiezos++;
   // Primero se repite lo pedido; a la segunda se dice con qué herramienta se
   // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
   di("ella", tropiezos === 1
     ? "Eso no me cuadra. Si te has atascado, pregúntame «¿Cómo hago eso?»."
-    : (lista[paso].terreno || lista[paso].terminal), true);
+    : (lista[paso].terreno || lista[paso].terminal), "mal");
 }
 
 /** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
