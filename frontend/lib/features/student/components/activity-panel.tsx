@@ -109,7 +109,9 @@ export function ActivityPanel({
           {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
           {checking ? "Comprobando..." : "Comprobar"}
         </ActionButton>
-        {data?.workdir && (
+        {/* Solo cuando hace falta: estando ya dentro no lleva a ningun sitio, y
+            su presencia hacia dudar de si se estaba en el sitio correcto. */}
+        {data?.workdir && !enElDirectorio && (
           <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
             <FolderOpen className="h-4 w-4" />
             Ir al directorio
@@ -224,10 +226,10 @@ export function ActivityPanel({
               {checking ? "Comprobando..." : "Comprobar actividad"}
             </ActionButton>
 
-            {/* Volver al directorio es lo que se hace muchas veces por sesion, asi
-                que va como boton; rehacer los archivos se hace una vez y borra
+            {/* Aparece solo estando fuera: es la salida de ese estado, no un
+                boton permanente. Rehacer los archivos se hace una vez y borra
                 trabajo, asi que va como icono y pregunta antes. */}
-            {data?.workdir && (
+            {data?.workdir && !enElDirectorio && (
               <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
                 <FolderOpen className="h-4 w-4" />
                 Ir al directorio

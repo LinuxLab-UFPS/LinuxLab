@@ -20,6 +20,14 @@ const ROJO = "\x1b[31m"
 const NEGRITA = "\x1b[1m"
 const FIN = "\x1b[0m"
 
+/* Borra la linea donde esta el cursor y vuelve al principio.
+ *
+ * El aviso se pinta donde quedo el cursor, que es justo despues del prompt, asi
+ * que sin esto salia pegado a el y parecia un comando que el estudiante hubiera
+ * escrito. Se borra ese prompt, se escribe el aviso en su sitio y la shell pinta
+ * uno nuevo debajo. */
+const LIMPIAR_LINEA = "\x1b[2K\r"
+
 /** Qué se está resolviendo, para nombrarlo por su nombre en el veredicto. */
 export type TipoDeReto = "actividad" | "comprobacion"
 
@@ -47,7 +55,7 @@ function devolverPrompt() {
  * cualquier comando.
  */
 export function avisarEnunciado(titulo: string, enunciado: string) {
-  escribirAviso(`${AMBAR}${titulo}: ${enunciado}${FIN}\r\n`)
+  escribirAviso(`${LIMPIAR_LINEA}${AMBAR}${titulo}: ${enunciado}${FIN}\r\n`)
   devolverPrompt()
 }
 
@@ -61,6 +69,6 @@ export function avisarResultado(
   const color = aprobada ? VERDE : ROJO
   const nombre = tipo === "comprobacion" ? "Comprobación" : "Actividad"
   const texto = `${nombre} ${aprobada ? "aprobada" : "no aprobada"}`
-  escribirAviso(`${NEGRITA}${color}${texto} (${puntaje}/${total} pts)${FIN}\r\n`)
+  escribirAviso(`${LIMPIAR_LINEA}${NEGRITA}${color}${texto} (${puntaje}/${total} pts)${FIN}\r\n`)
   devolverPrompt()
 }

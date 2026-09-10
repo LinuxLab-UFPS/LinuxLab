@@ -1,7 +1,7 @@
 "use client"
 
 import { env } from "@/lib/config/env"
-import { markTerminalReady } from "@/lib/features/student/terminal-input"
+import { markTerminalReady, markTerminalNotReady } from "@/lib/features/student/terminal-input"
 
 /**
  * La sesion de terminal, fuera de React.
@@ -95,7 +95,13 @@ function olvidarCwd() {
 function leerCwd(texto: string) {
   let ultima: string | null = null
   for (const m of texto.matchAll(OSC7)) ultima = m[1]
-  if (ultima === null || ultima === cwd) return
+  if (ultima === null) return
+  /* El prompt es la unica prueba de que hay una shell escuchando: lo emite ella
+     misma (OSC 7, ver `linuxlab-shell.sh`). Aqui se vacia la cola de comandos
+     que llegaron antes, y no al abrir el socket, que es un segundo antes de que
+     exista la PTY. */
+  markTerminalReady()
+  if (ultima === cwd) return
   cwd = ultima
   for (const oyente of oyentesCwd) oyente(cwd)
 }
@@ -175,9 +181,9 @@ function conectar() {
     abierta = true
     intento = 0
     if (tamaño) socket.send(JSON.stringify({ type: "resize", ...tamaño }))
-    // La terminal está lista: los comandos que llegaron antes (p. ej. el cd a
-    // el directorio de trabajo al abrir una actividad) se vacían en orden.
-    markTerminalReady()
+    // Ojo: aqui NO se vacia la cola. El socket abierto no quiere decir que haya
+    // shell, y lo que se escriba antes del primer prompt se pierde. Se hace en
+    // `leerCwd`, cuando la shell habla.
   }
 
   socket.onmessage = (event) => {
@@ -206,6 +212,8 @@ function conectar() {
     olvidarPantallaAlterna()
     // Lo tecleado que no llego a salir era para esa shell, no para la siguiente.
     olvidarEntrada()
+    // Y lo que se mande desde fuera vuelve a la cola hasta el proximo prompt.
+    markTerminalNotReady()
 
     // Nunca llego a abrirse y quedan intentos.
     if (!abierta && intento < ESPERAS.length) {

@@ -159,7 +159,11 @@ export function TerminalWorkspace({
                 />
               }
             >
-              <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
+              {/* Con el marco pegado al borde de la pantalla, la primera columna
+                  quedaba en el filo. Mismo aire que en el modal. */}
+              <div className="h-full px-2 py-1">
+                <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
+              </div>
             </TerminalFrame>
           </div>
         </div>

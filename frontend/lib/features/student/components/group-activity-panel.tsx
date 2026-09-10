@@ -156,10 +156,13 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             {checking ? "Comprobando..." : "Comprobar"}
           </ActionButton>
         )}
-        <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
-          <FolderOpen className="h-4 w-4" />
-          Ir al directorio
-        </ActionButton>
+        {/* Solo cuando hace falta: estando ya dentro no lleva a ningun sitio. */}
+        {!enElDirectorio && (
+          <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+            <FolderOpen className="h-4 w-4" />
+            Ir al directorio
+          </ActionButton>
+        )}
         <IconAction
           label={resetting ? "Vaciando..." : "Vaciar el directorio"}
           icon={resetting ? Loader2 : RotateCcw}
@@ -288,10 +291,12 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
             )}
             </div>
 
-            <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
-              <FolderOpen className="h-4 w-4" />
-              Ir al directorio
-            </ActionButton>
+            {!enElDirectorio && (
+              <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+                <FolderOpen className="h-4 w-4" />
+                Ir al directorio
+              </ActionButton>
+            )}
 
             {/* Ir al directorio se hace muchas veces por sesion, asi que va como
                 boton; vaciar el directorio borra trabajo, asi que va como icono y
