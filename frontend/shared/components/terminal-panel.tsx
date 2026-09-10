@@ -25,7 +25,10 @@ export function TerminalPanel({ onClose }: { onClose: () => void }) {
     // contra una altura automatica, dejandola a media pantalla. Con esto ocupa
     // todo lo que no es cabecera y el `py-4` reparte el mismo margen arriba y
     // abajo.
-    <aside className="sticky top-0 flex h-[calc(100vh-66px)] w-[38%] min-w-[360px] shrink-0 flex-col gap-3 bg-background py-4">
+        /* Mas ancha desde que el indice dejo de ser una columna: con solo la
+       leccion al lado sobra sitio, y a 1280 el 38% dejaba una consola alta y
+       estrecha que no se parecia a una terminal. */
+    <aside className="sticky top-0 flex h-[calc(100vh-66px)] w-[44%] min-w-[420px] shrink-0 flex-col gap-3 bg-background py-4">
       <TerminalFrame
         className="min-h-0 flex-1"
         onClose={onClose}

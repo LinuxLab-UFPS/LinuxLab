@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Hand, Home, Map, PanelLeftClose } from "lucide-react"
+import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { simulators } from "@shared/lib/content/simulators"
 import {
@@ -18,7 +18,6 @@ import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
 import type { LessonSubtopic } from "@/lib/models/content"
 import type { TopicLessons } from "@shared/lib/content/lessons"
-import { useClasesContenidos, useContenidos } from "@/lib/features/student/contenidos-ui"
 
 interface GroupSidebarProps {
   activeTopicSlug: string
@@ -34,12 +33,7 @@ interface GroupSidebarProps {
    * suyo que contar y las cifras vacias se leerian como un cero real.
    */
   soloLectura?: boolean
-  /**
-   * Si lleva el boton de plegarse a la barra de arriba. Solo lo pide la columna
-   * de escritorio: dentro del modal el boton no tendria a donde plegar.
-   */
-  plegable?: boolean
-  /** Para que la columna pueda quitarle el marco de tarjeta y pegarse al borde. */
+  /** Para ajustar el marco a la capa que lo contiene: flotante o modal. */
   className?: string
 }
 
@@ -59,10 +53,8 @@ export function PanelContenidos({
   topicLessons,
   groupName,
   soloLectura = false,
-  plegable = false,
   className,
 }: GroupSidebarProps) {
-  const { plegar } = useContenidos()
   const {
     isLessonDone,
     isTopicDone,
@@ -93,21 +85,6 @@ export function PanelContenidos({
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
           {groupName ?? "Contenidos del curso"}
         </h2>
-        {/* Plegar la columna, en el borde por el que se va: la columna esta a la
-            izquierda de la leccion y se retira hacia ese lado, asi que el boton
-            queda en el canto contrario, apuntando la salida. No se pinta dentro
-            del modal, que no tiene columna a la que volver. */}
-        {plegable && (
-          <button
-            type="button"
-            onClick={() => plegar(true)}
-            title="Plegar los contenidos"
-            aria-label="Plegar los contenidos"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          >
-            <PanelLeftClose className="h-4 w-4" />
-          </button>
-        )}
       </div>
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
@@ -255,41 +232,5 @@ export function PanelContenidos({
       </nav>
 
     </div>
-  )
-}
-
-/**
- * El panel en su columna, que es como se ve en escritorio.
- *
- * `top-0` y `max-h-full`: se pega al borde de su contenedor con scroll, que es
- * el <main> de la pagina y ya empieza debajo de la cabecera. Antes descontaba a
- * mano los 66px de la cabecera porque el que scrolleaba era la ventana. La
- * lista de temas sigue a mano mientras la pagina se desplaza.
- *
- * En movil se esconde: 320px que no ceden dejaban la leccion sin ancho. Alli el
- * mismo panel se despliega desde `SidebarMovil`.
- */
-export function GroupSidebar(props: GroupSidebarProps) {
-  /* Cuando cabe en columna, va en columna; cuando no, la misma lista se pliega a
-     la barra de arriba. Las dos caras se deciden en un solo sitio para que no
-     puedan verse las dos a la vez ni ninguna. Ver `contenidos-ui.tsx`. */
-  const { columna } = useClasesContenidos()
-
-  return (
-    /* Pegada al borde y de arriba abajo, como la barra de cualquier aplicacion.
-       Antes flotaba dentro de la fila centrada, con un margen a su izquierda y
-       sin llegar al bajo de la pantalla: se leia como una tarjeta suelta en vez
-       de como el marco de la pagina, y dejaba la leccion descentrada.
-
-       El alto va contra el viewport y no en `h-full` por lo mismo que en
-       `TerminalPanel`: la fila alinea a `items-start`, asi que no la estira y un
-       `h-full` se resolveria contra una altura automatica. */
-    <aside className={cn("sticky top-0 h-[calc(100vh-66px)] w-80 shrink-0", columna)}>
-      <PanelContenidos
-        {...props}
-        plegable
-        className="h-full max-h-full rounded-none border-0 border-r border-black/15 shadow-none dark:border-border"
-      />
-    </aside>
   )
 }

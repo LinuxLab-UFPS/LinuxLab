@@ -1,11 +1,10 @@
 import { SiteHeader } from "@/lib/features/student/components/site-header"
 import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
-import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
 import { GroupBody } from "@/lib/features/student/components/group-body"
 import { ContentArea } from "@/lib/features/student/components/content-area"
 import { GroupTerminal } from "@shared/components/group-terminal"
 import { syllabus, getTopicBySlug } from "@shared/lib/content/temario"
-import { bienvenida, esBienvenida, paginaBienvenida } from "@shared/lib/content/bienvenida"
+import { esBienvenida, paginaBienvenida } from "@shared/lib/content/bienvenida"
 import { WelcomeArea } from "@/lib/features/student/components/welcome-area"
 import { getBienvenidaMarkdown } from "@shared/lib/content/lessons"
 import {
@@ -20,7 +19,6 @@ import { parseLessonBlocks } from "@shared/lib/content/lesson-blocks"
 import { LessonProgressProvider } from "@/lib/features/student/progress"
 import { requireServerRole } from "@/lib/features/auth/session"
 import { TerminalUIProvider } from "@shared/components/terminal-ui"
-import { ContenidosProvider } from "@/lib/features/student/contenidos-ui"
 import { LessonLoadingProvider } from "@shared/components/lesson-loading"
 import {
   ReadingProgressProvider,
@@ -57,24 +55,12 @@ export default async function GroupPage({
     return (
       <LessonProgressProvider soloLectura={soloLectura}>
         <TerminalUIProvider>
-          {/* Dentro de TerminalUIProvider: la barra de contenidos se pliega sola
-              cuando la consola se lleva la derecha, asi que necesita saberlo. */}
-          <ContenidosProvider>
           <LessonLoadingProvider>
             <div className="flex h-screen flex-col overflow-hidden bg-background">
               <div className="z-40 shrink-0 bg-background">
                 {cabecera}
               </div>
               <main className="flex-1 overflow-y-auto overflow-x-hidden">
-                {/* Ver la otra rama: la barra se ancla al borde, fuera del
-                    centrado. */}
-                <div className="flex items-start">
-                  <GroupSidebar
-                    activeTopicSlug={bienvenida.slug}
-                    activeSubtopicId={pagina?.id}
-                    topicLessons={getTopicLessons()}
-                    soloLectura={soloLectura}
-                  />
                 <GroupBody>
                   <WelcomeArea
                     page={pagina}
@@ -84,11 +70,9 @@ export default async function GroupPage({
                   />
                   <GroupTerminal />
                 </GroupBody>
-                </div>
               </main>
             </div>
           </LessonLoadingProvider>
-          </ContenidosProvider>
         </TerminalUIProvider>
       </LessonProgressProvider>
     )
@@ -119,7 +103,6 @@ export default async function GroupPage({
     <LessonProgressProvider soloLectura={soloLectura}>
       <ReadingProgressProvider>
         <TerminalUIProvider>
-         <ContenidosProvider>
          <LessonLoadingProvider>
           {/* El scroll lo tiene el `<main>`, no la ventana. Con el scroll en la
               ventana la barra del navegador es la del viewport entero y corria
@@ -138,18 +121,6 @@ export default async function GroupPage({
               <ReadingProgressBar />
             </div>
             <main className="flex-1 overflow-y-auto overflow-x-hidden">
-              {/* La barra de contenidos va fuera de la fila centrada: se ancla al
-                  borde y ocupa el alto entero, y lo demas se centra en lo que
-                  queda. Dentro de `GroupBody` la barra viajaba con el centrado y
-                  arrastraba la leccion fuera de eje. */}
-            <div className="flex items-start">
-              <GroupSidebar
-                activeTopicSlug={topic.slug}
-                activeSubtopicId={activeSubtopic?.id}
-                contentSubtopics={meta?.subtopics}
-                topicLessons={getTopicLessons()}
-                soloLectura={soloLectura}
-              />
             <GroupBody>
               <ContentArea
                 topic={topic}
@@ -163,11 +134,9 @@ export default async function GroupPage({
               />
               <GroupTerminal />
             </GroupBody>
-            </div>
             </main>
           </div>
          </LessonLoadingProvider>
-         </ContenidosProvider>
         </TerminalUIProvider>
       </ReadingProgressProvider>
     </LessonProgressProvider>
