@@ -320,7 +320,11 @@ const PISTAS_GREP = [
   {
     id: "causa",
     etiqueta: "Causa raíz",
-    pista: "Ya se debería haber reportado la <b>causa raíz</b> del incidente. Necesito saber cuál fue, búscala en el historial de incidencias.",
+    /* La frase va tal cual esta escrita en el archivo, con su mayuscula y sin
+       la tilde: `grep` compara literalmente, asi que una pista que la escriba
+       de otra forma manda a buscar algo que no existe. Los archivos del caso
+       imitan registros de verdad y van sin tildes. */
+    pista: "Ya se debería haber reportado la causa del incidente. En el historial de incidencias hay una línea que empieza por <b>Causa raiz</b>, así, sin tilde. Necesito saber cuál fue.",
     terreno: "Los informes están en incidencias/. La línea que busco empieza por «Causa raiz».",
     terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
@@ -347,8 +351,8 @@ const PISTAS_GREP = [
   {
     id: "autor",
     etiqueta: "Quién desplegó",
-    pista: "Nadie firmó el despliegue del viernes, pero en el registro tuvo que quedar quién lo hizo. Busca dónde dice <b>desplegado por</b>.",
-    terreno: "Los registros de despliegue están en despliegues/. Busca una línea que hable de quién desplegó.",
+    pista: "Nadie firmó el despliegue del viernes, pero en el registro tuvo que quedar quién lo hizo. Busca la línea que dice <b>Desplegado por</b>.",
+    terreno: "Los registros de despliegue están en despliegues/. La línea que busco empieza por «Desplegado por».",
     terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
     arma() {
       const quien = alAzar(COMPANEROS);
@@ -372,8 +376,8 @@ const PISTAS_GREP = [
   {
     id: "afectado",
     etiqueta: "Servicio afectado",
-    pista: "El equipo de monitoreo me mandó un aviso cuando se cayó. Dime qué <b>servicio</b> fue <b>afectado</b>.",
-    terreno: "Los avisos están en avisos/. El que sirve es el crítico, y nombra el servicio afectado.",
+    pista: "El equipo de monitoreo me mandó un aviso cuando se cayó. Busca la línea que dice <b>Servicio afectado</b> y dime cuál fue.",
+    terreno: "Los avisos están en avisos/. El que sirve es el crítico, y su línea empieza por «Servicio afectado».",
     terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
       const servicio = alAzar(SERVICIOS);
@@ -432,7 +436,7 @@ const PISTAS_REGEX = [
   {
     id: "build",
     etiqueta: "Número de build",
-    pista: "Dime el número de <b>build</b> que rompió producción. Va con esa etiqueta delante.",
+    pista: "Dime el número de build que rompió producción. Va etiquetado como <b>BUILD</b>, en mayúsculas, y cinco dígitos.",
     terreno: "Lleva la etiqueta BUILD y cinco dígitos. Mira en integracion/, y ojo que hay etiquetas parecidas que no valen.",
     terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
     arma() {
