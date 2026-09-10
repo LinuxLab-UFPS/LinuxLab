@@ -7,6 +7,9 @@ const config = require("../config/env")
 // log driver expects anyway.
 const logger = pino({
   level: config.logLevel,
+  // En pruebas unitarias la salida del logger ensucia el reporte de Jest:
+  // se silencia por completo.
+  enabled: process.env.NODE_ENV !== "test",
   ...(!config.isProd && {
     transport: {
       target: "pino-pretty",

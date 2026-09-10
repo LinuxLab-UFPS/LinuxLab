@@ -63,7 +63,8 @@ app.use(cors({
 }));
 
 app.use(morgan('[:date[clf]] [:method] :url :status :res[content-length] - :response-time ms', {
-    skip: (req) => req.url === "/" || req.url === "/api/health" || req.url.startsWith("/terminal"),
+	// En pruebas unitarias el acceso HTTP ensucia el reporte de Jest.
+	skip: (req) => req.url === "/" || req.url === "/api/health" || req.url.startsWith("/terminal") || process.env.NODE_ENV === "test",
 }));
 
 app.use((req, _res, next) => {
