@@ -38,6 +38,7 @@ import {
 import type { SearchItem } from "@shared/lib/content/lessons"
 import type { Simulator } from "@shared/lib/content/simulators"
 import { getActivities } from "@shared/lib/content/activities"
+import { NavMenuMovil } from "@shared/components/nav-menu-movil"
 
 /** Icono propio de cada simulador en el menú; sin entrada, cae al del grupo. */
 const SIMULATOR_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -124,7 +125,17 @@ export function SiteHeader({
           </Link>
         </nav>
 
+        {/* Por debajo del umbral el nav de arriba se esconde: aqui esta el
+            mismo destino, para que no haya que saberse la URL. */}
         <div className="ml-auto flex items-center gap-2">
+          <NavMenuMovil
+            enlaces={[
+              { href: "/terminal", label: "Terminal", icon: SquareTerminal, activo: pathname === "/terminal" },
+              { href: "/actividades", label: "Actividades", icon: Target, activo: pathname.startsWith("/actividades") },
+              { href: "/simuladores", label: "Simuladores", icon: MonitorPlay, activo: pathname.startsWith("/simuladores") },
+              { href: "/estudiante/grupo", label: "Rendimiento", icon: BarChart3, activo: pathname.startsWith("/estudiante/grupo") },
+            ]}
+          />
           {/* Search opens the modal palette. */}
           <button
             type="button"

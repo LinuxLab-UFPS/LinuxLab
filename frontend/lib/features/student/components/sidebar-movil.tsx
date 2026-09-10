@@ -44,7 +44,7 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
   }, [ruta, params])
 
   return (
-    <div className="w-full md:hidden">
+    <div className="w-full xl:hidden">
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}

@@ -207,7 +207,7 @@ export function PanelContenidos({
                     {simulators
                       .filter((sim) => sim.topicNumber === topic.number)
                       .map((sim) => (
-                        <li key={sim.id} className="hidden md:list-item">
+                        <li key={sim.id}>
                           <LessonLink href={sim.href} className={filaHija(false, false)}>
                             <VinetaSimulador />
                             <span className="min-w-0 truncate">{sim.title}</span>
@@ -240,7 +240,7 @@ export function PanelContenidos({
  */
 export function GroupSidebar(props: GroupSidebarProps) {
   return (
-    <aside className="sticky top-0 hidden max-h-full w-80 shrink-0 pb-4 pt-16 md:block">
+    <aside className="sticky top-0 hidden max-h-full w-80 shrink-0 pb-4 pt-16 xl:block">
       <div className="mt-2 flex max-h-full overflow-hidden">
         <PanelContenidos {...props} />
       </div>

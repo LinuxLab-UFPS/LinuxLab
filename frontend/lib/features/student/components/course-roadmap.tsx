@@ -171,7 +171,7 @@ export function MapaTemario({
                         // Las actividades se resuelven en la terminal, que en
                         // movil no existe: el enlace llevaria a una pantalla que
                         // no se puede usar.
-                        <li key={a.clave} className="hidden md:list-item">
+                        <li key={a.clave}>
                           <LessonLink href={a.href} className={filaHija(false, a.hecha)}>
                             <VinetaActividad hecha={a.hecha} />
                             <span className="truncate">{a.title}</span>
@@ -182,7 +182,7 @@ export function MapaTemario({
                     : activities
                         .filter((a) => a.topicNumber === topic.number)
                         .map((a) => (
-                          <li key={a.slug} className="hidden md:list-item">
+                          <li key={a.slug}>
                             <span className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground/70">
                               <VinetaActividad />
                               <span className="truncate">{a.title}</span>
@@ -197,7 +197,7 @@ export function MapaTemario({
                   {simulators
                     .filter((sim) => sim.topicNumber === topic.number)
                     .map((sim) => (
-                      <li key={sim.id} className="hidden md:list-item">
+                      <li key={sim.id}>
                         <LessonLink href={sim.href} className={filaHija(false, false)}>
                           <VinetaSimulador />
                           <span className="truncate">{sim.title}</span>
