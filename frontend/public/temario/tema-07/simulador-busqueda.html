@@ -633,9 +633,19 @@ const FAMILIAS = [
   { nombre: "find", pistas: PISTAS_FIND },
   { nombre: "sort", pistas: PISTAS_SORT },
 ];
-// Dos y no tres: la partida pide menos datos pero cada uno exige buscar de
-// verdad, ahora que Laura ya no dice donde mirar.
-const DATOS_POR_CASO = 2;
+/* Tres, uno por familia de las que quedan.
+ *
+ * Con dos, la familia `sort` no salia NUNCA: el bucle de `nuevoCaso` recorre
+ * FAMILIAS en orden ([grep, regex, find, sort]), descarta una al azar y para al
+ * llenar los huecos, asi que los dos primeros siempre caian entre las tres
+ * primeras familias. `sort` esta en el indice 3 y solo se alcanzaria saltandose
+ * dos de las anteriores, y solo se salta una. Cuatro casos escritos que nadie
+ * llego a jugar, y una cabecera que prometia `sort`.
+ *
+ * Con tres se llenan los tres huecos que quedan tras el descarte, asi que cada
+ * familia superviviente aporta uno y `sort` entra siempre que no sea la
+ * descartada. */
+const DATOS_POR_CASO = 3;
 
 /** Los senuelos que siempre estan: el proyecto nunca se ve vacio. */
 function archivosBase() {
