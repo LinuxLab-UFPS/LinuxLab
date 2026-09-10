@@ -151,8 +151,9 @@
   cursor: pointer;
 }
 
-/* El escenario deja sitio para la barra, si no la tapa. */
-@media (max-width: 1279px) {
+/* El escenario deja sitio para la barra, si no la tapa. Mismo criterio que la
+   barra: donde hay dedo, no donde la ventana es estrecha. */
+@media (pointer: coarse) {
   .stage,
   .desk {
     padding-bottom: 68px !important;
@@ -163,12 +164,15 @@
  * Retos de vi se juega con teclas sueltas (h, j, k, l, dd, yy, p), no
  * escribiendo comandos: una barra de escritura no sirve de nada ahi. Antes que
  * ofrecer algo injugable, se dice.
+ *
+ * Por tipo de puntero y no por ancho: en un computador con la ventana pequeña
+ * hay teclado fisico, y ahi el cartel estaba mintiendo.
  */
 .solo-escritorio {
   display: none;
 }
 
-@media (max-width: 1279px) {
+@media (pointer: coarse) {
   .solo-escritorio {
     position: fixed;
     inset: 0;
@@ -214,7 +218,7 @@
 
 /* El dock de aplicaciones y la barra de escritura se disputaban el borde
    inferior: el dock sube justo por encima de ella. */
-@media (max-width: 1279px) {
+@media (pointer: coarse) {
   .dock {
     bottom: 76px !important;
   }

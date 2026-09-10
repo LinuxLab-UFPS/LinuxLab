@@ -7,7 +7,6 @@ import { FilesystemHierarchy } from "@shared/components/filesystem-hierarchy"
 import { ExerciseCheck } from "@/lib/features/student/components/exercise-check"
 import { ExampleCheck } from "@/lib/features/student/components/example-check"
 import { LessonActivity } from "@/lib/features/student/components/lesson-activity"
-import { SoloEnEscritorio } from "@/lib/features/student/components/solo-en-escritorio"
 import { LESSON_ILLUSTRATIONS } from "@shared/components/lesson-illustrations"
 import { getSimulator } from "@shared/lib/content/simulators"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -132,43 +131,23 @@ export function LessonBody({ blocks }: { blocks: LessonBlock[] }) {
           case "fs-tree":
             return <FilesystemHierarchy key={i} />
 
-          /* Lo que necesita la terminal se retira en movil y deja un aviso en
-             su sitio. Se hace con clases y no con un `useMediaQuery` porque
-             esto se pinta en el servidor: con JS, el telefono llegaria a pintar
-             la version de escritorio antes de corregirse. */
+          /* Esto se retiraba en movil, con un aviso de que hacia falta un
+             computador: la terminal solo existia como columna de escritorio y
+             sin ella no habia donde resolver nada. Ahora se abre como modal a
+             pantalla completa en cualquier talla (ver `GroupTerminal`), asi que
+             las comprobaciones y las actividades se hacen tambien desde el
+             telefono y el aviso ya no tiene sentido. */
           case "terminal-demo":
-            return (
-              <div key={i} className="hidden md:block">
-                <TerminalDemoButton />
-              </div>
-            )
+            return <TerminalDemoButton key={i} />
 
           case "exercise":
-            return (
-              <div key={i}>
-                <div className="hidden md:block">
-                  <ExerciseCheck slug={block.slug} />
-                </div>
-                <SoloEnEscritorio que="Esta comprobación" />
-              </div>
-            )
+            return <ExerciseCheck key={i} slug={block.slug} />
 
           case "example-check":
-            return (
-              <div key={i} className="hidden md:block">
-                <ExampleCheck />
-              </div>
-            )
+            return <ExampleCheck key={i} />
 
           case "activity":
-            return (
-              <div key={i}>
-                <div className="hidden md:block">
-                  <LessonActivity slugs={block.slugs} />
-                </div>
-                <SoloEnEscritorio que="La actividad de este tema" />
-              </div>
-            )
+            return <LessonActivity key={i} slugs={block.slugs} />
 
           case "illustration": {
             // Una directiva con un id que no existe se ve, igual que una imagen

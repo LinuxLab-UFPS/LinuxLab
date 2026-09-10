@@ -66,17 +66,15 @@ export function ContentArea({
         <LessonContainer>
           {/* El panel de contenidos, plegado. Solo en movil: en escritorio esta
               en su columna y aqui estorbaria. */}
-          <div className="mb-6">
-            <SidebarMovil
-              activeTopicSlug={topic.slug}
-              activeSubtopicId={activeSubtopic?.id}
-              contentSubtopics={meta?.subtopics}
-              topicLessons={topicLessons}
-              soloLectura={soloLectura}
-              topicTitle={`${topic.number}. ${topic.title}`}
-              lessonTitle={activeSubtopic?.title}
-            />
-          </div>
+          <SidebarMovil
+            activeTopicSlug={topic.slug}
+            activeSubtopicId={activeSubtopic?.id}
+            contentSubtopics={meta?.subtopics}
+            topicLessons={topicLessons}
+            soloLectura={soloLectura}
+            topicTitle={`${topic.number}. ${topic.title}`}
+            lessonTitle={activeSubtopic?.title}
+          />
 
           {/* La rama de simulador no pasa por aqui: monta su propia portada con
               su titulo, y dos cabeceras seguidas sobraban. */}

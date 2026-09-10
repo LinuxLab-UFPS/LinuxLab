@@ -16,10 +16,23 @@
 (function () {
   "use strict"
 
-  var LIMITE = 1280
-
-  function esCompacta() {
-    return window.innerWidth < LIMITE
+  /* Solo en pantallas tactiles, no por anchura.
+   *
+   * Con el corte por ancho, un computador con la ventana pequeña se llevaba la
+   * barra tambien: se podia escribir en ella y directamente en el simulador, y
+   * no habia forma de saber cual de los dos era el sitio. La barra existe porque
+   * cinco de los seis simuladores no tienen ningun campo donde tocar y sin ella
+   * el teclado del sistema no se abre nunca, o sea que hace falta exactamente
+   * donde el teclado es en pantalla y en ningun otro sitio.
+   *
+   * `pointer: coarse` es el dedo: telefonos y tablets si, raton no, y sigue
+   * valiendo en una tablet grande apaisada, que por ancho se habria quedado
+   * fuera. */
+  function esTactil() {
+    return (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(pointer: coarse)").matches
+    )
   }
 
   /** Manda una tecla al simulador como si viniera de un teclado de verdad. */
@@ -92,7 +105,7 @@
   }
 
   function revisar() {
-    if (esCompacta()) montar()
+    if (esTactil()) montar()
     else quitar()
   }
 

@@ -136,12 +136,43 @@ export function TerminalWorkspace({
      con la pantalla y la terminal se abre encima cuando hace falta. Los botones
      de la actividad viajan al pie del modal para poder trabajar sin cerrarlo. */
   if (!completa) {
+    /* Sin actividad abierta esta pantalla es la terminal, y nada mas. Con el
+       modal detras de un boton quedaba una pagina con unas tarjetas de
+       sugerencias y un boton flotante: tres toques para llegar a lo que se venia
+       a hacer. Las sugerencias no se pierden, estan en el catalogo de
+       actividades, que es su sitio.
+
+       Y va incrustada, no en el modal: solo puede haber una consola montada a la
+       vez, asi que las dos formas son excluyentes. */
+    if (!panel) {
+      return (
+        <div className="flex h-full flex-col gap-3 px-3 py-3">
+          <div className="min-h-0 flex-1">
+            <TerminalFrame
+              className="h-full"
+              toolbar={
+                <TerminalSettingsBar
+                  fontSize={fontSize}
+                  fontFamily={fontFamily}
+                  onFontSizeChange={handleFontSize}
+                  onFontFamilyChange={handleFontFamily}
+                />
+              }
+            >
+              <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
+            </TerminalFrame>
+          </div>
+        </div>
+      )
+    }
+
+    /* Con una actividad abierta manda el enunciado: hay que leerlo para saber
+       que escribir. La consola se abre encima, con los botones de la actividad
+       en su pie para poder trabajar sin cerrarla. */
     return (
       <AccionesActividadProvider>
         <div className="flex h-full flex-col px-4 py-4">
-          <div className="min-h-0 flex-1">
-            {panel ?? (isStudent ? <SuggestedActivities onHide={() => setHiddenPersisted(true)} visible /> : null)}
-          </div>
+          <div className="min-h-0 flex-1">{panel}</div>
           {!terminalAbierta && <BotonTerminal onClick={() => setTerminalAbierta(true)} />}
           <TerminalModalConAcciones open={terminalAbierta} onOpenChange={setTerminalAbierta} />
         </div>

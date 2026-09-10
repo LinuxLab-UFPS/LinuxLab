@@ -67,16 +67,14 @@ export function WelcomeArea({
     <LessonScrollArea key={page?.id ?? ""} topicNumber={0} subtopicId={null}>
       <LessonContainer>
         {/* El panel de contenidos plegado, solo en movil (ver ContentArea). */}
-        <div className="mb-6">
-          <SidebarMovil
-            activeTopicSlug={bienvenida.slug}
-            activeSubtopicId={page?.id}
-            topicLessons={topicLessons}
-            soloLectura={soloLectura}
-            topicTitle={bienvenida.title}
-            lessonTitle={page?.title}
-          />
-        </div>
+        <SidebarMovil
+          activeTopicSlug={bienvenida.slug}
+          activeSubtopicId={page?.id}
+          topicLessons={topicLessons}
+          soloLectura={soloLectura}
+          topicTitle={bienvenida.title}
+          lessonTitle={page?.title}
+        />
 
         <LessonHeader
           topicTitle={bienvenida.title}

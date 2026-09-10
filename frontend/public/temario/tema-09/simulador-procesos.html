@@ -192,6 +192,15 @@ button.win-dot::after{
   #w-term{height:min(240px,40vh)}
   #w-pasos{height:auto;min-height:120px}
   .dock{position:fixed;bottom:12px}
+
+  /* Los medidores no caben en la linea de las pestañas: dos barras de 96px
+     fijos mas sus rotulos y sus cifras se salian por la derecha, y la de RAM
+     quedaba cortada por el borde de la ventana. Bajan a su propia linea y las
+     barras se reparten el ancho que haya. */
+  .mon-top{flex-wrap:wrap}
+  .medidores{margin-left:0;width:100%;gap:12px}
+  .med{flex:1;min-width:0}
+  .med-barra{width:auto;flex:1;min-width:36px}
 }
 </style>
 
