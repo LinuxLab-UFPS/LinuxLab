@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
-import { PanelLeft, PanelLeftOpen } from "lucide-react"
+import { PanelLeftOpen } from "lucide-react"
 import { PanelContenidos } from "@/lib/features/student/components/group-sidebar"
 import { Dialog, DialogContent, DialogTitle } from "@shared/components/ui/dialog"
 import { cn } from "@shared/lib/utils"
@@ -78,7 +78,6 @@ export function SidebarMovil({ topicTitle, lessonTitle, ...panel }: SidebarMovil
         aria-expanded={abierto}
         className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-black/15 bg-background px-3 py-2.5 text-left shadow-sm transition-colors hover:bg-secondary dark:border-border"
       >
-        <PanelLeft className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium text-foreground">
             {topicTitle}
