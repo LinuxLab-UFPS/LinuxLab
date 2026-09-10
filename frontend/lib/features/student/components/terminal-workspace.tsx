@@ -16,6 +16,12 @@ import type { Activity } from "@shared/lib/content/activities"
 import type { LessonRef } from "@shared/lib/content/lessons"
 import type { GroupActivityDetail } from "@/lib/features/student/group-activities"
 import { GroupActivityPanel } from "@/lib/features/student/components/group-activity-panel"
+import { useEsCompleta } from "@shared/hooks/use-talla"
+import { BotonTerminal, TerminalModal } from "@shared/components/terminal-modal"
+import {
+  AccionesActividadProvider,
+  useAccionesActividad,
+} from "@/lib/features/student/acciones-actividad"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
@@ -63,6 +69,8 @@ export function TerminalWorkspace({
   // null mientras no se ha leído el almacenamiento: sin eso, la primera pintura
   // arrancaría colapsada y el panel entraría con una animación que nadie pidió.
   const [hidden, setHidden] = useState<boolean | null>(null)
+  const completa = useEsCompleta()
+  const [terminalAbierta, setTerminalAbierta] = useState(false)
 
   useEffect(() => {
     // Lectura unica de localStorage al montar (patron aceptado).
@@ -101,6 +109,35 @@ export function TerminalWorkspace({
    * en una pantalla grande llega al tope de 44rem, y en una de 1440px se
    * encoge en vez de desbordar. */
   const track = open ? "min(44rem, 38vw)" : "28rem"
+
+  /* El panel de la actividad, que es lo mismo en las dos maquetaciones. */
+  const panel =
+    activity && statement ? (
+      <ActivityPanel activity={activity} statement={statement} origin={origin} next={next} />
+    ) : groupActivity && user ? (
+      <GroupActivityPanel detail={groupActivity} userId={user.id} />
+    ) : null
+
+  // Hasta saber la talla no se pinta: cada maquetacion mide distinto y
+  // adivinar aqui provoca un salto al cargar.
+  if (completa === undefined) return null
+
+  /* Por debajo de 1280 no hay ancho para dos columnas: el enunciado se queda
+     con la pantalla y la terminal se abre encima cuando hace falta. Los botones
+     de la actividad viajan al pie del modal para poder trabajar sin cerrarlo. */
+  if (!completa) {
+    return (
+      <AccionesActividadProvider>
+        <div className="flex h-full flex-col px-4 py-4">
+          <div className="min-h-0 flex-1">
+            {panel ?? (isStudent ? <SuggestedActivities onHide={() => setHiddenPersisted(true)} visible /> : null)}
+          </div>
+          {!terminalAbierta && <BotonTerminal onClick={() => setTerminalAbierta(true)} />}
+          <TerminalModalConAcciones open={terminalAbierta} onOpenChange={setTerminalAbierta} />
+        </div>
+      </AccionesActividadProvider>
+    )
+  }
 
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
@@ -194,4 +231,16 @@ export function TerminalWorkspace({
       </div>
     </div>
   )
+}
+
+/** El modal, ya dentro del proveedor, con las acciones que publique el panel. */
+function TerminalModalConAcciones({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+}) {
+  const { acciones } = useAccionesActividad()
+  return <TerminalModal open={open} onOpenChange={onOpenChange} acciones={acciones} />
 }

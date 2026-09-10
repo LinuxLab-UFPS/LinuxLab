@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowRight, FolderOpen, Loader2, RotateCcw, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
@@ -23,6 +23,7 @@ import { Tag } from "@shared/components/tag"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
+import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
 
 
 /**
@@ -66,6 +67,11 @@ export function ActivityPanel({
      el falso negativo que tenia la version anterior. */
   const enElDirectorio = useEnElDirectorio(data?.workdir)
 
+  /* Con la terminal como modal, estos botones quedan detras justo cuando hacen
+     falta. Se publican para que el modal los pinte en su pie; son los mismos
+     manejadores, no una copia. */
+  const { publicar } = useAccionesActividad()
+
   /* Con `vi` abierto, lo que se manda a la terminal no se ejecuta: se teclea
      dentro del archivo, y en modo normal `c`, `d` y `~` son ordenes de edicion
      que lo estropean. Asi que el boton se apaga mientras dure. */
@@ -86,6 +92,40 @@ export function ActivityPanel({
      pregunta antes porque el boton vive al lado del de ir al directorio, y
      confundirlos costaria el trabajo hecho. */
   const [confirmando, setConfirmando] = useState(false)
+
+  useEffect(() => {
+    publicar(
+      <>
+        <ActionButton
+          tone={passed ? "emerald" : "amber"}
+          onClick={comprobar}
+          disabled={checking || loading || !enElDirectorio}
+        >
+          {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          {checking ? "Comprobando..." : "Comprobar"}
+        </ActionButton>
+        {data?.workdir && (
+          <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+            <FolderOpen className="h-4 w-4" />
+            Ir al directorio
+          </ActionButton>
+        )}
+        {data?.hasSetup && data?.workdir && (
+          <IconAction
+            label={resetting ? "Preparando..." : "Reiniciar archivos"}
+            icon={resetting ? Loader2 : RotateCcw}
+            onClick={() => setConfirmando(true)}
+            disabled={resetting || loading || aPantallaCompleta || !enElDirectorio}
+          />
+        )}
+      </>,
+    )
+    return () => publicar(null)
+    // Solo los datos, no las funciones: publicar JSX en cada render seria un bucle.
+  }, [
+    publicar, passed, checking, loading, enElDirectorio, aPantallaCompleta, resetting,
+    data?.workdir, data?.hasSetup, comprobar, goToWorkdir,
+  ])
 
   return (
     /* Sin tarjeta: el enunciado es todo este lado, no una ficha dentro de el.

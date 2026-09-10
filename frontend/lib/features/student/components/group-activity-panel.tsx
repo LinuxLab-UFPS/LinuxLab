@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FolderOpen, Loader2, RotateCcw, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
@@ -23,6 +23,7 @@ import { DIFFICULTY_LABEL, DIFFICULTY_TONE } from "@shared/lib/content/activitie
 import { notify } from "@shared/lib/toast"
 import { StudentInfoTable } from "@shared/components/student-info-table"
 import { avisarResultado } from "@/lib/features/student/terminal-aviso"
+import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
 
 
 /**
@@ -58,6 +59,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
      se habia pulsado "ir al directorio" sacaba el boton gris tras cada recarga a
      quien ya estaba en el sitio correcto. */
   const enElDirectorio = useEnElDirectorio(detail.workdir)
+  const { publicar } = useAccionesActividad()
   const canCheck =
     detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
     enElDirectorio
@@ -140,6 +142,33 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   }
 
   const hasEntrega = isManual ? !!submission : attempts.length > 0
+
+  useEffect(() => {
+    publicar(
+      <>
+        {detail.evaluationType === "atomic" && (
+          <ActionButton tone={passed ? "emerald" : "amber"} onClick={check} disabled={checking || !canCheck}>
+            {checking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            {checking ? "Comprobando..." : "Comprobar"}
+          </ActionButton>
+        )}
+        <ActionButton tone="neutral" onClick={goToWorkdir} disabled={aPantallaCompleta}>
+          <FolderOpen className="h-4 w-4" />
+          Ir al directorio
+        </ActionButton>
+        <IconAction
+          label={resetting ? "Vaciando..." : "Vaciar el directorio"}
+          icon={resetting ? Loader2 : RotateCcw}
+          onClick={() => setConfirmando(true)}
+          disabled={resetting || aPantallaCompleta || !enElDirectorio}
+        />
+      </>,
+    )
+    return () => publicar(null)
+  }, [
+    publicar, passed, checking, canCheck, aPantallaCompleta, resetting, enElDirectorio,
+    detail.evaluationType, check, goToWorkdir,
+  ])
 
   return (
     /* Sin tarjeta, igual que la actividad del temario: el enunciado se lleva
