@@ -235,4 +235,19 @@ describe("CU02 — ciclo de sesion", () => {
     expect(res.status).toBe(403)
     expect((res.headers["set-cookie"] || []).join(";")).toContain("token=;")
   })
+
+  test("POST /api/auth/logout cierra la sesion, borra la cookie y la deja en la bitacora", async () => {
+    prisma.enrollment.findFirst.mockResolvedValue(null)
+
+    const res = await request(app)
+      .post("/api/auth/logout")
+      .set("Cookie", sessionCookie({ id: "user-1", role: "student", hasEnrollment: false }))
+
+    expect(res.status).toBe(200)
+    expect(res.body.message).toContain("Sesión cerrada")
+    expect((res.headers["set-cookie"] || []).join(";")).toContain("token=;")
+    expect(mockAuditService.audit).toHaveBeenCalledWith(
+      expect.objectContaining({ eventType: "auth_logout" }),
+    )
+  })
 })
