@@ -66,13 +66,16 @@ export default async function GroupPage({
                 {cabecera}
               </div>
               <main className="flex-1 overflow-y-auto overflow-x-hidden">
-                <GroupBody>
+                {/* Ver la otra rama: la barra se ancla al borde, fuera del
+                    centrado. */}
+                <div className="flex items-start">
                   <GroupSidebar
                     activeTopicSlug={bienvenida.slug}
                     activeSubtopicId={pagina?.id}
                     topicLessons={getTopicLessons()}
                     soloLectura={soloLectura}
                   />
+                <GroupBody>
                   <WelcomeArea
                     page={pagina}
                     blocks={blocks}
@@ -81,6 +84,7 @@ export default async function GroupPage({
                   />
                   <GroupTerminal />
                 </GroupBody>
+                </div>
               </main>
             </div>
           </LessonLoadingProvider>
@@ -134,7 +138,11 @@ export default async function GroupPage({
               <ReadingProgressBar />
             </div>
             <main className="flex-1 overflow-y-auto overflow-x-hidden">
-            <GroupBody>
+              {/* La barra de contenidos va fuera de la fila centrada: se ancla al
+                  borde y ocupa el alto entero, y lo demas se centra en lo que
+                  queda. Dentro de `GroupBody` la barra viajaba con el centrado y
+                  arrastraba la leccion fuera de eje. */}
+            <div className="flex items-start">
               <GroupSidebar
                 activeTopicSlug={topic.slug}
                 activeSubtopicId={activeSubtopic?.id}
@@ -142,6 +150,7 @@ export default async function GroupPage({
                 topicLessons={getTopicLessons()}
                 soloLectura={soloLectura}
               />
+            <GroupBody>
               <ContentArea
                 topic={topic}
                 meta={meta}
@@ -154,6 +163,7 @@ export default async function GroupPage({
               />
               <GroupTerminal />
             </GroupBody>
+            </div>
             </main>
           </div>
          </LessonLoadingProvider>

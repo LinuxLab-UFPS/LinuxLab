@@ -39,6 +39,8 @@ interface GroupSidebarProps {
    * de escritorio: dentro del modal el boton no tendria a donde plegar.
    */
   plegable?: boolean
+  /** Para que la columna pueda quitarle el marco de tarjeta y pegarse al borde. */
+  className?: string
 }
 
 /**
@@ -58,6 +60,7 @@ export function PanelContenidos({
   groupName,
   soloLectura = false,
   plegable = false,
+  className,
 }: GroupSidebarProps) {
   const { plegar } = useContenidos()
   const {
@@ -71,7 +74,12 @@ export function PanelContenidos({
     /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
        lleva dentro. Sin esto el panel cambiaba de ancho segun el tema abierto,
        porque una leccion de nombre largo lo estiraba. */
-    <div className="flex w-full min-w-0 max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
+    <div
+      className={cn(
+        "flex w-full min-w-0 max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none",
+        className,
+      )}
+    >
       {/* Nav: home + title */}
       <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
         <Link
@@ -268,10 +276,20 @@ export function GroupSidebar(props: GroupSidebarProps) {
   const { columna } = useClasesContenidos()
 
   return (
-    <aside className={cn("sticky top-0 max-h-full w-80 shrink-0 pb-4 pt-16", columna)}>
-      <div className="mt-2 flex max-h-full overflow-hidden">
-        <PanelContenidos {...props} plegable />
-      </div>
+    /* Pegada al borde y de arriba abajo, como la barra de cualquier aplicacion.
+       Antes flotaba dentro de la fila centrada, con un margen a su izquierda y
+       sin llegar al bajo de la pantalla: se leia como una tarjeta suelta en vez
+       de como el marco de la pagina, y dejaba la leccion descentrada.
+
+       El alto va contra el viewport y no en `h-full` por lo mismo que en
+       `TerminalPanel`: la fila alinea a `items-start`, asi que no la estira y un
+       `h-full` se resolveria contra una altura automatica. */
+    <aside className={cn("sticky top-0 h-[calc(100vh-66px)] w-80 shrink-0", columna)}>
+      <PanelContenidos
+        {...props}
+        plegable
+        className="h-full max-h-full rounded-none border-0 border-r border-black/15 shadow-none dark:border-border"
+      />
     </aside>
   )
 }
