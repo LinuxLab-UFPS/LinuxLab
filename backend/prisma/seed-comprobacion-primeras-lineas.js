@@ -24,7 +24,8 @@ const DATOS = {
   instructions:
     "En tu directorio personal, guarda en primeras.txt las cinco primeras líneas " +
     "de /etc/passwd. Usa head para quedarte con esas cinco y > para mandarlas al " +
-    "archivo en vez de a la pantalla.",
+    "archivo en vez de a la pantalla." +
+    "Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

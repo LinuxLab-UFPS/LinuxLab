@@ -17,7 +17,7 @@ const registerTeacherSchema = z.object({
     })
     .trim()
     .min(1, "El código del docente es requerido")
-    .max(20, "El código del docente no puede exceder 20 caracteres"),
+    .max(8, "El código del docente no puede exceder 8 caracteres"),
 })
 
 /** Forma de usuario que viaja en /api/auth/firebase y /api/auth/me. */

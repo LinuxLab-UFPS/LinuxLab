@@ -20,7 +20,8 @@ const DATOS = {
     "Escribe un script llamado saludo.sh en tu directorio " +
     "personal. La primera línea tiene que ser el shebang de bash y la segunda " +
     "un echo con el saludo que quieras. Déjalo con permisos 755, puestos con el " +
-    "número y no con +x, para poder ejecutarlo con ./saludo.sh.",
+    "número y no con +x, para poder ejecutarlo con ./saludo.sh." +
+    "Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

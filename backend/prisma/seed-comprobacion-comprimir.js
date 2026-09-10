@@ -22,7 +22,8 @@ const DATOS = {
   instructions:
     "Crea notas.txt en tu directorio personal con al menos una " +
     "línea escrita. Comprímelo con gzip y deja solo el archivo comprimido: el " +
-    "original no debe quedar.",
+    "original no debe quedar." +
+    "Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

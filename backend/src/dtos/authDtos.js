@@ -21,7 +21,7 @@ const registerSelfStudentSchema = z.object({
     .string()
     .trim()
     .min(1, "Ingresa tu código de estudiante")
-    .max(20, "El código no puede superar los 20 caracteres"),
+    .max(8, "El código no puede superar los 8 caracteres"),
 })
 
 const setStudentCodeSchema = z.object({
@@ -29,7 +29,7 @@ const setStudentCodeSchema = z.object({
     .string()
     .trim()
     .min(1, "Ingresa tu código de estudiante")
-    .max(20, "El código no puede superar los 20 caracteres"),
+    .max(8, "El código no puede superar los 8 caracteres"),
   /* El formulario de "Completar información" envía también el nombre: quien
      entra por Gmail llega con el de su cuenta de Google y puede corregirlo
      aquí antes de usar la plataforma. Opcional para no romper a quien solo

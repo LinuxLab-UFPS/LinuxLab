@@ -15,7 +15,7 @@ const studentRowSchema = z.object({
   code: z
     .string({ invalid_type_error: "El código del estudiante debe ser texto" })
     .trim()
-    .max(20, "El código no puede superar los 20 caracteres")
+    .max(8, "El código no puede superar los 8 caracteres")
     .optional()
     .nullable(),
 })
@@ -53,7 +53,7 @@ const updateGroupSchema = z.object({
 const registerStudentSchema = z.object({
   name: z.string().trim().max(255).optional().default(""),
   email: emailField,
-  code: z.string().trim().max(20, "El código no puede superar los 20 caracteres").optional().nullable(),
+  code: z.string().trim().max(8, "El código no puede superar los 8 caracteres").optional().nullable(),
 })
 
 /**

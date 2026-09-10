@@ -194,6 +194,7 @@ export default function LoginPage() {
                 <Input
                   id="code"
                   autoComplete="off"
+                  maxLength={8}
                   placeholder="1150000"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}

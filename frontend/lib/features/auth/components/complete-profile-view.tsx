@@ -102,6 +102,7 @@ export function CompleteProfileView({ defaultName }: { defaultName?: string | nu
             <Input
               id="complete-code"
               autoComplete="off"
+              maxLength={8}
               value={code}
               placeholder="1150000"
               onChange={(e) => setCode(e.target.value)}

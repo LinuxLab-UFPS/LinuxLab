@@ -80,6 +80,7 @@ export function AddStudentDialog({
             <Label htmlFor="student-code">Código</Label>
             <Input
               id="student-code"
+              maxLength={8}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="1151234"
