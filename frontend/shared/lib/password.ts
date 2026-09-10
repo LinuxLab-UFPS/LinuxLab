@@ -78,11 +78,13 @@ export async function evaluarPassword(password: string): Promise<EstadoPassword>
       cumple: estado.meetsMinPasswordLength ?? password.length >= minimo,
     })
   }
-  if (politica.maxPasswordLength) {
+  // El maximo solo aparece cuando se ha pasado. Listarlo siempre es ruido:
+  // nadie necesita que le confirmen que no ha escrito de mas.
+  if (politica.maxPasswordLength && estado.meetsMaxPasswordLength === false) {
     requisitos.push({
       id: "longitud-max",
-      texto: `Como mucho ${politica.maxPasswordLength} caracteres`,
-      cumple: estado.meetsMaxPasswordLength ?? true,
+      texto: `Máximo ${politica.maxPasswordLength} caracteres`,
+      cumple: false,
     })
   }
   if (estado.containsLowercaseLetter !== undefined) {
