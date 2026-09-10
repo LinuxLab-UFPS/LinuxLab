@@ -4,6 +4,7 @@
 <title>El despliegue del viernes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/movil.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 /* ============================================================
@@ -1517,7 +1518,10 @@ const hist = Barra.historial();
 
 document.addEventListener("keydown", (ev) => {
   if (ocupado()) return;
-  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
+  // La barra de escritura de movil es la terminal, no el chat: sus teclas si
+  // tienen que llegar aqui.
+  if (document.activeElement && document.activeElement.tagName === "INPUT"
+      && document.activeElement.id !== "teclado-movil") return;
   if (ev.key === "Enter") {
     const linea = tecleado;
     hist.recordar(linea);
@@ -1645,3 +1649,7 @@ if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
   };
 }
 </script>
+
+<!-- El teclado en pantalla tactil: este simulador lee las teclas del
+     documento y no tiene campo propio donde escribir. -->
+<script src="/temario/comun/movil.js"></script>
