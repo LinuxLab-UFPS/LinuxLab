@@ -216,6 +216,17 @@
   }
 }
 
+/* El unico simulador con campo propio es el del sistema de archivos (tema 3),
+   que por eso no lleva la barra inyectada. Su campo mide 13.5px, y iOS acerca la
+   pagina al enfocar cualquier cosa por debajo de 16: la deja ampliada y no se
+   vuelve sola. `html body` por lo mismo que arriba, que su <style> va despues de
+   este archivo. */
+@media (pointer: coarse) {
+  html body .inp {
+    font-size: 16px;
+  }
+}
+
 /* El dock de aplicaciones y la barra de escritura se disputaban el borde
    inferior: el dock sube justo por encima de ella. */
 @media (pointer: coarse) {
