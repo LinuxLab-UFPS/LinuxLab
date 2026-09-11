@@ -252,7 +252,7 @@ html.claro .card{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27
   <h2>Filtro de permisos</h2>
   <p>
     Llegan archivos a tu mesa. Cada uno dice qué permisos trae y qué necesita.
-    Arréglalos con chmod antes de que se acabe el tiempo, y ajusta la umask
+    Arréglalos con chmod, y ajusta la umask
     cuando lo que llegue sean archivos por crearse. Equivocarse cuesta segundos.
   </p>
 </div>
@@ -393,7 +393,7 @@ const barra = Barra.montar({
   titulo: 'Filtro de permisos',
   ayuda: [
     { clave: 'help',   tono: 'verde', texto: 'Escribe <code>help</code> en la terminal para ver las formas de cambiar permisos.' },
-    { clave: 'Tiempo', tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde esa ronda y empieza la siguiente.' },
+    { clave: 'Tiempo', tono: 'rojo',  texto: 'Resolver rápido da puntos extra. Si el reloj llega a cero la ronda sigue: se pasa al siguiente al arreglar el archivo.' },
   ],
   tema: true,
   onReiniciar: () => volverAlInicio(),
@@ -511,7 +511,7 @@ function arrancarTiempo() {
   tick = setInterval(() => {
     restante = Math.max(0, restante - 0.1);
     pintarBarra();
-    if (restante === 0) { clearInterval(tick); perderRonda() }
+    if (restante === 0) sinTiempo();
   }, 100);
 }
 
@@ -587,6 +587,7 @@ function resolverChmod(partes, r) {
 function fallar(motivo) {
   // La penalización va sobre el tiempo y no sobre los intentos: castiga la
   // prisa sin cerrar la puerta a corregir.
+  const habia = restante;
   restante = Math.max(0, restante - 3);
   pintarBarra();
   escribir("rechazado · -3s · " + motivo, "bad");
@@ -594,7 +595,9 @@ function fallar(motivo) {
   destello(true);
   // Vuelve al amarillo de espera: el rojo señala el intento, no la ronda.
   setTimeout(() => { if (jugando) estado("espera") }, 900);
-  if (restante === 0) { clearInterval(tick); perderRonda() }
+  // Solo la primera vez que llega a cero: con el reloj ya parado, avisar otra
+  // vez en cada intento rechazado seria ruido.
+  if (habia > 0 && restante === 0) sinTiempo();
 }
 
 function ganarRonda() {
@@ -610,11 +613,12 @@ function ganarRonda() {
   setTimeout(siguiente, 780);
 }
 
-function perderRonda() {
-  transicion = true;
-  escribir("se acabó el tiempo para este archivo", "note");
-  estado("error");
-  setTimeout(siguiente, 900);
+/* Sin tiempo no se pierde la ronda: se acaba la bonificacion y se sigue hasta
+   arreglar el archivo. Antes se saltaba al siguiente sin haberlo resuelto, y
+   para aprender lo que cuenta es terminarlo. */
+function sinTiempo() {
+  clearInterval(tick);
+  escribir("se acabó el tiempo de bonificación · sigue hasta arreglarlo", "note");
 }
 
 function siguiente() {
