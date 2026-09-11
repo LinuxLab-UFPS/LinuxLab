@@ -153,7 +153,7 @@ html.claro .hint{box-shadow:0 1px 2px rgba(27,31,36,.05)}
   <button class="sim-play" id="play"><span class="tri">▶</span></button>
   <h2>Retos de vi</h2>
   <p>
-    Cinco retos contrarreloj con los comandos de vi. Copiar líneas, pegarlas
+    Cinco retos con los comandos de vi. Copiar líneas, pegarlas
     donde toca y borrar lo que sobra, sin salir del modo normal.
     Cuanto antes se resuelve cada reto, más puntos.
   </p>
@@ -313,7 +313,7 @@ const barra = Barra.montar({
   titulo: 'Retos de vi',
   ayuda: [
     { clave: 'Deshacer',  tono: 'verde', texto: '¿Borraste algo que no debías? <code>u</code> devuelve el tablero al paso anterior, tantas veces como haga falta.' },
-    { clave: 'Tiempo',    tono: 'rojo',  texto: 'Si el reloj llega a cero se pierde ese reto y empieza el siguiente.' },
+    { clave: 'Tiempo',    tono: 'rojo',  texto: 'Resolver rápido da puntos extra. Si el reloj llega a cero el reto sigue: se pasa al siguiente al completarlo.' },
   ],
   tema: true,
   onReiniciar: () => volverAlInicio(),
@@ -376,8 +376,9 @@ function arrancarTiempo() {
     const pct = (restante / limite) * 100;
     barraT.style.width = pct + "%";
     barraT.className = "timer-fill" + (pct === 0 ? " out" : pct < 35 ? " warn" : "");
-    // Se acaba el tiempo: este reto se pierde y se pasa al siguiente.
-    if (restante === 0) { clearInterval(tick); fallarReto() }
+    /* Sin tiempo no se pierde el reto: se acaba la bonificacion y el reto
+       sigue abierto. Solo se avanza al completarlo, que es lo que ensena. */
+    if (restante === 0) clearInterval(tick);
   }, 100);
 }
 
@@ -479,13 +480,19 @@ function ejecutar(tecla) {
 }
 
 /* ---------- ciclo ---------- */
-function cargarReto() {
+/* El bufer del reto, desde cero. Aparte de `cargarReto` para que reintentar
+   pueda rehacerlo sin tocar el reloj. */
+function armarReto() {
   const armado = orden[reto].armar();
   lineas = clonar(armado.inicio);
   meta = armado.meta ?? null;
   gana = armado.gana ?? null;
   pierde = armado.pierde ?? null;
   fila = 0; col = 0; registro = null; historial = []; pendiente = "";
+}
+
+function cargarReto() {
+  armarReto();
   pintarCabecera();
   pintar();
   arrancarTiempo();
@@ -512,22 +519,20 @@ function ganarReto() {
   }, 700);
 }
 
-/* Se pierde por agotar el reloj, o por llevarse algo verde en los retos de
-   punteria. No resta puntos: se pasa al siguiente reto sin sumar, que ya es
-   castigo suficiente en un contrarreloj. */
-function fallarReto() {
-  clearInterval(tick);
+/* Llevarse algo verde en un reto de punteria deja el bufer sin arreglo posible.
+   Antes se saltaba al siguiente reto; ahora se rehace el mismo, porque solo se
+   avanza al completar. El reloj NO se reinicia: si lo hiciera, arruinar a
+   proposito serviria para recuperar tiempo de bonificacion. */
+function reintentarReto() {
   transicion = true;
-  const barraT = $("timer");
-  barraT.className = "timer-fill out";
   const f = $("flash");
   f.classList.add("on", "err");
   setTimeout(() => f.classList.remove("on", "err"), 260);
 
   setTimeout(() => {
-    reto++;
-    if (reto >= orden.length) return terminar();
-    cargarReto();
+    armarReto();
+    pintar();
+    transicion = false;
   }, 700);
 }
 
@@ -565,7 +570,7 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   ejecutar(e.key);
   pintar();
-  if (arruinado()) fallarReto();
+  if (arruinado()) reintentarReto();
   else if (resuelto()) ganarReto();
 });
 

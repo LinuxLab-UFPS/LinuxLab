@@ -221,77 +221,83 @@ export function ActivityBrowser({
             value={busqueda}
             onChange={(valor) => conPagina(() => setBusqueda(valor))}
             placeholder="Buscar actividad por nombre o descripción..."
-            className="max-w-sm flex-1"
+            className="w-full lg:max-w-sm lg:flex-1"
           />
 
-          <Select value={tema} onValueChange={(v) => conPagina(() => setTema(v))}>
-            <SelectTrigger className={cn("w-full lg:w-52", CONTROL_SURFACE)}>
-              <SelectValue>{etiquetaTema(tema)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS} className={SELECT_ITEM}>
-                Todos los temas
-              </SelectItem>
-              {temas.map((t) => (
-                <SelectItem key={t.number} value={String(t.number)} className={SELECT_ITEM}>
-                  {t.number}. {t.title}
+          {/* Por debajo de `lg` los cuatro filtros van en 2x2 y no uno por
+              linea: apilados, la busqueda y los filtros ocupaban media
+              pantalla del telefono antes de la primera actividad. Desde `lg`
+              caben en la fila, como siempre. */}
+          <div className="grid grid-cols-2 gap-3 lg:flex">
+            <Select value={tema} onValueChange={(v) => conPagina(() => setTema(v))}>
+              <SelectTrigger className={cn("w-full lg:w-52", CONTROL_SURFACE)}>
+                <SelectValue>{etiquetaTema(tema)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS} className={SELECT_ITEM}>
+                  Todos los temas
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {temas.map((t) => (
+                  <SelectItem key={t.number} value={String(t.number)} className={SELECT_ITEM}>
+                    {t.number}. {t.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={dificultad}
-            onValueChange={(v) => conPagina(() => setDificultad(v))}
-          >
-            <SelectTrigger className={cn("w-full lg:w-40", CONTROL_SURFACE)}>
-              <SelectValue>{etiquetaDificultad(dificultad)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS} className={SELECT_ITEM}>
-                Todas las dificultades
-              </SelectItem>
-              {DIFICULTADES.map((d) => (
-                <SelectItem key={d} value={d} className={SELECT_ITEM}>
-                  {DIFFICULTY_LABEL[d]}
+            <Select
+              value={dificultad}
+              onValueChange={(v) => conPagina(() => setDificultad(v))}
+            >
+              <SelectTrigger className={cn("w-full lg:w-40", CONTROL_SURFACE)}>
+                <SelectValue>{etiquetaDificultad(dificultad)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS} className={SELECT_ITEM}>
+                  Todas las dificultades
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {DIFICULTADES.map((d) => (
+                  <SelectItem key={d} value={d} className={SELECT_ITEM}>
+                    {DIFFICULTY_LABEL[d]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={estado} onValueChange={(v) => conPagina(() => setEstado(v))}>
-            <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
-              <SelectValue>{etiquetaEstado(estado)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS} className={SELECT_ITEM}>
-                Todas
-              </SelectItem>
-              <SelectItem value={COMPLETADAS} className={SELECT_ITEM}>
-                Completadas
-              </SelectItem>
-              <SelectItem value={PENDIENTES} className={SELECT_ITEM}>
-                Pendientes
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={estado} onValueChange={(v) => conPagina(() => setEstado(v))}>
+              <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
+                <SelectValue>{etiquetaEstado(estado)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS} className={SELECT_ITEM}>
+                  Todas
+                </SelectItem>
+                <SelectItem value={COMPLETADAS} className={SELECT_ITEM}>
+                  Completadas
+                </SelectItem>
+                <SelectItem value={PENDIENTES} className={SELECT_ITEM}>
+                  Pendientes
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={origen} onValueChange={(v) => conPagina(() => setOrigen(v))}>
-            <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
-              <SelectValue>{etiquetaOrigen(origen)}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={TODOS} className={SELECT_ITEM}>
-                Docente y sistema
-              </SelectItem>
-              <SelectItem value={DEL_DOCENTE} className={SELECT_ITEM}>
-                Docente
-              </SelectItem>
-              <SelectItem value={DEL_SISTEMA} className={SELECT_ITEM}>
-                Sistema
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={origen} onValueChange={(v) => conPagina(() => setOrigen(v))}>
+              <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
+                <SelectValue>{etiquetaOrigen(origen)}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={TODOS} className={SELECT_ITEM}>
+                  Docente y sistema
+                </SelectItem>
+                <SelectItem value={DEL_DOCENTE} className={SELECT_ITEM}>
+                  Docente
+                </SelectItem>
+                <SelectItem value={DEL_SISTEMA} className={SELECT_ITEM}>
+                  Sistema
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

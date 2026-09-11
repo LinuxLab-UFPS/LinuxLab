@@ -98,6 +98,14 @@ html.claro .win{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27,
    escrita, no clavado al fondo del recuadro. */
 .console{background:#12161d;flex:1;min-height:0;padding:12px 14px;overflow-y:auto}
 .hist{font-size:13px;line-height:1.65;}
+
+/* En movil `comun/movil.css` apila el escenario y la columna mide lo que mida
+   su contenido, asi que el `height: min(30rem, 100%)` de la ventana crecia con
+   cada comando: el 100% de algo que crece tambien crece. Aqui el alto es fijo y
+   la consola se desplaza por dentro, que ya baja sola al final tras cada linea. */
+@media (max-width: 1279px) {
+  .win{height:min(26rem,60dvh)}
+}
 .tl{color:var(--text)}
 .tl.cmd{color:var(--muted)}
 .tl.err{color:#F85149}
