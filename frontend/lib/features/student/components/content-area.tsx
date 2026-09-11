@@ -69,7 +69,6 @@ export function ContentArea({
           <BarraContenidos
             activeTopicSlug={topic.slug}
             activeSubtopicId={activeSubtopic?.id}
-            contentSubtopics={meta?.subtopics}
             topicLessons={topicLessons}
             soloLectura={soloLectura}
             topicTitle={`${topic.number}. ${topic.title}`}
