@@ -18,6 +18,48 @@ interface Props {
   fontFamily?: string
 }
 
+/** Una fuente que cualquier canvas sabe medir, para mientras llega la elegida. */
+const FUENTE_RESERVA = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+
+/**
+ * El nombre de fuente que xterm puede medir.
+ *
+ * xterm mide la celda en un OffscreenCanvas: pone `ctx.font = "16px <familia>"`
+ * y mide una "W". Un canvas no entiende variables de CSS, asi que con
+ * `var(--font-fira-code)` la asignacion se rechaza en silencio y mide con la
+ * fuente que tuviera antes. Pintar, en cambio, lo hace el DOM, donde la variable
+ * si se resuelve: celdas de una fuente y letras de otra, que es lo que se veia
+ * descuadrado. Y como el canvas se quedaba con la ultima fuente valida, el
+ * cambio de tamaño no se notaba hasta pasar por una que si lo fuera.
+ *
+ * «La del sistema» funcionaba porque ya es una lista de nombres literales. Esto
+ * hace lo mismo con las demas: cambia cada `var(--x)` por lo que vale.
+ */
+function fuenteReal(familia: string): string {
+  if (typeof window === "undefined") return familia
+  const raiz = getComputedStyle(document.documentElement)
+  return familia.replace(
+    /var\((--[\w-]+)\)/g,
+    (_, nombre: string) => raiz.getPropertyValue(nombre).trim() || "monospace",
+  )
+}
+
+/**
+ * Espera a que la fuente este descargada antes de medir.
+ *
+ * next/font las sirve con `display: swap` y el navegador no las baja hasta que
+ * algo las usa. Si xterm mide antes, mide la de reserva y la rejilla sale con
+ * el ancho equivocado aunque el nombre ya sea el bueno.
+ */
+async function cargarFuente(familia: string, tamano: number): Promise<void> {
+  if (typeof document === "undefined" || !document.fonts) return
+  try {
+    await document.fonts.load(`${tamano}px ${familia}`)
+  } catch {
+    // Sin la fuente se mide con la de reserva, que es lo que habia antes.
+  }
+}
+
 /**
  * La pantalla de la terminal. Solo la pantalla: la conexion y la sesion viven
  * en `terminal-session.ts`, fuera de React.
@@ -44,7 +86,10 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(-
       cursorBlink: true,
       cursorStyle: "block",
       fontSize,
-      fontFamily,
+      /* La de reserva y no la elegida: la elegida llega en el efecto de abajo,
+         cuando ya esta descargada. Asi el cambio a la de verdad es un cambio de
+         opcion y xterm vuelve a medir la celda con la fuente buena. */
+      fontFamily: FUENTE_RESERVA,
       theme: {
         background: "#1a1d24",
         foreground: "#ffffff",
@@ -157,14 +202,26 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(-
   useEffect(() => {
     const term = termRef.current
     if (!term) return
-    term.options.fontSize = fontSize
-    term.options.fontFamily = fontFamily
+    let vigente = true
+    let id: ReturnType<typeof setTimeout> | undefined
+    // Nombre literal y fuente descargada ANTES de tocar xterm: ver `fuenteReal`.
+    const real = fuenteReal(fontFamily)
 
-    const id = setTimeout(() => {
-      fitRef.current?.fit()
-      redimensionar(term.cols, term.rows)
-    }, 100)
-    return () => clearTimeout(id)
+    cargarFuente(real, fontSize).then(() => {
+      // Si llego otro cambio mientras bajaba la fuente, este ya no manda.
+      if (!vigente) return
+      term.options.fontSize = fontSize
+      term.options.fontFamily = real
+      id = setTimeout(() => {
+        fitRef.current?.fit()
+        redimensionar(term.cols, term.rows)
+      }, 100)
+    })
+
+    return () => {
+      vigente = false
+      clearTimeout(id)
+    }
   }, [fontSize, fontFamily])
 
   return (
