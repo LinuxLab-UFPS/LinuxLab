@@ -104,6 +104,22 @@ El control de acceso se concentró en un middleware que compone la autenticació
 | Acceso no autorizado | `/unauthorized` | Todos | 403 con mensaje y salida al dominio propio. |
 | Gestión de docentes | `(protected)/admin/docentes` | Administrador | Registro con formulario, listado con búsqueda y activación/inactivación. |
 
+Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local con datos de demostración):
+
+![Iniciar sesión](annex-images/it1/login.png)
+
+![Verificación de correo](annex-images/it1/auth-verificacion.png)
+
+![Restablecer contraseña](annex-images/it1/auth-reset-password.png)
+
+![Acción de correo](annex-images/it1/auth-accion.png)
+
+![Activar cuenta docente](annex-images/it1/auth-setup-account.png)
+
+![Acceso no autorizado](annex-images/it1/unauthorized.png)
+
+![Gestión de docentes](annex-images/it1/admin-docentes.png)
+
 ### 3.2 Endpoints implementados
 
 | Método | Ruta | Actor | Descripción |

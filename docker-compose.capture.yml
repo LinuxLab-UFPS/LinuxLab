@@ -1,0 +1,21 @@
+# Override SOLO para la sesion de captura de vistas (anexos).
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.capture.yml up -d \
+#     postgres migrate init entorno backend frontend
+#
+# Que cambia respecto al stack normal:
+#   1. El backend deja de apuntar a Neon y usa el Postgres local del compose,
+#      de modo que las capturas salen con los datos del seed demo.
+#   2. NODE_ENV se deja en production: el logger usa pino-pretty en modo
+#      desarrollo, y esa dependencia no viaja en la imagen (npm ci --omit=dev),
+#      asi que el contenedor entraria en bucle de reinicio.
+#   3. El JWT_SECRET comun sale de la raiz .env (y no del default del compose),
+#      para que la cookie inyectada por Playwright valide en Next y en Express.
+#
+# El archivo no se debe usar para desplegar.
+
+services:
+  backend:
+    environment:
+      DATABASE_URL: postgresql://linuxlab:${DB_PASSWORD:-linuxlab}@postgres:5432/linuxlab

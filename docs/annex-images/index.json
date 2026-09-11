@@ -1,0 +1,128 @@
+[
+  {
+    "iteration": 1,
+    "name": "login",
+    "role": "publico",
+    "path": "/login",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "auth-verificacion",
+    "role": "publico",
+    "path": "/auth/verificacion",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "auth-reset-password",
+    "role": "publico",
+    "path": "/auth/reset-password",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "auth-accion",
+    "role": "publico",
+    "path": "/auth/accion",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "auth-setup-account",
+    "role": "publico",
+    "path": "/auth/setup-account",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "unauthorized",
+    "role": "publico",
+    "path": "/unauthorized",
+    "status": "ok"
+  },
+  {
+    "iteration": 1,
+    "name": "admin-docentes",
+    "role": "admin",
+    "path": "/admin/docentes",
+    "status": "ok"
+  },
+  {
+    "iteration": 2,
+    "name": "contenidos",
+    "role": "student",
+    "path": "/contenidos",
+    "status": "ok"
+  },
+  {
+    "iteration": 2,
+    "name": "simuladores",
+    "role": "student",
+    "path": "/simuladores",
+    "status": "ok"
+  },
+  {
+    "iteration": 2,
+    "name": "terminal",
+    "role": "student",
+    "path": "/terminal",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "inicio-docente",
+    "role": "teacher",
+    "path": "/inicio",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "grupos-crear",
+    "role": "teacher",
+    "path": "/grupos/crear",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "grupo-detalle",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a",
+    "status": "ok"
+  },
+  {
+    "iteration": 4,
+    "name": "actividades",
+    "role": "student",
+    "path": "/actividades",
+    "status": "ok"
+  },
+  {
+    "iteration": 4,
+    "name": "grupo-actividad",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a/actividades/8f9da20e-e370-467a-890a-5ce4465f8cde",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
+    "name": "grupo-finalizar",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a/finalizar",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
+    "name": "admin-bitacora",
+    "role": "admin",
+    "path": "/admin/bitacora",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
+    "name": "verificar-certificado",
+    "role": "publico",
+    "path": "/verificar/CERT-DEMO-001",
+    "status": "ok"
+  }
+]
