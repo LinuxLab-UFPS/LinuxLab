@@ -11,13 +11,11 @@ import { NeonProgress } from "@shared/components/neon-progress"
 import { useCourseProgress } from "@/lib/features/student/course-progress"
 import { syllabus } from "@shared/lib/content/temario"
 import { useEsCompleta } from "@shared/hooks/use-talla"
-import type { LessonSubtopic } from "@/lib/models/content"
 import type { TopicLessons } from "@shared/lib/content/lessons"
 
 interface BarraContenidosProps {
   activeTopicSlug: string
   activeSubtopicId?: string
-  contentSubtopics?: LessonSubtopic[]
   topicLessons: Record<number, TopicLessons>
   groupName?: string
   /** Sin progreso: quien lee el temario sin cursarlo. Ver `PanelContenidos`. */
@@ -113,33 +111,43 @@ export function BarraContenidos({ topicTitle, lessonTitle, ...panel }: BarraCont
         <Home className="h-4 w-4" />
       </Link>
 
-      {/* En escritorio es texto, no un boton: con el aspecto de boton invitaba a
-          un clic que ya no hace nada, y eso es peor que no tenerlo. Lo unico
-          pulsable de dentro es el menu. Debajo de `xl` manda el boton de abajo,
-          que si abre el modal. */}
-      <div className={`${marco} hidden xl:flex`}>
-        <Popover open={abierto && completa === true} onOpenChange={cambiar}>
-          <PopoverTrigger
+      {/* En escritorio la barra entera abre el indice. Mientras solo lo abria el
+          boton de menu, la barra era texto: con aspecto de boton invitaba a un
+          clic que no hacia nada. Ahora que el menu de tres rayas ya dice que
+          ahi hay un indice, pulsar cualquier parte es lo que se espera. Debajo
+          de `xl` manda el boton de abajo, que abre el modal. */}
+      <Popover open={abierto && completa === true} onOpenChange={cambiar}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
             aria-label="Abrir los contenidos del curso"
-            className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground data-[state=open]:bg-secondary data-[state=open]:text-foreground"
+            className={`${marco} group hidden transition-colors hover:bg-secondary data-[state=open]:bg-secondary xl:flex`}
           >
-            <Menu className="h-4 w-4" />
-          </PopoverTrigger>
-          {/* Sin relleno y sin marco propio: el panel ya trae el suyo, asi que
-              la capa flotante ES el panel y no una caja con otra caja dentro.
-              `max-h` y no `h`: se estira hasta donde pida la lista, con techo en
-              la pantalla, para que los diez temas salgan sin desplazar. */}
-          <PopoverContent
-            align="start"
-            sideOffset={12}
-            className="max-h-[86vh] w-80 overflow-hidden border-0 p-0 shadow-2xl"
-          >
-            <PanelContenidos {...panel} compacto className="max-h-[86vh] shadow-none" />
-          </PopoverContent>
-        </Popover>
-        {donde}
-        {progreso}
-      </div>
+            <span
+              aria-hidden
+              className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors group-hover:text-foreground group-data-[state=open]:text-foreground"
+            >
+              <Menu className="h-4 w-4" />
+            </span>
+            {donde}
+            {progreso}
+          </button>
+        </PopoverTrigger>
+        {/* El panel es la capa flotante, sin caja alrededor: ya trae su marco.
+            Su techo es el sitio que queda bajo la barra, que calcula Radix, y
+            no un `86vh` fijo: con eso, en un portatil de 800 de alto, los
+            ultimos temas se salian por el borde de la pantalla. */}
+        <PopoverContent
+          align="start"
+          sideOffset={12}
+          // Aire contra el borde de la pantalla, que Radix descuenta del alto
+          // disponible de abajo.
+          collisionPadding={12}
+          className="max-h-[var(--radix-popover-content-available-height)] w-80 overflow-hidden border-0 p-0 shadow-2xl"
+        >
+          <PanelContenidos {...panel} compacto className="max-h-[var(--radix-popover-content-available-height)] shadow-none" />
+        </PopoverContent>
+      </Popover>
 
       <button
         type="button"
