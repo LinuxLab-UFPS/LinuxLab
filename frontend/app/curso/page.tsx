@@ -1,11 +1,10 @@
 import { SiteHeader } from "@/lib/features/student/components/site-header"
 import { TeacherHeader } from "@/lib/features/teacher/components/teacher-header"
-import { GroupSidebar } from "@/lib/features/student/components/group-sidebar"
 import { GroupBody } from "@/lib/features/student/components/group-body"
 import { ContentArea } from "@/lib/features/student/components/content-area"
 import { GroupTerminal } from "@shared/components/group-terminal"
 import { syllabus, getTopicBySlug } from "@shared/lib/content/temario"
-import { bienvenida, esBienvenida, paginaBienvenida } from "@shared/lib/content/bienvenida"
+import { esBienvenida, paginaBienvenida } from "@shared/lib/content/bienvenida"
 import { WelcomeArea } from "@/lib/features/student/components/welcome-area"
 import { getBienvenidaMarkdown } from "@shared/lib/content/lessons"
 import {
@@ -61,14 +60,8 @@ export default async function GroupPage({
               <div className="z-40 shrink-0 bg-background">
                 {cabecera}
               </div>
-              <main className="flex-1 overflow-y-auto">
+              <main className="flex-1 overflow-y-auto overflow-x-hidden">
                 <GroupBody>
-                  <GroupSidebar
-                    activeTopicSlug={bienvenida.slug}
-                    activeSubtopicId={pagina?.id}
-                    topicLessons={getTopicLessons()}
-                    soloLectura={soloLectura}
-                  />
                   <WelcomeArea
                     page={pagina}
                     blocks={blocks}
@@ -127,15 +120,8 @@ export default async function GroupPage({
               {cabecera}
               <ReadingProgressBar />
             </div>
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <GroupBody>
-              <GroupSidebar
-                activeTopicSlug={topic.slug}
-                activeSubtopicId={activeSubtopic?.id}
-                contentSubtopics={meta?.subtopics}
-                topicLessons={getTopicLessons()}
-                soloLectura={soloLectura}
-              />
               <ContentArea
                 topic={topic}
                 meta={meta}

@@ -397,9 +397,6 @@
 }
 
 /* Terminal styling */
-.terminal-body {
-  font-family: 'Geist Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-}
 
 /* Blinking cursor animation */
 @keyframes blink {

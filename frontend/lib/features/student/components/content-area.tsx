@@ -6,7 +6,7 @@ import { SimulatorLesson } from "@shared/components/simulator-lesson"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
 import { LessonContainer } from "@shared/components/terminal-ui"
 import { LessonHeader } from "@shared/components/lesson-header"
-import { SidebarMovil } from "@/lib/features/student/components/sidebar-movil"
+import { BarraContenidos } from "@/lib/features/student/components/barra-contenidos"
 import type { Topic } from "@/lib/features/student/types"
 import type { LessonResource, LessonSubtopic, TopicContentMeta } from "@/lib/models/content"
 import type { LessonBlock } from "@shared/lib/content/lesson-blocks"
@@ -64,19 +64,17 @@ export function ContentArea({
         />
       ) : (
         <LessonContainer>
-          {/* El panel de contenidos, plegado. Solo en movil: en escritorio esta
-              en su columna y aqui estorbaria. */}
-          <div className="mb-6">
-            <SidebarMovil
-              activeTopicSlug={topic.slug}
-              activeSubtopicId={activeSubtopic?.id}
-              contentSubtopics={meta?.subtopics}
-              topicLessons={topicLessons}
-              soloLectura={soloLectura}
-              topicTitle={`${topic.number}. ${topic.title}`}
-              lessonTitle={activeSubtopic?.title}
-            />
-          </div>
+          {/* Donde estas y la puerta al indice. Ya no hay columna: el indice se
+              abre encima cuando se pide (ver `barra-contenidos.tsx`). */}
+          <BarraContenidos
+            activeTopicSlug={topic.slug}
+            activeSubtopicId={activeSubtopic?.id}
+            contentSubtopics={meta?.subtopics}
+            topicLessons={topicLessons}
+            soloLectura={soloLectura}
+            topicTitle={`${topic.number}. ${topic.title}`}
+            lessonTitle={activeSubtopic?.title}
+          />
 
           {/* La rama de simulador no pasa por aqui: monta su propia portada con
               su titulo, y dos cabeceras seguidas sobraban. */}

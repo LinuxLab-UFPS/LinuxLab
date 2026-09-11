@@ -106,17 +106,36 @@ export function EssentialCommands({ className }: { className?: string }) {
   if (picked === null || learned.length === 0) return null
 
   return (
-    // `items-stretch` + `justify-between`: la columna de botones mide lo que
-    // midan las tarjetas y el «+» se apoya en su mismo bajo. Con `items-start`
-    // los dos botones se quedaban arriba y su borde inferior caia muy por
-    // encima del de las tarjetas, que son mas altas.
-    <div className={cn("flex items-stretch gap-2", className)}>
+    /* El titulo encima de las tarjetas, y el «+» a su lado. Antes no habia
+       titulo y los dos botones vivian apilados en una columna a la derecha: la
+       tira aparecia debajo de la terminal sin decir que era, y el «+» tan lejos
+       de las tarjetas que nadie relacionaba lo uno con lo otro. */
+    <div className={cn("flex flex-col gap-2", className)}>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={toggleHidden}
+          aria-expanded={!hidden}
+          className="flex items-center gap-2 rounded-md text-sm font-medium text-foreground transition-colors hover:text-primary"
+        >
+          <Command className="h-4 w-4 text-primary" />
+          Comandos esenciales
+        </button>
+        {!hidden && (
+          <CollapsedPanelButton
+            label="Escoger comandos"
+            icon={Plus}
+            onClick={() => setPicking(true)}
+          />
+        )}
+      </div>
+
       {/* La hoja se despliega hacia abajo en vez de aparecer de golpe. La fila
           de la rejilla va de 0fr a 1fr, que es la única forma de animar un alto
           que no se conoce de antemano; el recorte lo hace la caja de dentro. */}
       <div
         className={cn(
-          "grid flex-1 transition-all duration-300 ease-out",
+          "grid transition-all duration-300 ease-out",
           hidden ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
         )}
       >
@@ -127,22 +146,6 @@ export function EssentialCommands({ className }: { className?: string }) {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="flex flex-col items-center justify-between gap-1.5">
-        <CollapsedPanelButton
-          label={hidden ? "Mostrar comandos esenciales" : "Ocultar comandos esenciales"}
-          icon={Command}
-          onClick={toggleHidden}
-          active={!hidden}
-        />
-        {!hidden && (
-          <CollapsedPanelButton
-            label="Escoger comandos"
-            icon={Plus}
-            onClick={() => setPicking(true)}
-          />
-        )}
       </div>
 
       <CommandPicker

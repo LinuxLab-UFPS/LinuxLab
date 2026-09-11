@@ -15,7 +15,21 @@ function setupGateway(server) {
   const heartbeat = startHeartbeat(wss)
   wss.on("close", () => stopHeartbeat(heartbeat))
 
-  wss.on("connection", (ws, request) => {    ws.isAlive = true
+  wss.on("connection", (ws, request) => {
+    /* Igual que en el socket SSH (ver `sshService`): Nagle retiene los paquetes
+       pequeños esperando a juntarlos con el siguiente, y escribir en una shell
+       es un byte cada vez. Sin esto, cada tecla se lleva 40ms de mas solo en
+       este tramo, y otros tantos en el de SSH. Son las dos patas del viaje, y
+       las dos tenian el mismo freno. */
+    try {
+      if (ws._socket && typeof ws._socket.setNoDelay === "function") {
+        ws._socket.setNoDelay(true)
+      }
+    } catch (err) {
+      logger.warn({ err }, "No se pudo desactivar Nagle en el socket del navegador")
+    }
+
+    ws.isAlive = true
     ws.on("pong", () => {
       ws.isAlive = true
     })

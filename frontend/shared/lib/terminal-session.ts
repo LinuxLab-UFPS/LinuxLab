@@ -1,7 +1,6 @@
 "use client"
 
 import { env } from "@/lib/config/env"
-import { markTerminalReady } from "@/lib/features/student/terminal-input"
 
 /**
  * La sesion de terminal, fuera de React.
@@ -28,8 +27,16 @@ const ESPERAS = [500, 1200, 2500]
  * Cuanto texto se guarda para repintar. Es lo que ve quien vuelve a la
  * terminal, no el scrollback entero: 200 KB son varias pantallas de sobra y
  * ponen un techo a la memoria de una sesion larga.
+ *
+ * El recorte no se hace al pasarse de MAX sino al pasarse de TOPE, y entonces
+ * baja hasta MAX. La diferencia importa: antes se recortaba en cuanto se
+ * superaban los 200 KB, o sea en CADA trozo que llegaba a partir de ahi, y cada
+ * trozo es una tecla del eco. Escribir reservaba y copiaba 200 KB por pulsacion
+ * y la terminal se iba volviendo lenta segun avanzaba la sesion. Con la holgura
+ * se recorta una vez cada 100 KB.
  */
 const MAX_HISTORIAL = 200_000
+const TOPE_HISTORIAL = 300_000
 
 type Salida = (texto: string) => void
 
@@ -95,7 +102,13 @@ function olvidarCwd() {
 function leerCwd(texto: string) {
   let ultima: string | null = null
   for (const m of texto.matchAll(OSC7)) ultima = m[1]
-  if (ultima === null || ultima === cwd) return
+  if (ultima === null) return
+  /* El prompt es la unica prueba de que hay una shell escuchando: lo emite ella
+     misma (OSC 7, ver `linuxlab-shell.sh`). Aqui se vacia la cola de comandos
+     que llegaron antes, y no al abrir el socket, que es un segundo antes de que
+     exista la PTY. */
+  vaciarCola()
+  if (ultima === cwd) return
   cwd = ultima
   for (const oyente of oyentesCwd) oyente(cwd)
 }
@@ -145,10 +158,16 @@ function olvidarPantallaAlterna() {
  * conexion. Asi un emulador que se monta despues los ve tambien, en su sitio.
  */
 function emitir(texto: string) {
-  leerCwd(texto)
-  leerPantallaAlterna(texto)
+  /* Las dos lecturas escanean con expresiones regulares, y esto corre por cada
+     trozo que llega, incluido el eco de cada tecla. Un ESC es condicion
+     necesaria para las dos secuencias que buscan, asi que una tecla normal se
+     va por aqui sin pagar los dos escaneos. */
+  if (texto.includes("\x1b")) {
+    leerCwd(texto)
+    leerPantallaAlterna(texto)
+  }
   historial += texto
-  if (historial.length > MAX_HISTORIAL) {
+  if (historial.length > TOPE_HISTORIAL) {
     historial = historial.slice(historial.length - MAX_HISTORIAL)
   }
   for (const oyente of oyentes) oyente(texto)
@@ -166,6 +185,23 @@ export function escribirAviso(texto: string): void {
   emitir(texto)
 }
 
+/**
+ * Deja la pantalla en blanco, sin pasar por la shell.
+ *
+ * Se usa al abrir una comprobacion: el enunciado se lee mejor en una pantalla
+ * limpia que al final de lo que hubiera antes. Mandarle `clear` a bash no vale
+ * aqui, porque ese comando da la vuelta por el contenedor y volveria DESPUES
+ * del aviso, borrandolo. Esto es local y ordenado: se limpia y se escribe.
+ *
+ * Borra tambien el historial, que si no un emulador que se monte despues
+ * repintaria la pantalla vieja encima de la limpia. `2J` vacia lo visible, `3J`
+ * el desplazamiento hacia atras y `H` devuelve el cursor arriba del todo.
+ */
+export function limpiarPantalla(): void {
+  historial = ""
+  emitir("\x1b[2J\x1b[3J\x1b[H")
+}
+
 function conectar() {
   if (typeof window === "undefined") return
   const socket = new WebSocket(`${WS_BASE}/terminal`)
@@ -175,9 +211,9 @@ function conectar() {
     abierta = true
     intento = 0
     if (tamaño) socket.send(JSON.stringify({ type: "resize", ...tamaño }))
-    // La terminal está lista: los comandos que llegaron antes (p. ej. el cd a
-    // el directorio de trabajo al abrir una actividad) se vacían en orden.
-    markTerminalReady()
+    // Ojo: aqui NO se vacia la cola. El socket abierto no quiere decir que haya
+    // shell, y lo que se escriba antes del primer prompt se pierde. Se hace en
+    // `leerCwd`, cuando la shell habla.
   }
 
   socket.onmessage = (event) => {
@@ -206,6 +242,8 @@ function conectar() {
     olvidarPantallaAlterna()
     // Lo tecleado que no llego a salir era para esa shell, no para la siguiente.
     olvidarEntrada()
+    // Y lo que se mande desde fuera vuelve a la cola hasta el proximo prompt.
+    hayShell = false
 
     // Nunca llego a abrirse y quedan intentos.
     if (!abierta && intento < ESPERAS.length) {
@@ -294,6 +332,41 @@ export function enviarEntrada(data: string): void {
   // Sin ventana abierta, la tecla sale ya: escribir suelto no arrastra retraso.
   // Con una abierta, se acumula y sale cuando venza.
   if (temporizadorEnvio === null) vaciarEntrada()
+}
+
+/* ── Lo que manda la plataforma, no el estudiante ──────────────────────────
+ *
+ * El panel de la actividad tiene que poder llevar la shell a su directorio, y
+ * el reinicio de archivos tiene que sacarla de un directorio que acaba de
+ * borrar. Ni uno ni otro comparten ancestro util con la consola, asi que el
+ * comando viaja por aqui. Lo que se envia es lo mismo que teclearia el
+ * estudiante, con sus caracteres de control: la PTY no distingue el origen.
+ *
+ * Vivia en `terminal-input.ts` y repartia a los emuladores montados, lo que
+ * tenia un agujero: en movil la consola es un modal, y con el modal cerrado no
+ * hay ninguno montado. El comando recorria un conjunto vacio y se perdia sin
+ * dejar rastro. Aqui escribe al socket, que existe montada o no la pantalla.
+ *
+ * Y encola hasta el PRIMER PROMPT, no hasta que abre el socket: el socket abre
+ * en cuanto el servidor acepta, pero la PTY tarda otro segundo en existir, y lo
+ * que se escriba en ese hueco no lo lee nadie.
+ */
+let hayShell = false
+const cola: string[] = []
+
+function vaciarCola(): void {
+  if (hayShell) return
+  hayShell = true
+  const pendientes = cola.splice(0, cola.length)
+  for (const dato of pendientes) enviarEntrada(dato)
+}
+
+export function sendToTerminal(data: string): void {
+  if (!hayShell) {
+    cola.push(data)
+    return
+  }
+  enviarEntrada(data)
 }
 
 /** Lo que estuviera esperando deja de tener sentido: es de otra sesion. */

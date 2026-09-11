@@ -87,25 +87,40 @@ export function Stepper({
 
   if (orientation === "horizontal") {
     return (
-      <ol className={cn("flex items-center", className)}>
-        {steps.map((step, i) => (
-          <li
-            key={step.id}
-            className={cn("flex min-w-0 items-center gap-3", i < steps.length - 1 && "flex-1")}
-          >
-            <Circulo {...estado(i)} />
-            <Rotulo indice={i} label={step.label} encendido={i <= current} />
-            {i < steps.length - 1 && (
-              <span
-                className={cn(
-                  "mx-4 h-px min-w-8 flex-1 transition-colors",
-                  i < current ? "bg-primary/40" : "bg-table-line",
-                )}
-              />
-            )}
-          </li>
-        ))}
-      </ol>
+      <div className={className}>
+        <ol className="flex items-center">
+          {steps.map((step, i) => (
+            <li
+              key={step.id}
+              className={cn("flex min-w-0 items-center gap-3", i < steps.length - 1 && "flex-1")}
+            >
+              <Circulo {...estado(i)} />
+              {/* En estrecho no caben tres rotulos: el `truncate` los dejaba en
+                  nada y el «Paso N» de encima partia en dos lineas. Debajo de
+                  `sm` se quedan solo los circulos y el paso en curso se nombra
+                  una vez, entero, bajo el riel. */}
+              <div className="hidden min-w-0 sm:block">
+                <Rotulo indice={i} label={step.label} encendido={i <= current} />
+              </div>
+              {i < steps.length - 1 && (
+                <span
+                  className={cn(
+                    "mx-2 h-px min-w-8 flex-1 transition-colors sm:mx-4",
+                    i < current ? "bg-primary/40" : "bg-table-line",
+                  )}
+                />
+              )}
+            </li>
+          ))}
+        </ol>
+
+        <p className="mt-3 text-sm font-medium text-foreground sm:hidden">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+            Paso {current + 1} de {steps.length}
+          </span>
+          <span className="mt-0.5 block">{steps[current]?.label}</span>
+        </p>
+      </div>
     )
   }
 

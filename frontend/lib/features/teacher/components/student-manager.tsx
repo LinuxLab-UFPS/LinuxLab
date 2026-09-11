@@ -124,6 +124,12 @@ export function StudentManager({
           bad.push({ line, email: row.email, reason: "Sin código" })
           return
         }
+        // El mismo tope que los formularios y el servidor. Sin esto el archivo
+        // se aceptaba entero aqui y el alta fallaba despues, fila por fila.
+        if (row.code.trim().length > 8) {
+          bad.push({ line, email: row.email, reason: "Código de más de 8 caracteres" })
+          return
+        }
         if (seenEmails.has(emailKey(row.email))) {
           bad.push({ line, email: row.email, reason: "Correo repetido" })
           return
@@ -218,6 +224,7 @@ export function StudentManager({
               </Label>
               <Input
                 id="student-code"
+                maxLength={8}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="1150000"

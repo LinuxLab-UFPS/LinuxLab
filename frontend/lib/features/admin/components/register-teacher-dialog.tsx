@@ -123,6 +123,7 @@ export function RegisterTeacherDialog({
               </Label>
               <Input
                 id="code"
+                maxLength={8}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Ej: DOC-001"

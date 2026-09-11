@@ -16,6 +16,13 @@ import type { Activity } from "@shared/lib/content/activities"
 import type { LessonRef } from "@shared/lib/content/lessons"
 import type { GroupActivityDetail } from "@/lib/features/student/group-activities"
 import { GroupActivityPanel } from "@/lib/features/student/components/group-activity-panel"
+import { useEsCompleta } from "@shared/hooks/use-talla"
+import { BotonTerminal, TerminalModal } from "@shared/components/terminal-modal"
+import {
+  AccionesActividadProvider,
+  useAccionesActividad,
+} from "@/lib/features/student/acciones-actividad"
+import { useDirectorioAutomatico } from "@/lib/features/student/use-directorio-automatico"
 
 const HIDDEN_KEY = "linuxlab:suggested-hidden"
 
@@ -63,6 +70,8 @@ export function TerminalWorkspace({
   // null mientras no se ha leído el almacenamiento: sin eso, la primera pintura
   // arrancaría colapsada y el panel entraría con una animación que nadie pidió.
   const [hidden, setHidden] = useState<boolean | null>(null)
+  const completa = useEsCompleta()
+  const [terminalAbierta, setTerminalAbierta] = useState(false)
 
   useEffect(() => {
     // Lectura unica de localStorage al montar (patron aceptado).
@@ -89,6 +98,15 @@ export function TerminalWorkspace({
   }, [])
 
   const isStudent = user?.role === "student"
+
+  /* La terminal sigue a la pantalla: entra sola en el directorio de la actividad
+     que se abre y vuelve al home al salir de ella. */
+  useDirectorioAutomatico({
+    activo: isStudent,
+    slug: activity?.slug ?? null,
+    workdirDeGrupo: groupActivity?.workdir ?? null,
+  })
+
   const open = Boolean(isStudent && ((activity && statement) || groupActivity))
   // Una actividad abierta manda: se ve aunque las sugerencias estén ocultas.
   const showColumn = isStudent && (open || hidden === false)
@@ -102,6 +120,70 @@ export function TerminalWorkspace({
    * encoge en vez de desbordar. */
   const track = open ? "min(44rem, 38vw)" : "28rem"
 
+  /* El panel de la actividad, que es lo mismo en las dos maquetaciones. */
+  const panel =
+    activity && statement ? (
+      <ActivityPanel activity={activity} statement={statement} origin={origin} next={next} />
+    ) : groupActivity && user ? (
+      <GroupActivityPanel detail={groupActivity} userId={user.id} />
+    ) : null
+
+  // Hasta saber la talla no se pinta: cada maquetacion mide distinto y
+  // adivinar aqui provoca un salto al cargar.
+  if (completa === undefined) return null
+
+  /* Por debajo de 1280 no hay ancho para dos columnas: el enunciado se queda
+     con la pantalla y la terminal se abre encima cuando hace falta. Los botones
+     de la actividad viajan al pie del modal para poder trabajar sin cerrarlo. */
+  if (!completa) {
+    /* Sin actividad abierta esta pantalla es la terminal, y nada mas. Con el
+       modal detras de un boton quedaba una pagina con unas tarjetas de
+       sugerencias y un boton flotante: tres toques para llegar a lo que se venia
+       a hacer. Las sugerencias no se pierden, estan en el catalogo de
+       actividades, que es su sitio.
+
+       Y va incrustada, no en el modal: solo puede haber una consola montada a la
+       vez, asi que las dos formas son excluyentes. */
+    if (!panel) {
+      return (
+        <div className="flex h-full flex-col gap-3 px-3 py-3">
+          <div className="min-h-0 flex-1">
+            <TerminalFrame
+              className="h-full"
+              toolbar={
+                <TerminalSettingsBar
+                  fontSize={fontSize}
+                  fontFamily={fontFamily}
+                  onFontSizeChange={handleFontSize}
+                  onFontFamilyChange={handleFontFamily}
+                />
+              }
+            >
+              {/* Con el marco pegado al borde de la pantalla, la primera columna
+                  quedaba en el filo. Mismo aire que en el modal. */}
+              <div className="h-full px-2 py-1">
+                <TerminalEmulator fontSize={fontSize} fontFamily={fontFamily} />
+              </div>
+            </TerminalFrame>
+          </div>
+        </div>
+      )
+    }
+
+    /* Con una actividad abierta manda el enunciado: hay que leerlo para saber
+       que escribir. La consola se abre encima, con los botones de la actividad
+       en su pie para poder trabajar sin cerrarla. */
+    return (
+      <AccionesActividadProvider>
+        <div className="flex h-full flex-col px-4 py-4">
+          <div className="min-h-0 flex-1">{panel}</div>
+          {!terminalAbierta && <BotonTerminal onClick={() => setTerminalAbierta(true)} />}
+          <TerminalModalConAcciones open={terminalAbierta} onOpenChange={setTerminalAbierta} />
+        </div>
+      </AccionesActividadProvider>
+    )
+  }
+
   return (
     <div className="flex h-full items-center justify-center px-6 py-8">
       <div
@@ -110,7 +192,13 @@ export function TerminalWorkspace({
           hidden !== null && "transition-all duration-300 ease-out",
         )}
         style={{
-          gridTemplateColumns: `${showColumn ? track : "0rem"} ${TERMINAL_WIDTH}`,
+          /* `minmax(0, ...)` en las dos: son los anchos que se querrian, no los
+             que se exigen. Declarados a pelo, la suma de la columna y la consola
+             se pasaba del viewport (a 1440: 547 + 24 + 1024 = 1595) y como el
+             `max-w-full` recorta la caja pero no las columnas, la fila se salia
+             por los dos lados sin que hubiera barra que lo delatara. Con
+             `minmax` la consola cede lo que haga falta para que quepa. */
+          gridTemplateColumns: `minmax(0, ${showColumn ? track : "0rem"}) minmax(0, ${TERMINAL_WIDTH})`,
           columnGap: showColumn ? "1.5rem" : "0rem",
         }}
       >
@@ -194,4 +282,16 @@ export function TerminalWorkspace({
       </div>
     </div>
   )
+}
+
+/** El modal, ya dentro del proveedor, con las acciones que publique el panel. */
+function TerminalModalConAcciones({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+}) {
+  const { acciones } = useAccionesActividad()
+  return <TerminalModal open={open} onOpenChange={onOpenChange} acciones={acciones} />
 }

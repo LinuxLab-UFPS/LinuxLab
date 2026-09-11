@@ -27,7 +27,8 @@ export function ExampleCheck() {
       <div className="space-y-4 px-5 py-4">
         <p className="text-sm leading-relaxed text-foreground">
           Crea un directorio llamado practicas dentro de tu directorio personal y,
-          dentro de él, otro llamado tema-03.
+          dentro de él, otro llamado tema-03. Cuando termines, pulsa el botón de
+          comprobar.
         </p>
 
         <ul className="space-y-2">

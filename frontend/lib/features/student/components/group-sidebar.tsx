@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LessonLink } from "@shared/components/lesson-loading"
-import { CheckCircle2, ChevronRight, Hand, Home, Map } from "lucide-react"
+import { CheckCircle2, ChevronRight, Hand, Map } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { simulators } from "@shared/lib/content/simulators"
 import {
@@ -33,6 +33,16 @@ interface GroupSidebarProps {
    * suyo que contar y las cifras vacias se leerian como un cero real.
    */
   soloLectura?: boolean
+  /** Para ajustar el marco a la capa que lo contiene: flotante o modal. */
+  className?: string
+  /**
+   * Sin titulo ni progreso: los pone ya la barra de la que cuelga.
+   *
+   * No es solo por no repetirse. Son 105px que, en un portatil de 800 de alto,
+   * eran la diferencia entre ver los diez temas y tener que desplazar la lista
+   * para llegar al ultimo.
+   */
+  compacto?: boolean
 }
 
 /**
@@ -51,6 +61,8 @@ export function PanelContenidos({
   topicLessons,
   groupName,
   soloLectura = false,
+  className,
+  compacto = false,
 }: GroupSidebarProps) {
   const {
     isLessonDone,
@@ -63,25 +75,25 @@ export function PanelContenidos({
     /* `w-full` y `min-w-0`: la tarjeta se ajusta a su columna y no al texto que
        lleva dentro. Sin esto el panel cambiaba de ancho segun el tema abierto,
        porque una leccion de nombre largo lo estiraba. */
-    <div className="flex w-full min-w-0 max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none">
-      {/* Nav: home + title */}
-      <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3">
-        <Link
-          href="/inicio"
-          title="Volver al inicio"
-          aria-label="Volver al inicio"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-        >
-          <Home className="h-4 w-4" />
-        </Link>
-        <h2 className="truncate text-sm font-semibold text-foreground">
-          {groupName ?? "Contenidos del curso"}
-        </h2>
-      </div>
+    <div
+      className={cn(
+        "flex w-full min-w-0 max-h-full flex-col overflow-hidden rounded-xl border border-black/15 bg-background shadow-md dark:border-border dark:shadow-none",
+        className,
+      )}
+    >
+      {/* Solo el titulo: el atajo al inicio se mudo a la barra, donde esta a la
+          vista siempre y no solo con el indice abierto. */}
+      {!compacto && (
+        <div className="flex h-12 shrink-0 items-center border-b border-border px-4">
+          <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+            {groupName ?? "Contenidos del curso"}
+          </h2>
+        </div>
+      )}
 
       {/* El progreso, arriba del todo: es lo primero que se quiere saber al
           abrir el curso, y al pie de una lista larga quedaba fuera de vista. */}
-      {!soloLectura && (
+      {!soloLectura && !compacto && (
         <LessonLink
           href={`/curso?tema=${bienvenida.slug}&sub=roadmap`}
           className="shrink-0 border-b border-border px-4 py-3 transition-colors hover:bg-secondary"
@@ -207,7 +219,7 @@ export function PanelContenidos({
                     {simulators
                       .filter((sim) => sim.topicNumber === topic.number)
                       .map((sim) => (
-                        <li key={sim.id} className="hidden md:list-item">
+                        <li key={sim.id}>
                           <LessonLink href={sim.href} className={filaHija(false, false)}>
                             <VinetaSimulador />
                             <span className="min-w-0 truncate">{sim.title}</span>
@@ -224,26 +236,5 @@ export function PanelContenidos({
       </nav>
 
     </div>
-  )
-}
-
-/**
- * El panel en su columna, que es como se ve en escritorio.
- *
- * `top-0` y `max-h-full`: se pega al borde de su contenedor con scroll, que es
- * el <main> de la pagina y ya empieza debajo de la cabecera. Antes descontaba a
- * mano los 66px de la cabecera porque el que scrolleaba era la ventana. La
- * lista de temas sigue a mano mientras la pagina se desplaza.
- *
- * En movil se esconde: 320px que no ceden dejaban la leccion sin ancho. Alli el
- * mismo panel se despliega desde `SidebarMovil`.
- */
-export function GroupSidebar(props: GroupSidebarProps) {
-  return (
-    <aside className="sticky top-0 hidden max-h-full w-80 shrink-0 pb-4 pt-16 md:block">
-      <div className="mt-2 flex max-h-full overflow-hidden">
-        <PanelContenidos {...props} />
-      </div>
-    </aside>
   )
 }

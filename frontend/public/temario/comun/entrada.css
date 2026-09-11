@@ -1,0 +1,28 @@
+/* El campo de la consola de los simuladores.
+ *
+ * Ocupa el sitio del <span> que antes imitaba lo tecleado, asi que hereda su
+ * clase (`.typed` o `.tecleado`) y aqui solo se le quita lo que el navegador le
+ * pone por ser un <input>. Va en comun porque los cinco lo comparten.
+ */
+input.typed,
+input.tecleado {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  /* 16px o mas, o iOS acerca la pagina al enfocar y no se vuelve solo. En
+     escritorio manda el tamano del simulador, que es menor y ahi no estorba. */
+  caret-color: var(--red, #C41E3A);
+}
+
+@media (pointer: coarse) {
+  input.typed,
+  input.tecleado,
+  input.inp {
+    font-size: 16px;
+  }
+}

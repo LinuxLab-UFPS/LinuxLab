@@ -19,7 +19,8 @@ const DATOS = {
   instructions:
     "Crea solo-lectura.txt en tu directorio personal con al " +
     "menos dos líneas escritas en vi. Después retírale el permiso de escritura " +
-    "a los tres bloques, de forma que solo quede lectura para todos.",
+    "a los tres bloques, de forma que solo quede lectura para todos." +
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

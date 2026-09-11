@@ -4,7 +4,10 @@
 <title>El despliegue del viernes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/movil.css">
+<link rel="stylesheet" href="/temario/comun/entrada.css">
 <script src="/temario/comun/barra.js"></script>
+<script src="/temario/comun/consola.js"></script>
 <style>
 /* ============================================================
    EL DESPLIEGUE DEL VIERNES
@@ -87,16 +90,6 @@ button.win-dot::after{
 #w-term{left:36%;top:6%;width:60%;height:76%}
 #w-chat{left:3%;top:9%;width:30%;height:70%}
 
-/* El guiño: vive en el cuadrante de la terminal, detras de ella. */
-.marca{
-  position:absolute;left:36%;top:6%;width:60%;height:76%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:clamp(26px,5.2vmin,54px);font-weight:700;letter-spacing:.04em;
-  color:var(--red);filter:drop-shadow(0 0 24px rgba(255,0,48,.5));
-  user-select:none;pointer-events:none;
-}
-.marca span{color:var(--bright);filter:none}
-
 /* ---------- dock ---------- */
 .dock{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:12px;padding:9px 14px;background:rgba(22,27,34,.86);border:1px solid var(--border);border-radius:14px;backdrop-filter:blur(6px)}
 .dock-btn{width:clamp(36px,5.2vmin,52px);height:clamp(36px,5.2vmin,52px);border:none;background:none;padding:0;cursor:pointer;position:relative;transition:transform .15s}
@@ -114,7 +107,6 @@ button.win-dot::after{
 .prompt{display:flex;gap:8px;flex-shrink:0;padding-top:2px;font-size:12.5px}
 .ps1{color:var(--green);flex-shrink:0}
 .tecleado{color:#FFFFFF;white-space:pre-wrap;word-break:break-all}
-.caret{display:inline-block;width:8px;height:15px;background:#FFFFFF;vertical-align:-2px;animation:parpadeo 1s step-end infinite}
 @keyframes parpadeo{50%{opacity:0}}
 
 /* ---------- la aplicacion de mensajes ---------- */
@@ -138,6 +130,10 @@ button.win-dot::after{
 .msg.yo{align-self:flex-end;border-bottom-right-radius:3px;
   background:var(--surf2);border:1px solid var(--border);color:var(--bright)}
 .msg.mal{background:rgba(255,59,87,.10);border-color:#7A2233;color:#FFB3C0}
+/* Lo que hay que hacer, en el ambar de la marca: los demas mensajes son azules
+   y este tiene que encontrarse de un vistazo al volver al chat. */
+.msg.objetivo{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.45);color:#FFE0A3}
+.msg.objetivo b{color:#FFC864}
 .msg code{background:rgba(0,0,0,.35);border-radius:3px;padding:0 3px;color:var(--azul-app)}
 /* Los tres puntos mientras escribe. Se turnan, no parpadean a la vez. */
 .msg.escribiendo{display:flex;gap:4px;align-items:center;padding:10px 12px}
@@ -171,7 +167,6 @@ button.win-dot::after{
 /* portada y final: mismo tamaño y mismos colores que los otros simuladores */
 
 /* pegado: el evento paste solo llega a algo editable */
-.pegar{position:fixed;top:-300px;left:-300px;width:1px;height:1px;opacity:0}
 
 @media (max-width:900px){
   .desk{grid-template-columns:1fr;overflow-y:auto}
@@ -184,7 +179,6 @@ button.win-dot::after{
 
 <div class="desk" id="desk">
   <!-- Debajo de la terminal, para quien se le ocurra cerrarla. -->
-  <div class="marca" aria-hidden="true">Linux<span>Lab</span></div>
 
   <!-- mensajes: donde Laura pide y donde se responde -->
   <div class="win" id="w-chat">
@@ -214,7 +208,9 @@ button.win-dot::after{
     <div class="consola" id="consola">
       <div class="prompt">
         <span class="ps1" id="ps1">estudiante@linuxlab:~$</span>
-        <span><span class="tecleado" id="tecleado"></span><span class="caret"></span></span>
+        <input class="tecleado" id="tecleado" type="text" autocomplete="off"
+               autocapitalize="none" autocorrect="off" spellcheck="false"
+               aria-label="Escribe un comando">
       </div>
     </div>
   </div>
@@ -243,8 +239,6 @@ button.win-dot::after{
       </svg>
     </button>
   </div>
-
-  <textarea id="pegar" class="pegar" aria-hidden="true" tabindex="-1"></textarea>
 
 </div>
 
@@ -326,7 +320,11 @@ const PISTAS_GREP = [
   {
     id: "causa",
     etiqueta: "Causa raíz",
-    pista: "Ya se debería haber reportado la <b>causa raíz</b> del incidente. Necesito saber cuál fue, búscala en el historial de incidencias.",
+    /* La frase va tal cual esta escrita en el archivo, con su mayuscula y sin
+       la tilde: `grep` compara literalmente, asi que una pista que la escriba
+       de otra forma manda a buscar algo que no existe. Los archivos del caso
+       imitan registros de verdad y van sin tildes. */
+    pista: "Ya se debería haber reportado la causa del incidente. En el historial de incidencias hay una línea que empieza por <b>Causa raiz</b>, así, sin tilde. Necesito saber cuál fue.",
     terreno: "Los informes están en incidencias/. La línea que busco empieza por «Causa raiz».",
     terminal: 'Busca la frase "Causa raiz" con grep -r sobre incidencias/.',
     arma() {
@@ -353,8 +351,8 @@ const PISTAS_GREP = [
   {
     id: "autor",
     etiqueta: "Quién desplegó",
-    pista: "Nadie firmó el despliegue del viernes, pero en el registro tuvo que quedar quién lo hizo. Busca dónde dice <b>desplegado por</b>.",
-    terreno: "Los registros de despliegue están en despliegues/. Busca una línea que hable de quién desplegó.",
+    pista: "Nadie firmó el despliegue del viernes, pero en el registro tuvo que quedar quién lo hizo. Busca la línea que dice <b>Desplegado por</b>.",
+    terreno: "Los registros de despliegue están en despliegues/. La línea que busco empieza por «Desplegado por».",
     terminal: 'Busca la frase "Desplegado por" con grep -r sobre despliegues/.',
     arma() {
       const quien = alAzar(COMPANEROS);
@@ -378,8 +376,8 @@ const PISTAS_GREP = [
   {
     id: "afectado",
     etiqueta: "Servicio afectado",
-    pista: "El equipo de monitoreo me mandó un aviso cuando se cayó. Dime qué <b>servicio</b> fue <b>afectado</b>.",
-    terreno: "Los avisos están en avisos/. El que sirve es el crítico, y nombra el servicio afectado.",
+    pista: "El equipo de monitoreo me mandó un aviso cuando se cayó. Busca la línea que dice <b>Servicio afectado</b> y dime cuál fue.",
+    terreno: "Los avisos están en avisos/. El que sirve es el crítico, y su línea empieza por «Servicio afectado».",
     terminal: 'Busca la frase "Servicio afectado" con grep -r sobre avisos/.',
     arma() {
       const servicio = alAzar(SERVICIOS);
@@ -438,7 +436,7 @@ const PISTAS_REGEX = [
   {
     id: "build",
     etiqueta: "Número de build",
-    pista: "Dime el número de <b>build</b> que rompió producción. Va con esa etiqueta delante.",
+    pista: "Dime el número de build que rompió producción. Va etiquetado como <b>BUILD</b>, en mayúsculas, y cinco dígitos.",
     terreno: "Lleva la etiqueta BUILD y cinco dígitos. Mira en integracion/, y ojo que hay etiquetas parecidas que no valen.",
     terminal: "El build es BUILD y cinco dígitos. Descríbelo con grep -rE y llaves.",
     arma() {
@@ -635,9 +633,19 @@ const FAMILIAS = [
   { nombre: "find", pistas: PISTAS_FIND },
   { nombre: "sort", pistas: PISTAS_SORT },
 ];
-// Dos y no tres: la partida pide menos datos pero cada uno exige buscar de
-// verdad, ahora que Laura ya no dice donde mirar.
-const DATOS_POR_CASO = 2;
+/* Tres, uno por familia de las que quedan.
+ *
+ * Con dos, la familia `sort` no salia NUNCA: el bucle de `nuevoCaso` recorre
+ * FAMILIAS en orden ([grep, regex, find, sort]), descarta una al azar y para al
+ * llenar los huecos, asi que los dos primeros siempre caian entre las tres
+ * primeras familias. `sort` esta en el indice 3 y solo se alcanzaria saltandose
+ * dos de las anteriores, y solo se salta una. Cuatro casos escritos que nadie
+ * llego a jugar, y una cabecera que prometia `sort`.
+ *
+ * Con tres se llenan los tres huecos que quedan tras el descarte, asi que cada
+ * familia superviviente aporta uno y `sort` entra siempre que no sea la
+ * descartada. */
+const DATOS_POR_CASO = 3;
 
 /** Los senuelos que siempre estan: el proyecto nunca se ve vacio. */
 function archivosBase() {
@@ -1296,6 +1304,39 @@ function terminoDe(m) {
   return "";
 }
 
+/**
+ * El termino que se nombre, venga como venga la pregunta.
+ *
+ * `terminoDe` exige la forma «que es / que son / que significa / que hace», y
+ * fuera de ahi no reconoce nada: «como funciona grep», «explicame find» o «grep»
+ * a secas se colaban como intento de respuesta y Laura contestaba que no le
+ * cuadra. Regañar a quien pregunta es lo contrario de lo que queremos.
+ *
+ * Esto barre el mensaje entero buscando cualquier cosa del glosario. Se usa como
+ * ultimo recurso y DESPUES de comprobar si la respuesta es la correcta, para que
+ * un dato valido que por casualidad nombre una herramienta se confirme igual.
+ */
+function terminoSuelto(m) {
+  const s = pelado(m);
+  if (!s) return null;
+  // Primero la pareja comando+opcion, por lo mismo que en `terminoDe`: quien
+  // escribe «grep -r» pregunta por la opcion, no por grep.
+  for (const pareja of Object.keys(OPCIONES)) {
+    const [cmd, opcion] = pareja.split(" ");
+    if (s.includes(cmd) && new RegExp("(^|[^a-z0-9-])" + opcion + "($|[^a-z0-9])").test(s)) {
+      return pareja;
+    }
+  }
+  for (const [frase, clave] of Object.entries(ALIAS)) {
+    if (s.includes(frase)) return clave;
+  }
+  for (const clave of Object.keys(GLOSARIO)) {
+    const c = pelado(clave);
+    if (new RegExp("(^|[^a-z0-9-])" + c.replace("-", "\\-") + "($|[^a-z0-9])").test(s)) return clave;
+  }
+  return null;
+}
+
 /** Cuantas veces ha pedido ayuda con el dato en curso. */
 let ayudas = 0;
 
@@ -1348,13 +1389,15 @@ let tropiezos = 0;
    asi que la espera no bloquea al que ya sabe la siguiente respuesta. */
 let cola = [], escribiendo = false, temporizador = null;
 
-function di(de, texto, mal) {
+/* `tono` es la clase que lleva la burbuja: "mal" cuando la respuesta no cuadra,
+   "objetivo" para lo que Laura pide, y nada para el resto de la conversacion. */
+function di(de, texto, tono) {
   if (de === "yo") {
-    charla.push({ de, texto, mal: false });
+    charla.push({ de, texto, tono: "" });
     pintarChat();
     return;
   }
-  cola.push({ de, texto, mal: Boolean(mal) });
+  cola.push({ de, texto, tono: tono || "" });
   bombear();
 }
 
@@ -1386,7 +1429,7 @@ function pintarChat() {
   cont.innerHTML = "";
   for (const m of charla) {
     const d = document.createElement("div");
-    d.className = "msg " + m.de + (m.mal ? " mal" : "");
+    d.className = "msg " + m.de + (m.tono ? " " + m.tono : "");
     d.innerHTML = m.texto;
     cont.appendChild(d);
   }
@@ -1399,11 +1442,17 @@ function pintarChat() {
   cont.scrollTop = cont.scrollHeight;
 }
 
-/** Lo que Laura pide ahora. */
+/**
+ * Lo que Laura pide ahora.
+ *
+ * Va en ambar y rotulado, mientras el resto de su charla sigue azul: entre
+ * saludos, confirmaciones y explicaciones, la peticion es lo unico que hay que
+ * hacer, y salia igual que todo lo demas.
+ */
 function pedir() {
   const lista = objetivos();
   if (paso >= lista.length) return;
-  di("ella", lista[paso].pista);
+  di("ella", "<b>Objetivo:</b> " + lista[paso].pista, "objetivo");
 }
 
 /** La respuesta del estudiante, contra el dato en curso. */
@@ -1439,12 +1488,17 @@ function responderChat() {
     return;
   }
 
+  // No era la respuesta: antes de darlo por fallo, se mira si nombraba algo del
+  // glosario. «Como funciona grep» es una pregunta, no un intento.
+  const suelto = terminoSuelto(valor);
+  if (suelto !== null) { responderTermino(suelto); return; }
+
   tropiezos++;
   // Primero se repite lo pedido; a la segunda se dice con qué herramienta se
   // saca. Nadie se queda atascado, pero tampoco se regala a la primera.
   di("ella", tropiezos === 1
     ? "Eso no me cuadra. Si te has atascado, pregúntame «¿Cómo hago eso?»."
-    : (lista[paso].terreno || lista[paso].terminal), true);
+    : (lista[paso].terreno || lista[paso].terminal), "mal");
 }
 
 /** El rotulo de un dato, para escribirlo en la terminal al confirmarlo. */
@@ -1505,55 +1559,22 @@ function terminar() {
 /* ============================================================
    ENTRADA
    ============================================================ */
-let tecleado = "";
 const ocupado = () => !$("fin").hidden || !$("portada").classList.contains("hide");
-
-function enfocar() {
-  const t = $("pegar");
-  if (t && t.focus) t.focus({ preventScroll: true });
-}
 
 const hist = Barra.historial();
 
-document.addEventListener("keydown", (ev) => {
-  if (ocupado()) return;
-  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
-  if (ev.key === "Enter") {
-    const linea = tecleado;
-    hist.recordar(linea);
-    tecleado = "";
-    $("tecleado").textContent = "";
-    ejecutar(linea);
-    return;
-  }
-  // Flecha arriba y abajo, el historial de la shell: repetir un comando largo
-  // obligaba a escribirlo entero otra vez.
-  if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
-    ev.preventDefault();
-    const previa = hist.mover(ev.key === "ArrowUp" ? 1 : -1);
-    if (previa === null) return;
-    tecleado = previa;
-    $("tecleado").textContent = tecleado;
-    return;
-  }
-  if (ev.key === "Backspace") tecleado = tecleado.slice(0, -1);
-  else if (ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey) tecleado += ev.key;
-  else return;
-  ev.preventDefault();
-  $("tecleado").textContent = tecleado;
+/* La consola lleva un campo de verdad (ver `comun/consola.js`): el teclado del
+   telefono sale al tocarlo, y pegar y borrar los resuelve el navegador. */
+const consola = Consola.montar({
+  campo: "tecleado",
+  historial: hist,
+  ocupado,
+  ejecutar,
 });
 
-document.addEventListener("paste", (ev) => {
-  if (ocupado()) return;
-  if (document.activeElement && document.activeElement.tagName === "INPUT") return;
-  const datos = ev.clipboardData || window.clipboardData;
-  if (!datos) return;
-  ev.preventDefault();
-  tecleado += (datos.getData("text") || "").split(/\r?\n/)[0];
-  $("tecleado").textContent = tecleado;
-  const t = $("pegar");
-  if (t) t.value = "";
-});
+function enfocar() {
+  if (consola) consola.enfocar();
+}
 
 $("desk").addEventListener("click", (ev) => {
   if (ev.target.tagName !== "INPUT") enfocar();
@@ -1569,8 +1590,7 @@ $("desk").addEventListener("click", (ev) => {
  * arranca hasta que se pulsa play. */
 function preparar() {
   nuevoCaso();
-  tecleado = "";
-  $("tecleado").textContent = "";
+  if (consola) consola.limpiar();
   $("consola").querySelectorAll(".log").forEach((l) => l.remove());
   $("ps1").textContent = "estudiante@linuxlab:~$";
   $("fin").hidden = true;
@@ -1587,8 +1607,10 @@ function preparar() {
     $(v).hidden = false;
     $(d).dataset.abierta = "true";
   }
-  log("Copia local del repositorio lista. Usa grep, find y sort para ubicar los datos en ella.");
-  log(`Laura necesita ${caso.datos.length} datos para cerrar el informe del incidente:`);
+  /* La consola arranca con lo justo. Iban dos lineas mas en blanco contando lo
+     mismo que ya dice la cabecera y que Laura repite en su primer mensaje, y
+     entre las tres tapaban media pantalla antes de escribir nada. Se queda la
+     gris, que es la unica que aporta: que datos hay que encontrar. */
   log(caso.datos.map((d) => d.etiqueta.toLowerCase()).join(", ") + ".", "nota");
   pintar();
 }
@@ -1645,3 +1667,4 @@ if (typeof globalThis !== "undefined" && globalThis.__PRUEBAS__) {
   };
 }
 </script>
+

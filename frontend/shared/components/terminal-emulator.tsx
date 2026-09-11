@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react"
 import { Terminal } from "@xterm/xterm"
 import { FitAddon } from "@xterm/addon-fit"
 import "@xterm/xterm/css/xterm.css"
-import { onTerminalInput } from "@/lib/features/student/terminal-input"
 import {
   asegurarSesion,
   enviarEntrada,
@@ -29,7 +28,7 @@ interface Props {
  * repinta lo dicho hasta ahora y sigue en directo, asi que la sesion tampoco se
  * pierde al navegar.
  */
-export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo, Monaco, 'Courier New', monospace" }: Props) {
+export function TerminalEmulator({ className, fontSize = 16, fontFamily = "var(--font-geist-mono), ui-monospace, monospace" }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   /* El addon vive en una referencia y no dentro del efecto de montaje porque lo
@@ -117,7 +116,6 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
     redimensionar(term.cols, term.rows)
 
     term.onData(enviarEntrada)
-    const unsubscribe = onTerminalInput(enviarEntrada)
 
     let resizeTimer: ReturnType<typeof setTimeout>
     const observer = new ResizeObserver(() => {
@@ -136,7 +134,6 @@ export function TerminalEmulator({ className, fontSize = 16, fontFamily = "Menlo
       contenedor.removeEventListener("paste", bloquearPegado, true)
       contenedor.removeEventListener("auxclick", bloquearPegado, true)
       baja()
-      unsubscribe()
       observer.disconnect()
       term.dispose()
       termRef.current = null

@@ -16,6 +16,7 @@ import {
 } from "@shared/components/ui/dropdown-menu"
 import { ThemeToggle } from "@shared/components/theme-toggle"
 import { RoleTag } from "@shared/components/role-tag"
+import { NavMenuMovil } from "@shared/components/nav-menu-movil"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
 
 
@@ -52,7 +53,7 @@ export function AdminHeader() {
           <RoleTag variant="admin" />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {NAV.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/")
             return (
@@ -72,6 +73,15 @@ export function AdminHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          {/* El mismo nav de arriba, para cuando no cabe en linea. */}
+          <NavMenuMovil
+            enlaces={NAV.map((item) => ({
+              href: item.href,
+              label: item.label,
+              icon: item.icon,
+              activo: pathname === item.href || pathname.startsWith(item.href + "/"),
+            }))}
+          />
           <ThemeToggle className="text-white/70 hover:bg-white/10 hover:text-white" />
 
           <DropdownMenu>

@@ -23,7 +23,8 @@ const DATOS = {
     "cinco líneas: en la primera tu nombre, en las siguientes 3, 3 comandos que " +
     "hayas aprendido y en la última tu correo institucional. Recuerda que para " +
     "insertar texto en el editor debes presionar i, y luego Esc + escribir :wq " +
-    "para guardar los cambios y salir.",
+    "para guardar los cambios y salir." +
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

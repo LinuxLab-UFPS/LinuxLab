@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect } from "react"
+import { useCallback, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { avisarResultado, type TipoDeReto } from "./terminal-aviso"
-import { sendToTerminal } from "@/lib/features/student/terminal-input"
+import { sendToTerminal } from "@shared/lib/terminal-session"
 import { apiFetch } from "@/lib/api/client"
 import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
 import { notify } from "@shared/lib/toast"
@@ -14,19 +14,18 @@ export type { ActivityCheckResult as CheckResult, LessonActivity } from "@/lib/m
 
 export { describeCheck }
 
-/**
- * Loads an activity and evaluates it on demand.
- *
- * Nothing is decided here: the browser asks "evaluate this activity" and the
- * server answers what passed and what did not. The student is always taken from
- * the session, never from the request.
- */
-export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
-  const queryClient = useQueryClient()
-  const queryKey = ["lesson-activity", slug] as const
+export const lessonActivityKey = (slug: string) => ["lesson-activity", slug] as const
 
-  const activityQuery = useQuery({
-    queryKey,
+/**
+ * La consulta de la actividad, para poder compartirla.
+ *
+ * La usan el panel y el espacio de trabajo, que necesita el directorio de la
+ * actividad para llevar la terminal a el. Al ser la misma clave, react-query la
+ * atiende una sola vez: no hay dos peticiones ni dos reinicios.
+ */
+export function lessonActivityQuery(slug: string) {
+  return {
+    queryKey: lessonActivityKey(slug),
     queryFn: async () => {
       const data = await apiFetch<LessonActivity>(`/api/activities/${slug}`)
       // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
@@ -40,7 +39,21 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
       return data
     },
     enabled: Boolean(slug),
-  })
+  }
+}
+
+/**
+ * Loads an activity and evaluates it on demand.
+ *
+ * Nothing is decided here: the browser asks "evaluate this activity" and the
+ * server answers what passed and what did not. The student is always taken from
+ * the session, never from the request.
+ */
+export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
+  const queryClient = useQueryClient()
+  const queryKey = lessonActivityKey(slug)
+
+  const activityQuery = useQuery(lessonActivityQuery(slug))
 
   const checkMutation = useMutation({
     mutationFn: () =>
@@ -124,6 +137,16 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
     }
   }, [resetMutation.isError, resetMutation.error])
 
+  /* Memorizadas porque las pantallas las publican al modal de la terminal desde
+     un efecto: sin identidad estable, cada render publicaba de nuevo, el
+     proveedor cambiaba de estado y volvia a renderizar, en bucle hasta tumbar
+     la pestaña. Las de react-query ya son estables, son estos envoltorios los
+     que no lo eran. */
+  const { mutate: mutarCheck } = checkMutation
+  const { mutate: mutarReset } = resetMutation
+  const check = useCallback(() => mutarCheck(), [mutarCheck])
+  const reset = useCallback(() => mutarReset(), [mutarReset])
+
   const activity = activityQuery.data ?? null
   const error =
     activityQuery.error ??
@@ -145,7 +168,7 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
     checking: checkMutation.isPending,
     resetting: resetMutation.isPending,
     error: error instanceof Error ? error.message : null,
-    check: () => checkMutation.mutate(),
-    reset: () => resetMutation.mutate(),
+    check,
+    reset,
   }
 }

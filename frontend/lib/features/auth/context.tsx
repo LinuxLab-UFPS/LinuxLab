@@ -8,12 +8,13 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  deleteUser,
 } from "firebase/auth"
 import { getFirebaseAuth } from "@/lib/features/auth/firebase"
 import { apiFetch } from "@/lib/api/client"
 import { terminarSesion } from "@shared/lib/terminal-session"
 import type { User } from "@/lib/features/auth/types"
-import { errorCodeOf, mapFirebaseError } from "@/lib/features/auth/errors"
+import { errorCodeOf, mapFirebaseError, messageForAuthError } from "@/lib/features/auth/errors"
 
 interface AuthContextValue {
   user: User | null
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       cred = await signInWithEmailAndPassword(auth, email, password)
     } catch (e) {
-      throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo iniciar sesión."))
+      throw new Error(messageForAuthError(e, "No se pudo iniciar sesión."))
     }
     if (!cred.user.emailVerified) {
       try {
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         cred = await createUserWithEmailAndPassword(auth, email, password)
       } catch (e) {
-        throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo crear la cuenta."))
+        throw new Error(messageForAuthError(e, "No se pudo crear la cuenta."))
       }
       try {
         if (name.trim()) await updateProfile(cred.user, { displayName: name.trim() })
@@ -105,9 +106,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({ email, name: name.trim(), code: code.trim() }),
         })
       } catch (e) {
-        // El usuario ya quedó creado en Firebase; si falla el alta en la
-        // plataforma lo reportamos para no dejar la cuenta a medias.
-        throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo registrar la cuenta en la plataforma."))
+        // El usuario ya existe en Firebase pero no en la plataforma, y el correo
+        // de verificacion todavia no ha salido. Dejarlo asi encerraba al
+        // estudiante: al reintentar le decian que el correo ya estaba
+        // registrado, y al entrar que verificara un correo que nunca recibio.
+        //
+        // Se deshace la mitad hecha para que pueda volver a intentarlo limpio.
+        // El token acaba de emitirse, asi que `deleteUser` no pide reautenticar.
+        try {
+          await deleteUser(cred.user)
+        } catch {
+          // Si no se pudo borrar, al menos que le llegue la verificacion: con
+          // ella entra, y la sesion le crea la fila que falta y lo lleva a
+          // "Completar información". Es una salida, no un callejon.
+          try {
+            await apiFetch("/api/auth/request-verification", {
+              method: "POST",
+              body: JSON.stringify({ email, next }),
+            })
+          } catch {}
+          try {
+            await firebaseSignOut(auth)
+          } catch {}
+        }
+        // El error del backend ya viene con su causa en espanol (por ejemplo que
+        // el codigo estudiantil esta repetido); antes se sustituia por un texto
+        // generico y el estudiante no sabia que corregir.
+        throw new Error(messageForAuthError(e, "No se pudo registrar la cuenta en la plataforma."))
       }
       try {
         await apiFetch("/api/auth/request-verification", {
@@ -132,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.debugLink) console.log("[PoC] custom reset link:", data.debugLink)
       return { debugLink: data.debugLink }
     } catch (e) {
-      throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo enviar el correo de recuperación."))
+      throw new Error(messageForAuthError(e, "No se pudo enviar el correo de recuperación."))
     }
   }, [])
 
@@ -156,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.debugLink) console.log("[PoC] custom verify link:", data.debugLink)
       return { debugLink: data.debugLink }
     } catch (e) {
-      throw new Error(mapFirebaseError(errorCodeOf(e), "No se pudo reenviar el correo."))
+      throw new Error(messageForAuthError(e, "No se pudo reenviar el correo."))
     }
   }, [])
 

@@ -2,7 +2,7 @@ import { LessonBody } from "@shared/components/lesson-body"
 import { LessonNav } from "@shared/components/lesson-nav"
 import { LessonHeader } from "@shared/components/lesson-header"
 import { LessonContainer } from "@shared/components/terminal-ui"
-import { SidebarMovil } from "@/lib/features/student/components/sidebar-movil"
+import { BarraContenidos } from "@/lib/features/student/components/barra-contenidos"
 import { LessonScrollArea } from "@shared/components/lesson-scroll-area"
 import { CourseRoadmap, MapaTemario } from "@/lib/features/student/components/course-roadmap"
 import { bienvenida, type PaginaBienvenida } from "@shared/lib/content/bienvenida"
@@ -66,17 +66,15 @@ export function WelcomeArea({
   return (
     <LessonScrollArea key={page?.id ?? ""} topicNumber={0} subtopicId={null}>
       <LessonContainer>
-        {/* El panel de contenidos plegado, solo en movil (ver ContentArea). */}
-        <div className="mb-6">
-          <SidebarMovil
-            activeTopicSlug={bienvenida.slug}
-            activeSubtopicId={page?.id}
-            topicLessons={topicLessons}
-            soloLectura={soloLectura}
-            topicTitle={bienvenida.title}
-            lessonTitle={page?.title}
-          />
-        </div>
+        {/* Donde estas y la puerta al indice (ver `barra-contenidos.tsx`). */}
+        <BarraContenidos
+          activeTopicSlug={bienvenida.slug}
+          activeSubtopicId={page?.id}
+          topicLessons={topicLessons}
+          soloLectura={soloLectura}
+          topicTitle={bienvenida.title}
+          lessonTitle={page?.title}
+        />
 
         <LessonHeader
           topicTitle={bienvenida.title}

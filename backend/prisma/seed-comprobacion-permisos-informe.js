@@ -19,7 +19,8 @@ const DATOS = {
   instructions:
     "Crea informe.txt en tu directorio personal con al menos " +
     "una línea escrita. Déjalo de forma que puedas leerlo y escribirlo tú, que " +
-    "tu grupo solo pueda leerlo, y que los demás no puedan hacer nada con él.",
+    "tu grupo solo pueda leerlo, y que los demás no puedan hacer nada con él." +
+    " Cuando termines, pulsa el botón de comprobar.",
 }
 
 async function main() {

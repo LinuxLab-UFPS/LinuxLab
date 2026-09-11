@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-import { Eye, EyeOff } from "lucide-react"
+import { Check, Circle, Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
 import { destinoSeguro } from "@shared/lib/next-url"
@@ -11,7 +11,7 @@ import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
 import { Button } from "@shared/components/ui/button"
 import { ForgotPasswordDialog } from "@shared/components/forgot-password-dialog"
-import { PASSWORD_HINT, passwordError } from "@shared/lib/password"
+import { evaluarPassword, passwordError, type EstadoPassword } from "@shared/lib/password"
 import { cn } from "@shared/lib/utils"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -29,6 +29,7 @@ export default function LoginPage() {
   // Solo al registrarse se valida en vivo: en el login la contrasena ya
   // existe y avisar de su longitud ahi no ayuda a nadie.
   const [passTocado, setPassTocado] = useState(false)
+  const [estadoPass, setEstadoPass] = useState<EstadoPassword | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [forgotOpen, setForgotOpen] = useState(false)
 
@@ -73,6 +74,30 @@ export default function LoginPage() {
     }
   }
 
+  /* Los requisitos los pone Firebase, no nosotros: se le preguntan mientras el
+     estudiante escribe. Con un respiro de 300 ms para no consultar en cada
+     tecla; el SDK ademas cachea la politica tras la primera vez. */
+  useEffect(() => {
+    // En el login no se consulta nada: la contrasena ya existe y sus requisitos
+    // no vienen al caso. El estado que quede sin usar no molesta, porque todo lo
+    // que lo lee esta detras de `mode === "signup"`.
+    if (mode !== "signup") return
+    let vigente = true
+    const id = setTimeout(() => {
+      evaluarPassword(password).then((e) => {
+        if (vigente) setEstadoPass(e)
+      })
+    }, 300)
+    return () => {
+      vigente = false
+      clearTimeout(id)
+    }
+  }, [password, mode])
+
+  const requisitos = estadoPass?.requisitos ?? []
+  // Solo se marca en rojo lo que ya se escribio: quien no ha tecleado nada aun
+  // no ha hecho nada mal.
+  const passIncompleta = mode === "signup" && password.length > 0 && estadoPass?.valida === false
   const errorPass = mode === "signup" ? passwordError(password, passTocado) : null
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -89,6 +114,19 @@ export default function LoginPage() {
       setPassTocado(true)
       notify.error(null, fallaPass)
       return
+    }
+    if (mode === "signup") {
+      // Se comprueba contra la politica del proyecto, no contra la nuestra: es
+      // la que va a aplicar Firebase un segundo despues. Si no se pudo
+      // consultar (`sinPolitica`) se deja pasar, porque bloquear el registro
+      // por un fallo de red nuestro es peor que dejar que Firebase responda.
+      const estado = await evaluarPassword(password)
+      setEstadoPass(estado)
+      if (!estado.valida && !estado.sinPolitica) {
+        setPassTocado(true)
+        notify.error(null, "La contraseña no cumple los requisitos que se indican bajo el campo.")
+        return
+      }
     }
     if (mode === "signup" && !name.trim()) {
       notify.error(null, "Ingresa tu nombre completo.")
@@ -156,6 +194,7 @@ export default function LoginPage() {
                 <Input
                   id="code"
                   autoComplete="off"
+                  maxLength={8}
                   placeholder="1150000"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
@@ -171,7 +210,7 @@ export default function LoginPage() {
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="tu@ufps.edu.co"
+              placeholder="tucorreo@ejemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="h-11"
@@ -200,9 +239,9 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onBlur={() => setPassTocado(true)}
-                aria-invalid={Boolean(errorPass)}
+                aria-invalid={Boolean(errorPass) || passIncompleta}
                 aria-describedby="password-ayuda"
-                className={cn("h-11 pr-10", errorPass && "border-danger")}
+                className={cn("h-11 pr-10", (errorPass || passIncompleta) && "border-danger")}
                 disabled={busy}
               />
               <button
@@ -216,15 +255,35 @@ export default function LoginPage() {
               </button>
             </div>
             {mode === "signup" ? (
-              <p
-                id="password-ayuda"
-                className={cn("text-xs", errorPass ? "text-danger" : "text-muted-foreground")}
-              >
-                {errorPass ?? PASSWORD_HINT}
-              </p>
+              <ul id="password-ayuda" className="space-y-1">
+                {requisitos.map((r) => (
+                  <li
+                    key={r.id}
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs",
+                      r.cumple
+                        ? "text-emerald-600 dark:text-emerald-500"
+                        : password.length > 0
+                          ? "text-danger"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    {r.cumple ? (
+                      <Check className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <Circle className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    {r.texto}
+                  </li>
+                ))}
+              </ul>
             ) : null}
           </div>
-          <Button type="submit" disabled={busy} className="h-11 w-full">
+          <Button
+            type="submit"
+            disabled={busy || (mode === "signup" && passIncompleta)}
+            className="h-11 w-full"
+          >
             {submitting ? (mode === "login" ? "Iniciando…" : "Creando…") : mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
           </Button>
         </form>

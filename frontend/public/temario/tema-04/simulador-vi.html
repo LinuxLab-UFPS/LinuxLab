@@ -1,8 +1,10 @@
 <!doctype html>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Retos de vi · LinuxLab</title>
 <link rel="stylesheet" href="/temario/comun/barra.css">
 <link rel="stylesheet" href="/temario/comun/claro.css">
+<link rel="stylesheet" href="/temario/comun/movil.css">
 <script src="/temario/comun/barra.js"></script>
 <style>
 :root {
@@ -576,3 +578,15 @@ pintarCabecera();
 barra.jugando(false);
 pintar();
 </script>
+
+<!-- vi se juega con teclas sueltas, no escribiendo comandos: en una pantalla
+     tactil no hay forma de jugarlo. Se dice en vez de fingir que funciona. -->
+<div class="solo-escritorio">
+  <h2>Este reto necesita teclado</h2>
+  <p>Retos de vi se juega con teclas sueltas (h, j, k, l, dd, yy, p), así que
+     hace falta un computador con teclado físico. Los demás simuladores sí
+     funcionan desde el móvil.</p>
+  <button class="volver" onclick="window.parent.postMessage({action:'close-simulator'},'*')">
+    Volver
+  </button>
+</div>
