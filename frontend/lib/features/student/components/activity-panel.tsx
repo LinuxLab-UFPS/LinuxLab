@@ -161,31 +161,36 @@ export function ActivityPanel({
             </Link>
           )}
         </div>
-
-        {/* El mismo orden que en la tarjeta: primero si esta completada,
-            despues la nota del ultimo intento y al final la dificultad. */}
-        <div className="mt-4">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            {passed && <Tag tone="sky">Completada</Tag>}
-            {data?.lastAttempt && (
-              <Tag tone={data.lastAttempt.score >= 60 ? "emerald" : "amber"}>
-                {data.lastAttempt.score}/{data.maxScore}
-              </Tag>
-            )}
-            {activity.difficulty && (
-              <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
-                {DIFFICULTY_LABEL[activity.difficulty]}
-              </Tag>
-            )}
-          </div>
-        </div>
       </header>
 
       {/* `relative` para el aviso de directorio, que se pone encima del
           enunciado y de los botones. Ver `AvisoDirectorio`. */}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
+          {/* El titulo va con el enunciado y no clavado arriba: con el telefono
+              de lado la cabecera fija se comia la mitad del alto. Quedan
+              fijos solo Volver y los botones de abajo. */}
+          <div className="mb-4">
+          {/* El mismo orden que en la tarjeta: primero si esta completada,
+              despues la nota del ultimo intento y al final la dificultad. */}
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">{activity.title}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {passed && <Tag tone="sky">Completada</Tag>}
+              {data?.lastAttempt && (
+                <Tag tone={data.lastAttempt.score >= 60 ? "emerald" : "amber"}>
+                  {data.lastAttempt.score}/{data.maxScore}
+                </Tag>
+              )}
+              {activity.difficulty && (
+                <Tag tone={DIFFICULTY_TONE[activity.difficulty]}>
+                  {DIFFICULTY_LABEL[activity.difficulty]}
+                </Tag>
+              )}
+            </div>
+          </div>
+          </div>
+
           <div className="lesson-prose [&>*:first-child]:mt-0">
             <Markdown>{statement}</Markdown>
           </div>

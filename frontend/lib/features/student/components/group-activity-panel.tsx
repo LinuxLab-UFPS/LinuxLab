@@ -190,31 +190,36 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
               `origen` del enlace; sin origen, al catálogo de actividades. */}
           <BackButton fallback="/actividades" />
         </div>
-
-        <div className="mt-4">
-          <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Tag tone="brand">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
-            <Tag tone="brand">
-              {detail.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
-            </Tag>
-            {/* Misma escala del temario: el docente clasificó la actividad y
-                viaja desde el backend para convivir con las del curso. */}
-            <Tag tone={DIFFICULTY_TONE[detail.difficulty]}>
-              {DIFFICULTY_LABEL[detail.difficulty]}
-            </Tag>
-          </div>
-        </div>
-        <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate font-mono">~/actividades/{detail.workdir}</span>
-        </div>
       </header>
 
       {/* `relative` para el aviso de directorio, que se pone encima del
           enunciado y de los botones. Ver `AvisoDirectorio`. */}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className={cn("my-4 min-h-0 flex-1 overflow-y-auto pr-2 scrollbar-siempre", DENSE_PROSE)}>
+          {/* El titulo va con el enunciado y no clavado arriba: con el telefono
+              de lado la cabecera fija se comia la mitad del alto. Quedan
+              fijos solo Volver y los botones de abajo. */}
+          <div className="mb-4">
+          <div>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">{detail.title}</h1>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Tag tone="brand">{detail.activityType === "quiz" ? "Quiz" : "Taller"}</Tag>
+              <Tag tone="brand">
+                {detail.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
+              </Tag>
+              {/* Misma escala del temario: el docente clasificó la actividad y
+                  viaja desde el backend para convivir con las del curso. */}
+              <Tag tone={DIFFICULTY_TONE[detail.difficulty]}>
+                {DIFFICULTY_LABEL[detail.difficulty]}
+              </Tag>
+            </div>
+          </div>
+          <div className="mt-2 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+            <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate font-mono">~/actividades/{detail.workdir}</span>
+          </div>
+          </div>
+
           {detail.instructions ? (
             <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
               {detail.instructions}
