@@ -104,7 +104,18 @@ html.claro .win{box-shadow:0 1px 2px rgba(27,31,36,.06),0 4px 12px -6px rgba(27,
    cada comando: el 100% de algo que crece tambien crece. Aqui el alto es fijo y
    la consola se desplaza por dentro, que ya baja sola al final tras cada linea. */
 @media (max-width: 1279px) {
-  .win{height:min(26rem,60dvh)}
+  .win{height:min(18rem,45dvh)}
+}
+
+/* Telefono de lado: apilados no caben ni el arbol ni la consola en tan poco
+   alto. Lado a lado, la consola a la izquierda y el arbol a la derecha, y la
+   ventana ocupa el alto entero de su columna. Mismo selector que `movil.css` y
+   despues de el, por eso gana su `!important`. */
+@media (max-width: 1279px) and (orientation: landscape) {
+  .stage{flex-direction:row}
+  .stage > *{width:50% !important}
+  .term-col{order:-1}
+  .win{height:100%}
 }
 .tl{color:var(--text)}
 .tl.cmd{color:var(--muted)}
