@@ -83,35 +83,11 @@ Decisiones de forma del ciclo: el correo es la identidad en el login; el rol viv
 
 ## 5. Decisiones técnicas del ciclo
 
-### 5.1 Credenciales duales: cuenta institucional de Google + correo/contraseña
+Para resolver la autenticación sin depender de un único método de acceso se optó por credenciales duales sobre Firebase Auth: la plataforma valida el token emitido por Google y lo asocia con el usuario de la base, y en paralelo admite el flujo de correo y contraseña con verificación obligatoria. Se prefirió este esquema antes que una contraseña propia gestionada por la plataforma, que obligaría a administrar credenciales adicionales, y antes que depender solo de Google, que excluiría a los estudiantes que no pudieran entrar con su cuenta institucional; el correo con dominio `@ufps.edu.co` se exige antes del intercambio de tokens. De ahí se derivan los tres correos automáticos que sostienen la confianza del acceso (verificación de registro, restablecimiento de contraseña y activación de docente).
 
-**Contexto.** La universidad dispone de cuentas institucionales de Google, pero el registro del estudiante también requiere una contraseña (RF-01, RF-04) y el curso no garantiza que todos los estudiantes tengan la cuenta institucional lista.
+La sesión no se delega al navegador ni a una tabla de sesiones en base de datos, sino a un JWT firmado del lado del servidor con `JWT_SECRET` y entregado en una cookie `httpOnly`. El rol viaja dentro del token firmado, de modo que no puede manipularse desde el cliente, y las operaciones sensibles lo revalidan contra la base de datos; la inactivación de una cuenta se resuelve al leer al usuario en `/me`, respondiendo con rechazo y borrando la cookie cuando la sesión ya no corresponde a una cuenta válida. Este mismo token es el que reutilizará el canal de terminal en la siguiente iteración.
 
-**Alternativas.** (a) Solo correo/contraseña propia — obliga a gestionar credenciales nuevas y sus olvidos; (b) solo Google OAuth — más simple pero excluye a quien no puede entrar con su cuenta institucional.
-
-**Decisión.** Modo dual sobre Firebase Auth: la plataforma valida el token emitido por Google (`verifyIdToken`) y lo casa con el usuario de la base; en paralelo admite el flujo correo/contraseña con verificación obligatoria del correo. Se exige el dominio `@ufps.edu.co` antes de entrar en el intercambio de tokens, dándole papel institucional al correo.
-
-**Consecuencia.** Tres correos automáticos constituyen la confianza del ciclo (verificación de registro, restablecimiento de contraseña y activación de docente) y la sesión se establece por la plataforma, no por el proveedor externo.
-
-### 5.2 Sesión firmada del lado del servidor (JWT)
-
-**Contexto.** El rol y el identificador del usuario circulan con cada petición protegida.
-
-**Alternativas.** (a) Sesión en el navegador — es manipulable; (b) sesión en base de datos con tabla de sesiones; (c) token firmado por el servidor.
-
-**Decisión.** JWT firmado con `JWT_SECRET`, entregado en cookie `httpOnly` (cookie `token`) y verificado por el backend en cada petición. El rol no es confiable desde el cliente: viene dentro del token firmado y puede revalidarse contra la base en las operaciones sensibles.
-
-**Consecuencia.** La autorización y el cierre de sesión no dependen de estado de sesión en base de datos; la invalidación de una cuenta inactiva se resuelve al leer el usuario en `/me` (rechazo 403 y borrado de la cookie).
-
-### 5.3 Control de acceso en el borde: middleware + guardas de layout
-
-**Contexto.** El rol debe respetarse tanto en las rutas de la API como en la navegación del frontend.
-
-**Alternativas.** (a) Comprobar el rol dentro de cada controlador: propenso a omisiones; (b) middleware centralizado por ruta más guardas de layout por dominio.
-
-**Decisión.** Un middleware `requireRoles` compone autenticación + rol y se aplica por ruta en Express; en el frontend, el middleware de Next y las guardas de layout separan los dominios estudiante/docente, con páginas dedicadas para 401/403. La protección no descansa en un solo punto.
-
-**Consecuencia.** La denegación de rol es consistente para HTTP (403 con `AuthorizationError`) y para la capa visual; el mismo token resume la sesión para los dos canales (HTTP y el WebSocket de la terminal en la iteración 2).
+El control de acceso se concentró en un middleware que compone la autenticación con la exigencia de rol y se aplica ruta por ruta en la API, complementado en el frontend por el middleware de Next y por guardas de layout que separan los dominios de estudiante y docente, con páginas dedicadas para los accesos denegados. Se descartó comprobar el rol dentro de cada controlador por su propensión a omisiones: la autorización queda así en dos capas, de manera que ninguna ruta protegida ni vista depende de un solo punto de verificación, y la denegación responde de forma uniforme con 403 sin exponer datos.
 
 ## 6. Vistas implementadas
 
