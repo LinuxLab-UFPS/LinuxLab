@@ -50,9 +50,16 @@
   },
   {
     "iteration": 2,
-    "name": "contenidos",
+    "name": "inicio",
     "role": "student",
-    "path": "/contenidos",
+    "path": "/inicio",
+    "status": "ok"
+  },
+  {
+    "iteration": 2,
+    "name": "curso",
+    "role": "student",
+    "path": "/curso",
     "status": "ok"
   },
   {
@@ -60,6 +67,13 @@
     "name": "simuladores",
     "role": "student",
     "path": "/simuladores",
+    "status": "ok"
+  },
+  {
+    "iteration": 2,
+    "name": "simulador-detalle",
+    "role": "student",
+    "path": "/simuladores/travesia-del-arbol",
     "status": "ok"
   },
   {

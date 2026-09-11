@@ -21,7 +21,6 @@ En la primera iteración se construyó el módulo de acceso del laboratorio, inc
 | CU02 | RF-04, RF-05, RNF-04 | Alta | Inicio de sesión dual (Google OAuth o correo/contraseña) que exige correo verificado; control de acceso por rol en middleware; sesión sobre HTTPS en cookie protegida. |
 | CU03 | RF-03 | Media | Restablecimiento de contraseña mediante correo con enlace de un solo uso. |
 | CU04 | RF-06, RF-07 | Alta | Registro de docentes por el administrador con correo de activación automático. |
-| CU05 | RF-08, RF-09 | Alta | Listado de docentes registrados y gestión del estado de su cuenta (activación e inactivación). |
 
 ### 1.3 Criterios de aceptación
 
@@ -31,19 +30,19 @@ En la primera iteración se construyó el módulo de acceso del laboratorio, inc
 | CU02 | 1. Con credenciales válidas y correo verificado el usuario accede a la plataforma. 2. Con correo sin verificar o cuenta inactiva el ingreso se rechaza. 3. Un rol no puede invocar rutas de otro rol: el servidor responde 403 y no expone datos. 4. La sesión se establece sobre HTTPS y viaja en cookie protegida (httpOnly, sameSite). |
 | CU03 | 1. El usuario solicita el restablecimiento y recibe el enlace en su correo. 2. Con el enlace establece una nueva contraseña. 3. La respuesta no revela si el correo existe o no. |
 | CU04 | 1. El administrador registra un docente con nombre, código y correo. 2. El docente recibe automáticamente el correo de activación. 3. Un correo de administrador no puede registrarse como docente. |
-| CU05 | 1. El administrador lista los docentes registrados con búsqueda y filtro por estado. 2. El administrador activa o inactiva la cuenta de un docente. 3. Un docente inactivo no puede iniciar sesión. |
 
 ## 2. Diseño
 
 ### 2.1 Modelo de datos de la iteración
 
-Entidades introducidas en este ciclo: `User`, `Student`, `Teacher` y `LinuxAccount` (todas marcadas como nuevas). El modelo es acumulativo: en las siguientes iteraciones se conservan estas entidades y se añaden las demás (`Settings` en la iteración 2; `Group`, `Enrollment` y `Job` en la iteración 3; el resto del dominio académico en las iteraciones 4 y 5).
+Entidades introducidas en este ciclo: `User`, `Student`, `Teacher`, `LinuxAccount` y `Job` (todas marcadas como nuevas). El modelo es acumulativo: en las siguientes iteraciones se conservan estas entidades y se añaden las demás (`Settings` en la iteración 2; `Group`, `Enrollment`, `TopicProgress` y `LessonView` en la iteración 3; el dominio de actividades en la iteración 4 y el de certificados y auditoría en la iteración 5).
 
 ```mermaid
 erDiagram
     User ||--o| Student : "perfil de estudiante"
     User ||--o| Teacher : "perfil de docente"
     User ||--o| LinuxAccount : "cuenta del entorno"
+    User ||--o{ Job : "trabajos encolados"
 
     User {
         uuid id PK
@@ -75,12 +74,24 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
+    Job {
+        uuid id PK
+        string type
+        string status
+        int priority
+        int retries
+        uuid user_id FK
+        uuid group_id FK
+        json payload
+        datetime created_at
+        datetime updated_at
+    }
 
     classDef nueva fill:#d4edda,stroke:#28a745,stroke-width:2px
-    class User,Student,Teacher,LinuxAccount nueva
+    class User,Student,Teacher,LinuxAccount,Job nueva
 ```
 
-Decisiones de forma del ciclo: el correo es la identidad en el login; el rol vive en `User` (no en tablas separadas de identidad); la inactivación de una cuenta (`active = false`) es un flag lógico que preserva el historial para la auditoría posterior; `LinuxAccount` nace ya en este ciclo porque el alta de estudiante y de docente deja encolado el aprovisionamiento de su cuenta del entorno, aunque la cuenta se materializa en la iteración 2.
+Decisiones de forma del ciclo: el correo es la identidad en el login; el rol vive en `User` (no en tablas separadas de identidad); la inactivación de una cuenta (`active = false`) es un flag lógico que preserva el historial para la auditoría posterior; `LinuxAccount` y `Job` nacen ya en este ciclo porque el alta de estudiante y de docente deja encolado el aprovisionamiento de su cuenta del entorno, aunque la cuenta se materializa en la iteración 2. El `Job` es la pieza común de todas las tareas asíncronas del sistema (aprovisionamiento, teardown de grupos y envío de certificados) y se reutiliza en los ciclos siguientes.
 
 ### 2.2 Decisiones técnicas del ciclo
 
@@ -129,9 +140,7 @@ Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local
 | POST | `/api/auth/logout` | Cualquier usuario autenticado | Cierra la sesión, la registra en la bitácora y borra la cookie. |
 | POST | `/api/auth/request-verification` | Público | Envía el correo de verificación; respuesta genérica si el correo no existe. |
 | POST | `/api/auth/request-password-reset` | Público | Envía el correo de restablecimiento; respuesta genérica si el correo no existe. |
-| GET | `/api/admin/docentes` | Administrador | Listado de docentes con búsqueda y filtro de estado. |
 | POST | `/api/admin/docentes` | Administrador | Registro de docente (idempotente) con correo de activación y encolado de su cuenta Linux. |
-| PATCH | `/api/admin/docentes/:id` | Administrador | Activación/inactivación de la cuenta docente. |
 
 ## 4. Pruebas
 
@@ -139,8 +148,8 @@ Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local
 
 Pruebas unitarias de rutas HTTP con Jest + supertest: la base de datos se reemplaza por un mock de Prisma, la integración con Firebase/correo se mockea en la frontera, y la sesión es un JWT real firmado con el secreto de prueba, por lo que el middleware de autorización se ejercita de verdad. Comando: `npx jest tests/auth tests/admin` desde `backend/`.
 
-| CU / RF | Endpoint / pieza | Casos |
-|---------|------------------|-------|
+| CU / RF / RNF | Endpoint / pieza | Casos |
+|---------------|------------------|-------|
 | CU01, CU02 | `POST /api/auth/firebase` | Rechazo de petición sin token (400); alta de estudiante con cookie; rechazo de correo sin verificar (403); sin duplicar usuarios; bloqueo de cuenta inactiva (403). |
 | CU01 | `POST /api/auth/request-verification` | Envío del correo con categoría verification; respuesta genérica para correo inexistente; DTO inválido (400). |
 | CU03 | `POST /api/auth/request-password-reset` | DTO inválido (400); respuesta genérica para correo inexistente; error de Firebase (500). |
@@ -148,7 +157,5 @@ Pruebas unitarias de rutas HTTP con Jest + supertest: la base de datos se reempl
 | CU02 | `POST /api/auth/logout` | Cierre de sesión: confirmación, borrado de cookie y registro auth_logout en la bitácora. |
 | CU02 (RF-05) | `GET /api/admin/docentes` | Sesión de estudiante → 403 sin consultar la base; sesión de docente → 403 sin consultar la base. |
 | CU04 | `POST /api/admin/docentes` | Registro docente (201) con invitación por correo y encolado del aprovisionamiento de su cuenta Linux; correo de administrador no promovible (409); payload incompleto (400). |
-| CU05 | `GET /api/admin/docentes` | Listado con filtro de docentes (200). |
-| CU05 | `PATCH /api/admin/docentes/:id` | Inactivación de docente con trazabilidad en auditoría; id sin perfil docente (404). |
 
-Total de la iteración: 24 pruebas unitarias en verde (16 auth, 2 roles, 6 docentes).
+Total de la iteración: 21 pruebas unitarias en verde (16 auth, 2 roles, 3 docentes).

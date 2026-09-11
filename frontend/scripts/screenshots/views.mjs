@@ -19,8 +19,10 @@ export function buildViews(auth) {
     { iteration: 1, name: "admin-docentes", path: "/admin/docentes", role: "admin" },
 
     // Iteracion 2 - Contenido academico y entorno Linux
-    { iteration: 2, name: "contenidos", path: "/contenidos", role: "student" },
+    { iteration: 2, name: "inicio", path: "/inicio", role: "student" },
+    { iteration: 2, name: "curso", path: "/curso", role: "student" },
     { iteration: 2, name: "simuladores", path: "/simuladores", role: "student" },
+    { iteration: 2, name: "simulador-detalle", path: "/simuladores/travesia-del-arbol", role: "student" },
     { iteration: 2, name: "terminal", path: "/terminal", role: "student" },
 
     // Iteracion 3 - Gestion docente y grupos
