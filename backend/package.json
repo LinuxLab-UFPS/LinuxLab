@@ -10,7 +10,8 @@
     "test:watch": "jest --watch",
     "test:it1": "jest tests/auth tests/admin/registrarDocente.test.js",
     "test:it2": "jest tests/preferences tests/terminal",
-    "test:it3": "jest tests/temario tests/groups tests/admin/gestionDocentes.test.js"
+    "test:it3": "jest tests/temario tests/groups tests/admin/gestionDocentes.test.js",
+    "test:it4": "jest tests/activities tests/submissions"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

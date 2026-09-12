@@ -40,12 +40,12 @@ entidades que aparecen en ese ciclo.
 | 1 | `tests/auth`, `tests/admin/registrarDocente` | 21 |
 | 2 | `tests/preferences` (7), `tests/terminal` (HTTP 3, entorno 6, heartbeat 3, wsAuth 4, gateway 7) | 30 |
 | 3 | `tests/temario` (8, avance), `tests/groups` (CRUD 12, matrícula 9, provisión 2, acceso terminal 2), `tests/admin/gestionDocentes` (CU05: 3) + nuevos de grupos | 36 |
-| 4 | `tests/activities`, `tests/submissions` (por construir) | — |
+| 4 | `tests/activities` (grupo 12, estudiante 10), `tests/submissions` (6) | 28 |
 | 5 | `tests/certificates`, `tests/audit` (por construir) | — |
 
-Comandos: `npm run test:it1`, `npm run test:it2`, `npm run test:it3` (desde `backend/`).
+Comandos: `npm run test:it1`, `npm run test:it2`, `npm run test:it3`, `npm run test:it4` (desde `backend/`).
 
-Total del proyecto con las iteraciones 1–3: 87 pruebas en verde (21 + 30 + 36).
+Total del proyecto con las iteraciones 1–4: 115 pruebas en verde (21 + 30 + 36 + 28).
 
 ## 4. Reglas de coherencia
 

@@ -8,6 +8,7 @@ export function buildViews(auth) {
   const a = auth.activityId
   const c = auth.certCode
   const t = auth.inviteToken
+  const s = auth.users.student.id
 
   return [
     // Iteracion 1 - Acceso y gestion de usuarios
@@ -37,7 +38,9 @@ export function buildViews(auth) {
 
     // Iteracion 4 - Actividades y evaluacion
     { iteration: 4, name: "actividades", path: "/actividades", role: "student" },
+    { iteration: 4, name: "actividad-crear", path: `/grupos/${g}/actividades/crear`, role: "teacher" },
     { iteration: 4, name: "grupo-actividad", path: `/grupos/${g}/actividades/${a}`, role: "teacher" },
+    { iteration: 4, name: "estudiante-entrega", path: `/grupos/${g}/actividades/${a}/estudiantes/${s}`, role: "teacher" },
 
     // Iteracion 5 - Seguimiento, auditoria y cierre
     { iteration: 5, name: "grupo-finalizar", path: `/grupos/${g}/finalizar`, role: "teacher" },
