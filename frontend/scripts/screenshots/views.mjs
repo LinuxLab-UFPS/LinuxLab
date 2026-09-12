@@ -41,6 +41,7 @@ export function buildViews(auth) {
     { iteration: 4, name: "actividad-crear", path: `/grupos/${g}/actividades/crear`, role: "teacher" },
     { iteration: 4, name: "grupo-actividad", path: `/grupos/${g}/actividades/${a}`, role: "teacher" },
     { iteration: 4, name: "estudiante-entrega", path: `/grupos/${g}/actividades/${a}/estudiantes/${s}`, role: "teacher" },
+    { iteration: 4, name: "resolver-actividad", path: `/terminal?ga=${a}`, role: "student" },
 
     // Iteracion 5 - Seguimiento, auditoria y cierre
     { iteration: 5, name: "grupo-finalizar", path: `/grupos/${g}/finalizar`, role: "teacher" },

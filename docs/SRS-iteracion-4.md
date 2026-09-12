@@ -146,6 +146,10 @@ La evaluación manual se resuelve como una entrega: el estudiante somete la evid
 
 ![Detalle de entrega](annex-images/it4/estudiante-entrega.png)
 
+**Resolver actividad** — `/terminal?ga=[activityId]` (Estudiante): enunciado de la actividad de curso y panel de resultados junto a la consola; es el único lugar donde se resuelve una actividad, automática o manual.
+
+![Resolver actividad](annex-images/it4/resolver-actividad.png)
+
 **Rendimiento del estudiante** — `/estudiante/grupo` (Estudiante): avance y calificaciones del curso.
 
 ![Rendimiento del estudiante](annex-images/it3/estudiante-grupo.png)

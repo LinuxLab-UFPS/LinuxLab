@@ -161,6 +161,13 @@
     "status": "ok"
   },
   {
+    "iteration": 4,
+    "name": "resolver-actividad",
+    "role": "student",
+    "path": "/terminal?ga=8f9da20e-e370-467a-890a-5ce4465f8cde",
+    "status": "ok"
+  },
+  {
     "iteration": 5,
     "name": "grupo-finalizar",
     "role": "teacher",
