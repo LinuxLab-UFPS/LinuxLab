@@ -27,17 +27,6 @@ beforeEach(() => {
 })
 
 describe("RNF-03/RNF-07 — aislamiento y limites del entorno Linux", () => {
-  test("createStudent crea el usuario en el grupo Unix con el home endurecido", async () => {
-    await containerService.createStudent("docente01", "G-0001", "grp_abc", "estudiante01")
-
-    const comandos = mockSsh.execCommand.mock.calls.map((c) => c[0])
-    const alta = comandos.find((c) => c.includes("useradd"))
-    expect(alta).toBeDefined()
-    expect(alta).toContain("usermod -aG grp_abc estudiante01")
-    expect(alta).toContain("chmod 2700")
-    expect(alta).toContain("/home/docente01/grupos/G-0001/estudiante01")
-  })
-
   test("createStudent aplica cuota de disco y techos de cgroup por estudiante", async () => {
     await containerService.createStudent("docente01", "G-0001", "grp_abc", "estudiante01")
 
@@ -50,20 +39,6 @@ describe("RNF-03/RNF-07 — aislamiento y limites del entorno Linux", () => {
     expect(endurecimiento).toContain("32M")
     expect(endurecimiento).toContain("64M")
     expect(endurecimiento).toContain("setquota -u estudiante01 0 20480 0 3000 /home")
-  })
-
-  test("createStudent aborta si el grupo Unix del curso no existe", async () => {
-    mockSsh.execCommand.mockImplementation(async (command) => {
-      if (command.includes("getent group")) return { code: 1, stdout: "", stderr: "" }
-      return sshExitoso(command)
-    })
-
-    await expect(
-      containerService.createStudent("docente01", "G-0001", "grp_abc", "estudiante01"),
-    ).rejects.toThrow(/grupo Unix grp_abc no existe/)
-
-    const comandos = mockSsh.execCommand.mock.calls.map((c) => c[0])
-    expect(comandos.some((c) => c.includes("useradd"))).toBe(false)
   })
 
   test("openPtySession lanza el shell del estudiante con nice y su (sin privilegios)", async () => {

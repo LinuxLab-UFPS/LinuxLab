@@ -146,7 +146,7 @@ Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local
 
 ### 4.1 Pruebas del ciclo
 
-Pruebas unitarias de rutas HTTP con Jest + supertest: la base de datos se reemplaza por un mock de Prisma, la integración con Firebase/correo se mockea en la frontera, y la sesión es un JWT real firmado con el secreto de prueba, por lo que el middleware de autorización se ejercita de verdad. Comando: `npx jest tests/auth tests/admin` desde `backend/`.
+Pruebas unitarias de rutas HTTP con Jest + supertest: la base de datos se reemplaza por un mock de Prisma, la integración con Firebase/correo se mockea en la frontera, y la sesión es un JWT real firmado con el secreto de prueba, por lo que el middleware de autorización se ejercita de verdad. Comando: `npm run test:it1` desde `backend/`.
 
 | CU / RF / RNF | Endpoint / pieza | Casos |
 |---------------|------------------|-------|

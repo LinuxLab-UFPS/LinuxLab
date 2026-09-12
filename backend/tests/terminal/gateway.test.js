@@ -135,17 +135,6 @@ describe("CU14 — sesion de terminal por WebSocket", () => {
     expect(mockContainerService.openPtySession).not.toHaveBeenCalled()
   })
 
-  test("cierra con 4001 cuando el estudiante no tiene matricula activa", async () => {
-    prisma.user.findUnique.mockResolvedValue(usuarioProvisionado)
-    mockEnrollmentService.hasActiveEnrollment.mockResolvedValue(false)
-
-    const client = conectar(cookie())
-    const { code } = await esperarCierre(client)
-
-    expect(code).toBe(4001)
-    expect(mockContainerService.openPtySession).not.toHaveBeenCalled()
-  })
-
   test("abre la PTY y reenvia la entrada y el redimensionado del cliente", async () => {
     prisma.user.findUnique.mockResolvedValue(usuarioProvisionado)
 

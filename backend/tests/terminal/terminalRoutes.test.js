@@ -40,15 +40,6 @@ describe("CU14 — reinicio de la terminal por HTTP", () => {
     expect(mockSsh.execCommand).not.toHaveBeenCalled()
   })
 
-  test("un estudiante sin matricula activa recibe 403 sin tocar el entorno", async () => {
-    const res = await request(app)
-      .post("/api/terminal/reset")
-      .set("Cookie", sessionCookie({ id: "user-1", role: "student", hasEnrollment: false }))
-
-    expect(res.status).toBe(403)
-    expect(mockSsh.execCommand).not.toHaveBeenCalled()
-  })
-
   test("responde 400 cuando el usuario no tiene cuenta Linux configurada", async () => {
     prisma.user.findUnique.mockResolvedValue({ id: "user-1", linuxAccount: null })
 
