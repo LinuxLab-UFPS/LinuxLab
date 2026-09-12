@@ -44,8 +44,11 @@ export function buildViews(auth) {
     { iteration: 4, name: "resolver-actividad", path: `/terminal?ga=${a}`, role: "student" },
 
     // Iteracion 5 - Seguimiento, auditoria y cierre
+    { iteration: 5, name: "calificaciones", path: `/grupos/${g}?tab=calificaciones`, role: "teacher" },
+    { iteration: 5, name: "bitacora-grupo", path: `/grupos/${g}?tab=bitacora`, role: "teacher" },
     { iteration: 5, name: "grupo-finalizar", path: `/grupos/${g}/finalizar`, role: "teacher" },
     { iteration: 5, name: "admin-bitacora", path: "/admin/bitacora", role: "admin" },
+    { iteration: 5, name: "admin-entorno", path: "/admin/entorno", role: "admin" },
     { iteration: 5, name: "verificar-certificado", path: `/verificar/${c}`, role: null },
   ].filter((v) => v.path && !v.path.includes("undefined") && !v.path.includes("null"))
 }

@@ -31,7 +31,7 @@ entidades que aparecen en ese ciclo.
 | 2 | `Settings` | Preferencias del entorno (tema y tipografía de terminal, RF-19). `LinuxAccount` se materializa (`linux_provisioned = true`). El acceso de la terminal se valida por sesión y cuenta aprovisionada; el alcance por curso no pertenece a este ciclo. |
 | 3 | `Group`, `Enrollment`, `Topic`, `Subtopic`, `TopicProgress`, `LessonView` | La matrícula habilita el acceso a contenidos y terminal; el avance se registra por matrícula; el catálogo de temas y subtemas es la referencia del avance. La cuenta del estudiante se crea dentro del grupo Unix del curso y el teardown se ejecuta al archivar o finalizar. |
 | 4 | `TopicActivity`, `TopicSubmission`, `GroupActivity`, `GroupSubmission`, `SubmissionAutoDetail`, `SubmissionManualDetail` | Banco de actividades, evaluación automática y revisión manual. |
-| 5 | `Certificate`, `InstructorCertificate`, `AuditEvent` | Cierre del curso, certificados y consulta de bitácora. |
+| 5 | `Certificate`, `InstructorCertificate`, `AuditEvent` | Cierre del curso, certificados verificables y bitácora. `AuditEvent` formaliza los eventos que el sistema registra desde la iteración 1. |
 
 ## 3. Atribución de pruebas por iteración
 
@@ -41,11 +41,11 @@ entidades que aparecen en ese ciclo.
 | 2 | `tests/preferences` (7), `tests/terminal` (HTTP 3, entorno 6, heartbeat 3, wsAuth 4, gateway 7) | 30 |
 | 3 | `tests/temario` (8, avance), `tests/groups` (CRUD 12, matrícula 9, provisión 2, acceso terminal 2), `tests/admin/gestionDocentes` (CU05: 3) + nuevos de grupos | 36 |
 | 4 | `tests/activities` (grupo 12, estudiante 10), `tests/submissions` (6) | 28 |
-| 5 | `tests/certificates`, `tests/audit` (por construir) | — |
+| 5 | `tests/certificates` (10), `tests/audit` (6), `tests/reports` (6), `tests/admin/provisioning` (7), `tests/capacity` (2) | 31 |
 
-Comandos: `npm run test:it1`, `npm run test:it2`, `npm run test:it3`, `npm run test:it4` (desde `backend/`).
+Comandos: `npm run test:it1`, `npm run test:it2`, `npm run test:it3`, `npm run test:it4`, `npm run test:it5` (desde `backend/`).
 
-Total del proyecto con las iteraciones 1–4: 115 pruebas en verde (21 + 30 + 36 + 28).
+Total del proyecto con las iteraciones 1–5: 146 pruebas en verde (21 + 30 + 36 + 28 + 31). La prueba de carga real de RNF-05 se ejecuta aparte con `node scripts/loadtest-terminal.mjs`.
 
 ## 4. Reglas de coherencia
 

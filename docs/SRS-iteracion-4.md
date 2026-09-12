@@ -199,4 +199,4 @@ Pruebas de rutas HTTP con Jest + supertest sobre un mock del cliente Prisma y la
 | CU20, RF-28 | `GET /api/group-activities/mine`, `/mine/grades` | Listado de sus actividades (200); calificaciones (200). |
 | CU19, RF-27 | `PATCH /api/submissions/:id/grade` | 401 sin sesión; 403 estudiante; 404 entrega inexistente; 400 fuera de rango; 200 con retroalimentación y trazabilidad; 403 de un grupo ajeno. |
 
-Total de la iteración: 28 pruebas en verde (12 de actividades del docente, 10 del estudiante y 6 de calificación de entregas). La suite completa del proyecto queda en 115 pruebas verdes, sumando las 21 de la iteración 1, las 30 de la iteración 2, las 36 de la iteración 3 y las 28 de la iteración 4.
+Total de la iteración: 28 pruebas en verde (12 de actividades del docente, 10 del estudiante y 6 de calificación de entregas). La suite completa del proyecto queda en 146 pruebas verdes, sumando las 21 de la iteración 1, las 30 de la iteración 2, las 36 de la iteración 3, las 28 de la iteración 4 y las 31 de la iteración 5.

@@ -169,6 +169,20 @@
   },
   {
     "iteration": 5,
+    "name": "calificaciones",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a?tab=calificaciones",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
+    "name": "bitacora-grupo",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a?tab=bitacora",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
     "name": "grupo-finalizar",
     "role": "teacher",
     "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a/finalizar",
@@ -179,6 +193,13 @@
     "name": "admin-bitacora",
     "role": "admin",
     "path": "/admin/bitacora",
+    "status": "ok"
+  },
+  {
+    "iteration": 5,
+    "name": "admin-entorno",
+    "role": "admin",
+    "path": "/admin/entorno",
     "status": "ok"
   },
   {
