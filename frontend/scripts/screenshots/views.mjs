@@ -7,6 +7,7 @@ export function buildViews(auth) {
   const g = auth.groupId
   const a = auth.activityId
   const c = auth.certCode
+  const t = auth.inviteToken
 
   return [
     // Iteracion 1 - Acceso y gestion de usuarios
@@ -29,6 +30,10 @@ export function buildViews(auth) {
     { iteration: 3, name: "inicio-docente", path: "/inicio", role: "teacher" },
     { iteration: 3, name: "grupos-crear", path: "/grupos/crear", role: "teacher" },
     { iteration: 3, name: "grupo-detalle", path: `/grupos/${g}`, role: "teacher" },
+    { iteration: 3, name: "grupo-editar", path: `/grupos/${g}/editar`, role: "teacher" },
+    { iteration: 3, name: "estudiante-grupo", path: "/estudiante/grupo", role: "student" },
+    { iteration: 3, name: "inscripcion", path: `/inscripcion?token=${t}&group=${g}`, role: null },
+    { iteration: 3, name: "inscripcion-pendiente", path: "/inscripcion/pendiente", role: "student" },
 
     // Iteracion 4 - Actividades y evaluacion
     { iteration: 4, name: "actividades", path: "/actividades", role: "student" },

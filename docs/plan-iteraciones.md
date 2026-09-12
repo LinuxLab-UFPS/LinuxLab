@@ -28,7 +28,7 @@ entidades que aparecen en ese ciclo.
 | Iteración | Entidades nuevas | Notas |
 |-----------|------------------|-------|
 | 1 | `User`, `Student`, `Teacher`, `LinuxAccount`, `Job` | `Job` respalda la cola de aprovisionamiento que el alta de usuario/docente encola. `LinuxAccount` nace con `linux_provisioned = false`. |
-| 2 | `Settings` | Preferencias del entorno (tema y tipografía de terminal, RF-19). `LinuxAccount` se materializa (`linux_provisioned = true`). El acceso de la terminal se valida por sesión y cuenta aprovisionada; el alcance por curso no pertenece a este ciclo. |
+| 2 | `Settings`, `Topic`, `Subtopic` | Preferencias del entorno (RF-19) y el catálogo de temas y subtemas del temario, que sirve de referencia al avance. `LinuxAccount` se materializa (`linux_provisioned = true`). El acceso de la terminal se valida por sesión y cuenta aprovisionada; el alcance por curso no pertenece a este ciclo. |
 | 3 | `Group`, `Enrollment`, `TopicProgress`, `LessonView` | La matrícula habilita el avance del temario (CU11) y el aprovisionamiento por grupo. La terminal pasa a validar matrícula activa, la cuenta del estudiante se crea dentro del grupo Unix del curso y el teardown se ejecuta al archivar o finalizar. |
 | 4 | `TopicActivity`, `TopicSubmission`, `GroupActivity`, `GroupSubmission`, `SubmissionAutoDetail`, `SubmissionManualDetail` | Banco de actividades, evaluación automática y revisión manual. |
 | 5 | `Certificate`, `InstructorCertificate`, `AuditEvent` | Cierre del curso, certificados y consulta de bitácora. |
@@ -39,13 +39,13 @@ entidades que aparecen en ese ciclo.
 |-----------|--------|---------|
 | 1 | `tests/auth`, `tests/admin/registrarDocente` | 21 |
 | 2 | `tests/preferences` (7), `tests/terminal` (HTTP 3, entorno 6, heartbeat 3, wsAuth 4, gateway 7) | 30 |
-| 3 | `tests/temario` (8, avance), `tests/groups` (provisión 2, acceso terminal 2), `tests/admin/gestionDocentes` (CU05: 3) + nuevos de grupos | 15+ |
+| 3 | `tests/temario` (8, avance), `tests/groups` (CRUD 12, matrícula 9, provisión 2, acceso terminal 2), `tests/admin/gestionDocentes` (CU05: 3) + nuevos de grupos | 36 |
 | 4 | `tests/activities`, `tests/submissions` (por construir) | — |
 | 5 | `tests/certificates`, `tests/audit` (por construir) | — |
 
 Comandos: `npm run test:it1`, `npm run test:it2`, `npm run test:it3` (desde `backend/`).
 
-Total del proyecto con las iteraciones 1–3: 66 pruebas en verde (21 + 30 + 15).
+Total del proyecto con las iteraciones 1–3: 87 pruebas en verde (21 + 30 + 36).
 
 ## 4. Reglas de coherencia
 
@@ -54,4 +54,4 @@ Total del proyecto con las iteraciones 1–3: 66 pruebas en verde (21 + 30 + 15)
 3. Las entidades del modelo se introducen una sola vez (punto 2) y se conservan en los diagramas posteriores.
 4. Los RF/RNF de cada ciclo son los de la tabla del punto 1; el backlog de cada SRS no repite CUs ni inventa RNF fuera de lista.
 5. El avance del temario y la matrícula pertenecen a la iteración 3.
-6. CU14 se reparte entre las iteraciones 2 y 3: la iteración 2 entrega el entorno y la cuenta personal; la iteración 3 el alcance por curso (matrícula activa, grupo Unix y teardown). Las pruebas que dependen de matrícula o grupo Unix viven en `tests/groups`.
+6. CU11 y CU14 se reparten entre las iteraciones 2 y 3: la iteración 2 entrega la navegación del temario y el entorno con la cuenta personal; la iteración 3 el alcance por curso (matrícula activa, avance de lectura, grupo Unix y teardown). Las pruebas que dependen de matrícula o grupo Unix viven en `tests/groups` y `tests/temario`.

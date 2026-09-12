@@ -33,7 +33,7 @@ En la segunda iteración se construyó el contenido académico y el entorno de p
 
 ### 2.1 Modelo de datos de la iteración
 
-Entidad introducida en este ciclo: `Settings` (marcada como nueva). Se conservan las entidades de la iteración anterior (`User`, `Student`, `Teacher`, `LinuxAccount` y `Job`) y se materializa la cuenta Linux, que pasa de `linux_provisioned = false` a `true` cuando el worker termina de crearla en el entorno.
+Entidades introducidas en este ciclo: `Settings`, `Topic` y `Subtopic` (marcadas como nuevas). Se conservan las entidades de la iteración anterior (`User`, `Student`, `Teacher`, `LinuxAccount` y `Job`) y se materializa la cuenta Linux, que pasa de `linux_provisioned = false` a `true` cuando el worker termina de crearla en el entorno.
 
 ```mermaid
 erDiagram
@@ -42,6 +42,7 @@ erDiagram
     User ||--o| LinuxAccount : "cuenta del entorno"
     User ||--o| Settings : "preferencias"
     User ||--o{ Job : "trabajos encolados"
+    Topic ||--o{ Subtopic : "temas y subtemas"
 
     User {
         uuid id PK
@@ -81,6 +82,21 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
+    Topic {
+        uuid id PK
+        int order_number UK
+        string slug UK
+        string title
+        text description
+    }
+    Subtopic {
+        uuid id PK
+        uuid topic_id FK
+        int order_number
+        string slug
+        string title
+        string file
+    }
     Job {
         uuid id PK
         string type
@@ -95,10 +111,10 @@ erDiagram
     }
 
     classDef nueva fill:#d4edda,stroke:#28a745,stroke-width:2px
-    class Settings nueva
+    class Settings,Topic,Subtopic nueva
 ```
 
-Decisión de forma del ciclo: las preferencias del entorno viven en `Settings`, una extensión uno a uno de `User`, en lugar de columnas nuevas en `User` o de almacenamiento en el navegador, de modo que viajan con la cuenta del usuario y se comparten entre dispositivos. El avance del temario no forma parte de este modelo: la matrícula y su registro (`Enrollment`, `TopicProgress` y `LessonView`) se introducen en la iteración 3, de la que depende el avance de lectura.
+Decisión de forma del ciclo: las preferencias del entorno viven en `Settings`, una extensión uno a uno de `User`, en lugar de columnas nuevas en `User` o de almacenamiento en el navegador, de modo que viajan con la cuenta del usuario y se comparten entre dispositivos. El temario conserva su contenido como archivos versionados, pero su catálogo de temas y subtemas (`Topic` y `Subtopic`) vive en la base de datos porque es la referencia sobre la que la iteración 3 registra el avance. El avance en sí no forma parte de este modelo: la matrícula y su registro (`Enrollment`, `TopicProgress` y `LessonView`) se introducen en la iteración 3.
 
 ### 2.2 Decisiones técnicas del ciclo
 

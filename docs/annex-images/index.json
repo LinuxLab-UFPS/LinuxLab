@@ -105,6 +105,34 @@
     "status": "ok"
   },
   {
+    "iteration": 3,
+    "name": "grupo-editar",
+    "role": "teacher",
+    "path": "/grupos/d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a/editar",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "estudiante-grupo",
+    "role": "student",
+    "path": "/estudiante/grupo",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "inscripcion",
+    "role": "publico",
+    "path": "/inscripcion?token=4a2e44f2c76ecc9963588726a7b491b88518ab9ea5a27c1e&group=d50cd1ee-0436-497c-bd48-9b9d2d9bcf9a",
+    "status": "ok"
+  },
+  {
+    "iteration": 3,
+    "name": "inscripcion-pendiente",
+    "role": "student",
+    "path": "/inscripcion/pendiente",
+    "status": "ok"
+  },
+  {
     "iteration": 4,
     "name": "actividades",
     "role": "student",

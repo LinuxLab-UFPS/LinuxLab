@@ -59,10 +59,11 @@ export function buildAuth() {
   }
 
   const groupId = query(`SELECT id FROM "Group" WHERE name = 'Sistemas Operativos - Grupo A' LIMIT 1`)
+  const inviteToken = query(`SELECT invite_token FROM "Group" WHERE id = '${groupId}' LIMIT 1`)
   const activityId = query(`SELECT id FROM "GroupActivity" WHERE group_id = '${groupId}' ORDER BY activity_number ASC LIMIT 1`)
   const certCode = query(`SELECT code FROM "Certificate" WHERE code = 'CERT-DEMO-001' LIMIT 1`)
 
-  return { secret, users, groupId, activityId, certCode }
+  return { secret, users, groupId, inviteToken, activityId, certCode }
 }
 
 /**
