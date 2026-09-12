@@ -1,9 +1,7 @@
-# SRS — Iteración 3: Gestión docente y grupos de laboratorio
+# Backlog Iteración 3: Gestión docente y grupos de laboratorio
 
-**Proyecto:** LinuxLab UFPS
 **Fecha de ejecución:** 27 de julio – 9 de agosto de 2026
-**Módulo:** Gestión docente y grupos de laboratorio / Matrícula y avance
-**Versión desplegada al cierre:** v0.3 — docentes administrados, grupos creados y editados por el docente, estudiantes vinculados por enlace o matrícula y su entorno Linux asociado, con el avance del temario registrado por matrícula.
+**Módulo:** Gestión docente y grupos de laboratorio / Matrícula, avance y acceso por curso
 
 ---
 
@@ -11,9 +9,7 @@
 
 ### 1.1 Propósito y objetivo del ciclo
 
-En la tercera iteración se construyó la organización académica del laboratorio: el administrador lista y activa o inactiva docentes, y el docente crea, edita y archiva sus grupos de laboratorio, comparte un enlace de invitación para la auto-inscripción y vincula estudiantes de forma individual o por carga CSV. Cada matrícula encola el aprovisionamiento de la cuenta del estudiante dentro del grupo Unix del curso, y el entorno se desmonta cuando el grupo se archiva o se elimina.
-
-El ciclo cierra además dos alcances que la iteración anterior dejó fuera por depender de la matrícula: el **registro del avance de lectura** del temario (extensión de CU11) y el **control de acceso a la terminal por matrícula**, con la cuenta del estudiante creada dentro del grupo Unix del curso y destruida con él (extensión de CU14). Se prioriza este módulo por dependencia técnica, pues sin grupos y matrícula no puede asignarse ninguna actividad ni medirse el progreso de un curso.
+En la tercera iteración se construyó la organización académica del laboratorio: el administrador lista y activa o inactiva docentes, y el docente crea, edita y archiva sus grupos, comparte un enlace de invitación para la auto-inscripción y vincula estudiantes de forma individual o por carga CSV. A partir de este ciclo, el acceso a los contenidos y a la terminal deja de ser una capacidad general de la cuenta y queda ligado a la vinculación con un grupo de laboratorio: el estudiante necesita una matrícula activa, su avance de lectura se registra por matrícula y no por usuario, y la cuenta del entorno se crea dentro del grupo Unix del curso y se destruye cuando el grupo se archiva o se elimina. Se prioriza este módulo porque sin grupos y matrícula no puede asignarse ninguna actividad ni medirse el progreso de un curso.
 
 ### 1.2 Backlog del ciclo
 
@@ -33,11 +29,11 @@ El ciclo cierra además dos alcances que la iteración anterior dejó fuera por 
 | CU | Criterios de aceptación |
 |----|-------------------------|
 | CU05 | 1. El administrador lista los docentes con búsqueda y filtro por estado. 2. Activa o inactiva la cuenta de un docente. 3. Un id sin perfil docente se rechaza. |
-| CU06 | 1. El docente crea un grupo con nombre y descripción cuando su cuenta Linux está provisionada. 2. El aprovisionamiento del grupo se encola al crearlo. 3. Sin cuenta provisionada la creación se rechaza; un estudiante no puede crear grupos. |
+| CU06 | 1. El docente crea un grupo con nombre y descripción cuando su cuenta Linux está provisionada. 2. El aprovisionamiento del grupo se encola al crearlo. 3. Sin cuenta provisionada la creación se rechaza y un estudiante no puede crear grupos. |
 | CU07 | 1. El docente edita el nombre y la descripción de un grupo activo. 2. Un grupo finalizado o archivado no es editable. |
 | CU08 | 1. El docente archiva un grupo y su entorno se desmonta, conservando el histórico. 2. Un grupo archivado se puede desarchivar. 3. Solo un grupo archivado se puede eliminar, y al hacerlo se libera a sus estudiantes. |
 | CU09 | 1. El docente obtiene un enlace de invitación para su grupo. 2. Puede renovarlo para invalidar el anterior. |
-| CU10 | 1. El docente vincula un estudiante por correo o código y el aprovisionamiento de su cuenta se encola. 2. La carga CSV matricula por lotes e informa los errores por fila. 3. Un estudiante con el enlace vigente se inscribe por sí mismo. 4. Un token inválido o un grupo inactivo se rechazan; un docente no puede inscribirse como estudiante. |
+| CU10 | 1. El docente vincula un estudiante por correo o código y el aprovisionamiento de su cuenta se encola. 2. La carga CSV matricula por lotes e informa los errores por fila. 3. Un estudiante con el enlace vigente se inscribe por sí mismo. 4. Un token inválido o un grupo inactivo se rechazan, y un docente no puede inscribirse como estudiante. |
 | CU11 (extensión) | 1. Al abrir una lección queda registrada su lectura en todas las matrículas activas del estudiante. 2. El progreso del tema se actualiza cuando todos sus subtemas están leídos. 3. Un estudiante sin matrícula activa no acumula avance y el servidor lo rechaza con 409. |
 | CU14 (extensión) | 1. La sesión de terminal se rechaza si el estudiante no tiene matrícula activa. 2. La cuenta del estudiante se crea dentro del grupo Unix del curso. 3. Al archivar o finalizar el grupo se desmonta la cuenta y el directorio del curso. |
 
@@ -45,7 +41,7 @@ El ciclo cierra además dos alcances que la iteración anterior dejó fuera por 
 
 ### 2.1 Modelo de datos de la iteración
 
-Entidades introducidas en este ciclo: `Group`, `Enrollment`, `TopicProgress` y `LessonView` (marcadas como nuevas). Se conservan las entidades de los ciclos anteriores (`User`, `Student`, `Teacher`, `LinuxAccount`, `Job`, `Settings`, `Topic` y `Subtopic`).
+En esta iteración se introducen las entidades que dan forma a la organización académica. `Group` representa el grupo de laboratorio de un docente, con su estado (`active`, `finished`, `archived`), su directorio de trabajo y el token de invitación. `Enrollment` es la matrícula que ata a un estudiante con un grupo y se convierte en el eje de lo académico: el avance cuelga de ella y no del usuario. `Topic` y `Subtopic` son el catálogo de temas y subtemas del temario sobre el que se registra la lectura, y `TopicProgress` y `LessonView` registran, respectivamente, el tema completado y las lecturas de cada subtema, ambos por matrícula. Se conservan las entidades de los ciclos anteriores (`User`, `Student`, `Teacher`, `LinuxAccount`, `Job` y `Settings`), y la cuenta Linux del estudiante queda ahora asociada al grupo Unix del curso, de modo que se materializa al matricularlo y se destruye al desmontar el grupo.
 
 ```mermaid
 erDiagram
@@ -90,20 +86,6 @@ erDiagram
         string terminal_font_family
         string theme
     }
-    Topic {
-        uuid id PK
-        int order_number UK
-        string slug UK
-        string title
-    }
-    Subtopic {
-        uuid id PK
-        uuid topic_id FK
-        int order_number
-        string slug
-        string title
-        string file
-    }
     Job {
         uuid id PK
         string type
@@ -132,6 +114,20 @@ erDiagram
         string status "active, archived"
         datetime created_at
     }
+    Topic {
+        uuid id PK
+        int order_number UK
+        string slug UK
+        string title
+    }
+    Subtopic {
+        uuid id PK
+        uuid topic_id FK
+        int order_number
+        string slug
+        string title
+        string file
+    }
     TopicProgress {
         uuid id PK
         uuid enrollment_id FK
@@ -147,51 +143,52 @@ erDiagram
     }
 
     classDef nueva fill:#d4edda,stroke:#28a745,stroke-width:2px
-    class Group,Enrollment,TopicProgress,LessonView nueva
+    class Group,Enrollment,Topic,Subtopic,TopicProgress,LessonView nueva
 ```
-
-Decisiones de forma del ciclo: la matrícula (`Enrollment`) es la unidad que ata a un estudiante con un grupo y el eje de todo lo académico; un estudiante cursa un solo grupo activo a la vez. El avance (`TopicProgress`, `LessonView`) cuelga de la matrícula y no del usuario, de modo que leer una lección cuenta en cada curso en el que el estudiante esté inscrito y se conserva por cohorte. El grupo guarda su `status` y su `group_dir` como estado del ciclo de vida, y el `invite_token` es el único secreto de la auto-inscripción.
 
 ### 2.2 Decisiones técnicas del ciclo
 
-La organización académica se apoyó en una cola de trabajos desacoplada del alta: crear un grupo, matricular a un estudiante o desmontar un curso no bloquean la petición, sino que registran un `Job` que un worker procesa por lotes cada 5 segundos, con prioridades por tipo (docente, grupo, estudiante), reintentos con tope y reclamo de lotes con `FOR UPDATE SKIP LOCKED` para que varias instancias no repitan trabajo. El mismo mecanismo es el que repara el entorno: la reconciliación reconstruye desde la base de datos las cuentas y directorios que falten, siguiendo el orden jerárquico docente → grupo → estudiante, de modo que una pérdida de volumen o contenedor no deje cuentas huérfanas.
+La organización académica se apoyó en una cola de trabajos desacoplada del alta: crear un grupo, matricular a un estudiante o desmontar un curso no bloquean la petición, sino que registran un `Job` que un worker procesa por lotes cada 5 segundos, con prioridades por tipo (docente, grupo, estudiante), reintentos con tope y reclamo de lotes con `FOR UPDATE SKIP LOCKED` para que varias instancias no repitan trabajo. El mismo mecanismo repara el entorno: la reconciliación reconstruye desde la base de datos las cuentas y directorios que falten, siguiendo el orden jerárquico docente → grupo → estudiante, de modo que una pérdida de volumen o contenedor no deje cuentas huérfanas.
 
-El enlace de invitación es un token opaco por grupo que se puede renovar, y la auto-inscripción pasa por el mismo camino que la matrícula manual: valida que el grupo esté activo, que el token coincida y que quien se inscribe sea estudiante; al inscribirse, el servidor reemite la cookie de sesión para que el nuevo estado de matrícula (`hasEnrollment`) se refleje de inmediato sin obligar a un nuevo inicio de sesión. La matrícula manual admite una fila o una carga CSV; en ambos casos el proceso es idempotente (reinscribir no duplica) y los errores de una fila no tumban el lote. Como un estudiante solo puede estar en un grupo activo, la matrícula se rechaza si ya cursa otro.
+El enlace de invitación es un token opaco por grupo que se puede renovar, y la auto-inscripción pasa por el mismo camino que la matrícula manual: valida que el grupo esté activo, que el token coincida y que quien se inscribe sea estudiante. Al inscribirse, el servidor reemite la cookie de sesión para que el nuevo estado de matrícula se refleje de inmediato sin obligar a un nuevo inicio de sesión. La matrícula manual admite una fila o una carga CSV; en ambos casos el proceso es idempotente (reinscribir no duplica) y los errores de una fila no tumban el lote. Como un estudiante solo puede estar en un grupo activo, la matrícula se rechaza si ya cursa otro.
 
-El archivado cierra el curso sin perder el histórico: dentro de una transacción marca el grupo y sus matrículas, cancela los trabajos de aprovisionamiento pendientes que recrearían lo que se está por destruir y encola el desmontaje del entorno, que elimina la cuenta, el grupo Unix y el directorio del curso. El `Job` conserva los nombres de usuario porque las filas que los contenían se borran en la misma operación. Solo un grupo archivado se puede eliminar, y el borrado vuelve a desmontar por si el primer teardown falló, liberando a los estudiantes para matricularse en otro curso.
+El archivado cierra el curso sin perder el histórico: dentro de una transacción marca el grupo y sus matrículas, cancela los trabajos de aprovisionamiento pendientes que recrearían lo que se está por destruir y encola el desmontaje del entorno, que elimina la cuenta, el grupo Unix y el directorio del curso; el `Job` conserva los nombres de usuario porque las filas que los contenían se borran en la misma operación. Solo un grupo archivado se puede eliminar, y el borrado vuelve a desmontar por si el primer teardown falló, liberando a los estudiantes para matricularse en otro curso.
 
-El avance de lectura se resuelve sobre la matrícula y no sobre el temario: al abrir un subtema se registra la lectura en todas las matrículas activas del estudiante, y el progreso del tema se marca cuando todos sus subtemas fueron leídos. Esto mantiene el temario como contenido fijo y versionado, y hace que el indicador de avance sea por curso y no global.
+El acceso a contenidos y a la terminal queda ahora condicionado a la matrícula: el avance de lectura se registra en todas las matrículas activas del estudiante y el gateway de la terminal verifica que el estudiante conserve una matrícula vigente antes de abrir la PTY. Esto refleja en el entorno lo que ya ocurre en el modelo: la matrícula es lo que habilita el curso, y al desmontarse el grupo se destruye también la cuenta del estudiante en el entorno.
 
 ## 3. Codificación
 
 ### 3.1 Vistas implementadas
 
-| Vista | Ruta | Actor | Incremento del ciclo |
-|-------|------|-------|----------------------|
-| Gestión de docentes | `/admin/docentes` | Administrador | Listado con búsqueda y filtro de estado, y activación/inactivación (misma vista del registro de docente). |
-| Panel de grupos | `/inicio` | Docente | Listado de grupos activos y finalizados, con creación y acceso al detalle. |
-| Crear grupo | `/grupos/crear` | Docente | Formulario de nombre, descripción y estudiantes iniciales. |
-| Detalle de grupo | `/grupos/[id]` | Docente | Estudiantes matriculados, enlace de invitación y seguimiento del curso. |
-| Editar grupo | `/grupos/[id]/editar` | Docente | Edición de nombre y descripción de un grupo activo. |
-| Mi grupo | `/estudiante/grupo` | Estudiante | Grupo activo del estudiante, matrícula y progreso. |
-| Inscripción por enlace | `/inscripcion` | Estudiante | Auto-inscripción con el token del grupo. |
-| Inscripción pendiente | `/inscripcion/pendiente` | Estudiante | Estado para el estudiante autenticado sin matrícula activa. |
-
-Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local con datos de demostración):
+**Gestión de docentes** — `/admin/docentes` (Administrador): listado con búsqueda y filtro de estado, y activación/inactivación.
 
 ![Gestión de docentes](annex-images/it1/admin-docentes.png)
 
+**Panel de grupos** — `/inicio` (Docente): listado de grupos activos y finalizados, con creación y acceso al detalle.
+
 ![Panel de grupos](annex-images/it3/inicio-docente.png)
+
+**Crear grupo** — `/grupos/crear` (Docente): formulario de nombre, descripción y estudiantes iniciales.
 
 ![Crear grupo](annex-images/it3/grupos-crear.png)
 
+**Detalle de grupo** — `/grupos/[id]` (Docente): estudiantes matriculados, enlace de invitación y seguimiento del curso.
+
 ![Detalle de grupo](annex-images/it3/grupo-detalle.png)
+
+**Editar grupo** — `/grupos/[id]/editar` (Docente): edición de nombre y descripción de un grupo activo.
 
 ![Editar grupo](annex-images/it3/grupo-editar.png)
 
+**Mi grupo** — `/estudiante/grupo` (Estudiante): grupo activo, matrícula y progreso.
+
 ![Mi grupo](annex-images/it3/estudiante-grupo.png)
 
+**Inscripción por enlace** — `/inscripcion` (Estudiante): auto-inscripción con el token del grupo.
+
 ![Inscripción por enlace](annex-images/it3/inscripcion.png)
+
+**Inscripción pendiente** — `/inscripcion/pendiente` (Estudiante): estado para el estudiante autenticado sin matrícula activa.
 
 ![Inscripción pendiente](annex-images/it3/inscripcion-pendiente.png)
 
@@ -224,7 +221,7 @@ Registro visual de las vistas del ciclo (capturas tomadas sobre el entorno local
 
 ### 4.1 Pruebas del ciclo
 
-Pruebas de rutas HTTP con Jest + supertest sobre un mock del cliente Prisma y la sesión como JWT real; los colaboradores pesados (provisión/SSH, correo) se sustituyen en la frontera y la terminal WebSocket se prueba con un cliente `ws` real. Comando: `npm run test:it3` desde `backend/`.
+Pruebas de rutas HTTP con Jest + supertest sobre un mock del cliente Prisma y la sesión como JWT real; los colaboradores pesados (provisión/SSH y correo) se sustituyen en la frontera y la terminal WebSocket se prueba con un cliente `ws` real. Comando: `npm run test:it3` desde `backend/`.
 
 | CU / RF / RNF | Endpoint / pieza | Casos |
 |---------------|------------------|-------|

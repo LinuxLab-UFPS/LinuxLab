@@ -28,8 +28,8 @@ entidades que aparecen en ese ciclo.
 | Iteración | Entidades nuevas | Notas |
 |-----------|------------------|-------|
 | 1 | `User`, `Student`, `Teacher`, `LinuxAccount`, `Job` | `Job` respalda la cola de aprovisionamiento que el alta de usuario/docente encola. `LinuxAccount` nace con `linux_provisioned = false`. |
-| 2 | `Settings`, `Topic`, `Subtopic` | Preferencias del entorno (RF-19) y el catálogo de temas y subtemas del temario, que sirve de referencia al avance. `LinuxAccount` se materializa (`linux_provisioned = true`). El acceso de la terminal se valida por sesión y cuenta aprovisionada; el alcance por curso no pertenece a este ciclo. |
-| 3 | `Group`, `Enrollment`, `TopicProgress`, `LessonView` | La matrícula habilita el avance del temario (CU11) y el aprovisionamiento por grupo. La terminal pasa a validar matrícula activa, la cuenta del estudiante se crea dentro del grupo Unix del curso y el teardown se ejecuta al archivar o finalizar. |
+| 2 | `Settings` | Preferencias del entorno (tema y tipografía de terminal, RF-19). `LinuxAccount` se materializa (`linux_provisioned = true`). El acceso de la terminal se valida por sesión y cuenta aprovisionada; el alcance por curso no pertenece a este ciclo. |
+| 3 | `Group`, `Enrollment`, `Topic`, `Subtopic`, `TopicProgress`, `LessonView` | La matrícula habilita el acceso a contenidos y terminal; el avance se registra por matrícula; el catálogo de temas y subtemas es la referencia del avance. La cuenta del estudiante se crea dentro del grupo Unix del curso y el teardown se ejecuta al archivar o finalizar. |
 | 4 | `TopicActivity`, `TopicSubmission`, `GroupActivity`, `GroupSubmission`, `SubmissionAutoDetail`, `SubmissionManualDetail` | Banco de actividades, evaluación automática y revisión manual. |
 | 5 | `Certificate`, `InstructorCertificate`, `AuditEvent` | Cierre del curso, certificados y consulta de bitácora. |
 

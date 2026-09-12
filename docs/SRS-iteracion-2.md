@@ -33,7 +33,7 @@ En la segunda iteración se construyó el contenido académico y el entorno de p
 
 ### 2.1 Modelo de datos de la iteración
 
-Entidades introducidas en este ciclo: `Settings`, `Topic` y `Subtopic` (marcadas como nuevas). Se conservan las entidades de la iteración anterior (`User`, `Student`, `Teacher`, `LinuxAccount` y `Job`) y se materializa la cuenta Linux, que pasa de `linux_provisioned = false` a `true` cuando el worker termina de crearla en el entorno.
+Entidad introducida en este ciclo: `Settings` (marcada como nueva). Se conservan las entidades de la iteración anterior (`User`, `Student`, `Teacher`, `LinuxAccount` y `Job`) y se materializa la cuenta Linux, que pasa de `linux_provisioned = false` a `true` cuando el worker termina de crearla en el entorno.
 
 ```mermaid
 erDiagram
@@ -42,7 +42,6 @@ erDiagram
     User ||--o| LinuxAccount : "cuenta del entorno"
     User ||--o| Settings : "preferencias"
     User ||--o{ Job : "trabajos encolados"
-    Topic ||--o{ Subtopic : "temas y subtemas"
 
     User {
         uuid id PK
@@ -82,21 +81,6 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    Topic {
-        uuid id PK
-        int order_number UK
-        string slug UK
-        string title
-        text description
-    }
-    Subtopic {
-        uuid id PK
-        uuid topic_id FK
-        int order_number
-        string slug
-        string title
-        string file
-    }
     Job {
         uuid id PK
         string type
@@ -111,10 +95,10 @@ erDiagram
     }
 
     classDef nueva fill:#d4edda,stroke:#28a745,stroke-width:2px
-    class Settings,Topic,Subtopic nueva
+    class Settings nueva
 ```
 
-Decisión de forma del ciclo: las preferencias del entorno viven en `Settings`, una extensión uno a uno de `User`, en lugar de columnas nuevas en `User` o de almacenamiento en el navegador, de modo que viajan con la cuenta del usuario y se comparten entre dispositivos. El temario conserva su contenido como archivos versionados, pero su catálogo de temas y subtemas (`Topic` y `Subtopic`) vive en la base de datos porque es la referencia sobre la que la iteración 3 registra el avance. El avance en sí no forma parte de este modelo: la matrícula y su registro (`Enrollment`, `TopicProgress` y `LessonView`) se introducen en la iteración 3.
+Decisión de forma del ciclo: las preferencias del entorno viven en `Settings`, una extensión uno a uno de `User`, en lugar de columnas nuevas en `User` o de almacenamiento en el navegador, de modo que viajan con la cuenta del usuario y se comparten entre dispositivos. El avance del temario no forma parte de este modelo: la matrícula y su registro (`Enrollment`, `TopicProgress` y `LessonView`) se introducen en la iteración 3.
 
 ### 2.2 Decisiones técnicas del ciclo
 
@@ -173,4 +157,4 @@ Pruebas unitarias y de integración con Jest: las rutas HTTP se ejercitan con su
 | CU14, RNF-08 | `heartbeat` | Termina a los clientes que no responden al ping; termina en el siguiente ciclo al que dejó de responder; `stopHeartbeat` detiene el latido. |
 | CU14, RF-19 | `PUT /api/preferences` | 401 sin sesión; 400 por tamaño de letra fuera de rango (11 y 25); 400 por tema inválido; 400 por familia tipográfica inválida; 200 aplicando solo los campos enviados; 200 sin campos en el cuerpo. |
 
-Total de la iteración: 30 pruebas en verde, repartidas en 6 suites (7 preferencias, 3 terminal HTTP, 6 terminal-entorno, 3 heartbeat, 4 wsAuth, 7 gateway WebSocket). La suite completa del proyecto queda en 66 pruebas verdes, sumando las 21 de la iteración 1 y las 15 que la iteración 3 aporta del avance del temario, la gestión de docentes y el acceso de la terminal por matrícula.
+Total de la iteración: 30 pruebas en verde, repartidas en 6 suites (7 preferencias, 3 terminal HTTP, 6 terminal-entorno, 3 heartbeat, 4 wsAuth, 7 gateway WebSocket). La suite completa del proyecto queda en 87 pruebas verdes, sumando las 21 de la iteración 1 y las 36 de la iteración 3.
