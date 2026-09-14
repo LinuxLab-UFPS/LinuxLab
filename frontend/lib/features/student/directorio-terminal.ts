@@ -77,15 +77,31 @@ export function irA(destino: string | null, workdir: string | null = null) {
   if (destino === null) return
   if (ultimoDestino === destino) return
   ultimoDestino = destino
-  /* Ctrl+U primero: si habia algo escrito a medias, un Enter suelto lo
-     ejecutaria. Y `mkdir -p` antes del `cd` porque el directorio solo lo monta
-     `setup.py` cuando la actividad trae archivos de partida; sin el, el `cd`
-     fallaba en silencio y el estudiante se quedaba en su home creyendo que ya
-     estaba dentro. */
-  sendToTerminal(
-    destino === HOME ? "\x15cd ~\n" : `\x15mkdir -p ${destino} && cd ${destino}\n`,
-  )
+  sendToTerminal(destino === HOME ? "\x15cd ~\n" : ordenEntrar(destino))
   fijarUbicando(workdir)
+}
+
+/* Ctrl+U primero: si habia algo escrito a medias, un Enter suelto lo ejecutaria.
+   Y `mkdir -p` antes del `cd` porque el directorio solo lo monta `setup.py`
+   cuando la actividad trae archivos de partida; sin el, el `cd` fallaba en
+   silencio y el estudiante se quedaba en su home creyendo que ya estaba dentro. */
+function ordenEntrar(ruta: string) {
+  return `\x15mkdir -p ${ruta} && cd ${ruta}\n`
+}
+
+/**
+ * Mete la shell en el directorio de la actividad que ya esta abierta.
+ *
+ * Es lo que hace "Ir al directorio", y tambien lo que toca despues de reiniciar
+ * la actividad. Reiniciar borra el directorio y lo vuelve a crear (o lo vacia),
+ * y la shell que estaba dentro se queda en el viejo, que ya no figura en ningun
+ * sitio. Antes se la mandaba al home, pero el destino guardado aqui seguia
+ * siendo la actividad, asi que nadie la traia de vuelta: justo despues de
+ * reiniciar, el aviso de "no estas en el directorio" tapaba la actividad entera.
+ * Volver a entrar en la misma ruta la pone en el directorio nuevo sin salir.
+ */
+export function entrarEnActividad(workdir: string) {
+  sendToTerminal(ordenEntrar(`~/actividades/${workdir}`))
 }
 
 function suscribir(oyente: () => void) {
