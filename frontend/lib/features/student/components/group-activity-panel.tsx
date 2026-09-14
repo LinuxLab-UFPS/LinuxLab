@@ -9,7 +9,6 @@ import { ActionButton } from "@shared/components/action-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { ResultadoDialog } from "@shared/components/resultado-dialog"
-import { sendToTerminal } from "@shared/lib/terminal-session"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import {
   checkGroupActivity,
@@ -25,7 +24,7 @@ import { StudentInfoTable } from "@shared/components/student-info-table"
 import { avisarResultado } from "@/lib/features/student/terminal-aviso"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
 import { AvisoDirectorio, EsperaDirectorio } from "@/lib/features/student/components/aviso-directorio"
-import { useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
+import { entrarEnActividad, useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
 
 
 /**
@@ -78,7 +77,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
      cada render y el ciclo publicar → estado → render tumbaba la pestaña. */
   const goToWorkdir = useCallback(() => {
     if (aPantallaCompleta) return
-    sendToTerminal(`mkdir -p ~/actividades/${detail.workdir} && cd ~/actividades/${detail.workdir}\n`)
+    entrarEnActividad(detail.workdir)
   }, [detail.workdir, aPantallaCompleta])
 
   /* El resultado se enseña en un modal, igual que en las del temario: debajo
@@ -114,8 +113,10 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     try {
       await resetGroupActivity(detail.id)
       // La shell que estuviera dentro se quedo en el directorio viejo, que ya no
-      // figura en ningun sitio. Ctrl+U limpia lo que hubiera escrito a medias.
-      sendToTerminal("\x15cd ~\n")
+      // figura en ningun sitio. Se la vuelve a meter en la misma ruta: mandarla
+      // al home dejaba el aviso de "no estas en el directorio" tapando la
+      // actividad. Ver `entrarEnActividad`.
+      entrarEnActividad(detail.workdir)
       notify.success("Directorio vaciado")
     } catch (e) {
       notify.error(e, "No se pudo vaciar el directorio")

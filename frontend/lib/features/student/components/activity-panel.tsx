@@ -10,7 +10,6 @@ import { BackButton } from "@shared/components/back-button"
 import { IconAction } from "@shared/components/icon-action"
 import { ConfirmDialog } from "@/lib/features/admin/components/confirm-dialog"
 import { ResultadoDialog } from "@shared/components/resultado-dialog"
-import { sendToTerminal } from "@shared/lib/terminal-session"
 import { useEnElDirectorio, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
 import { useActivityCheck } from "@/lib/features/student/use-activity-check"
 import { DENSE_PROSE } from "@shared/lib/content/prose"
@@ -25,7 +24,7 @@ import { StudentInfoTable } from "@shared/components/student-info-table"
 import type { LessonRef } from "@shared/lib/content/lessons"
 import { useAccionesActividad } from "@/lib/features/student/acciones-actividad"
 import { AvisoDirectorio, EsperaDirectorio } from "@/lib/features/student/components/aviso-directorio"
-import { useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
+import { entrarEnActividad, useUbicandoDirectorio } from "@/lib/features/student/directorio-terminal"
 
 
 /**
@@ -95,7 +94,7 @@ export function ActivityPanel({
   const workdir = data?.workdir ?? null
   const goToWorkdir = useCallback(() => {
     if (!workdir || aPantallaCompleta) return
-    sendToTerminal(`mkdir -p ~/actividades/${workdir} && cd ~/actividades/${workdir}\n`)
+    entrarEnActividad(workdir)
   }, [workdir, aPantallaCompleta])
 
   /* Reiniciar borra el directorio de la actividad y lo vuelve a montar. Se

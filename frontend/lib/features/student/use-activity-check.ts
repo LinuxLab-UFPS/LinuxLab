@@ -3,7 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { avisarResultado, type TipoDeReto } from "./terminal-aviso"
-import { sendToTerminal } from "@shared/lib/terminal-session"
+import { entrarEnActividad } from "@/lib/features/student/directorio-terminal"
 import { apiFetch } from "@/lib/api/client"
 import { ESTADO_ACTIVIDADES_KEY } from "@/lib/features/student/activity-status"
 import { notify } from "@shared/lib/toast"
@@ -97,6 +97,7 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
         body: JSON.stringify({ force: true }),
       }),
     onSuccess: () => {
+      const workdir = queryClient.getQueryData<LessonActivity>(queryKey)?.workdir
       queryClient.setQueryData<LessonActivity>(queryKey, (prev) =>
         prev ? { ...prev, lastAttempt: null } : prev,
       )
@@ -104,15 +105,14 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
       // Reiniciar borra el directorio y crea otro en su lugar. Una shell que
       // estuviera dentro se queda en el directorio viejo, que ya no figura en
       // ningún sitio: `pwd` sigue enseñando la ruta, `ls` no devuelve nada y lo
-      // que se escriba ahí no llega al directorio nuevo.
+      // que se escriba ahí no llega al directorio nuevo. Se la vuelve a meter en
+      // la misma ruta, ver `entrarEnActividad`.
       //
-      // El `\x15` (Ctrl+U) borra lo que el estudiante tuviera escrito a medias.
-      // Antes se usaba `\x03` (Ctrl+C) y ensuciaba la terminal por partida
-      // doble: bash hace eco de un `^C`, y como la señal viaja pegada al
-      // comando en el mismo envío, se come parte del buffer y del `cd ~` solo
-      // sobrevivia `d ~`, que salia como `-bash: d: command not found`.
+      // La orden va con `\x15` (Ctrl+U) y no con `\x03` (Ctrl+C), que ensuciaba
+      // la terminal por partida doble: bash hace eco de un `^C`, y como la señal
+      // viaja pegada al comando en el mismo envío, se come parte del buffer.
       // Ctrl+U no es una señal: la consume la disciplina de linea sin eco.
-      sendToTerminal("\x15cd ~\n")
+      if (workdir) entrarEnActividad(workdir)
       notify.success("Archivos reiniciados")
     },
   })
