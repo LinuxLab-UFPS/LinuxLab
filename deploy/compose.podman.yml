@@ -27,7 +27,7 @@ x-health-pg: &health-pg
   start_period: 10s
 
 x-health-backend: &health-backend
-  test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health >/dev/null || exit 1"]
   interval: 15s
   timeout: 5s
   retries: 6
