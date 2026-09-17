@@ -7,11 +7,14 @@ import { cn } from "@shared/lib/utils"
  */
 export function NeonProgress({
   value,
+  label = "Progreso",
   className,
   barClassName,
 }: {
   /** 0 to 100. */
   value: number
+  /** Accessible name. A `progressbar` without one is announced as unlabelled. */
+  label?: string
   className?: string
   barClassName?: string
 }) {
@@ -20,7 +23,9 @@ export function NeonProgress({
   return (
     <div
       role="progressbar"
+      aria-label={label}
       aria-valuenow={pct}
+      aria-valuetext={`${pct}%`}
       aria-valuemin={0}
       aria-valuemax={100}
       className={cn("h-1 w-full overflow-hidden rounded-full bg-secondary", className)}
