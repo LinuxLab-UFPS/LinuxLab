@@ -34,10 +34,13 @@
 		# lo que necesitan los servicios externos.
 		Referrer-Policy "strict-origin-when-cross-origin"
 
-		# Aisla la ventana de cualquier pop-up de otro origen. El login de
-		# Google va por redireccion y no por ventana emergente, asi que no le
-		# afecta.
-		Cross-Origin-Opener-Policy "same-origin"
+		# `same-origin-allow-popups` y no `same-origin`: el login usa
+		# `signInWithPopup`, y Firebase devuelve la credencial a traves de
+		# `window.opener` desde la ventana emergente. Con `same-origin` ese
+		# vinculo se corta y nadie puede entrar. Esta variante conserva el
+		# aislamiento frente a quien nos abra a nosotros, que es lo que
+		# interesa, sin romper el que abrimos nosotros.
+		Cross-Origin-Opener-Policy "same-origin-allow-popups"
 
 		# Solo informa, todavia no bloquea. Next inyecta scripts y estilos en
 		# linea para hidratar, de modo que una politica estricta sin nonces
