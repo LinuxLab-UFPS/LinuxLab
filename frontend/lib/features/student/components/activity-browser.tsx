@@ -230,7 +230,7 @@ export function ActivityBrowser({
               caben en la fila, como siempre. */}
           <div className="grid grid-cols-2 gap-3 lg:flex">
             <Select value={tema} onValueChange={(v) => conPagina(() => setTema(v))}>
-              <SelectTrigger className={cn("w-full lg:w-52", CONTROL_SURFACE)}>
+              <SelectTrigger aria-label="Filtrar por tema" className={cn("w-full lg:w-52", CONTROL_SURFACE)}>
                 <SelectValue>{etiquetaTema(tema)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -249,7 +249,7 @@ export function ActivityBrowser({
               value={dificultad}
               onValueChange={(v) => conPagina(() => setDificultad(v))}
             >
-              <SelectTrigger className={cn("w-full lg:w-40", CONTROL_SURFACE)}>
+              <SelectTrigger aria-label="Filtrar por dificultad" className={cn("w-full lg:w-40", CONTROL_SURFACE)}>
                 <SelectValue>{etiquetaDificultad(dificultad)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -265,7 +265,7 @@ export function ActivityBrowser({
             </Select>
 
             <Select value={estado} onValueChange={(v) => conPagina(() => setEstado(v))}>
-              <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
+              <SelectTrigger aria-label="Filtrar por estado" className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
                 <SelectValue>{etiquetaEstado(estado)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -282,7 +282,7 @@ export function ActivityBrowser({
             </Select>
 
             <Select value={origen} onValueChange={(v) => conPagina(() => setOrigen(v))}>
-              <SelectTrigger className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
+              <SelectTrigger aria-label="Filtrar por origen" className={cn("w-full lg:w-36", CONTROL_SURFACE)}>
                 <SelectValue>{etiquetaOrigen(origen)}</SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -326,6 +326,11 @@ export function ActivityBrowser({
         )
       ) : (
         <>
+          {/* El titulo de la pagina es un `h1` y las tarjetas traen un `h3`,
+              asi que sin este nivel intermedio el documento se salta el `h2` y
+              un lector de pantalla pierde la jerarquia. No se pinta porque el
+              listado ya se entiende por si solo. */}
+          <h2 className="sr-only">Listado de actividades</h2>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {dePagina.map((item) =>
               item.source === "bank" ? (

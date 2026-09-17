@@ -56,6 +56,7 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-[#0d1117]">
       <div className="bg-background">
         <LandingHeader />
+        <main>
         <div className={`${BLOQUE} relative overflow-hidden`}>
           <HomeHero
             fondo={<ComandosDeFondo />}
@@ -107,6 +108,7 @@ export default async function LandingPage() {
             </div>
           </section>
         </div>
+        </main>
       </div>
       <SiteFooter />
     </div>

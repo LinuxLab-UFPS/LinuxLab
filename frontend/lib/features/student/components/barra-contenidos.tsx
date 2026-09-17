@@ -120,9 +120,9 @@ export function BarraContenidos({ topicTitle, lessonTitle, ...panel }: BarraCont
         <PopoverTrigger asChild>
           <button
             type="button"
-            aria-label="Abrir los contenidos del curso"
             className={`${marco} group hidden transition-colors hover:bg-secondary data-[state=open]:bg-secondary xl:flex`}
           >
+            <span className="sr-only">Abrir los contenidos del curso</span>
             <span
               aria-hidden
               className="-ml-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors group-hover:text-foreground group-data-[state=open]:text-foreground"
