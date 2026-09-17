@@ -109,9 +109,9 @@ function Panel({
       )}
     >
       <div className={cn("order-1", invertido && "lg:order-2")}>
-        <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {titulo}
-        </h3>
+        </h2>
         <div className="mt-4 text-base leading-relaxed text-muted-foreground">
           {children}
         </div>
