@@ -40,14 +40,16 @@ export function AcercaDe() {
           <img
             src={CAPTURA}
             alt="La plataforma con una lección abierta y la terminal al lado"
+            width={1268}
+            height={623}
             className="w-full rounded-xl border border-border shadow-[var(--neon-glow)]"
           />
         </div>
 
         <div className="order-1 lg:order-2">
-          <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Un laboratorio de Linux que corre en el navegador
-          </h3>
+          </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
             LinuxLab es una plataforma de aprendizaje interactivo desarrollada en
             la Universidad Francisco de Paula Santander, diseñada para la
@@ -71,10 +73,10 @@ export function AcercaDe() {
           diciendo cuanto hay, despues de haber dicho que es. */}
       <div className="mt-16 grid items-center gap-10 border-t border-border pt-16 lg:grid-cols-2 lg:gap-16">
         <div>
-          <h3 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             {conMayuscula(enLetra(TEMAS))} temas.{" "}
             {conMayuscula(enLetra(LECCIONES, "f"))} lecciones.
-          </h3>
+          </h2>
           <p className="mt-4 text-base leading-relaxed text-muted-foreground">
             Teoría, video y práctica en una sola ruta, de la arquitectura del
             Kernel a la gestión de permisos.
