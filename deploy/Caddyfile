@@ -11,6 +11,43 @@
 # este puerto. Aqui dentro todo es HTTP plano por la red de contenedores.
 
 :3000 {
+	# Cabeceras de seguridad.
+	#
+	# Las cuatro que la auditoria marca como ausentes con severidad alta. El
+	# TLS lo termina el proxy de la U, pero estas viajan hasta el navegador tal
+	# cual, porque ese proxy reenvia las cabeceras de respuesta.
+	header {
+		# Sin `includeSubDomains` a proposito: el dominio cuelga de
+		# proyectosistemas.ufps.edu.co, compartido con el resto de proyectos de
+		# la facultad, y ese flag los arrastraria a todos a HTTPS obligatorio.
+		# El `max-age` arranca en un dia, que es el despliegue por etapas que
+		# recomienda la propia auditoria; se sube cuando lleve tiempo estable.
+		Strict-Transport-Security "max-age=86400"
+
+		# El laboratorio no se embebe en ningun sitio.
+		X-Frame-Options "DENY"
+
+		# Nada de adivinar el tipo de un recurso por su contenido.
+		X-Content-Type-Options "nosniff"
+
+		# La ruta completa no sale hacia otros origenes; el dominio si, que es
+		# lo que necesitan los servicios externos.
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# Aisla la ventana de cualquier pop-up de otro origen. El login de
+		# Google va por redireccion y no por ventana emergente, asi que no le
+		# afecta.
+		Cross-Origin-Opener-Policy "same-origin"
+
+		# Solo informa, todavia no bloquea. Next inyecta scripts y estilos en
+		# linea para hidratar, de modo que una politica estricta sin nonces
+		# tumba la aplicacion. Se observa que reporta antes de imponerla.
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+
+		# El servidor no anuncia con que esta hecho.
+		-Server
+	}
+
 	# `/terminal` es la pagina de Next Y el WebSocket del backend: el mismo
 	# camino para dos destinos. Lo que los separa es la cabecera de upgrade,
 	# que solo trae el socket. Sin este matcher habria que elegir, y elegir
