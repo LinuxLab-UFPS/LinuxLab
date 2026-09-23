@@ -20,7 +20,7 @@ LinuxLab/
 │   │   │                       #   · grupos y matrículas
 │   │   │                       #   · actividades y aserciones (activityService, checkCatalog)
 │   │   │                       #   · aprovisionamiento del entorno (worker, reconcile, linuxContainer)
-│   │   ├── gateway.js          # WebSocket gateway (terminal Xterm.js)
+│   │   ├── gateway/            # WebSocket gateway (terminal Xterm.js)
 │   │   └── index.js            # Punto de entrada
 │   ├── prisma/                 # Schema, migraciones y seeds
 │   └── Dockerfile
@@ -29,10 +29,14 @@ LinuxLab/
 │   └── scripts/                # entrypoint.sh, checker.py, setup.py, linuxlab-shell.sh
 ├── frontend/                   # Interfaz (Next.js 16 + shadcn/ui)
 │   ├── app/                    # App Router
-│   ├── components/             # Componentes React (terminal, paneles, tablas)
+│   ├── lib/features/           # Componentes y datos por rol (student, teacher, admin)
+│   ├── shared/                 # Componentes, hooks y utilidades comunes
 │   └── content/temario/        # Lecciones en Markdown
+├── deploy/                     # Produccion: compose de Podman, Caddyfile y scripts
 ├── scripts/docker/             # Infraestructura (claves SSH, etc.)
-└── docker-compose.yml          # 6 servicios
+├── docs/                       # Analisis, diseno y operacion del servidor
+├── .github/workflows/          # Despliegue continuo
+└── docker-compose.yml          # 6 servicios (desarrollo)
 ```
 
 ## Arquitectura app-entorno
@@ -183,7 +187,7 @@ El histórico de la base se conserva.
 
 ## Sesiones de terminal
 
-- **Gateway** (`gateway.js`): WebSocket en `:3000/terminal`. El mensaje de
+- **Gateway** (`gateway/index.js`): WebSocket en `:3000/terminal`. El mensaje de
   `resize` que llega antes de abrir la PTY se guarda en `pending` y se aplica
   al crearla; la entrada que llega antes de que exista el stream se descarta.
 - **Apertura de sesión** (`openPtySession`): `sudo sh -c '...; exec nice -n 10 su - <usuario>'`
@@ -260,8 +264,29 @@ sesiones reales de ~6 MB) contiene al devorador en su propia burbuja. Si el
 host no delega cgroups o cuotas, el entorno sigue operando con los techos del
 contenedor y los ulimits (lo que se pierde es el reparto fino por usuario).
 
+## Despliegue
+
+Hay dos configuraciones de contenedores, con propósitos distintos:
+
+- **`docker-compose.yml`** (raíz): levanta los 6 servicios con Docker en la máquina
+  de un desarrollador.
+- **`deploy/compose.podman.yml`**: los mismos servicios tal como corren en el
+  servidor de la universidad, con **Podman rootless** y un proxy Caddy
+  (`deploy/Caddyfile`) que da una sola URL pública y emite las cabeceras de
+  seguridad.
+
+El servidor **nunca compila**: las imágenes se construyen fuera y se cargan con
+`podman load`. Los scripts de `deploy/` cubren el ciclo completo:
+`build-local.sh` (construye y empaqueta), `deploy-server.sh` (instalación
+inicial), `update.sh` y `update-server.sh` (actualización). El flujo de
+`.github/workflows/deploy.yml` no hace trabajo propio, invoca esos mismos
+scripts al integrar en `main`.
+
+El procedimiento detallado, los requisitos del servidor y las variables de
+configuración están en el manual técnico del proyecto.
+
 ## Tecnologías
 
 - **Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, Xterm.js
 - **Backend:** Express 5, Prisma ORM, PostgreSQL 16, ssh2, ws
-- **Infra:** Docker Compose, contenedor Ubuntu 22.04, SSH interno con claves RSA
+- **Infra:** Docker Compose en desarrollo y Podman rootless con Caddy en producción, contenedor Ubuntu 22.04, SSH interno con claves RSA
