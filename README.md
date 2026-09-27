@@ -80,9 +80,8 @@ versión que acompaña la entrega final del trabajo de grado.
 
 La rama `main` corresponde a la versión en producción. Ningún cambio se integra en
 ella directamente, sino a través de un Pull Request, y cada integración se despliega
-en el servidor de la universidad mediante el flujo descrito en
-[Despliegue continuo](#despliegue-continuo). Las versiones posteriores se identifican
-con una nueva etiqueta sobre `main`.
+de forma automática en el servidor de la universidad. Las versiones posteriores se
+identifican con una nueva etiqueta sobre `main`.
 
 ---
 
@@ -333,90 +332,6 @@ Plantilla en [frontend/.env.example](frontend/.env.example).
 
 ---
 
-## Despliegue en producción
-
-Hay dos configuraciones de contenedores con propósitos distintos. El
-[docker-compose.yml](docker-compose.yml) de la raíz levanta el laboratorio con Docker
-en la máquina de un desarrollador, mientras que
-[deploy/compose.podman.yml](deploy/compose.podman.yml) define los servicios tal como
-se ejecutan en el servidor de la universidad, con Podman sin privilegios y un proxy
-Caddy que ofrece una sola URL pública.
-
-El despliegue se organiza alrededor de la memoria del servidor. Compilar el frontend
-y el backend exige más memoria de la que se asigna al laboratorio, así que el
-servidor no construye imágenes en ningún momento. Las tres imágenes se construyen en
-la máquina de desarrollo, se empaquetan en un único archivo comprimido, se
-transfieren por SSH y se cargan en el servidor ya construidas.
-
-### Scripts de despliegue
-
-| Script | Se ejecuta en | Función | Opciones |
-| ------ | ------------- | ------- | -------- |
-| [build-local.sh](deploy/build-local.sh) | Máquina de desarrollo | Fija la dirección pública del backend, construye las tres imágenes, las empaqueta en `imagenes.tar.gz` y, si se indica, lo transfiere al servidor. | `--url`, `--host`, `--key`, `--path` |
-| [deploy-server.sh](deploy/deploy-server.sh) | Servidor | Instalación inicial. Crea las redes internas, carga las imágenes, levanta los servicios, espera a que el backend responda, carga las semillas y crea el administrador. | `--admin-email`, `--admin-name`, `--skip-seeds`, `--image-file`, `--skip-load`, `--dry-run` |
-| [update.sh](deploy/update.sh) | Máquina de desarrollo o flujo de despliegue continuo | Actualización de extremo a extremo. Construye y transfiere las imágenes, sincroniza la copia del repositorio en el servidor con `main` e invoca allí la parte remota. | `--host`, `--ssh-port`, `--key`, `--url`, `--db-password`, `--backend-env`, `--skip-pull`, `--push`, `--dry-run` |
-| [update-server.sh](deploy/update-server.sh) | Servidor | Parte remota de la actualización. Valida la configuración, carga las imágenes, recrea los contenedores sin tocar los volúmenes, espera la salud del backend y carga las semillas. | `--image-file`, `--skip-load`, `--skip-seeds`, `--dry-run` |
-
-Todos los scripts muestran su ayuda con `--help`, admiten `--dry-run` para enumerar
-los pasos sin ejecutarlos y son idempotentes, de modo que volver a ejecutarlos sobre
-un despliegue ya aplicado no duplica recursos ni altera el estado.
-
-La instalación inicial y la actualización se separan porque difieren en lo que
-pueden dar por supuesto. La primera crea recursos que todavía no existen y pide los
-datos del administrador. La segunda parte de un laboratorio en funcionamiento y no
-toca la configuración ni los datos almacenados.
-
-### Instalación inicial
-
-```bash
-# En la máquina de desarrollo. La URL se fija antes de compilar.
-bash deploy/build-local.sh --url https://dominio-del-laboratorio --host usuario@servidor
-
-# En el servidor, dentro de la copia del repositorio.
-export DB_PASSWORD=<clave de la base de datos>
-bash deploy/deploy-server.sh --admin-email admin@ufps.edu.co
-```
-
-Antes de la instalación hay que crear `backend/.env` en el servidor a partir de
-[deploy/backend.env.example](deploy/backend.env.example) y `frontend/.env.local` en
-la máquina de desarrollo. `deploy-server.sh` genera el `JWT_SECRET` si falta.
-
-### Actualización
-
-Una vez instalado el laboratorio, cada cambio se aplica con un solo comando desde la
-máquina de desarrollo. El script toma el servidor, los puertos y la clave de la base
-de datos de `deploy/.deploy.env`, un archivo local excluido del control de versiones,
-y cualquier opción los sobrescribe.
-
-```bash
-bash deploy/update.sh
-```
-
-### Despliegue continuo
-
-El flujo [deploy.yml](.github/workflows/deploy.yml) se activa con cada integración en
-`main` y también puede lanzarse a mano. No realiza un trabajo propio, sino que genera
-`frontend/.env.local` y la configuración del backend a partir de los secretos del
-repositorio, instala la clave SSH de despliegue y ejecuta `deploy/update.sh`. De esta
-manera el proceso automatizado y el manual son equivalentes.
-
-El flujo necesita los siguientes secretos en el entorno `deploy` del repositorio.
-
-- **Servidor.** `HOST`, `SSH_PORT`, `PORT_0`, `PORT_1` y `DEPLOY_SSH_KEY`.
-- **Base de datos y sesión.** `DB_PASSWORD`, `DATABASE_URL` y `JWT_SECRET`.
-- **Backend.** Las credenciales `FIREBASE_*`, las de correo `SMTP_*` y
-  `EMAIL_FROM_*`, y `FRONTEND_URL`.
-- **Frontend.** `NEXT_PUBLIC_BACKEND_URL`, las variables `NEXT_PUBLIC_FIREBASE_*` y
-  `NEXT_PUBLIC_VIDEO_BASE_URL`.
-
-El detalle de la configuración del servidor, el presupuesto de memoria, la
-coordinación con el administrador de la infraestructura y la solución de problemas
-está en [deploy/README.md](deploy/README.md). La respuesta ante incidentes se
-documenta en [docs/operacion.md](docs/operacion.md) y el procedimiento completo en el
-[manual técnico](https://drive.google.com/file/d/15XFWrPdOIWl6ANmI5ULdcSstTr40Nb8d/view).
-
----
-
 ## Arquitectura app-entorno
 
 ```
@@ -469,40 +384,6 @@ SSH. En producción se suma el `proxy` y solo él publica un puerto.
 
 ---
 
-## El contenedor del entorno
-
-La imagen ([entorno/Dockerfile](entorno/Dockerfile)) parte de **Ubuntu 22.04** e
-incluye las herramientas del curso (bash, vim, nano, tar, gzip, bzip2, zip, grep,
-find, procps, sudo, quota) y un `systemctl` simulado para el tema de servicios. Se le
-retiran `wget` y `curl` para que desde una terminal no se pueda descargar software.
-
-- **`checker.py`, `setup.py` y `submitter.py` van dentro de la imagen**
-  (`/usr/local/lib/linuxlab/`), con permisos `755 root:root`. No viajan por red y el
-  estudiante no puede reemplazarlos ni interceptarlos. El checker **solo lee** y el
-  setup **escribe** el árbol de trabajo de las actividades del temario. Se separaron
-  a propósito, para que un fallo del evaluador no pueda estropear lo que mide.
-- **[entrypoint.sh](entorno/scripts/entrypoint.sh)** se aplica en cada arranque.
-  - Restaura `/etc/passwd`, `/etc/group`, `/etc/shadow` y `/etc/gshadow` desde el
-    volumen `entorno_etc` (`/var/lib/linuxlab`). En el primer arranque siembra los
-    archivos base.
-  - Configura la clave pública de `labadmin` y el aislamiento base, con `/home` en
-    `711` y `hidepid=2` en `/proc`.
-  - **Reescribe `/etc/sudoers.d/labadmin`.** Un cambio hecho solo en el Dockerfile no
-    tiene efecto, por lo que los permisos de `labadmin` se modifican en el
-    entrypoint.
-  - Habilita cgroups v2 con un cgroup por usuario para el techo de CPU (10 %) y el
-    techo de RAM (32 MB suave y 64 MB duro, de modo que el proceso que devora
-    memoria muere dentro de su propio cgroup sin provocar el OOM del contenedor), y
-    cuotas en `/home`. Si el anfitrión no delega esos controladores, el entorno
-    sigue funcionando sin ellos.
-  - Borra de `/tmp` los archivos con más de un día de antigüedad.
-
-Los volúmenes son `entorno_home`, montado en `/home` con los archivos de estudiantes
-y docentes, y `entorno_etc`, montado en `/var/lib/linuxlab` con la copia de las
-cuentas. Ambos sobreviven a `stop`, `restart` y al reinicio del anfitrión.
-
----
-
 ## Jerarquía de roles y directorios
 
 ```
@@ -539,163 +420,6 @@ cuentas. Ambos sobreviven a `stop`, `restart` y al reinicio del anfitrión.
 
 ---
 
-## Cuentas y aprovisionamiento
-
-El flujo respeta la jerarquía. **El administrador registra al docente** (job con
-prioridad 10) y **el docente crea el grupo** con sus estudiantes (jobs de grupo con
-prioridad 5 y de estudiante con prioridad 1). La prioridad vive en el dato y no en el
-orden del código, porque `claimJobs` ordena por `priority DESC, created_at ASC`.
-
-**El worker** ([provisioningWorkerService.js](backend/src/services/provisioningWorkerService.js))
-consulta la cola cada 5 segundos. En cada ciclo atiende los tipos de job en un orden
-fijo, reserva de cada uno un lote de hasta 5 con `FOR UPDATE SKIP LOCKED` y los
-ejecuta de a 3 en paralelo. Un job fallido se reintenta hasta 3 veces.
-
-1. **Grupos** → `createGroup` crea el grupo Unix y el directorio `2751`. No depende
-   de que el docente exista, porque nace como `root:grp`. Al terminar,
-   `syncTeacherGroups` hace al docente dueño de sus grupos y miembro del grupo Unix.
-2. **Cuentas**, de docentes y estudiantes, ordenadas por prioridad.
-   - `createTeacher` crea el usuario y `/home/<docente>/{home,grupos}`.
-   - `createStudent` verifica el grupo Unix, crea el home y el usuario, aplica
-     `chown estudiante:grp` y `chmod 2700`, la cuota de disco (20 MB) y el cgroup de
-     CPU (10 %). Es idempotente, de modo que si un intento previo dejó el home roto,
-     lo repara. Si el `chown` falla, borra el home vacío en lugar de dejar uno
-     `root:root`. Antes de marcar la cuenta como aprovisionada,
-     `provisionStudentAccount` verifica por uid que el home pertenezca al
-     estudiante.
-3. **Desmontajes**, al archivar un curso.
-4. **Correos de certificados**, al finalizar un curso.
-
-**La reconciliación** ([reconcileService.js](backend/src/services/reconcileService.js))
-es el mecanismo de recuperación. Si el entorno pierde estado, por un volumen borrado
-o un contenedor recreado, el administrador la ejecuta y reconstruye todo desde la
-base de datos en el mismo orden jerárquico. Verifica la calidad de los homes y no
-solo que el usuario exista, y repara la propiedad de los directorios de grupo
-(`repairGroupOwnership`). No recupera los archivos que los usuarios hubieran creado.
-
-**El archivado** está atado al borrado del entorno. El desmontaje elimina los
-usuarios Linux de los matriculados, cuyos nombres salen de la base y nunca de listar
-el directorio, el grupo Unix y la carpeta del curso. El histórico de la base se
-conserva.
-
----
-
-## Sesiones de terminal
-
-- **Gateway** ([gateway/index.js](backend/src/gateway/index.js)). WebSocket en
-  `/terminal`. El mensaje de `resize` que llega antes de abrir la PTY se guarda y se
-  aplica al crearla, y la entrada que llega antes de que exista el stream se
-  descarta.
-- **Apertura de sesión** (`openPtySession`). Ejecuta
-  `sudo sh -c '...; exec nice -n 10 su - <usuario>'`, así que la shell corre con
-  prioridad baja (`nice 10`) y, si el cgroup del usuario existe, se mueve a él.
-- **`MaxSessions 100`.** Cada terminal abierta ocupa un canal sobre la única conexión
-  SSH que mantiene el backend, y 100 es el techo de terminales.
-- **`TMOUT=900` de solo lectura** (en `/etc/bash.bashrc`). La sesión inactiva se
-  cierra a los 15 minutos y libera su cupo.
-- **`pkill -u` al cerrar la terminal.** Elimina los procesos huérfanos del
-  estudiante.
-
----
-
-## El checker y las actividades
-
-**La decisión central es que el evaluador corre con la identidad del estudiante.**
-`checker.py` se invoca con `sudo -u <estudiante>` y nunca como root. Si corriera como
-root, "el archivo existe y se puede leer" sería cierto siempre y la comprobación no
-mediría nada. Los parámetros viajan por **la entrada estándar como JSON** y nunca se
-interpolan en la línea de comandos.
-
-- **`resolve()`.** Cada `ruta` se resuelve contra el home real del estudiante. El
-  token `$usuario` lo sustituye el propio checker a partir de su identidad de
-  proceso, que no se puede falsear. El home simbólico `/home/<usuario>` se traduce
-  al real, que cuelga del curso, `realpath` colapsa los `..` y sigue los enlaces
-  simbólicos, y cualquier ruta que quede fuera del home se rechaza.
-- **Catálogo de aserciones.** Son nueve tipos: `directorio_existe`,
-  `archivo_existe`, `archivo_no_existe`, `permisos_son`, `propietario_es`,
-  `archivo_contiene`, `minimo_lineas`, `archivo_es` y `ultima_linea_es`. Viven en el
-  checker del entorno y en
-  [checkCatalogService.js](backend/src/services/checkCatalogService.js), que los
-  entrega a la interfaz del docente por `GET /api/activities/catalog`. Así existe una
-  sola fuente de verdad.
-- **Rutas relativas a la carpeta de trabajo.** Cada actividad de curso tiene un
-  `workdir` generado a partir del título y el id. El docente escribe las rutas de
-  sus aserciones relativas a esa carpeta (`informe.txt`) y el backend las resuelve a
-  `actividades/<workdir>/<ruta>` al evaluar. Las comprobaciones del temario
-  conservan rutas absolutas.
-- **`setup.py`.** Construye el árbol de trabajo de las actividades del temario en
-  `~/actividades/<slug>/`. El estudiante puede recargarlo sin perder lo suyo, y el
-  botón de recarga envía `force`.
-- **Tokens.** `$codigo` y `$correo` los sustituye el backend desde la base, porque el
-  contenedor no los conoce, lo que permite rutas personales por estudiante.
-- **Evaluación de curso.** `POST /api/group-activities/:id/check` valida que la
-  matrícula en el grupo esté activa y que la actividad esté habilitada y no vencida.
-  Registra cada intento numerado con su detalle por aserción y su puntaje, y deja
-  rastro en la bitácora (`activity_audit_events`). La edición de una actividad
-  publicada queda bloqueada tras el primer intento.
-
----
-
-## Límites de recursos
-
-| Límite                            | Valor                        | Qué evita                                        |
-| --------------------------------- | ---------------------------- | ------------------------------------------------ |
-| `mem_limit` del entorno           | 512 MB (dev) / 448 MB (prod) | Admite entre 44 y 48 sesiones simultáneas, medidas a unos 6 MB cada una |
-| `cpus` del entorno                | 0.5 núcleos                  | Que un `while true` degrade al backend o al frontend |
-| CPU por usuario (cgroup v2)       | 10 % de 1 CPU                | Que un estudiante acapare el laboratorio         |
-| RAM por usuario (cgroup v2)       | 32 MB suave / 64 MB duro     | Que el OOM de un proceso abusivo mate sesiones ajenas |
-| Cuota por estudiante (`setquota`) | 20 MB en bloques / 3000 inodos | Llenar el disco del curso o agotar los inodos con `touch` |
-| `/tmp` (tmpfs en dev)             | 96 MB                        | Acumular archivos grandes en la capa del anfitrión |
-| `MaxSessions` del sshd            | 100                          | Abrir terminales sin techo                       |
-| `ulimit -u`                       | 16 procesos                  | Fork bombs y acaparamiento de CPU                |
-| `ulimit -f`                       | 15 MB                        | Archivos individuales enormes                    |
-| `ulimit -n`                       | 256 descriptores             | Bucles de descriptores que compitan con sshd     |
-| `ulimit -v`                       | 256 MB                       | Un proceso que consuma toda la RAM               |
-| `pids_limit` del contenedor       | 512 procesos                 | Fork bombs que eludan el ulimit del bashrc       |
-| Limpieza de `/tmp`                | Al arrancar (más de 1 día)   | Residuos de entregas acumulados en disco         |
-| `TMOUT`                           | 900 s, solo lectura          | Sesiones abiertas indefinidamente                |
-| `pkill -u`                        | Al cerrar la terminal        | Procesos huérfanos                               |
-| `restart: unless-stopped`         | Servicios permanentes        | Que el laboratorio no vuelva tras un reinicio    |
-
-La CPU se reparte en tres capas. El `cpus` del contenedor aísla el laboratorio de
-los demás servicios, el cgroup por usuario da a cada estudiante un techo propio, y
-`nice 10` junto con `ulimit -u 16` funcionan como respaldo universal. La RAM sigue la
-misma idea en dos capas. El `mem_limit` del contenedor aísla el laboratorio, y el
-cgroup por usuario, medido con 40 sesiones reales de unos 6 MB, contiene al proceso
-abusivo dentro de su propio límite. Si el anfitrión no delega cgroups ni cuotas, como
-ocurre en el servidor con Podman sin privilegios, el entorno sigue operando con los
-techos del contenedor y los ulimits, y lo que se pierde es el reparto fino por
-usuario. [deploy/README.md](deploy/README.md) detalla qué garantías se conservan en
-ese modo.
-
----
-
-## Contenido del curso
-
-- **Lecciones.** Cada tema tiene una carpeta en
-  [frontend/content/temario/](frontend/content/temario) (`tema-01` a `tema-10`) con
-  sus lecciones en Markdown y un `meta.json` que fija su orden y sus títulos. La
-  misma estructura se registra en la base de datos mediante
-  [seed-temario.js](backend/prisma/seed-temario.js), de modo que una lección nueva se
-  agrega en ambos lugares.
-- **Actividades del temario.** Los enunciados están en
-  [frontend/content/actividades/](frontend/content/actividades). Sus aserciones y su
-  árbol de trabajo se cargan con las semillas `seed-actividad-*.js` y
-  `seed-comprobacion-*.js` de [backend/prisma/](backend/prisma), que se ejecutan en
-  el orden que fija [seed.js](backend/prisma/seed.js).
-- **Videos.** No se guardan en el repositorio. Se alojan en un almacenamiento externo
-  indicado por `NEXT_PUBLIC_VIDEO_BASE_URL`, con la misma estructura
-  `tema-NN/archivo.mp4`. Se produjeron con Motion Canvas y su código está en el
-  repositorio
-  [LinuxLab-UFPS/LinuxLab-MotionCanvas](https://github.com/LinuxLab-UFPS/LinuxLab-MotionCanvas).
-- **Actividades de curso.** Las crea cada docente desde la plataforma, por lo que
-  viven solo en la base de datos.
-
-Las semillas son idempotentes y se ejecutan en cada despliegue, de modo que una
-lección o actividad nueva llega a producción con la siguiente integración en `main`.
-
----
-
 ## Tecnologías
 
 - **Frontend.** Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui y
@@ -712,7 +436,7 @@ lección o actividad nueva llega a producción con la siguiente integración en 
 
 | Documento | Contenido |
 | --------- | --------- |
-| [Manual técnico](https://drive.google.com/file/d/15XFWrPdOIWl6ANmI5ULdcSstTr40Nb8d/view) | Requisitos de la infraestructura, inventario de contenedores, puertos y volúmenes, variables de configuración e instalación. |
+| [Manual técnico](https://drive.google.com/file/d/15XFWrPdOIWl6ANmI5ULdcSstTr40Nb8d/view) | Requisitos, configuración, instalación, verificación y actualización del despliegue, paso a paso. |
 | [Manual de usuario](https://drive.google.com/file/d/1eDAuSpGBwE0FoKXJBkzziqTmnF2dKAJN/view) | Uso de la plataforma desde cada rol. |
 | [deploy/README.md](deploy/README.md) | Guía de despliegue y operación en el servidor. |
 | [docs/operacion.md](docs/operacion.md) | Respuesta ante incidentes en producción. |
