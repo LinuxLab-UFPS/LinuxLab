@@ -72,19 +72,6 @@ El uso de la plataforma desde cada rol se detalla en el
 
 ---
 
-## Versión estable
-
-La versión estable es **`v1.0.0`**, publicada en la página de
-[Releases](https://github.com/LinuxLab-UFPS/LinuxLab/releases) del repositorio. Es la
-versión que acompaña la entrega final del trabajo de grado.
-
-La rama `main` corresponde a la versión en producción. Ningún cambio se integra en
-ella directamente, sino a través de un Pull Request, y cada integración se despliega
-de forma automática en el servidor de la universidad. Las versiones posteriores se
-identifican con una nueva etiqueta sobre `main`.
-
----
-
 ## Estructura del proyecto
 
 ```
@@ -205,103 +192,120 @@ con sus componentes, su acceso a la API y sus tipos.
 
 ---
 
-## Ejecución local
+## Despliegue
 
-El laboratorio se levanta completo con Docker Compose. El backend necesita el entorno
-Linux para abrir las terminales, por lo que no se recomienda ejecutarlo fuera de los
-contenedores.
+### Variables de entorno
 
-1. Clonar el repositorio.
-
-   ```bash
-   git clone https://github.com/LinuxLab-UFPS/LinuxLab.git
-   cd LinuxLab
-   ```
-
-2. Crear la configuración del backend a partir de la plantilla y completarla con los
-   valores de la [tabla de variables](#variables-del-backend). En desarrollo la base
-   de datos es la del propio compose, de modo que `DATABASE_URL` queda como
-   `postgresql://linuxlab:linuxlab@postgres:5432/linuxlab` y `CORS_ORIGIN` como
-   `http://localhost:3001`.
-
-   ```bash
-   cp deploy/backend.env.example backend/.env
-   ```
-
-3. Crear la configuración del frontend. `NEXT_PUBLIC_BACKEND_URL` queda como
-   `http://localhost:3000` y `JWT_SECRET` debe tener el mismo valor que en el backend.
-
-   ```bash
-   cp frontend/.env.example frontend/.env.local
-   ```
-
-4. Construir y levantar los servicios. En el primer arranque el servicio `init`
-   genera las claves SSH, `migrate` crea el esquema de la base de datos y el backend
-   carga las semillas del temario y de las actividades.
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-5. Crear el primer administrador. El inicio de sesión exige que el correo ya exista
-   en la base de datos, por lo que la primera cuenta se crea con este script.
-
-   ```bash
-   docker compose cp deploy/bootstrap-admin.js backend:/app/bootstrap-admin.js
-   docker compose exec backend node bootstrap-admin.js correo@ufps.edu.co "Nombre"
-   ```
-
-6. Abrir `http://localhost:3001` e ingresar con la cuenta de Google de ese correo.
-
-Para trabajar sobre la interfaz con recarga en caliente, se detiene el servicio
-`frontend` y se ejecuta el servidor de desarrollo de Next.js, que usa el mismo
-puerto.
+La configuración del backend va en `backend/.env` y la del frontend en
+`frontend/.env.local`, creados a partir de sus plantillas.
 
 ```bash
-docker compose stop frontend
-cd frontend && npm install && npm run dev
+cp deploy/backend.env.example backend/.env
+cp frontend/.env.example frontend/.env.local
 ```
 
----
+Con el `docker-compose.yml` de la raíz, los valores de conexión son los siguientes.
 
-## Configuración
+```env
+# backend/.env
+DATABASE_URL=postgresql://linuxlab:linuxlab@postgres:5432/linuxlab
+CORS_ORIGIN=http://localhost:3001
 
-Ninguna credencial se guarda en el repositorio. La configuración del backend se lee
-de `backend/.env` al arrancar el contenedor, mientras que las variables públicas del
-frontend se incrustan en el código al compilarlo, de modo que un cambio en ellas
-obliga a reconstruir la imagen.
+# frontend/.env.local
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+```
 
-### Variables del backend
-
-Plantilla en [deploy/backend.env.example](deploy/backend.env.example).
+#### Backend
 
 | Variable | Propósito |
 | -------- | --------- |
-| `DATABASE_URL` | Cadena de conexión a PostgreSQL. Va sin comillas, porque Podman no las procesa. |
+| `DATABASE_URL` | Cadena de conexión a PostgreSQL, sin comillas. |
 | `PORT` | Puerto del backend dentro del contenedor, normalmente `3000`. |
 | `NODE_ENV` | `production` en el servidor. Activa la cookie de sesión `secure`. |
 | `FRONTEND_URL` | URL pública del frontend, usada en los enlaces de los correos y certificados. |
-| `CORS_ORIGIN` | Orígenes permitidos, separados por comas. No interviene cuando frontend y backend comparten la URL. |
-| `JWT_SECRET` | Secreto con el que se firma la sesión. Debe mantenerse estable entre despliegues. |
-| `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID`, `FIREBASE_CLIENT_CERT_URL` | Credenciales de la cuenta de servicio de Firebase, con las que se verifica el inicio de sesión. |
+| `CORS_ORIGIN` | Orígenes permitidos, separados por comas. |
+| `JWT_SECRET` | Secreto con el que se firma la sesión. |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID`, `FIREBASE_CLIENT_CERT_URL` | Credenciales de la cuenta de servicio de Firebase. |
 | `FIREBASE_STORAGE_BUCKET` | Almacenamiento de Firebase donde se guardan las entregas. |
 | `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME` | Remitente de los correos de la plataforma. |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` | Servidor de correo saliente. |
 | `LOG_LEVEL` | Nivel de detalle del registro. Es opcional. |
-| `SSH_HOST`, `SSH_USER`, `SSH_KEY_PATH` | Acceso al entorno Linux. Los inyecta el compose y no se escriben en el archivo. |
 
-### Variables del frontend
-
-Plantilla en [frontend/.env.example](frontend/.env.example).
+#### Frontend
 
 | Variable | Propósito |
 | -------- | --------- |
-| `NEXT_PUBLIC_FIREBASE_*` | Configuración del SDK web de Firebase para el inicio de sesión con Google. |
-| `NEXT_PUBLIC_BACKEND_URL` | URL del backend vista desde el navegador. En producción es la misma URL pública del frontend. |
+| `NEXT_PUBLIC_FIREBASE_*` | Configuración del SDK web de Firebase. |
+| `NEXT_PUBLIC_BACKEND_URL` | URL del backend vista desde el navegador. |
 | `BACKEND_URL` | URL del backend vista desde el servidor de Next.js. Es opcional. |
 | `NEXT_PUBLIC_FRONTEND_URL` | URL pública del frontend. |
 | `JWT_SECRET` | El mismo secreto del backend, con el que el frontend verifica la sesión. |
-| `NEXT_PUBLIC_VIDEO_BASE_URL` | Dirección del almacenamiento de los videos del temario. Vacía en local, donde los videos se sirven desde `public/`. |
+| `NEXT_PUBLIC_VIDEO_BASE_URL` | Dirección de los videos del temario. Es opcional. |
+
+### Build y ejecución
+
+```bash
+# Levantar los servicios
+docker compose up -d --build
+
+# Crear el primer administrador
+docker compose cp deploy/bootstrap-admin.js backend:/app/bootstrap-admin.js
+docker compose exec backend node bootstrap-admin.js correo@ufps.edu.co "Nombre"
+
+# Ver logs
+docker compose logs -f
+
+# Detener sin borrar los datos
+docker compose down
+
+# Frontend con recarga en caliente
+docker compose stop frontend
+cd frontend && npm install && npm run dev
+```
+
+La aplicación queda disponible en `http://localhost:3001` y la API en
+`http://localhost:3000`.
+
+### Cómo funciona
+
+- **[docker-compose.yml](docker-compose.yml).** Define los seis servicios del
+  laboratorio. En el primer arranque `init` genera las claves SSH, `migrate` aplica
+  las migraciones de la base de datos y el backend carga las semillas del temario.
+- **[deploy/compose.podman.yml](deploy/compose.podman.yml).** Define los mismos
+  servicios para el servidor de la universidad, que los ejecuta con Podman, y agrega
+  un proxy Caddy ([deploy/Caddyfile](deploy/Caddyfile)) que publica un único puerto y
+  reparte el tráfico entre el frontend y el backend.
+- **Dockerfiles.** El backend y el frontend parten de `node:22-alpine`, y el frontend
+  se construye en dos etapas para que la imagen final lleve solo la aplicación
+  compilada. El entorno parte de `ubuntu:22.04`.
+
+### CI/CD con GitHub Actions
+
+El workflow [.github/workflows/deploy.yml](.github/workflows/deploy.yml) despliega la
+aplicación en el servidor de la universidad.
+
+**Cuándo se ejecuta**
+
+- En cada push a la rama `main`.
+- Manualmente desde la pestaña Actions del repositorio.
+
+**Qué hace**
+
+1. Genera `frontend/.env.local` y la configuración del backend con los secrets del
+   repositorio.
+2. Instala la clave SSH de despliegue.
+3. Ejecuta [deploy/update.sh](deploy/update.sh), que construye las tres imágenes,
+   las empaqueta y las transfiere al servidor.
+4. En el servidor, [deploy/update-server.sh](deploy/update-server.sh) carga las
+   imágenes, recrea los contenedores conservando los volúmenes, espera a que el
+   backend responda y carga las semillas.
+
+**Secrets requeridos en el entorno `deploy`**
+
+- `HOST`, `SSH_PORT`, `PORT_0`, `PORT_1` y `DEPLOY_SSH_KEY`
+- `DB_PASSWORD`, `DATABASE_URL` y `JWT_SECRET`
+- `FRONTEND_URL`, `FIREBASE_*`, `EMAIL_FROM_*` y `SMTP_*`
+- `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_FIREBASE_*` y `NEXT_PUBLIC_VIDEO_BASE_URL`
 
 ---
 
