@@ -1,7 +1,7 @@
 {
   "name": "linux-lab-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "API, gateway de la terminal y worker de aprovisionamiento de LinuxLab UFPS",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
@@ -13,14 +13,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anderssonccg/linux-lab-backend.git"
+    "url": "git+https://github.com/LinuxLab-UFPS/LinuxLab.git",
+    "directory": "backend"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Mauricio Di Donato Sanchez, Andersson Camilo Cardenas Guarin",
+  "license": "UNLICENSED",
+  "private": true,
   "bugs": {
-    "url": "https://github.com/anderssonccg/linux-lab-backend/issues"
+    "url": "https://github.com/LinuxLab-UFPS/LinuxLab/issues"
   },
-  "homepage": "https://github.com/anderssonccg/linux-lab-backend#readme",
+  "homepage": "https://github.com/LinuxLab-UFPS/LinuxLab#readme",
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
