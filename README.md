@@ -108,6 +108,7 @@ describen lo que contiene cada uno.
 | ------- | --------- |
 | [docker-compose.yml](docker-compose.yml) | Define los seis servicios con los que se levanta el laboratorio en una máquina de desarrollo. |
 | [.github/workflows/deploy.yml](.github/workflows/deploy.yml) | Flujo de despliegue continuo que se ejecuta al integrar un cambio en `main`. |
+| [scripts/docker/init-env.sh](scripts/docker/init-env.sh) | Genera el par de claves RSA con el que el backend accede al entorno, si aún no existe. |
 | [.gitignore](.gitignore) | Excluye del control de versiones los archivos de configuración con credenciales, los videos y los artefactos de compilación. |
 
 ### Backend
@@ -176,22 +177,6 @@ con sus componentes, su acceso a la API y sus tipos.
 | [frontend/Dockerfile](frontend/Dockerfile) | Imagen del frontend, construida en dos etapas sobre `node:22-alpine`. |
 | [frontend/.env.example](frontend/.env.example) | Plantilla de las variables del frontend. |
 
-### Despliegue
-
-| Recurso | Contenido |
-| ------- | --------- |
-| [deploy/compose.podman.yml](deploy/compose.podman.yml) | Servicios de producción tal como se ejecutan en el servidor con Podman. |
-| [deploy/Caddyfile](deploy/Caddyfile) | Configuración del proxy, que reparte el tráfico entre el frontend y el backend y emite las cabeceras de seguridad. |
-| [deploy/build-local.sh](deploy/build-local.sh) | Construye y empaqueta las imágenes en la máquina de desarrollo. |
-| [deploy/deploy-server.sh](deploy/deploy-server.sh) | Instalación inicial en el servidor. |
-| [deploy/update.sh](deploy/update.sh) | Actualización completa, lanzada desde la máquina de desarrollo o desde el flujo de despliegue continuo. |
-| [deploy/update-server.sh](deploy/update-server.sh) | Parte de la actualización que se ejecuta en el servidor. |
-| [deploy/bootstrap-admin.js](deploy/bootstrap-admin.js) | Crea o promueve la cuenta del primer administrador. |
-| [deploy/backend.env.example](deploy/backend.env.example) | Plantilla de la configuración del backend. |
-| [deploy/frontend.build.env.example](deploy/frontend.build.env.example) | Plantilla de la variable pública que se fija al construir el frontend. |
-| [deploy/README.md](deploy/README.md) | Guía detallada del despliegue en el servidor. |
-| [scripts/docker/init-env.sh](scripts/docker/init-env.sh) | Genera el par de claves RSA con el que el backend accede al entorno, si aún no existe. |
-
 ### Documentación
 
 | Recurso | Contenido |
@@ -207,8 +192,6 @@ con sus componentes, su acceso a la API y sus tipos.
 
 ## Prerrequisitos
 
-### Para desarrollo
-
 - [Git](https://git-scm.com/).
 - [Docker](https://docs.docker.com/get-docker/) con el complemento Compose v2.
 - [Node.js](https://nodejs.org/) 22, la misma versión de las imágenes, solo si se
@@ -219,16 +202,6 @@ con sus componentes, su acceso a la API y sus tipos.
   `NEXT_PUBLIC_FIREBASE_*` del frontend y `FIREBASE_*` del backend.
 - Una cuenta SMTP para el envío de correos. Sin ella la plataforma arranca, pero no
   envía las invitaciones de docentes, los avisos de matrícula ni los certificados.
-
-### Para producción
-
-- Un servidor Linux con [Podman](https://podman.io/) 4.9 en modo sin privilegios y
-  podman-compose 1.0.6, con al menos 1 GB de memoria disponible para el laboratorio.
-- Una URL pública con HTTPS, entregada por el proxy institucional, que permita el
-  upgrade a WebSocket. La cookie de sesión es `secure` y no viaja por HTTP.
-- Acceso SSH al servidor con una clave privada.
-- Una máquina de construcción con Docker o Podman y memoria suficiente para compilar
-  el frontend, porque el servidor no construye las imágenes.
 
 ---
 
@@ -381,42 +354,6 @@ En desarrollo los servicios son `frontend` (red externa, puerto 3001), `backend`
 (las tres redes, puerto 3000), `entorno` (red `lab`), `postgres` (red `internal`),
 `migrate`, que aplica las migraciones al arrancar, e `init`, que genera las claves
 SSH. En producción se suma el `proxy` y solo él publica un puerto.
-
----
-
-## Jerarquía de roles y directorios
-
-```
-/home/                          → 711 root:root (no listable por otros)
-├── labadmin/                   → 700 (cuenta operativa del backend)
-└── <docente>/                  → 751 docente:docente
-    ├── home/                   → 750 (home personal del docente)
-    └── grupos/                 → 751
-        └── <grp_dir>/          → 2751 docente:grp_xxx (setgid)
-            └── <estudiante>/   → 2700 estudiante:grp_xxx (setgid)
-```
-
-| Rol            | Cómo se crea                                | Directorio                          | Permisos      |
-| -------------- | ------------------------------------------- | ----------------------------------- | ------------- |
-| **labadmin**   | Imagen y entrypoint (`authorized_keys`)     | `/home/labadmin/`                   | 700           |
-| **docente**    | `provisionTeacherAccount` → `createTeacher` | `/home/<docente>/{home,grupos}`     | 751/750       |
-| **grupo**      | `createGroup` (job con prioridad)           | `/home/<docente>/grupos/<grp_dir>/` | 2751 (setgid) |
-| **estudiante** | `provisionStudentAccount` → `createStudent` | `.../grupos/<grp_dir>/<usuario>/`   | 2700 (setgid) |
-
-- **Setgid (`2xxx`).** Los archivos creados dentro heredan el grupo del curso
-  (`grp_xxx`) y no el grupo primario de quien los crea.
-- **Aislamiento entre estudiantes.** Sus homes son `2700`, así que ni el grupo ni
-  `other` entran. El estudiante sí es miembro del grupo Unix de su curso, porque lo
-  exige el `chgrp` de las actividades, y por eso el acceso de grupo va a `0`. Sin
-  esa restricción cualquier compañero del curso podría atravesar un home ajeno y
-  leer sus archivos. `/home` en `711` impide listar los homes ajenos y `hidepid=2`
-  oculta los procesos de otros.
-- **El docente supervisa por la plataforma**, con los resultados del checker y las
-  entregas, y no por el sistema de archivos. El home `2700` del estudiante no le da
-  acceso directo a su trabajo. Al crear un grupo, el docente queda como miembro del
-  grupo Unix y dueño del directorio del curso (`syncTeacherGroups`), con lo que
-  gestiona su estructura. La calificación nunca depende de leer el home del
-  estudiante.
 
 ---
 
