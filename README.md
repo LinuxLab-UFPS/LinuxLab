@@ -68,7 +68,7 @@ con correo y contraseña.
   aprovisionamiento fallido y reconstruir las cuentas.
 
 El uso de la plataforma desde cada rol se detalla en el
-[manual de usuario](https://drive.google.com/file/d/1eDAuSpGBwE0FoKXJBkzziqTmnF2dKAJN/view).
+[manual de usuario](https://drive.google.com/file/d/1TFDK1Wmbj5reU5dF3KHoV46lh8NTzi3h/view).
 
 ---
 
@@ -377,8 +377,8 @@ SSH. En producción se suma el `proxy` y solo él publica un puerto.
 
 | Documento | Contenido |
 | --------- | --------- |
-| [Manual técnico](https://drive.google.com/file/d/15XFWrPdOIWl6ANmI5ULdcSstTr40Nb8d/view) | Requisitos, configuración, instalación, verificación y actualización del despliegue, paso a paso. |
-| [Manual de usuario](https://drive.google.com/file/d/1eDAuSpGBwE0FoKXJBkzziqTmnF2dKAJN/view) | Uso de la plataforma desde cada rol. |
+| [Manual técnico](https://drive.google.com/file/d/1hj14-Y93ReE-3NQPmU9lSfgR7EJ_4JtM/view) | Requisitos, configuración, instalación, verificación y actualización del despliegue, paso a paso. |
+| [Manual de usuario](https://drive.google.com/file/d/1TFDK1Wmbj5reU5dF3KHoV46lh8NTzi3h/view) | Uso de la plataforma desde cada rol. |
 | [deploy/README.md](deploy/README.md) | Guía de despliegue y operación en el servidor. |
 | [docs/operacion.md](docs/operacion.md) | Respuesta ante incidentes en producción. |
 | [LinuxLab-MotionCanvas](https://github.com/LinuxLab-UFPS/LinuxLab-MotionCanvas) | Código de los videos del temario. |
