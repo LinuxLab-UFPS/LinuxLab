@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react"
 import {
   Table,
   TableBody,
@@ -19,6 +20,9 @@ import type { StudentProgress, TopicSubtopics } from "@/lib/models/groups"
 import type { Topic } from "@/lib/features/student/types"
 
 const PAGE_SIZE = 10
+
+type ProgressSort = "none" | "desc" | "asc"
+const NEXT_SORT: Record<ProgressSort, ProgressSort> = { none: "desc", desc: "asc", asc: "none" }
 
 /**
  * Los estudiantes del curso con su progreso de contenidos. La columna
@@ -42,6 +46,7 @@ export function GroupStudents({
 }) {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<StudentProgress | null>(null)
+  const [sort, setSort] = useState<ProgressSort>("none")
 
   const progressById = useMemo(
     () => new Map(rows.map((r) => [r.student.id, r])),
@@ -56,6 +61,11 @@ export function GroupStudents({
       student.email.toLowerCase().includes(q) ||
       (student.code ?? "").toLowerCase().includes(q),
   )
+  if (sort !== "none") {
+    const progressOf = (id: string) => progressById.get(id)?.progress ?? 0
+    const dir = sort === "desc" ? -1 : 1
+    visible.sort((a, b) => dir * (progressOf(a.id) - progressOf(b.id)))
+  }
   const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
   const pageRows = visible.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
@@ -72,7 +82,26 @@ export function GroupStudents({
                 <TableHead className="w-24">Código</TableHead>
                 <TableHead>Estudiante</TableHead>
                 <TableHead className="w-36">Usuario</TableHead>
-                <TableHead className="w-52">Progreso</TableHead>
+                <TableHead className="w-52">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSort(NEXT_SORT[sort])
+                      setPage(1)
+                    }}
+                    className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                    aria-label="Ordenar por progreso"
+                  >
+                    Progreso
+                    {sort === "desc" ? (
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    ) : sort === "asc" ? (
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    ) : (
+                      <ArrowUpDown className="h-3.5 w-3.5 opacity-60" />
+                    )}
+                  </button>
+                </TableHead>
                 <TableHead className="w-40">Última conexión</TableHead>
               </TableRow>
             </TableHeader>
