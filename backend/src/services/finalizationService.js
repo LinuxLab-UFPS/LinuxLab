@@ -1,31 +1,24 @@
 const prisma = require("../../prisma/client")
 const { AppError } = require("../lib/errors")
 const accessService = require("./accessService")
-const { computePieceProgress } = require("./groupProgressService")
+const { computePieceProgress, PASSING_SCORE } = require("./groupProgressService")
 
 function round1(value) {
   return Math.round(value * 10) / 10
 }
 
-const PASSING_SCORE = 60
-
 /**
  * La regla de certificacion, en un solo sitio: la consume la vista previa y la
- * transaccion que finaliza el grupo. El curso se completa con dos dimensiones,
- * cada una medida con el instrumento justo:
+ * transaccion que finaliza el grupo.
  *
- * - Temario: el progreso del curso (lecturas, comprobaciones y actividades del
- *   banco aprobadas), el mismo % que el docente ve en la tabla de estudiantes.
- *   Debe alcanzar el minimo que el docente fijo para el grupo (`min_progress`,
- *   100 por defecto: el curso completo). Todo es de reintento ilimitado, asi
- *   que exigir el 100% es justo, pero el docente puede bajarlo.
- * - Actividades del docente: la dimension con restricciones (quiz de intento
- *   unico, fechas de cierre, revision manual de entrega unica). Se mide con la
- *   definitiva: promedio simple del ultimo intento de cada actividad del banco
- *   y de cada actividad habilitada del docente; basta con >= 60, el mismo
- *   umbral con el que se aprueba una actividad.
+ * Certifica quien alcanza el progreso minimo que el docente fijo para el grupo
+ * (`min_progress`, 100 por defecto: el curso completo). Es el mismo % que el
+ * docente ve en la tabla de estudiantes y el estudiante en su mapa: lecciones,
+ * actividades del curso y actividades del docente, cada una aprobada con 60.
  *
- * Sin actividades que promediar, la definitiva no aplica y manda el temario.
+ * La definitiva (promedio simple del ultimo intento de cada actividad del curso
+ * y de cada actividad habilitada del docente) ya no decide: se sigue
+ * calculando porque el certificado y el acta la muestran como nota.
  */
 async function finalizationSummary({ groupId, teacherUserId, role, tx = prisma }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
@@ -79,7 +72,7 @@ async function computeGroupSummary(group, tx = prisma) {
         manualDetail: { select: { submission_id: true } },
       },
     }),
-    computePieceProgress(enrollmentIds, tx),
+    computePieceProgress(groupId, enrollmentIds, tx),
   ])
 
   const laterOf = (a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b)
@@ -132,11 +125,9 @@ async function computeGroupSummary(group, tx = prisma) {
 
     const progress = progressByEnrollment.get(enrollment.id) ?? 0
     const progressOk = topicsTotal > 0 && progress >= minProgress
-    const definitiveOk = definitive === null || definitive >= PASSING_SCORE
 
     const motivos = []
     if (!progressOk) motivos.push(`Progreso ${progress}% < ${minProgress}%`)
-    if (!definitiveOk) motivos.push(`Definitiva ${definitive} < ${PASSING_SCORE}`)
 
     return {
       enrollmentId: enrollment.id,
@@ -148,7 +139,7 @@ async function computeGroupSummary(group, tx = prisma) {
       topicsTotal,
       progress,
       definitive,
-      eligible: progressOk && definitiveOk,
+      eligible: progressOk,
       motivo: motivos.length > 0 ? motivos.join(" · ") : null,
       pendingManual,
     }
