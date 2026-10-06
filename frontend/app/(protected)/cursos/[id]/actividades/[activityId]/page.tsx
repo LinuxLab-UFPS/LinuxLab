@@ -78,7 +78,7 @@ function ActivityDetail({
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">{activity.title}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
+                {topic ? `Tema: ${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
             {/* Las del temario no llevan ninguno de los dos: son iguales en
