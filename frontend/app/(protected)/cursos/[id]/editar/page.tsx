@@ -9,7 +9,11 @@ import { ActionButton } from "@shared/components/action-button"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
-import { GroupFormFields } from "@/lib/features/teacher/components/group-form-fields"
+import {
+  GroupFormFields,
+  closingPayload,
+  finishDateInputValue,
+} from "@/lib/features/teacher/components/group-form-fields"
 import { updateGroup } from "@/lib/features/teacher/data"
 import { queryKeys, useGroup } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
@@ -44,9 +48,9 @@ function EditGroupContent() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <ShieldAlert className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Grupo no encontrado</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          Puede que el grupo ya no exista o que no tengas acceso a él.
+          Puede que el curso ya no exista o que no tengas acceso a él.
         </p>
         <Link href="/inicio">
           <Button variant="outline">Volver al listado</Button>
@@ -68,7 +72,7 @@ function EditGroupContent() {
           Solo los cursos activos permiten cambiar su nombre y descripción: un curso
           finalizado o archivado conserva sus datos tal como se cerró.
         </p>
-        <Link href={`/grupos/${id}`}>
+        <Link href={`/cursos/${id}`}>
           <Button variant="outline">Volver al curso</Button>
         </Link>
       </div>
@@ -86,25 +90,33 @@ function EditGroupForm({ group }: { group: Group }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState(group.name)
   const [description, setDescription] = useState(group.description ?? "")
+  const [finishDate, setFinishDate] = useState(finishDateInputValue(group.autoFinishAt))
+  const [minProgress, setMinProgress] = useState(String(group.minProgress ?? 100))
 
   const saveMutation = useMutation({
-    mutationFn: () => updateGroup(group.id, { name, description }),
+    mutationFn: () =>
+      updateGroup(group.id, { name, description, ...closingPayload(finishDate, minProgress) }),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
-      notify.success("Grupo actualizado", {
-        description: "Los cambios ya son visibles para tus estudiantes.",
+      notify.success("Curso actualizado", {
+        description: "Los cambios ya son visibles para los estudiantes.",
       })
-      router.push(`/grupos/${updated.id}`)
+      router.push(`/cursos/${updated.id}`)
     },
-    onError: () => {
-      notify.error(null, "No se pudo guardar la información del grupo.")
+    onError: (err) => {
+      notify.error(err, "No se pudo guardar la información del curso.")
     },
   })
 
   const handleSave = () => {
     if (!name.trim()) {
-      notify.error(null, "El nombre del grupo es requerido.")
+      notify.error(null, "El nombre del curso es requerido.")
+      return
+    }
+    const progressValue = Number(minProgress)
+    if (!Number.isInteger(progressValue) || progressValue < 1 || progressValue > 100) {
+      notify.error(null, "El progreso mínimo debe ser un número entero entre 1 y 100.")
       return
     }
     saveMutation.mutate()
@@ -112,7 +124,7 @@ function EditGroupForm({ group }: { group: Group }) {
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <ActionButton tone="neutral" href={`/grupos/${group.id}`}>
+      <ActionButton tone="neutral" href={`/cursos/${group.id}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver al curso
       </ActionButton>
@@ -121,10 +133,10 @@ function EditGroupForm({ group }: { group: Group }) {
         <div className="min-w-0">
           <h1 className="flex items-center gap-3 text-2xl font-semibold text-foreground">
             <Pencil className="h-6 w-6 text-primary" />
-            Editar grupo
+            Editar curso
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Actualiza el nombre y la descripción con la que tus estudiantes ven el grupo.
+            Actualice el nombre y la descripción con la que los estudiantes ven el curso, y cuándo y cómo se cierra.
           </p>
 
           <div className="mt-8">
@@ -133,6 +145,10 @@ function EditGroupForm({ group }: { group: Group }) {
               onNameChange={setName}
               description={description}
               onDescriptionChange={setDescription}
+              finishDate={finishDate}
+              onFinishDateChange={setFinishDate}
+              minProgress={minProgress}
+              onMinProgressChange={setMinProgress}
               disabled={saveMutation.isPending}
             />
           </div>

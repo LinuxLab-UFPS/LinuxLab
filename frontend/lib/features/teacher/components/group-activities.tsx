@@ -16,6 +16,7 @@ import { TablePanel, TableEmptyState, TablePagination } from "@/shared/component
 import { Empty } from "@shared/components/empty"
 import { getTopic } from "@shared/lib/content/temario"
 import { Switch } from "@shared/components/ui/switch"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip"
 import { setActivityEnabled } from "@/lib/features/teacher/data"
 import { queryKeys } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
@@ -45,11 +46,16 @@ export function GroupActivities({
   // Filtrar por quiz o taller solo puede devolver actividades del docente: las
   // del curso no se clasifican asi, y colarlas en el resultado seria decir que
   // son talleres cuando nadie lo decidio.
-  const filtered = activities.filter(
-    (a) =>
-      (!q || a.title.toLowerCase().includes(q)) &&
-      (sourceFilter === "all" || a.source === sourceFilter),
-  )
+  // Las del docente van arriba: son las que puede tocar y las que suele venir
+  // a revisar. El sort es estable, asi que cada bloque conserva el orden del
+  // backend.
+  const filtered = activities
+    .filter(
+      (a) =>
+        (!q || a.title.toLowerCase().includes(q)) &&
+        (sourceFilter === "all" || a.source === sourceFilter),
+    )
+    .sort((a, b) => Number(a.source !== "teacher") - Number(b.source !== "teacher"))
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const page_ = Math.min(page, totalPages)
   const pageRows = filtered.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
@@ -88,7 +94,7 @@ export function GroupActivities({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Titulo</TableHead>
+              <TableHead>Título</TableHead>
               <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
               <TableHead className="w-40">Evaluación</TableHead>
@@ -101,7 +107,7 @@ export function GroupActivities({
                 <TableRow key={activity.id} className="relative">
                 <TableCell>
                   <Link
-                    href={`/grupos/${groupId}/actividades/${activity.id}`}
+                    href={`/cursos/${groupId}/actividades/${activity.id}`}
                     className="absolute inset-0 z-10"
                     aria-label={`Ver actividad ${activity.title}`}
                   />
@@ -135,11 +141,27 @@ export function GroupActivities({
                 </TableCell>
                 <TableCell className="text-center">
                   {/* Las del curso van siempre habilitadas: son el temario, y
-                      apagarlas en un grupo lo dejaria a medias. Un interruptor
-                      que no se puede mover solo confunde, asi que en esas filas
-                      la celda queda vacia. */}
+                      apagarlas en un grupo lo dejaria a medias. El interruptor
+                      se ve encendido y bloqueado, y el tooltip explica por que.
+                      El span recibe el hover porque un boton deshabilitado no
+                      dispara eventos. */}
                   {activity.source === "bank" ? (
-                    <span className="text-muted-foreground">—</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className="relative z-20 inline-flex cursor-not-allowed"
+                          tabIndex={0}
+                        >
+                          <Switch
+                            checked
+                            disabled
+                            onCheckedChange={() => {}}
+                            className="pointer-events-none bg-muted-foreground/40"
+                          />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>Esta actividad no se puede deshabilitar</TooltipContent>
+                    </Tooltip>
                   ) : (
                     <span className="relative z-20 inline-flex">
                       <Switch

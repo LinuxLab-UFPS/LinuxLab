@@ -84,7 +84,7 @@ export function CertificateFound({
 
         <dl className="mt-6 grid grid-cols-1 gap-5 border-t border-border pt-6 sm:grid-cols-2">
           <Field label="Curso" value={certificate.groupName} />
-          <Field label="Grupo" value={`N° ${certificate.groupNumber}`} />
+          <Field label="Curso" value={`N° ${certificate.groupNumber}`} />
           {student ? <Field label="Docente" value={student.teacherName} /> : null}
           {student ? (
             <Field label="Temas completados" value={`${student.topicsCompleted}/${student.topicsTotal}`} />

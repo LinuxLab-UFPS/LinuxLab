@@ -61,12 +61,12 @@ function InscripcionInner() {
     try {
       const res = await enrollApi.join(groupId, token)
       if (res.enrolled) {
-        notify.success(`¡Inscrito en ${res.groupName ?? info?.name ?? "el grupo"}!`)
+        notify.success(`¡Inscrito en ${res.groupName ?? info?.name ?? "el curso"}!`)
         router.replace("/inicio")
         return
       }
       if (res.reason === "already_enrolled") {
-        notify.info("Ya estabas inscrito en este grupo")
+        notify.info("Ya estabas inscrito en este curso")
         router.replace("/inicio")
         return
       }
@@ -87,7 +87,7 @@ function InscripcionInner() {
         {status === "loading" ? (
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Consultando el grupo…</p>
+            <p className="text-sm text-muted-foreground">Consultando el curso…</p>
           </div>
         ) : status === "invalid" ? (
           <>
@@ -96,7 +96,7 @@ function InscripcionInner() {
             </div>
             <h1 className="text-xl font-bold text-foreground">Enlace no válido</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Este enlace de inscripción no existe o el grupo ya no está activo. Solicita uno nuevo
+              Este enlace de inscripción no existe o el curso ya no está activo. Solicita uno nuevo
               a tu docente.
             </p>
             <Button onClick={() => router.replace("/login")} className="mt-8 h-11 w-full">
@@ -105,7 +105,7 @@ function InscripcionInner() {
           </>
         ) : (
           <>
-            <h1 className="text-xl font-bold text-foreground">{info?.name ?? "Grupo"}</h1>
+            <h1 className="text-xl font-bold text-foreground">{info?.name ?? "Curso"}</h1>
             {info?.teacherName ? (
               <p className="mt-1 text-sm text-muted-foreground">Docente: {info.teacherName}</p>
             ) : null}
@@ -134,7 +134,7 @@ function InscripcionInner() {
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10">
                     <CheckCircle2 className="h-7 w-7 text-emerald-600" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Ya estás inscrito en este grupo.</p>
+                  <p className="text-sm text-muted-foreground">Ya estás inscrito en este curso.</p>
                   <Button onClick={() => router.replace("/inicio")} className="mt-6 h-11 w-full">
                     Ir a mi tablero
                   </Button>
@@ -147,7 +147,7 @@ function InscripcionInner() {
                       Inscribiéndome…
                     </>
                   ) : (
-                    "Inscribirme en este grupo"
+                    "Inscribirme en este curso"
                   )}
                 </Button>
               )}

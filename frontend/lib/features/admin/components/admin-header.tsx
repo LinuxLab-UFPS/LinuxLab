@@ -18,6 +18,7 @@ import { ThemeToggle } from "@shared/components/theme-toggle"
 import { RoleTag } from "@shared/components/role-tag"
 import { NavMenuMovil } from "@shared/components/nav-menu-movil"
 import { useAuth, initialsOf } from "@/lib/features/auth/context"
+import { useTeacherRequestCount } from "@/lib/api/queries"
 
 
 /* Un solo color para toda la barra: el de la marca.
@@ -38,6 +39,9 @@ export function AdminHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, signOut } = useAuth()
+  // Solicitudes de cuenta docente por revisar: van como contador en su pestaña.
+  const { data: pendingRequests = 0 } = useTeacherRequestCount(user?.role === "admin")
+  const badgeOf = (href: string) => (href === "/admin/docentes" ? pendingRequests : 0)
 
   return (
     <header className="h-16 shrink-0 border-b border-white/10 bg-[#0a0a0a] text-white">
@@ -67,6 +71,14 @@ export function AdminHeader() {
               >
                 <item.icon className="h-4 w-4" />
                 {item.label}
+                {badgeOf(item.href) > 0 && (
+                  <span
+                    className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary-foreground"
+                    aria-label={`${badgeOf(item.href)} solicitudes pendientes`}
+                  >
+                    {badgeOf(item.href)}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -77,7 +89,7 @@ export function AdminHeader() {
           <NavMenuMovil
             enlaces={NAV.map((item) => ({
               href: item.href,
-              label: item.label,
+              label: badgeOf(item.href) > 0 ? `${item.label} (${badgeOf(item.href)})` : item.label,
               icon: item.icon,
               activo: pathname === item.href || pathname.startsWith(item.href + "/"),
             }))}

@@ -16,15 +16,15 @@ export default async function StudentActivityDetailPage({
   const sp = await searchParams
   const backHref =
     sp.from === "calificaciones"
-      ? `/grupos/${id}/actividades/${activityId}?from=calificaciones`
-      : `/grupos/${id}/actividades/${activityId}`
+      ? `/cursos/${id}/actividades/${activityId}?from=calificaciones`
+      : `/cursos/${id}/actividades/${activityId}`
 
   if (user.role === "student" && user.id !== studentId) {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
         <h2 className="mb-1 text-base font-medium text-foreground">Acceso denegado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          No puedes ver las entregas de otros estudiantes.
+          No es posible ver las entregas de otros estudiantes.
         </p>
         <BackButton fallback="/actividades" label="Volver a actividades" />
       </div>
@@ -41,7 +41,7 @@ export default async function StudentActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           No se encontró la entrega de este estudiante.
         </p>
-        <BackButton fallback={`/grupos/${id}/actividades/${activityId}`} label="Volver a la actividad" />
+        <BackButton fallback={`/cursos/${id}/actividades/${activityId}`} label="Volver a la actividad" />
       </div>
     )
   }

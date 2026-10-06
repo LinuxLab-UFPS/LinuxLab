@@ -11,14 +11,14 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
  */
 async function ensureGroupAccess({ groupId, teacherUserId, role, tx = prisma }) {
   if (!UUID_REGEX.test(groupId)) {
-    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+    throw new AppError("Curso no encontrado", 404, "NOT_FOUND")
   }
   const group = await tx.group.findUnique({ where: { id: groupId } })
   if (!group) {
-    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+    throw new AppError("Curso no encontrado", 404, "NOT_FOUND")
   }
   if (role !== "admin" && group.teacher_id !== teacherUserId) {
-    throw new AppError("No tienes permiso sobre este grupo", 403, "FORBIDDEN")
+    throw new AppError("No tienes permiso sobre este curso", 403, "FORBIDDEN")
   }
   return group
 }

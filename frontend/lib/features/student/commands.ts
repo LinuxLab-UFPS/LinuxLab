@@ -112,7 +112,7 @@ export const COMMANDS: EssentialCommand[] = [
   { name: "bash", args: "<script.sh>", description: "Ejecuta un script.", topicNumber: 10, subtopicId: "primer-script", categoria: "Escribir scripts" },
   { name: "read", args: "[-p aviso] <var>", description: "Lee una linea de la entrada.", topicNumber: 10, subtopicId: "variables", categoria: "Escribir scripts" },
   { name: "test", args: "<condicion>", description: "Comprueba una condicion; se escribe [ ].", topicNumber: 10, subtopicId: "condicionales", categoria: "Escribir scripts" },
-  { name: "exit", args: "[codigo]", description: "Termina el script con un codigo de salida.", topicNumber: 10, subtopicId: "scripting", categoria: "Escribir scripts" },
+  { name: "exit", args: "[código]", description: "Termina el script con un código de salida.", topicNumber: 10, subtopicId: "scripting", categoria: "Escribir scripts" },
 ]
 
 /** How many the cheat sheet shows at once. */

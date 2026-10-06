@@ -35,13 +35,17 @@ const MESSAGE_BUILDERS = {
 
   // --- Administracion ---
   teacher_registered: ({ target }) => `Registró al docente '${target}'.`,
+  teacher_request_approved: ({ target }) => `Aprobó la solicitud docente de '${target}'.`,
+  teacher_request_rejected: ({ target }) => `Rechazó la solicitud docente de '${target}'.`,
   teacher_toggled: ({ target, metadata }) =>
     `${metadata?.active ? "Activó" : "Desactivó"} al docente '${target}'.`,
 
   // --- Grupos ---
   group_created: ({ target }) => `Creó el curso '${target}'.`,
   group_finished: ({ target, metadata }) =>
-    `Finalizó el curso '${target}' con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`,
+    metadata?.automatic
+      ? `El curso '${target}' se finalizó automáticamente en su fecha de cierre con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`
+      : `Finalizó el curso '${target}' con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`,
   group_archived: ({ target }) => `Archivó el curso '${target}'.`,
   group_deleted: ({ target }) => `Eliminó el curso '${target}'.`,
 

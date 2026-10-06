@@ -1,4 +1,4 @@
-export type { TeacherListItem } from "@/lib/models/users"
+export type { TeacherListItem, TeacherRequest } from "@/lib/models/users"
 export type {
   ProvisioningStatus,
   TeacherProvisioningJobSummary,

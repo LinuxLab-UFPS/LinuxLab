@@ -355,7 +355,7 @@ async function renderInstructorCertificate(cert) {
       },
     ],
     cells: [
-      { label: "Grupo", value: `N° ${cert.groupNumber}` },
+      { label: "Curso", value: `N° ${cert.groupNumber}` },
       { label: "Inicio", value: formatShort(cert.courseStartedAt) },
       { label: "Finalizado", value: formatShort(cert.issuedAt), accent: true },
     ],
@@ -421,7 +421,7 @@ async function renderActa(acta) {
   doc.text(acta.groupName, margin, 92, { width: right - margin })
   setFont(doc, "regular", 9.5, MUTED)
   doc.text(
-    `Grupo N° ${acta.groupNumber} · Docente: ${acta.teacherName} · Finalizado el ${formatDate(acta.finishedAt)}`,
+    `Curso N° ${acta.groupNumber} · Docente: ${acta.teacherName} · Finalizado el ${formatDate(acta.finishedAt)}`,
     margin,
     116,
     { width: right - margin },

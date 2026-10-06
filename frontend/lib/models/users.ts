@@ -8,3 +8,14 @@ export interface TeacherListItem {
   linuxProvisioned?: boolean
   createdAt?: string
 }
+
+/** Solicitud de cuenta docente enviada desde /solicitud-docente. */
+export interface TeacherRequest {
+  id: string
+  name: string
+  email: string
+  code: string
+  status: "pending" | "approved" | "rejected"
+  createdAt: string
+  reviewedAt: string | null
+}

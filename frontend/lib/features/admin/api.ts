@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api/client"
-import type { TeacherListItem, TeacherProvisioningJobSummary } from "./types"
+import type { TeacherListItem, TeacherProvisioningJobSummary, TeacherRequest } from "./types"
 
 export interface TeacherFilters {
   search?: string
@@ -32,4 +32,19 @@ export const adminApi = {
 
   listTeacherProvisioningJobs: () =>
     apiFetch<TeacherProvisioningJobSummary[]>("/api/admin/docentes/provisioning-jobs"),
+
+  listTeacherRequests: () =>
+    apiFetch<TeacherRequest[]>("/api/admin/docentes/solicitudes?status=pending"),
+
+  teacherRequestCount: () =>
+    apiFetch<{ pending: number }>("/api/admin/docentes/solicitudes/count"),
+
+  approveTeacherRequest: (id: string) =>
+    apiFetch<TeacherListItem & { debugLink?: string }>(
+      `/api/admin/docentes/solicitudes/${id}/aprobar`,
+      { method: "POST" },
+    ),
+
+  rejectTeacherRequest: (id: string) =>
+    apiFetch<TeacherRequest>(`/api/admin/docentes/solicitudes/${id}/rechazar`, { method: "POST" }),
 }

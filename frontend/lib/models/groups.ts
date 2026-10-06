@@ -13,6 +13,10 @@ export interface Group {
   /** Directorio del grupo dentro del home del docente: grupos/<group_dir>. */
   groupDir?: string
   inviteToken?: string | null
+  /** Instante en que el curso se finaliza solo; null si se finaliza a mano. */
+  autoFinishAt?: string | null
+  /** Progreso minimo (%) para recibir el certificado; 100 = el curso completo. */
+  minProgress: number
   activeNow: number
   averageScore: number | null
 }
@@ -43,7 +47,13 @@ export interface FinalizeStudentRow {
 }
 
 export interface FinalizePreview {
-  group: { id: string; name: string; status: Group["status"] }
+  group: {
+    id: string
+    name: string
+    status: Group["status"]
+    minProgress: number
+    autoFinishAt: string | null
+  }
   students: FinalizeStudentRow[]
   summary: { eligibleCount: number; total: number }
 }
@@ -103,7 +113,17 @@ export interface Enrollment {
 export type CreateGroupInput = {
   name: string
   description: string
+  autoFinishAt?: string | null
+  minProgress?: number
   students?: { name: string; email: string; code: string }[]
+}
+
+/** Los campos que viajan al editar un grupo activo. */
+export type UpdateGroupInput = {
+  name: string
+  description?: string | null
+  autoFinishAt?: string | null
+  minProgress?: number
 }
 
 export type ProgressStatus = "completed" | "in-progress" | "not-started" | "overdue"

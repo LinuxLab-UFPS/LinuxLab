@@ -1,32 +1,29 @@
 const prisma = require("../../prisma/client")
 const { AppError } = require("../lib/errors")
 const accessService = require("./accessService")
+const { computePieceProgress, PASSING_SCORE } = require("./groupProgressService")
 
 function round1(value) {
   return Math.round(value * 10) / 10
 }
 
-const PASSING_SCORE = 60
-
 /**
  * La regla de certificacion, en un solo sitio: la consume la vista previa y la
- * transaccion que finaliza el grupo. El curso se completa con dos dimensiones,
- * cada una medida con el instrumento justo:
+ * transaccion que finaliza el grupo.
  *
- * - Temario (todos los temas): lecturas, comprobaciones y actividades del banco
- *   aprobadas. Todo es de reintento ilimitado, asi que exigir el 100% es justo.
- * - Actividades del docente: la dimension con restricciones (quiz de intento
- *   unico, fechas de cierre, revision manual de entrega unica). Se mide con la
- *   definitiva: promedio simple del ultimo intento de cada actividad del banco
- *   y de cada actividad habilitada del docente; basta con >= 60, el mismo
- *   umbral con el que se aprueba una actividad.
+ * Certifica quien alcanza el progreso minimo que el docente fijo para el grupo
+ * (`min_progress`, 100 por defecto: el curso completo). Es el mismo % que el
+ * docente ve en la tabla de estudiantes y el estudiante en su mapa: lecciones,
+ * actividades del curso y actividades del docente, cada una aprobada con 60.
  *
- * Sin actividades que promediar, la definitiva no aplica y manda el temario.
+ * La definitiva (promedio simple del ultimo intento de cada actividad del curso
+ * y de cada actividad habilitada del docente) ya no decide: se sigue
+ * calculando porque el certificado y el acta la muestran como nota.
  */
 async function finalizationSummary({ groupId, teacherUserId, role, tx = prisma }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
   if (group.status !== "active") {
-    throw new AppError("El grupo ya no está activo", 409, "CONFLICT")
+    throw new AppError("El curso ya no está activo", 409, "CONFLICT")
   }
   return computeGroupSummary(group, tx)
 }
@@ -53,8 +50,9 @@ async function computeGroupSummary(group, tx = prisma) {
   ])
   const topicsTotal = topics.length
   const enrollmentIds = enrollments.map((e) => e.id)
+  const minProgress = group.min_progress ?? 100
 
-  const [topicProgress, topicSubmissions, groupSubmissions] = await Promise.all([
+  const [topicProgress, topicSubmissions, groupSubmissions, progressByEnrollment] = await Promise.all([
     tx.topicProgress.findMany({
       where: { enrollment_id: { in: enrollmentIds }, completed: true },
       select: { enrollment_id: true, topic_id: true },
@@ -74,6 +72,7 @@ async function computeGroupSummary(group, tx = prisma) {
         manualDetail: { select: { submission_id: true } },
       },
     }),
+    computePieceProgress(groupId, enrollmentIds, tx),
   ])
 
   const laterOf = (a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b)
@@ -124,12 +123,11 @@ async function computeGroupSummary(group, tx = prisma) {
     }
     const definitive = scores.length > 0 ? round1(scores.reduce((a, b) => a + b, 0) / scores.length) : null
 
-    const topicsOk = topicsTotal > 0 && topicsCompleted === topicsTotal
-    const definitiveOk = definitive === null || definitive >= PASSING_SCORE
+    const progress = progressByEnrollment.get(enrollment.id) ?? 0
+    const progressOk = topicsTotal > 0 && progress >= minProgress
 
     const motivos = []
-    if (!topicsOk) motivos.push(`Temas ${topicsCompleted}/${topicsTotal}`)
-    if (!definitiveOk) motivos.push(`Definitiva ${definitive} < ${PASSING_SCORE}`)
+    if (!progressOk) motivos.push(`Progreso ${progress}% < ${minProgress}%`)
 
     return {
       enrollmentId: enrollment.id,
@@ -139,16 +137,22 @@ async function computeGroupSummary(group, tx = prisma) {
       code: enrollment.student.code ?? null,
       topicsCompleted,
       topicsTotal,
-      progress: topicsTotal > 0 ? Math.round((topicsCompleted / topicsTotal) * 100) : 0,
+      progress,
       definitive,
-      eligible: topicsOk && definitiveOk,
+      eligible: progressOk,
       motivo: motivos.length > 0 ? motivos.join(" · ") : null,
       pendingManual,
     }
   })
 
   return {
-    group: { id: group.id, name: group.name, status: group.status },
+    group: {
+      id: group.id,
+      name: group.name,
+      status: group.status,
+      minProgress,
+      autoFinishAt: group.auto_finish_at ?? null,
+    },
     students: rows,
     summary: { eligibleCount: rows.filter((r) => r.eligible).length, total: rows.length },
   }

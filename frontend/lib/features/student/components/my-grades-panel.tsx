@@ -26,7 +26,7 @@ function topicTitleOf(topicNumber: number): string {
 function hrefDe(s: GradeSeriesPoint): string {
   const destino =
     s.source === "bank" ? `/terminal?actividad=${s.workdir}` : `/terminal?ga=${s.activityId}`
-  return conOrigen(destino, "/estudiante/grupo")
+  return conOrigen(destino, "/estudiante/curso")
 }
 
 const STATUS_META: Record<GradebookCellStatus, { label: string; text: string; dot: string }> = {
@@ -111,7 +111,7 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <Users className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Sin grupo activo</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Sin curso activo</h2>
         <p className="text-sm text-muted-foreground">
           Cuando estés inscrito en un curso, aquí verás tus calificaciones.
         </p>
@@ -243,7 +243,7 @@ export function MyGradesPanel({ grades }: { grades: MyGrades }) {
                         <span className="block text-[10px] uppercase tracking-wide text-muted-foreground">
                           {/* Las del temario no llevan numero de actividad: ese
                               contador es de las que publica el docente. */}
-                          {s.source === "bank" ? "Del curso" : `#${s.activityNumber}`} ·{" "}
+                          {s.source === "bank" ? "Del temario" : `#${s.activityNumber}`} ·{" "}
                           {s.source === "bank"
                             ? (s.difficulty ? DIFFICULTY_LABEL[s.difficulty] : "Curso")
                             : [

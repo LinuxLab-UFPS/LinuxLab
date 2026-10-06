@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react"
 import { useQueryClient, useMutation } from "@tanstack/react-query"
-import { queryKeys, useTeachers as useTeachersQuery, useTeacherProvisioningJobs } from "@/lib/api/queries"
+import {
+  queryKeys,
+  useTeachers as useTeachersQuery,
+  useTeacherProvisioningJobs,
+  useTeacherRequests as useTeacherRequestsQuery,
+} from "@/lib/api/queries"
 import * as adminData from "./data"
 import type { TeacherFilters } from "./api"
 import type { TeacherListItem } from "./types"
@@ -75,5 +80,60 @@ export function useTeachers(filters?: TeacherFilters) {
     submitting: registerMutation.isPending,
     register,
     toggleStatus,
+  }
+}
+
+/**
+ * Solicitudes de cuenta docente: aprobar crea el docente con el mismo registro
+ * del dialogo de alta, asi que refresca la tabla de docentes, sus jobs y el
+ * contador del menu.
+ */
+export function useTeacherRequests() {
+  const queryClient = useQueryClient()
+  const requestsQuery = useTeacherRequestsQuery()
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.teacherRequests })
+    queryClient.invalidateQueries({ queryKey: ["admin", "teachers"] })
+    queryClient.invalidateQueries({ queryKey: queryKeys.teacherJobs })
+  }
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => adminData.approveTeacherRequest(id),
+    onSuccess: refresh,
+  })
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => adminData.rejectTeacherRequest(id),
+    onSuccess: refresh,
+  })
+
+  const approve = async (id: string) => {
+    const res = await notifyPromise(approveMutation.mutateAsync(id), {
+      loading: "Aprobando la solicitud…",
+      success: (teacher) => `${teacher.name} quedó registrado como docente`,
+      error: "No se pudo aprobar la solicitud",
+    })
+    if (res.ok) {
+      if (res.data.debugLink) notify.info(`Enlace de configuración (modo dev): ${res.data.debugLink}`)
+      notifyLoading(`Creando cuenta de ${res.data.name} en el entorno…`, {
+        id: `prov-teacher-${res.data.email}`,
+      })
+    }
+  }
+
+  const reject = async (id: string) => {
+    await notifyPromise(rejectMutation.mutateAsync(id), {
+      loading: "Rechazando la solicitud…",
+      success: "Solicitud rechazada",
+      error: "No se pudo rechazar la solicitud",
+    })
+  }
+
+  return {
+    requests: requestsQuery.data ?? [],
+    loading: requestsQuery.isLoading,
+    busy: approveMutation.isPending || rejectMutation.isPending,
+    approve,
+    reject,
   }
 }

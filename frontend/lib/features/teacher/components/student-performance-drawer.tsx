@@ -1,17 +1,6 @@
 "use client"
 
-import {
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  BarChart,
-  Bar,
-} from "recharts"
+import { ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts"
 import {
   Dialog,
   DialogContent,
@@ -22,9 +11,10 @@ import {
 import { cn } from "@shared/lib/utils"
 import { getTopic } from "@shared/lib/content/temario"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
-import { GraficaNotas, GraficaTemas } from "@shared/components/charts/grade-charts"
+import { GraficaTemas } from "@shared/components/charts/grade-charts"
+import { scoreColor } from "@shared/lib/score-color"
 import { useStudentPerformance } from "@/lib/api/queries"
-import type { GradebookCellStatus, GradeSummary } from "@/lib/models/groups"
+import type { GradebookCellStatus, GradeSeriesPoint, GradeSummary } from "@/lib/models/groups"
 
 /** El nombre del tema desde el temario; sin entrada cae a "Sin tema". */
 function topicTitleOf(topicNumber: number): string {
@@ -58,6 +48,14 @@ const STATUS_META: Record<
   "not-started": { label: "Sin iniciar", color: "var(--muted-foreground)", text: "text-muted-foreground" },
 }
 
+/** El estado de una sola actividad, en singular. */
+const ROW_STATUS: Record<GradebookCellStatus, string> = {
+  completed: "Completada",
+  "under-review": "En revisión",
+  overdue: "Vencida",
+  "not-started": "Sin iniciar",
+}
+
 const STATUS_DOT: Record<GradebookCellStatus, string> = {
   completed: "bg-success",
   "under-review": "bg-warning",
@@ -87,18 +85,8 @@ export function StudentPerformanceDrawer({
 }: StudentPerformanceDrawerProps) {
   const query = useStudentPerformance(groupId, studentId ?? "")
 
-  const firstName = studentName.trim().split(/\s+/)[0] || "Estudiante"
-
   const loading = query.isLoading || !query.data
   const data = query.data
-
-  const lineData =
-    data?.series.map((s) => ({
-      // Las del temario traen su slug entero, que no cabe en el eje.
-      name: s.source === "bank" && s.workdir.length > 12 ? `${s.workdir.slice(0, 11)}…` : s.workdir,
-      propio: s.score,
-      grupo: s.groupAverage,
-    })) ?? []
 
   const donutData =
     data?.series.length
@@ -117,14 +105,13 @@ export function StudentPerformanceDrawer({
       fullMark: 100,
     })) ?? []
 
-  const barData =
-    data?.series
-      .filter((s) => s.attempts > 0)
-      .map((s) => ({ name: s.workdir, intentos: s.attempts })) ?? []
+  // Las del docente primero, igual que en la tabla de actividades del curso.
+  const teacherRows = data?.series.filter((s) => s.source === "teacher") ?? []
+  const bankRows = data?.series.filter((s) => s.source === "bank") ?? []
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] grid-cols-[minmax(0,1fr)] overflow-y-auto overflow-x-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{studentName}</DialogTitle>
           <DialogDescription>
@@ -162,9 +149,9 @@ export function StudentPerformanceDrawer({
               ))}
             </div>
 
-            {/* Donut + Radar lado a lado */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <div className="rounded-lg border border-border bg-card p-4">
+            {/* Dona y temas lado a lado */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="min-w-0 rounded-lg border border-border bg-card p-4">
                 <ChartHeader>Estados de actividades</ChartHeader>
                 <div className="relative mx-auto h-44 max-w-[16rem]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -211,7 +198,7 @@ export function StudentPerformanceDrawer({
                 </div>
               </div>
 
-              <div className="rounded-lg border border-border bg-card p-4">
+              <div className="min-w-0 rounded-lg border border-border bg-card p-4">
                 <ChartHeader>Rendimiento por tema</ChartHeader>
                 {radarData.length > 0 ? (
                   <GraficaTemas datos={radarData} className="h-56" />
@@ -223,41 +210,47 @@ export function StudentPerformanceDrawer({
               </div>
             </div>
 
-            {/* Línea: score por actividad vs. promedio del grupo */}
-            <div className="rounded-lg border border-border bg-card p-4">
-              <ChartHeader>Calificación por actividad</ChartHeader>
-              <GraficaNotas datos={lineData} etiquetaPropia={firstName} />
-            </div>
-
-            {/* Barras: intentos por actividad */}
-            <div className="rounded-lg border border-border bg-card p-4">
-              <ChartHeader>Intentos por actividad</ChartHeader>
-              {barData.length > 0 ? (
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={barData} margin={{ top: 8, right: 16, bottom: 4, left: -24 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--table-line)" />
-                      <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 10 }}
-                        stroke="var(--muted-foreground)"
-                        minTickGap={8}
-                      />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                      <Tooltip formatter={tooltipValue} />
-                      <Bar dataKey="intentos" name="Intentos" fill="var(--primary)" radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Sin intentos registrados.
-                </p>
-              )}
-            </div>
+            {/* Una lista y no una grafica: con muchas actividades la grafica
+                pedia scroll lateral y no dejaba leer de cual era cada punto. */}
+            <ActivityList title="Tus actividades" rows={teacherRows} />
+            <ActivityList title="Actividades del temario" rows={bankRows} />
           </div>
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+/** Las actividades de un origen, una por fila: nota, intentos y estado. */
+function ActivityList({ title, rows }: { title: string; rows: GradeSeriesPoint[] }) {
+  if (rows.length === 0) return null
+  return (
+    <div className="space-y-2">
+      <ChartHeader>{title}</ChartHeader>
+      <ul className="divide-y divide-table-line rounded-lg border border-border">
+        {rows.map((row) => (
+          <li key={row.activityId} className="flex items-center gap-3 px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">{row.title}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {row.topicNumber ? `Tema ${row.topicNumber}` : "Sin tema"} · {row.attempts}{" "}
+                {row.attempts === 1 ? "intento" : "intentos"}
+              </p>
+            </div>
+            <span className={cn("shrink-0 text-xs", STATUS_META[row.status].text)}>
+              {ROW_STATUS[row.status]}
+            </span>
+            <span
+              className={cn(
+                "w-16 shrink-0 text-right font-mono text-sm",
+                row.score != null ? scoreColor(row.score) : "text-muted-foreground",
+              )}
+            >
+              {row.score != null ? `${row.score}/100` : "—"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

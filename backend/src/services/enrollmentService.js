@@ -285,7 +285,7 @@ async function enrollOne({ groupId, name, email, code, groupDir, groupName, teac
   })
   if (activeElsewhere) {
     throw new AppError(
-      `El estudiante ya pertenece al grupo activo '${activeElsewhere.group.name}'`,
+      `El estudiante ya pertenece al curso activo '${activeElsewhere.group.name}'`,
       409,
       "CONFLICT",
     )
@@ -534,7 +534,7 @@ async function enrollMany({ groupId, students, groupDir, groupName, teacherUsern
         result.errors.push({
           row: e.row,
           email: e.email,
-          error: `Ya pertenece al grupo activo '${busyGroup}'; no se puede matricular en otro`,
+          error: `Ya pertenece al curso activo '${busyGroup}'; no se puede matricular en otro`,
         })
         continue
       }
@@ -757,7 +757,7 @@ async function getGroupInfo({ groupId, token, req }) {
     include: { teacher: { select: { user: { select: { name: true } } } } },
   })
   if (!group || group.status !== "active") {
-    throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+    throw new AppError("El curso no existe o ya no está activo", 404, "NOT_FOUND")
   }
   if (!group.invite_token || group.invite_token !== token) {
     throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")
@@ -790,7 +790,7 @@ async function joinWithToken({ groupId, token, user, req }) {
   return runInTransaction(async (tx) => {
     const group = await tx.group.findUnique({ where: { id: groupId } })
     if (!group || group.status !== "active") {
-      throw new AppError("El grupo no existe o ya no está activo", 404, "NOT_FOUND")
+      throw new AppError("El curso no existe o ya no está activo", 404, "NOT_FOUND")
     }
     if (!group.invite_token || group.invite_token !== token) {
       throw new AppError("El enlace de inscripción no es válido", 403, "FORBIDDEN")

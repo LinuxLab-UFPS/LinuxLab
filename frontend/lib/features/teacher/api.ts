@@ -3,6 +3,7 @@ import { env } from "@/lib/config/env"
 import type {
   Group,
   CreateGroupInput,
+  UpdateGroupInput,
   Activity,
   ActivitySubmissionStudent,
   CreateActivityInput,
@@ -49,8 +50,8 @@ export const teacherApi = {
   getGroup: (id: string) => apiFetch<Group>(`/api/groups/${id}`),
   createGroup: (input: CreateGroupInput) =>
     apiFetch<CreateGroupResponse>("/api/groups", { method: "POST", body: JSON.stringify(input) }),
-  /** Actualiza nombre y descripción del grupo; el backend rechaza grupos no activos. */
-  updateGroup: (id: string, input: { name: string; description?: string | null }) =>
+  /** Actualiza los datos del grupo; el backend rechaza grupos no activos. */
+  updateGroup: (id: string, input: UpdateGroupInput) =>
     apiFetch<Group>(`/api/groups/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
   /** Regenera el token de inscripción del grupo; el enlace anterior queda inválido. */
   rotateInvite: (id: string) =>

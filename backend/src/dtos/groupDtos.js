@@ -20,34 +20,53 @@ const studentRowSchema = z.object({
     .nullable(),
 })
 
+// Ajustes del cierre del curso, comunes a creacion y edicion. La fecha llega
+// como instante ISO (el frontend ya la llevo de hora Bogota a UTC) y debe
+// ser futura: una fecha vencida finalizaria el grupo en el siguiente ciclo.
+const closingFields = {
+  autoFinishAt: z.coerce
+    .date({ invalid_type_error: "La fecha de finalización no es válida" })
+    .refine((d) => d.getTime() > Date.now(), "La fecha de finalización debe ser futura")
+    .nullable()
+    .optional(),
+  minProgress: z.coerce
+    .number({ invalid_type_error: "El progreso mínimo debe ser un número" })
+    .int("El progreso mínimo debe ser un número entero")
+    .min(1, "El progreso mínimo debe estar entre 1 y 100")
+    .max(100, "El progreso mínimo debe estar entre 1 y 100")
+    .default(100),
+}
+
 const createGroupSchema = z.object({
   name: z
     .string({
-      required_error: "El nombre del grupo es requerido",
-      invalid_type_error: "El nombre del grupo es requerido",
+      required_error: "El nombre del curso es requerido",
+      invalid_type_error: "El nombre del curso es requerido",
     })
     .trim()
-    .min(1, "El nombre del grupo es requerido")
-    .max(255, "El nombre del grupo no puede superar los 255 caracteres"),
+    .min(1, "El nombre del curso es requerido")
+    .max(255, "El nombre del curso no puede superar los 255 caracteres"),
   description: z.string().trim().max(2000).optional().nullable(),
+  ...closingFields,
   // Las filas se validan a mano en la matricula (por fila, sin tumbar todo el
   // lote): aqui solo se exige que la forma sea la esperada.
   students: z.array(studentRowSchema).max(500, "No se pueden matricular más de 500 estudiantes a la vez").default([]),
 })
 
 // La edicion reutiliza el mismo formulario de creacion, asi que siempre viajan
-// los dos campos: el nombre es requerido y la descripcion llega vacia si el
+// todos los campos: el nombre es requerido y la descripcion llega vacia si el
 // docente la borro.
 const updateGroupSchema = z.object({
   name: z
     .string({
-      required_error: "El nombre del grupo es requerido",
-      invalid_type_error: "El nombre del grupo es requerido",
+      required_error: "El nombre del curso es requerido",
+      invalid_type_error: "El nombre del curso es requerido",
     })
     .trim()
-    .min(1, "El nombre del grupo es requerido")
-    .max(255, "El nombre del grupo no puede superar los 255 caracteres"),
+    .min(1, "El nombre del curso es requerido")
+    .max(255, "El nombre del curso no puede superar los 255 caracteres"),
   description: z.string().trim().max(2000).optional().nullable(),
+  ...closingFields,
 })
 
 const registerStudentSchema = z.object({
@@ -80,6 +99,8 @@ function serializeGroup(group, studentCount, activityCount, extra = {}) {
     activityCount: (activityCount ?? 0) + (extra.topicActivityCount ?? 0),
     groupDir: group.group_dir ?? null,
     inviteToken: group.invite_token ?? null,
+    autoFinishAt: group.auto_finish_at ?? null,
+    minProgress: group.min_progress ?? 100,
     activeNow: extra.activeNow ?? 0,
     averageScore: extra.averageScore ?? null,
   }

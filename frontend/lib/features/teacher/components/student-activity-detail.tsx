@@ -371,7 +371,7 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
               className={cn("h-3.5 w-3.5 shrink-0", selectedFile ? "text-primary" : "text-muted-foreground")}
             />
             <span className="font-mono text-xs text-muted-foreground">
-              {selectedFile ?? "Selecciona un archivo"}
+              {selectedFile ?? "Seleccione un archivo"}
             </span>
           </div>
           <div className="flex-1 overflow-auto bg-background p-4">
@@ -387,7 +387,7 @@ function ManualDetail({ detail }: { detail: Extract<StudentActivityDetailType, {
               </pre>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Selecciona un archivo del árbol para ver su contenido.
+                Seleccione un archivo del árbol para ver su contenido.
               </p>
             )}
           </div>

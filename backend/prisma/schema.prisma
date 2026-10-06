@@ -87,6 +87,8 @@ enum EventType {
   activity_due_extended
   teacher_registered
   teacher_toggled
+  teacher_request_approved
+  teacher_request_rejected
   group_created
   group_finished
   group_archived
@@ -164,17 +166,21 @@ model LinuxAccount {
 // ════════════════════════════════════════
 
 model Group {
-  id           String      @id @default(uuid()) @db.Uuid
-  group_number Int         @unique @default(autoincrement())
-  name         String      @db.VarChar(255)
-  description  String?     @db.Text
-  teacher_id   String      @db.Uuid
-  teacher      Teacher     @relation(fields: [teacher_id], references: [user_id])
-  status       GroupStatus @default(active)
-  group_dir    String?     @db.VarChar(64)
-  invite_token String?     @db.VarChar(64)
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
+  id             String      @id @default(uuid()) @db.Uuid
+  group_number   Int         @unique @default(autoincrement())
+  name           String      @db.VarChar(255)
+  description    String?     @db.Text
+  teacher_id     String      @db.Uuid
+  teacher        Teacher     @relation(fields: [teacher_id], references: [user_id])
+  status         GroupStatus @default(active)
+  group_dir      String?     @db.VarChar(64)
+  invite_token   String?     @db.VarChar(64)
+  /// Instante en que el worker finaliza el curso solo; null = finalizacion manual.
+  auto_finish_at DateTime?
+  /// Progreso minimo (%) para certificar; 100 = el curso completo.
+  min_progress   Int         @default(100)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
 
   enrollments           Enrollment[]
   groupActivities       GroupActivity[]
@@ -406,6 +412,33 @@ model InstructorCertificate {
   students_certified Int
   students_total     Int
   issued_at          DateTime @default(now())
+}
+
+// ════════════════════════════════════════
+// SOLICITUDES DE CUENTA DOCENTE
+// ════════════════════════════════════════
+
+enum TeacherRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+/// Lo que llena un docente que pide su cuenta. Al aprobarla, el admin la
+/// convierte en un docente con el mismo registro de /admin/docentes.
+model TeacherRequest {
+  id          String               @id @default(uuid()) @db.Uuid
+  name        String               @db.VarChar(255)
+  email       String               @db.VarChar(255)
+  code        String               @db.VarChar(20)
+  status      TeacherRequestStatus @default(pending)
+  reviewed_by String?              @db.Uuid
+  reviewed_at DateTime?
+  created_at  DateTime             @default(now())
+  updated_at  DateTime             @updatedAt
+
+  @@index([status, created_at])
+  @@index([email])
 }
 
 // ════════════════════════════════════════

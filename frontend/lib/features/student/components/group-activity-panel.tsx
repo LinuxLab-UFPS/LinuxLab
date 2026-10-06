@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { FolderOpen, Loader2, RotateCcw, Send, ShieldCheck } from "lucide-react"
 import { cn } from "@shared/lib/utils"
 import { Tag } from "@shared/components/tag"
@@ -63,6 +64,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
   /* Ver `activity-panel`: mientras la shell va de camino no se decide nada. */
   const ubicando = useUbicandoDirectorio() !== null
   const { publicar } = useAccionesActividad()
+  const queryClient = useQueryClient()
   const canCheck =
     detail.evaluationType === "atomic" && detail.enabled && !closed && !limitReached &&
     enElDirectorio
@@ -93,6 +95,8 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
       setFinalScore(outcome.finalScore)
       setAttemptsCount(outcome.attemptsCount)
       setAttempts(outcome.attempts)
+      // La nota nueva mueve el % del curso, que cuenta las actividades del docente.
+      queryClient.invalidateQueries({ queryKey: ["enrollment"] })
       const total = outcome.results.reduce((suma, row) => suma + row.points, 0)
       avisarResultado("actividad", outcome.passed, outcome.finalScore, total)
       setResultado(true)
@@ -101,7 +105,7 @@ export function GroupActivityPanel({ detail, userId: _userId }: { detail: GroupA
     } finally {
       setChecking(false)
     }
-  }, [detail.id])
+  }, [detail.id, queryClient])
 
   /* Vaciar el directorio del taller. Solo toca `~/actividades/<workdir>`: el
      script compone esa ruta con un nombre que no admite `/` ni `.`, y comprueba

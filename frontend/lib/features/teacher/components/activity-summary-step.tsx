@@ -56,7 +56,7 @@ export function ActivitySummaryStep({
       <div>
         <h2 className="text-lg font-semibold text-foreground">Resumen de la actividad</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Revisa la información antes de publicar la actividad.
+          Revise la información antes de publicar la actividad.
         </p>
       </div>
 

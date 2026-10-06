@@ -2,15 +2,18 @@ const prisma = require("../../prisma/client")
 const { Prisma } = require("@prisma/client")
 const { createGroup, syncTeacherGroups, provisionStudentAccount, provisionTeacherAccount, teardownGroup } = require("./containerService")
 const certificateService = require("./certificateService")
+const groupService = require("./groupService")
 const logger = require("../lib/logger")
 
 const POLL_INTERVAL = 5000
 const BATCH_SIZE = 5
 const POOL_SIZE = 3
 const CYCLE_TIMEOUT = 90000
+const AUTO_FINISH_INTERVAL = 60000
 
 let intervalHandle = null
 let isRunning = false
+let lastAutoFinishCheck = 0
 
 const JOB_TYPES = ["group_provisioning", "user_provisioning", "group_teardown", "certificate_email"]
 
@@ -144,12 +147,47 @@ async function processPendingJobs() {
     await processGroupJobs()
     await processUserJobs()
     await processTeardownJobs()
+    await processAutoFinish()
     await processCertificateJobs()
   } catch (err) {
     logger.error({ err }, "Provisioning worker error")
   } finally {
     clearTimeout(watchdog)
     isRunning = false
+  }
+}
+
+/**
+ * Finaliza los grupos cuya fecha de cierre ya paso. Es la misma finalizacion
+ * que dispara el docente a mano (certificados, correos y teardown), hecha a su
+ * nombre. Basta con revisar una vez por minuto: la fecha es un dia, no un
+ * instante. Si el docente finaliza a la vez, el lock de finalizeGroup deja
+ * pasar solo a uno y el otro sale con 409, que aqui se ignora.
+ */
+async function processAutoFinish() {
+  if (Date.now() - lastAutoFinishCheck < AUTO_FINISH_INTERVAL) return
+  lastAutoFinishCheck = Date.now()
+
+  const due = await prisma.group.findMany({
+    where: { status: "active", auto_finish_at: { lte: new Date() } },
+    select: { id: true, name: true, teacher_id: true },
+  })
+  for (const group of due) {
+    try {
+      const { summary } = await groupService.finalizeGroup({
+        groupId: group.id,
+        role: "teacher",
+        teacherUserId: group.teacher_id,
+        automatic: true,
+      })
+      logger.info(
+        { groupId: group.id, certificatesIssued: summary.certificatesIssued },
+        `Group '${group.name}' finished automatically`,
+      )
+    } catch (err) {
+      if (err?.statusCode === 409) continue
+      logger.error({ err, groupId: group.id }, "Automatic group finish failed")
+    }
   }
 }
 

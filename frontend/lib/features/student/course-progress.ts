@@ -6,6 +6,10 @@ import { usePassedActivities } from "@/lib/features/student/activity-status"
 import { activities } from "@shared/lib/content/activities"
 import type { TopicLessons } from "@shared/lib/content/lessons"
 import { syllabus } from "@shared/lib/content/temario"
+import { useMyGroupOverview } from "@/lib/features/enrollment/context"
+
+/** La nota con la que se aprueba una actividad, la misma del backend. */
+const PASSING_SCORE = 60
 
 /**
  * How far the student actually got through the course.
@@ -23,6 +27,7 @@ import { syllabus } from "@shared/lib/content/temario"
 export function useCourseProgress(lessons: Record<number, TopicLessons>, activo = true) {
   const { isRead } = useLessonProgress()
   const { passed } = usePassedActivities(activo)
+  const { data: overview } = useMyGroupOverview()
 
   const isLessonDone = useCallback(
     (topicNumber: number, subtopicId: string) => {
@@ -72,16 +77,19 @@ export function useCourseProgress(lessons: Record<number, TopicLessons>, activo 
    * lecciones daba exactamente 0%. Con diez temas, cualquier avance real
    * redondeaba a cero y la barra parecia rota.
    *
-   * `isTopicDone` no cambia: el tema sigue poniendose verde solo cuando esta
-   * entero, que es lo que decide la certificacion.
+   * Las actividades del docente tambien son piezas: cada una cuenta como hecha
+   * con nota final de 60, igual que en la tabla del docente. Este % es el que
+   * decide el certificado. `isTopicDone` no cambia: el tema se pone verde solo
+   * con sus lecciones y las actividades del curso.
    */
+  const teacherActivities = overview?.activities ?? []
   const cursoTotal = syllabus.reduce(
     (suma, t) => suma + lessonTotal(t.number) + topicActivities(t.number).length,
-    0,
+    teacherActivities.length,
   )
   const cursoHecho = syllabus.reduce(
     (suma, t) => suma + doneCount(t.number) + activitiesDone(t.number),
-    0,
+    teacherActivities.filter((a) => a.finalScore >= PASSING_SCORE).length,
   )
   const cursoPct = cursoTotal > 0 ? Math.round((cursoHecho / cursoTotal) * 100) : 0
 

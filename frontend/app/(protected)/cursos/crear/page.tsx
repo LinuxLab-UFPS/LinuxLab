@@ -7,7 +7,7 @@ import { Send } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { createGroup } from "@/lib/features/teacher/data"
-import { GroupFormFields } from "@/lib/features/teacher/components/group-form-fields"
+import { GroupFormFields, closingPayload } from "@/lib/features/teacher/components/group-form-fields"
 import { RoleGuard } from "@shared/components/role-guard"
 import { queryKeys } from "@/lib/api/queries"
 import { notify, notifyPromise } from "@shared/lib/toast"
@@ -17,21 +17,33 @@ function CreateGroupContent() {
   const queryClient = useQueryClient()
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
+  const [finishDate, setFinishDate] = useState("")
+  const [minProgress, setMinProgress] = useState("100")
   const [publishing, setPublishing] = useState(false)
 
   const handlePublish = async () => {
     if (!groupName.trim()) {
-      notify.error(null, "El nombre del grupo es requerido.")
+      notify.error(null, "El nombre del curso es requerido.")
+      return
+    }
+    const progressValue = Number(minProgress)
+    if (!Number.isInteger(progressValue) || progressValue < 1 || progressValue > 100) {
+      notify.error(null, "El progreso mínimo debe ser un número entero entre 1 y 100.")
       return
     }
     setPublishing(true)
     const response = await notifyPromise(
-      createGroup({ name: groupName, description, students: [] }),
+      createGroup({
+        name: groupName,
+        description,
+        ...closingPayload(finishDate, minProgress),
+        students: [],
+      }),
       {
-        loading: "Creando el grupo…",
-        success: "Grupo creado",
-        description: "Después podrás invitar estudiantes con su enlace de inscripción.",
-        error: "No se pudo crear el grupo.",
+        loading: "Creando el curso…",
+        success: "Curso creado",
+        description: "Después podrá invitar estudiantes con el vínculo de inscripción.",
+        error: "No se pudo crear el curso.",
       },
     )
     setPublishing(false)
@@ -42,7 +54,7 @@ function CreateGroupContent() {
     // estar ahí sin esperar a que la caché expire.
     queryClient.invalidateQueries({ queryKey: queryKeys.groups })
 
-    router.push(`/grupos/${published.group.id}`)
+    router.push(`/cursos/${published.group.id}`)
   }
 
   return (
@@ -51,10 +63,10 @@ function CreateGroupContent() {
 
       <div className="mt-10">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold text-foreground">Crear grupo</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Crear curso</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            El nombre con el que tus estudiantes verán el grupo. Los estudiantes se agregan
-            después, compartiendo el enlace de inscripción o matriculándolos uno a uno.
+            El nombre con el que los estudiantes verán el curso. Los estudiantes se agregan
+            después, compartiendo el vínculo de inscripción o matriculándolos uno a uno.
           </p>
 
           <div className="mt-8">
@@ -63,13 +75,17 @@ function CreateGroupContent() {
               onNameChange={setGroupName}
               description={description}
               onDescriptionChange={setDescription}
+              finishDate={finishDate}
+              onFinishDateChange={setFinishDate}
+              minProgress={minProgress}
+              onMinProgressChange={setMinProgress}
             />
           </div>
 
           <div className="mt-10">
             <ActionButton tone="primary" onClick={handlePublish} disabled={publishing}>
               <Send className="h-4 w-4" />
-              {publishing ? "Creando..." : "Crear grupo"}
+              {publishing ? "Creando..." : "Crear curso"}
             </ActionButton>
           </div>
         </div>

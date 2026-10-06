@@ -44,7 +44,7 @@ function ActivityDetail({
   const topic = getTopic(activity.topicNumber)
   const hasEntregas = submissions.length > 0 || manualSubmissions.length > 0
   const studentDetailHref = (studentId: string) =>
-    `/grupos/${groupId}/actividades/${activity.id}/estudiantes/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
+    `/cursos/${groupId}/actividades/${activity.id}/estudiantes/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
   const manualRows = manualSubmissions.map((sub) => ({
     studentId: sub.studentId,
     studentName: sub.studentName,
@@ -69,7 +69,7 @@ function ActivityDetail({
   }))
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <BackButton fallback={`/grupos/${groupId}?tab=${backTab}`} />
+      <BackButton fallback={`/cursos/${groupId}?tab=${backTab}`} />
 
       <div className="grid gap-6 mt-9 lg:grid-cols-[1fr_1.2fr]">
         {/* Columna izquierda: detalle completo */}
@@ -78,7 +78,7 @@ function ActivityDetail({
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-foreground">{activity.title}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                {topic ? `${topic.number}. ${topic.title}` : "Sin tema asociado"}
+                {topic ? `Tema: ${topic.number}. ${topic.title}` : "Sin tema asociado"}
               </p>
             </div>
             {/* Las del temario no llevan ninguno de los dos: son iguales en
@@ -92,7 +92,7 @@ function ActivityDetail({
                 currentDueDate={activity.dueDate ?? null}
               />
             ) : (
-              <ActionButton tone="primary" href={`/grupos/${groupId}/actividades/crear?edit=${activity.id}`}>
+              <ActionButton tone="primary" href={`/cursos/${groupId}/actividades/crear?edit=${activity.id}`}>
                 Editar
               </ActionButton>
             )}
@@ -105,7 +105,7 @@ function ActivityDetail({
               <StatementDialog title={activity.title} statement={statement} />
             </DetailRow>
             <DetailRow label="Modalidad">
-              {activity.evaluationType === "manual" ? "Revision manual" : "Autoevaluacion"}
+              {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
             </DetailRow>
             <DetailRow label="Tipo de actividad">
               {activity.activityType === "quiz" ? "Quiz" : "Taller"}
@@ -113,7 +113,7 @@ function ActivityDetail({
             <DetailRow label="Dificultad">
               {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
             </DetailRow>
-            <DetailRow label="Puntuacion">{activity.maxScore} pts</DetailRow>
+            <DetailRow label="Puntuación">{activity.maxScore} pts</DetailRow>
             <DetailRow label="Fecha de cierre">
               {activity.dueDate ? formatBogotaDateTime(activity.dueDate) : "Sin fecha"}
             </DetailRow>
@@ -210,7 +210,7 @@ export default async function ActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           Esta actividad no existe o no pertenece al curso.
         </p>
-        <BackButton fallback={`/grupos/${id}?tab=${backTab}`} label="Volver al curso" />
+        <BackButton fallback={`/cursos/${id}?tab=${backTab}`} label="Volver al curso" />
       </div>
     )
   }

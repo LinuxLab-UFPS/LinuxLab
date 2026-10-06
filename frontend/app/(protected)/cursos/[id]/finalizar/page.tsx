@@ -18,6 +18,7 @@ import { RoleGuard } from "@shared/components/role-guard"
 import { ActionButton } from "@shared/components/action-button"
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@shared/components/ui/dialog"
 import { X } from "lucide-react"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 import {
   Table,
   TableBody,
@@ -56,7 +57,7 @@ function FinalizePageContent() {
       notify.success("Curso finalizado", {
         description: `Se emitieron ${outcome.summary.certificatesIssued} certificado(s) y los correos están en camino.`,
       })
-      router.push(`/grupos/${id}`)
+      router.push(`/cursos/${id}`)
     },
     onError: () => {
       notify.error(null, "No se pudo finalizar el curso.")
@@ -88,7 +89,7 @@ function FinalizePageContent() {
         <p className="mb-6 text-sm text-muted-foreground">
           Solo los cursos activos se pueden finalizar, o ya pasó por ello.
         </p>
-        <Link href={`/grupos/${id}`}>
+        <Link href={`/cursos/${id}`}>
           <Button variant="outline">Volver al curso</Button>
         </Link>
       </div>
@@ -102,7 +103,7 @@ function FinalizePageContent() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <ActionButton tone="neutral" href={`/grupos/${id}`}>
+      <ActionButton tone="neutral" href={`/cursos/${id}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver al curso
       </ActionButton>
@@ -113,7 +114,7 @@ function FinalizePageContent() {
           Finalizar curso
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {preview.group.name} · Revisa el cierre antes de confirmar: esta acción no se
+          {preview.group.name} · Revise el cierre antes de confirmar: esta acción no se
           puede deshacer.
         </p>
       </div>
@@ -138,9 +139,22 @@ function FinalizePageContent() {
         <div className="rounded-xl border border-table-line bg-card p-5">
           <p className="mb-2 text-sm font-semibold text-foreground">Regla de certificación</p>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>· Todos los temas del temario completados (lecturas, comprobaciones y actividades).</li>
-            <li>· Definitiva de actividades de 60 o más (promedio del último intento).</li>
+            <li>
+              {preview.group.minProgress >= 100
+                ? "· Todo el curso completado."
+                : `· Progreso del curso de ${preview.group.minProgress}% o más.`}
+            </li>
+            <li>
+              · El progreso cuenta lecturas, comprobaciones, actividades del temario y
+              actividades del docente, cada una aprobada con 60 o más.
+            </li>
           </ul>
+          {preview.group.autoFinishAt && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Si no se finaliza antes, el curso finaliza automáticamente el{" "}
+              {formatBogotaDateTime(preview.group.autoFinishAt)}.
+            </p>
+          )}
         </div>
       </div>
 
@@ -148,9 +162,9 @@ function FinalizePageContent() {
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-500">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Hay entregas manuales sin calificar que cuentan como 0 en la definitiva:{" "}
-            <span className="font-medium">{pendingManualNames.join(", ")}</span>. Califícalas
-            antes de finalizar si quieres que puntúen.
+            Hay entregas manuales sin calificar que todavía no cuentan para el progreso:{" "}
+            <span className="font-medium">{pendingManualNames.join(", ")}</span>. Califíquelas
+            antes de finalizar para que cuenten.
           </p>
         </div>
       )}
@@ -218,7 +232,7 @@ function FinalizePageContent() {
       {/* Confirmación */}
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
         <p className="text-xs text-muted-foreground sm:mr-auto">
-          Al finalizar se destruye el entorno Linux del grupo y los estudiantes quedan
+          Al finalizar se destruye el entorno Linux del curso y los estudiantes quedan
           liberados para matricularse en otro curso.
         </p>
         <Button
@@ -256,7 +270,7 @@ function FinalizePageContent() {
               y se enviarán al correo de cada uno, junto con su enlace de verificación.
             </p>
             <p className="mt-3 text-center text-sm leading-relaxed text-muted-foreground">
-              El acta del curso y tu certificado de instructor llegarán a tu correo.
+              El acta del curso y su certificado de instructor llegarán a su correo.
             </p>
             <p className="mt-3 text-center text-sm font-medium text-danger">
               El entorno del curso se elimina y la finalización no se puede deshacer.

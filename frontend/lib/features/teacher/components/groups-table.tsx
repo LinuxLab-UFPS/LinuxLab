@@ -89,10 +89,10 @@ export function GroupsTable() {
     const done = await notifyPromise(
       action === "archive" ? deactivateGroup(group.id) : deleteGroup(group.id),
       {
-        loading: action === "archive" ? "Archivando el grupo…" : "Eliminando el grupo…",
-        success: action === "archive" ? "Grupo archivado" : "Grupo eliminado",
+        loading: action === "archive" ? "Archivando el curso…" : "Eliminando el curso…",
+        success: action === "archive" ? "Curso archivado" : "Curso eliminado",
         error:
-          action === "archive" ? "No se pudo archivar el grupo." : "No se pudo eliminar el grupo.",
+          action === "archive" ? "No se pudo archivar el curso." : "No se pudo eliminar el curso.",
       },
     )
     if (done.ok) {
@@ -115,10 +115,10 @@ export function GroupsTable() {
 
   const handleUnarchive = async (group: Group) => {
     const done = await notifyPromise(unarchiveGroup(group.id), {
-      loading: "Restaurando el grupo…",
-      success: "Grupo restaurado",
+      loading: "Restaurando el curso…",
+      success: "Curso restaurado",
       description: "Vuelve al listado principal como finalizado.",
-      error: "No se pudo desarchivar el grupo.",
+      error: "No se pudo desarchivar el curso.",
     })
     if (done.ok) {
       queryClient.setQueryData(queryKeys.groups, (prev: Group[] = []) =>
@@ -145,7 +145,7 @@ export function GroupsTable() {
             {
               value: "todos",
               label: "Todos",
-              statLabel: "Grupos activos y finalizados",
+              statLabel: "Cursos activos y finalizados",
               count: counts.todos,
               icon: LayoutGrid,
               tone: "primary",
@@ -153,7 +153,7 @@ export function GroupsTable() {
             {
               value: "archivados",
               label: "Archivados",
-              statLabel: "Grupos archivados",
+              statLabel: "Cursos archivados",
               count: counts.archivados,
               icon: Archive,
               tone: "neutral",
@@ -167,13 +167,13 @@ export function GroupsTable() {
             setQuery(valor)
             setPage(1)
           }}
-          placeholder="Buscar grupo por nombre..."
+          placeholder="Buscar curso por nombre..."
           className="sm:max-w-sm flex-1"
         />
 
-        <ActionButton tone="primary" href="/grupos/crear" className="sm:ml-auto">
+        <ActionButton tone="primary" href="/cursos/crear" className="sm:ml-auto">
           <Plus className="h-4 w-4" />
-          Crear nuevo grupo
+          Crear nuevo curso
         </ActionButton>
       </div>
 
@@ -181,7 +181,7 @@ export function GroupsTable() {
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-44">Grupo</TableHead>
+              <TableHead className="w-44">Curso</TableHead>
               <TableHead className="w-56">Directorio de trabajo</TableHead>
               <TableHead className="w-28">Estudiantes</TableHead>
               <TableHead className="w-32">Creado</TableHead>
@@ -197,12 +197,12 @@ export function GroupsTable() {
               // que un `onClick` en la fila no da.
               <TableRow
                 key={group.id}
-                onClick={() => router.push(`/grupos/${group.id}`)}
+                onClick={() => router.push(`/cursos/${group.id}`)}
                 className="group cursor-pointer"
               >
                 <TableCell>
                   <Link
-                    href={`/grupos/${group.id}`}
+                    href={`/cursos/${group.id}`}
                     className="block truncate text-sm font-medium text-foreground transition-colors group-hover:text-primary"
                   >
                     {group.name}
@@ -235,23 +235,23 @@ export function GroupsTable() {
                     {group.status === "active" && (
                       <>
                         <IconAction
-                          label="Editar grupo"
+                          label="Editar curso"
                           icon={Pencil}
                           variant="boxed"
-                          href={`/grupos/${group.id}/editar`}
+                          href={`/cursos/${group.id}/editar`}
                         />
                         <IconAction
                           label="Finalizar curso"
                           icon={CheckCircle2}
                           variant="boxed"
                           tone="danger"
-                          onClick={() => router.push(`/grupos/${group.id}/finalizar`)}
+                          onClick={() => router.push(`/cursos/${group.id}/finalizar`)}
                         />
                       </>
                     )}
                     {group.status === "finished" && (
                       <IconAction
-                        label="Archivar grupo"
+                        label="Archivar curso"
                         icon={Archive}
                         variant="boxed"
                         tone="danger"
@@ -260,7 +260,7 @@ export function GroupsTable() {
                     )}
                     {group.status === "archived" && (
                       <IconAction
-                        label="Desarchivar grupo"
+                        label="Desarchivar curso"
                         icon={ArchiveRestore}
                         variant="boxed"
                         tone="danger"
@@ -277,8 +277,8 @@ export function GroupsTable() {
         {visible.length === 0 && (
           <TableEmptyState>
             {tab === "todos"
-              ? "No tienes grupos activos ni finalizados."
-              : "No tienes grupos archivados."}
+              ? "No hay cursos activos ni finalizados."
+              : "No hay cursos archivados."}
           </TableEmptyState>
         )}
       </TablePanel>
@@ -290,7 +290,7 @@ export function GroupsTable() {
           onChange={setPage}
           total={visible.length}
           pageSize={PAGE_SIZE}
-          label="grupos"
+          label="cursos"
         />
       )}
 

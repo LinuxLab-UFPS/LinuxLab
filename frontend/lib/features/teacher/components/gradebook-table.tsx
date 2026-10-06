@@ -8,7 +8,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/t
 import { getTopic } from "@shared/lib/content/temario"
 import type {
   Gradebook,
-  GradebookActivity,
   GradebookCell,
 } from "@/lib/models/groups"
 
@@ -94,23 +93,9 @@ interface GradebookTableProps {
 export function GradebookTable({ gradebook, groupId, students, onStudentClick }: GradebookTableProps) {
   const { activities, cells, activityAverages, studentAverages, topicActivities } = gradebook
 
-  // Columnas agrupadas por tema: cada tema aparece una sola vez con sus
-  // actividades contiguas, ordenadas según el temario ("Sin tema" al final).
-  const grouped = new Map<number, GradebookActivity[]>()
-  for (const a of activities) {
-    const t = a.topicNumber ?? 0
-    if (!grouped.has(t)) grouped.set(t, [])
-    grouped.get(t)!.push(a)
-  }
-  const groups = [...grouped.entries()]
-    .sort(([a], [b]) => (a === 0 ? 1 : b === 0 ? -1 : a - b))
-    .map(([topicNumber, list]) => ({
-      topicNumber: topicNumber === 0 ? null : topicNumber,
-      activities: list,
-    }))
-  // El orden real de las columnas: usado por el cuerpo y el pie para que las
-  // celdas siempre coincidan con las cabeceras.
-  const orderedActivities = groups.flatMap((g) => g.activities)
+  // Las actividades del docente van todas bajo una misma cabecera, en el orden
+  // en que llegan; el tema de cada una queda en su tooltip.
+  const orderedActivities = activities
 
   const activityCount = activities.length
 
@@ -139,7 +124,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-0">
           <thead>
-            {/* Fila de temas: los temas agrupan las columnas de actividades. */}
+            {/* Fila de grupos: las actividades del docente bajo una sola cabecera. */}
             <tr>
               <th
                 rowSpan={2}
@@ -153,36 +138,21 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
               >
                 Nombre
               </th>
-              {groups.map((group) => (
-                <th
-                  key={group.topicNumber ?? "none"}
-                  colSpan={group.activities.length}
-                  className="border-b border-r border-table-line bg-table-surface px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                  title={topicTitleOf(group.topicNumber)}
-                >
-                  {topicTitleOf(group.topicNumber)}
-                </th>
-              ))}
-              {/* Las del curso, en una sola columna. No son catorce columnas
+              <th
+                colSpan={orderedActivities.length}
+                className="border-b border-r border-table-line bg-table-surface px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                Tus actividades
+              </th>
+              {/* Las del temario, en una sola columna. No son catorce columnas
                   porque esta tabla ya crece a lo ancho con cada actividad que
                   publica el docente, y ademas lo util de ellas es cuantas lleva
                   cada quien, no la nota de cada una. */}
               <th
                 rowSpan={2}
-                className="w-24 min-w-24 border-b border-l border-table-line bg-table-surface px-3 py-3 text-center align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                className="w-28 min-w-28 border-b border-l border-table-line bg-table-surface px-3 py-3 text-center align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">Curso</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      Promedio de las actividades del temario. Son las mismas para todo el
-                      grupo, así que no tienen columna propia, pero cuentan para la
-                      definitiva igual que las que publica el docente.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                Actividades del temario
               </th>
               <th
                 rowSpan={2}
@@ -195,8 +165,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                 El codigo del directorio (T-0001) baja al tooltip junto al resto
                 de la ficha. */}
             <tr>
-              {groups.flatMap((group) =>
-                group.activities.map((a) => (
+              {orderedActivities.map((a) => (
                   <th
                     key={a.id}
                     className="w-32 min-w-32 max-w-32 border-b border-r border-table-line bg-table-surface p-0"
@@ -204,7 +173,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link
-                          href={`/grupos/${groupId}/actividades/${a.id}?from=calificaciones`}
+                          href={`/cursos/${groupId}/actividades/${a.id}?from=calificaciones`}
                           className="block w-full px-1 py-2 text-center text-[11px] font-semibold leading-tight text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
                         >
                           <span className="line-clamp-2 break-words normal-case">{a.title}</span>
@@ -212,6 +181,9 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-xs text-left">
                         <p className="font-medium normal-case">{a.title}</p>
+                        <p className="mt-1 font-normal normal-case">
+                          {a.topicNumber ? `Tema: ${a.topicNumber}. ${topicTitleOf(a.topicNumber)}` : "Sin tema"}
+                        </p>
                         <p className="mt-1 font-mono font-normal normal-case">{a.workdir}</p>
                         <p className="mt-1 font-normal normal-case">
                           {a.activityType === "quiz" ? "Quiz" : "Taller"} ·{" "}
@@ -223,8 +195,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                       </TooltipContent>
                     </Tooltip>
                   </th>
-                )),
-              )}
+              ))}
             </tr>
           </thead>
 
@@ -288,7 +259,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>
-                        Actividades fijas del curso: {topicActivities.done[student.id] ?? 0}/
+                        Actividades del temario: {topicActivities.done[student.id] ?? 0}/
                         {topicActivities.total} aprobadas
                       </p>
                     </TooltipContent>

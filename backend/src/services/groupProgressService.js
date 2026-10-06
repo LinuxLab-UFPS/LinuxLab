@@ -1,5 +1,9 @@
 const prisma = require("../../prisma/client")
 const accessService = require("./accessService")
+const { finalScore } = require("../utils/finalScore")
+
+/** La nota con la que se aprueba una actividad, del curso o del docente. */
+const PASSING_SCORE = 60
 
 function round1(value) {
   return Math.round(value * 10) / 10
@@ -10,10 +14,159 @@ function formatDate(value) {
 }
 
 /**
+ * Las piezas de un tema para una matricula: que subtemas cuentan como hechos
+ * (vistos y con sus checks aprobados) y cuantas actividades del banco aprobo.
+ * La comparten la tabla del docente y la regla de certificacion, para que el
+ * progreso que decide el certificado sea el mismo que el docente ve en la fila.
+ */
+function topicPieces(topic, viewed, passed) {
+  const activitiesBySubtopic = new Map() // subtopicId -> activityIds[]
+  for (const a of topic.activities) {
+    if (a.subtopic_id != null) {
+      if (!activitiesBySubtopic.has(a.subtopic_id)) activitiesBySubtopic.set(a.subtopic_id, [])
+      activitiesBySubtopic.get(a.subtopic_id).push(a.id)
+    }
+  }
+
+  let touched = 0
+  // Cuales, y no solo cuantos: la ficha del estudiante lista sus lecciones
+  // una por una, y un conteo no dice cual le falta. Misma regla que el
+  // conteo (visto y con sus checks aprobados), asi que la lista y la cifra
+  // de al lado no se pueden contradecir.
+  const hechos = []
+  for (const sub of topic.subtopics) {
+    if (!viewed.has(sub.id)) continue
+    touched++
+    const acts = activitiesBySubtopic.get(sub.id)
+    if (acts && acts.some((id) => !passed.has(id))) continue
+    hechos.push(sub.id)
+  }
+
+  // Las actividades sueltas del tema (las del banco, `kind: "activity"`)
+  // son trabajo del tema igual que sus lecciones, asi que cuentan como una
+  // pieza cada una. Las de `kind: "check"` no: esas van pegadas a un
+  // subtema y ya se exigen arriba para darlo por leido.
+  const propuestas = topic.activities.filter((a) => a.kind === "activity")
+  const propuestasHechas = propuestas.filter((a) => passed.has(a.id)).length
+
+  return {
+    hechos,
+    touched,
+    piezasHechas: hechos.length + propuestasHechas,
+    piezasTotal: topic.subtopics.length + propuestas.length,
+  }
+}
+
+/**
+ * Las actividades habilitadas del docente como piezas del curso: cada una suma
+ * una al total, y cuenta como hecha cuando la nota final del estudiante llega
+ * a 60 (ultimo intento en las automaticas, la nota del docente en las
+ * manuales; una entrega sin calificar todavia no cuenta). Es la misma nota que
+ * el estudiante ve en su lista de actividades.
+ */
+async function teacherActivityPieces(groupId, enrollmentIds, tx = prisma) {
+  const groupActivities = await tx.groupActivity.findMany({
+    where: { group_id: groupId, enabled: true },
+    select: { id: true, evaluation_type: true },
+  })
+  const doneByEnrollment = new Map() // enrollmentId -> n actividades aprobadas
+  if (groupActivities.length === 0 || enrollmentIds.length === 0) {
+    return { total: groupActivities.length, doneByEnrollment }
+  }
+
+  const submissions = await tx.groupSubmission.findMany({
+    where: {
+      enrollment_id: { in: enrollmentIds },
+      group_activity_id: { in: groupActivities.map((ga) => ga.id) },
+    },
+    select: {
+      enrollment_id: true,
+      group_activity_id: true,
+      score: true,
+      created_at: true,
+      autoDetail: { select: { submission_id: true } },
+      manualDetail: { select: { submission_id: true } },
+    },
+  })
+  const byKey = new Map() // "enrollmentId:activityId" -> intentos
+  for (const s of submissions) {
+    const key = `${s.enrollment_id}:${s.group_activity_id}`
+    if (!byKey.has(key)) byKey.set(key, [])
+    byKey.get(key).push(s)
+  }
+
+  for (const enrollmentId of enrollmentIds) {
+    let done = 0
+    for (const ga of groupActivities) {
+      const subs = byKey.get(`${enrollmentId}:${ga.id}`) ?? []
+      const manual = ga.evaluation_type === "manual"
+      const own = subs.filter((s) => (manual ? s.manualDetail : s.autoDetail))
+      const score = manual
+        ? (own.reduce((a, b) => (!a || new Date(b.created_at) > new Date(a.created_at) ? b : a), null)
+            ?.score ?? 0)
+        : finalScore(own)
+      if (score >= PASSING_SCORE) done++
+    }
+    doneByEnrollment.set(enrollmentId, done)
+  }
+  return { total: groupActivities.length, doneByEnrollment }
+}
+
+/**
+ * El % de progreso de cada matricula (Map enrollmentId -> 0..100), con la misma
+ * cuenta de `getGroupProgress` pero sin el resto de la ficha. Lo usa la
+ * finalizacion, que corre dentro de su transaccion.
+ */
+async function computePieceProgress(groupId, enrollmentIds, tx = prisma) {
+  const [topics, lessonViews, passedSubmissions, teacherPieces] = await Promise.all([
+    tx.topic.findMany({
+      select: {
+        subtopics: { select: { id: true } },
+        activities: { select: { id: true, kind: true, subtopic_id: true } },
+      },
+    }),
+    tx.lessonView.findMany({
+      where: { enrollment_id: { in: enrollmentIds } },
+      select: { enrollment_id: true, subtopic_id: true },
+    }),
+    tx.topicSubmission.findMany({
+      where: { enrollment_id: { in: enrollmentIds }, passed: true },
+      select: { enrollment_id: true, topic_activity_id: true },
+    }),
+    teacherActivityPieces(groupId, enrollmentIds, tx),
+  ])
+
+  const viewedBy = new Map()
+  const passedBy = new Map()
+  const addToSet = (map, key, value) => {
+    if (!map.has(key)) map.set(key, new Set())
+    map.get(key).add(value)
+  }
+  for (const lv of lessonViews) addToSet(viewedBy, lv.enrollment_id, lv.subtopic_id)
+  for (const ts of passedSubmissions) addToSet(passedBy, ts.enrollment_id, ts.topic_activity_id)
+
+  const result = new Map()
+  for (const enrollmentId of enrollmentIds) {
+    const viewed = viewedBy.get(enrollmentId) ?? new Set()
+    const passed = passedBy.get(enrollmentId) ?? new Set()
+    let hechas = teacherPieces.doneByEnrollment.get(enrollmentId) ?? 0
+    let total = teacherPieces.total
+    for (const topic of topics) {
+      const p = topicPieces(topic, viewed, passed)
+      hechas += p.piezasHechas
+      total += p.piezasTotal
+    }
+    result.set(enrollmentId, total > 0 ? Math.round((hechas / total) * 100) : 0)
+  }
+  return result
+}
+
+/**
  * Progreso de contenidos de los estudiantes de un grupo.
  *
- * El porcentaje cuenta **piezas**: cada subtema leido y cada actividad del banco
- * aprobada suma una, sobre el total de piezas del temario. Antes contaba temas
+ * El porcentaje cuenta **piezas**: cada subtema leido, cada actividad del banco
+ * aprobada y cada actividad habilitada del docente aprobada suma una, sobre el
+ * total de piezas del curso. Antes contaba temas
  * enteros, y como un tema solo esta completo cuando estan TODOS sus subtemas y
  * TODAS sus actividades, el estudiante que habia leido cuatro lecciones de cinco
  * en tres temas distintos salia con un 0% redondo. El docente lo leia como que
@@ -61,7 +214,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
   const topicByNumber = new Map(topicsOrdered.map((t) => [t.order_number, t]))
   const enrollmentIds = enrollments.map((e) => e.id)
 
-  const [topicProgress, topicSubmissions, lessonViews, groupSubmissions, groupActivities] =
+  const [topicProgress, topicSubmissions, lessonViews, groupSubmissions, groupActivities, teacherPieces] =
     await Promise.all([
       prisma.topicProgress.findMany({
         where: { enrollment_id: { in: enrollmentIds } },
@@ -94,6 +247,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
         where: { group_id: groupId, enabled: true },
         select: { id: true },
       }),
+      teacherActivityPieces(groupId, enrollmentIds),
     ])
 
   // Indices por matricula.
@@ -146,43 +300,14 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
 
     const perTopic = new Map()
     for (const topic of topicsOrdered) {
-      const activitiesBySubtopic = new Map() // subtopicId -> activityIds[]
-      for (const a of topic.activities) {
-        if (a.subtopic_id != null) {
-          if (!activitiesBySubtopic.has(a.subtopic_id)) activitiesBySubtopic.set(a.subtopic_id, [])
-          activitiesBySubtopic.get(a.subtopic_id).push(a.id)
-        }
-      }
-
-      let touched = 0
-      // Cuales, y no solo cuantos: la ficha del estudiante lista sus lecciones
-      // una por una, y un conteo no dice cual le falta. Misma regla que el
-      // conteo (visto y con sus checks aprobados), asi que la lista y la cifra
-      // de al lado no se pueden contradecir.
-      const hechos = []
-      for (const sub of topic.subtopics) {
-        if (!viewed.has(sub.id)) continue
-        touched++
-        const acts = activitiesBySubtopic.get(sub.id)
-        if (acts && acts.some((id) => !passed.has(id))) continue
-        hechos.push(sub.id)
-      }
-      const subtopicsDone = hechos.length
-
-      // Las actividades sueltas del tema (las del banco, `kind: "activity"`)
-      // son trabajo del tema igual que sus lecciones, asi que cuentan como una
-      // pieza cada una. Las de `kind: "check"` no: esas van pegadas a un
-      // subtema y ya se exigen arriba para darlo por leido.
-      const propuestas = topic.activities.filter((a) => a.kind === "activity")
-      const propuestasHechas = propuestas.filter((a) => passed.has(a.id)).length
-
+      const { hechos, touched, piezasHechas, piezasTotal } = topicPieces(topic, viewed, passed)
       perTopic.set(topic.order_number, {
-        completed: subtopicsDone,
+        completed: hechos.length,
         total: topic.subtopics.length,
         hechos,
         touched,
-        piezasHechas: subtopicsDone + propuestasHechas,
-        piezasTotal: topic.subtopics.length + propuestas.length,
+        piezasHechas,
+        piezasTotal,
       })
     }
     perTopicByEnrollment.set(enrollment.id, perTopic)
@@ -195,7 +320,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
   const totalTopics = topicsOrdered.length
   const piezasDelCurso = topicsOrdered.reduce(
     (suma, t) => suma + t.subtopics.length + t.activities.filter((a) => a.kind === "activity").length,
-    0,
+    teacherPieces.total,
   )
 
   const rows = enrollments.map((e) => {
@@ -225,7 +350,7 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
     const lastActivity = lastActivityByEnrollment.get(e.id)
     const piezasHechas = topicsOrdered.reduce(
       (suma, t) => suma + (perTopic.get(t.order_number)?.piezasHechas ?? 0),
-      0,
+      teacherPieces.doneByEnrollment.get(e.id) ?? 0,
     )
     const progress = piezasDelCurso > 0 ? Math.round((piezasHechas / piezasDelCurso) * 100) : 0
 
@@ -281,4 +406,4 @@ async function getGroupProgress({ groupId, teacherUserId, role }) {
   }
 }
 
-module.exports = { getGroupProgress }
+module.exports = { getGroupProgress, computePieceProgress, PASSING_SCORE }
