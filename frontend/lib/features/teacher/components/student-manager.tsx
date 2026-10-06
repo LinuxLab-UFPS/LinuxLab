@@ -259,7 +259,7 @@ export function StudentManager({
             )}
           >
             <Upload className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-foreground">Arrastra el archivo aquí</p>
+            <p className="text-sm text-foreground">Arrastre el archivo aquí</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Debe tener las columnas <span className="font-mono">nombre,email,codigo</span>
             </p>

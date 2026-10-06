@@ -100,7 +100,7 @@ function EditGroupForm({ group }: { group: Group }) {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
       notify.success("Curso actualizado", {
-        description: "Los cambios ya son visibles para tus estudiantes.",
+        description: "Los cambios ya son visibles para los estudiantes.",
       })
       router.push(`/cursos/${updated.id}`)
     },
@@ -136,7 +136,7 @@ function EditGroupForm({ group }: { group: Group }) {
             Editar curso
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Actualiza el nombre y la descripción con la que tus estudiantes ven el curso, y cuándo y cómo se cierra.
+            Actualice el nombre y la descripción con la que los estudiantes ven el curso, y cuándo y cómo se cierra.
           </p>
 
           <div className="mt-8">

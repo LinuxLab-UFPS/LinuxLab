@@ -114,7 +114,7 @@ function FinalizePageContent() {
           Finalizar curso
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {preview.group.name} · Revisa el cierre antes de confirmar: esta acción no se
+          {preview.group.name} · Revise el cierre antes de confirmar: esta acción no se
           puede deshacer.
         </p>
       </div>
@@ -145,13 +145,13 @@ function FinalizePageContent() {
                 : `· Progreso del curso de ${preview.group.minProgress}% o más.`}
             </li>
             <li>
-              · El progreso cuenta lecturas, comprobaciones, actividades del temario y tus
-              actividades, cada una aprobada con 60 o más.
+              · El progreso cuenta lecturas, comprobaciones, actividades del temario y
+              actividades del docente, cada una aprobada con 60 o más.
             </li>
           </ul>
           {preview.group.autoFinishAt && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Si no lo finalizas antes, el curso se finaliza solo el{" "}
+              Si no se finaliza antes, el curso finaliza automáticamente el{" "}
               {formatBogotaDateTime(preview.group.autoFinishAt)}.
             </p>
           )}
@@ -162,9 +162,9 @@ function FinalizePageContent() {
         <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-500">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Hay entregas manuales sin calificar que cuentan como 0 en la definitiva:{" "}
-            <span className="font-medium">{pendingManualNames.join(", ")}</span>. Califícalas
-            antes de finalizar si quieres que puntúen.
+            Hay entregas manuales sin calificar que todavía no cuentan para el progreso:{" "}
+            <span className="font-medium">{pendingManualNames.join(", ")}</span>. Califíquelas
+            antes de finalizar para que cuenten.
           </p>
         </div>
       )}
@@ -270,7 +270,7 @@ function FinalizePageContent() {
               y se enviarán al correo de cada uno, junto con su enlace de verificación.
             </p>
             <p className="mt-3 text-center text-sm leading-relaxed text-muted-foreground">
-              El acta del curso y tu certificado de instructor llegarán a tu correo.
+              El acta del curso y su certificado de instructor llegarán a su correo.
             </p>
             <p className="mt-3 text-center text-sm font-medium text-danger">
               El entorno del curso se elimina y la finalización no se puede deshacer.

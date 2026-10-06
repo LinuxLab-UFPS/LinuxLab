@@ -71,7 +71,7 @@ function NewActivityPage() {
   const firstInvalid = evaluationType === "atomic" ? checks.findIndex((c) => checkError(c) !== null) : -1
   const step2Error =
     evaluationType === "atomic" && checks.length === 0
-      ? "Agrega al menos una aserción para poder validar la actividad."
+      ? "Agregue al menos una aserción para poder validar la actividad."
       : firstInvalid !== -1
         ? `La aserción ${firstInvalid + 1} está incompleta: ${checkError(checks[firstInvalid])}.`
         : evaluationType === "atomic" && !distributeEvenly && checkTotal > MAX_SCORE

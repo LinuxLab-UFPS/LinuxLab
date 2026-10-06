@@ -80,8 +80,8 @@ export function ActivityChecksStep({
         </>
       ) : (
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Cuando el estudiante envíe su trabajo debes revisar la entrega, asignar la
-          calificación y escribir una retroalimentación o comentario.
+          Cuando el estudiante envíe su trabajo, el docente revisa la entrega, asigna la
+          calificación y escribe una retroalimentación o comentario.
         </p>
       )}
     </div>

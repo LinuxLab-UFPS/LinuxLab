@@ -277,8 +277,8 @@ export function GroupsTable() {
         {visible.length === 0 && (
           <TableEmptyState>
             {tab === "todos"
-              ? "No tienes cursos activos ni finalizados."
-              : "No tienes cursos archivados."}
+              ? "No hay cursos activos ni finalizados."
+              : "No hay cursos archivados."}
           </TableEmptyState>
         )}
       </TablePanel>

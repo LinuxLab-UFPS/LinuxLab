@@ -101,7 +101,7 @@ export function ActivityBasicStep({
           id="instructions"
           value={instructions}
           onChange={(e) => onInstructionsChange(e.target.value)}
-          placeholder="Escribe las instrucciones de la actividad…"
+          placeholder="Escriba las instrucciones de la actividad…"
           maxLength={2000}
           className="min-h-28 resize-none overflow-y-auto border-table-line text-sm"
         />

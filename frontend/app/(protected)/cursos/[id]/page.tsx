@@ -351,7 +351,7 @@ function GroupDetailContent() {
         <div>
           <p className="mb-3 text-sm text-muted-foreground">
             Las actividades del temario son las mismas en todos los cursos: no se editan ni se
-            deshabilitan. Aquí solo puedes modificar las que crees tú.
+            deshabilitan. Aquí solo se pueden modificar las creadas por el docente.
           </p>
           {activitiesQuery.isLoading ? (
             <SkeletonScreen>

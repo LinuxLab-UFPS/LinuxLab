@@ -42,7 +42,7 @@ function CreateGroupContent() {
       {
         loading: "Creando el curso…",
         success: "Curso creado",
-        description: "Después podrás invitar estudiantes con su enlace de inscripción.",
+        description: "Después podrá invitar estudiantes con el vínculo de inscripción.",
         error: "No se pudo crear el curso.",
       },
     )
@@ -65,8 +65,8 @@ function CreateGroupContent() {
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold text-foreground">Crear curso</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            El nombre con el que tus estudiantes verán el curso. Los estudiantes se agregan
-            después, compartiendo el enlace de inscripción o matriculándolos uno a uno.
+            El nombre con el que los estudiantes verán el curso. Los estudiantes se agregan
+            después, compartiendo el vínculo de inscripción o matriculándolos uno a uno.
           </p>
 
           <div className="mt-8">
