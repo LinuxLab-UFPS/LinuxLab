@@ -233,7 +233,7 @@ function ActivityList({ title, rows }: { title: string; rows: GradeSeriesPoint[]
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{row.title}</p>
               <p className="truncate text-xs text-muted-foreground">
-                Tema {row.topicNumber || "—"} · {row.attempts}{" "}
+                {row.topicNumber ? `Tema ${row.topicNumber}` : "Sin tema"} · {row.attempts}{" "}
                 {row.attempts === 1 ? "intento" : "intentos"}
               </p>
             </div>
