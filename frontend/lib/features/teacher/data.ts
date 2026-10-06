@@ -2,6 +2,7 @@ import { teacherApi } from "./api"
 import type {
   Group,
   CreateGroupInput,
+  UpdateGroupInput,
   Activity,
   ActivitySubmissionStudent,
   CreateActivityInput,
@@ -38,8 +39,8 @@ export async function createGroup(input: CreateGroupInput) {
   return teacherApi.createGroup(input)
 }
 
-/** Actualiza nombre y descripción de un grupo activo. */
-export async function updateGroup(id: string, input: { name: string; description?: string | null }) {
+/** Actualiza nombre, descripción y ajustes de cierre de un grupo activo. */
+export async function updateGroup(id: string, input: UpdateGroupInput) {
   return teacherApi.updateGroup(id, input)
 }
 

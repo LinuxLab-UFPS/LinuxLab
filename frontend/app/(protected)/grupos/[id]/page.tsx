@@ -40,6 +40,7 @@ import { GradebookPanel } from "@/lib/features/teacher/components/gradebook-pane
 import { AuditPanel } from "@/lib/features/teacher/components/audit-panel"
 import { buildGradebookSheet } from "@/lib/features/teacher/export/gradebook-export"
 import { addStudent } from "@/lib/features/teacher/data"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 import { queryKeys, useGradebook, useGroup, useGroupActivities, useGroupProgress, useGroupStudents } from "@/lib/api/queries"
 import type { EnrollmentStudent } from "@/lib/models/auth"
 import { notify } from "@shared/lib/toast"
@@ -191,6 +192,11 @@ function GroupDetailContent() {
             </ActionButton>
           )}
         </div>
+        {group.status === "active" && group.autoFinishAt && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Finaliza automáticamente el {formatBogotaDateTime(group.autoFinishAt)}
+          </p>
+        )}
         {group.description && (
           <p className="mt-1 truncate text-sm text-muted-foreground">{group.description}</p>
         )}

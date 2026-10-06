@@ -7,7 +7,7 @@ import { Send } from "lucide-react"
 import { ActionButton } from "@shared/components/action-button"
 import { BackButton } from "@shared/components/back-button"
 import { createGroup } from "@/lib/features/teacher/data"
-import { GroupFormFields } from "@/lib/features/teacher/components/group-form-fields"
+import { GroupFormFields, closingPayload } from "@/lib/features/teacher/components/group-form-fields"
 import { RoleGuard } from "@shared/components/role-guard"
 import { queryKeys } from "@/lib/api/queries"
 import { notify, notifyPromise } from "@shared/lib/toast"
@@ -17,6 +17,8 @@ function CreateGroupContent() {
   const queryClient = useQueryClient()
   const [groupName, setGroupName] = useState("")
   const [description, setDescription] = useState("")
+  const [finishDate, setFinishDate] = useState("")
+  const [minProgress, setMinProgress] = useState("100")
   const [publishing, setPublishing] = useState(false)
 
   const handlePublish = async () => {
@@ -24,9 +26,19 @@ function CreateGroupContent() {
       notify.error(null, "El nombre del grupo es requerido.")
       return
     }
+    const progressValue = Number(minProgress)
+    if (!Number.isInteger(progressValue) || progressValue < 1 || progressValue > 100) {
+      notify.error(null, "El progreso mínimo debe ser un número entero entre 1 y 100.")
+      return
+    }
     setPublishing(true)
     const response = await notifyPromise(
-      createGroup({ name: groupName, description, students: [] }),
+      createGroup({
+        name: groupName,
+        description,
+        ...closingPayload(finishDate, minProgress),
+        students: [],
+      }),
       {
         loading: "Creando el grupo…",
         success: "Grupo creado",
@@ -63,6 +75,10 @@ function CreateGroupContent() {
               onNameChange={setGroupName}
               description={description}
               onDescriptionChange={setDescription}
+              finishDate={finishDate}
+              onFinishDateChange={setFinishDate}
+              minProgress={minProgress}
+              onMinProgressChange={setMinProgress}
             />
           </div>
 

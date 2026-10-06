@@ -9,7 +9,11 @@ import { ActionButton } from "@shared/components/action-button"
 import { Button } from "@shared/components/ui/button"
 import { RoleGuard } from "@shared/components/role-guard"
 import { Skeleton, SkeletonScreen } from "@shared/components/skeleton"
-import { GroupFormFields } from "@/lib/features/teacher/components/group-form-fields"
+import {
+  GroupFormFields,
+  closingPayload,
+  finishDateInputValue,
+} from "@/lib/features/teacher/components/group-form-fields"
 import { updateGroup } from "@/lib/features/teacher/data"
 import { queryKeys, useGroup } from "@/lib/api/queries"
 import { notify } from "@shared/lib/toast"
@@ -86,9 +90,12 @@ function EditGroupForm({ group }: { group: Group }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState(group.name)
   const [description, setDescription] = useState(group.description ?? "")
+  const [finishDate, setFinishDate] = useState(finishDateInputValue(group.autoFinishAt))
+  const [minProgress, setMinProgress] = useState(String(group.minProgress ?? 100))
 
   const saveMutation = useMutation({
-    mutationFn: () => updateGroup(group.id, { name, description }),
+    mutationFn: () =>
+      updateGroup(group.id, { name, description, ...closingPayload(finishDate, minProgress) }),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
@@ -97,14 +104,19 @@ function EditGroupForm({ group }: { group: Group }) {
       })
       router.push(`/grupos/${updated.id}`)
     },
-    onError: () => {
-      notify.error(null, "No se pudo guardar la información del grupo.")
+    onError: (err) => {
+      notify.error(err, "No se pudo guardar la información del grupo.")
     },
   })
 
   const handleSave = () => {
     if (!name.trim()) {
       notify.error(null, "El nombre del grupo es requerido.")
+      return
+    }
+    const progressValue = Number(minProgress)
+    if (!Number.isInteger(progressValue) || progressValue < 1 || progressValue > 100) {
+      notify.error(null, "El progreso mínimo debe ser un número entero entre 1 y 100.")
       return
     }
     saveMutation.mutate()
@@ -124,7 +136,7 @@ function EditGroupForm({ group }: { group: Group }) {
             Editar grupo
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Actualiza el nombre y la descripción con la que tus estudiantes ven el grupo.
+            Actualiza el nombre y la descripción con la que tus estudiantes ven el grupo, y cuándo y cómo se cierra el curso.
           </p>
 
           <div className="mt-8">
@@ -133,6 +145,10 @@ function EditGroupForm({ group }: { group: Group }) {
               onNameChange={setName}
               description={description}
               onDescriptionChange={setDescription}
+              finishDate={finishDate}
+              onFinishDateChange={setFinishDate}
+              minProgress={minProgress}
+              onMinProgressChange={setMinProgress}
               disabled={saveMutation.isPending}
             />
           </div>

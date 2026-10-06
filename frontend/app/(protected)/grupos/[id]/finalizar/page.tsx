@@ -18,6 +18,7 @@ import { RoleGuard } from "@shared/components/role-guard"
 import { ActionButton } from "@shared/components/action-button"
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@shared/components/ui/dialog"
 import { X } from "lucide-react"
+import { formatBogotaDateTime } from "@/lib/utils/dates"
 import {
   Table,
   TableBody,
@@ -138,9 +139,19 @@ function FinalizePageContent() {
         <div className="rounded-xl border border-table-line bg-card p-5">
           <p className="mb-2 text-sm font-semibold text-foreground">Regla de certificación</p>
           <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>· Todos los temas del temario completados (lecturas, comprobaciones y actividades).</li>
+            <li>
+              {preview.group.minProgress >= 100
+                ? "· Todo el temario completado (lecturas, comprobaciones y actividades)."
+                : `· Progreso del curso de ${preview.group.minProgress}% o más (lecturas, comprobaciones y actividades).`}
+            </li>
             <li>· Definitiva de actividades de 60 o más (promedio del último intento).</li>
           </ul>
+          {preview.group.autoFinishAt && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Si no lo finalizas antes, el curso se finaliza solo el{" "}
+              {formatBogotaDateTime(preview.group.autoFinishAt)}.
+            </p>
+          )}
         </div>
       </div>
 
