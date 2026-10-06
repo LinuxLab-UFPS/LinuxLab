@@ -1,6 +1,7 @@
 "use client"
 
 import { TeachersTable } from "@/lib/features/admin/components/teachers-table"
+import { TeacherRequestsPanel } from "@/lib/features/admin/components/teacher-requests-panel"
 import { RoleGuard } from "@shared/components/role-guard"
 import { useAuth } from "@/lib/features/auth/context"
 import { TituloDeSeccion } from "@shared/components/titulo-de-seccion"
@@ -18,6 +19,7 @@ export default function DocentesPage() {
           </p>
         </div>
 
+        <TeacherRequestsPanel />
         <TeachersTable />
       </div>
     </RoleGuard>

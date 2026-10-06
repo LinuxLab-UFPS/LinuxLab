@@ -20,6 +20,8 @@ export const queryKeys = {
   studentPerformance: (id: string, studentId: string) =>
     ["groups", id, "gradebook", "students", studentId] as const,
   teacherJobs: ["admin", "teacher-jobs"] as const,
+  teacherRequests: ["admin", "teacher-requests"] as const,
+  teacherRequestCount: ["admin", "teacher-requests", "count"] as const,
   teachers: (filters?: { search?: string; status?: string }) => ["admin", "teachers", filters] as const,
   provisioningStatus: ["provisioning", "status"] as const,
   auditLog: (filters?: AuditFilters) => ["audit", filters] as const,
@@ -127,6 +129,24 @@ export function useTeachers(filters?: { search?: string; status?: string }) {
   return useQuery({
     queryKey: queryKeys.teachers(filters),
     queryFn: () => adminData.listTeachers(filters),
+  })
+}
+
+/** Solicitudes de cuenta docente pendientes (vista de admin). */
+export function useTeacherRequests() {
+  return useQuery({
+    queryKey: queryKeys.teacherRequests,
+    queryFn: adminData.listTeacherRequests,
+  })
+}
+
+/** Cuantas solicitudes esperan revision: el contador del menu del admin. */
+export function useTeacherRequestCount(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.teacherRequestCount,
+    queryFn: adminData.teacherRequestCount,
+    enabled,
+    refetchInterval: 60_000,
   })
 }
 

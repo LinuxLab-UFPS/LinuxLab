@@ -1,6 +1,6 @@
 import { adminApi } from "./api"
 import type { TeacherFilters } from "./api"
-import type { TeacherListItem, TeacherProvisioningJobSummary } from "./types"
+import type { TeacherListItem, TeacherProvisioningJobSummary, TeacherRequest } from "./types"
 
 export async function listTeachers(filters?: TeacherFilters): Promise<TeacherListItem[]> {
   return adminApi.listTeachers(filters)
@@ -24,4 +24,20 @@ export async function listTeacherProvisioningJobs(): Promise<TeacherProvisioning
   } catch {
     return []
   }
+}
+
+export async function listTeacherRequests(): Promise<TeacherRequest[]> {
+  return adminApi.listTeacherRequests()
+}
+
+export async function teacherRequestCount(): Promise<number> {
+  return (await adminApi.teacherRequestCount()).pending
+}
+
+export async function approveTeacherRequest(id: string) {
+  return adminApi.approveTeacherRequest(id)
+}
+
+export async function rejectTeacherRequest(id: string) {
+  return adminApi.rejectTeacherRequest(id)
 }
