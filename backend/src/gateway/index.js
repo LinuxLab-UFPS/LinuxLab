@@ -199,7 +199,7 @@ function setupGateway(server) {
         // usuario se elimina del entorno y la sesion JWT (7 dias) puede seguir
         // viva, asi que la puerta de entrada a la consola tambien valida.
         if (user.role === "student" && !(await enrollmentService.hasActiveEnrollment(user.id))) {
-          ws.close(4001, "No te encuentras registrado en ningún grupo de laboratorio")
+          ws.close(4001, "No te encuentras registrado en ningún curso")
           return
         }
 

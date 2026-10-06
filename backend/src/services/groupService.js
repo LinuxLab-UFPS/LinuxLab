@@ -73,7 +73,7 @@ async function createGroup(args) {
 
   if (!teacherAccount?.linux_provisioned) {
     throw new ConflictError(
-      "Tu cuenta Linux aún no está provisionada en el entorno. Espera a que termine el aprovisionamiento y vuelve a intentar crear el grupo.",
+      "Tu cuenta Linux aún no está provisionada en el entorno. Espera a que termine el aprovisionamiento y vuelve a intentar crear el curso.",
     )
   }
 
@@ -162,10 +162,10 @@ async function updateGroup({ groupId, name, description, autoFinishAt, minProgre
   if (!group) {
     // ensureGroupAccess ya la habria rechazado, pero el chequeo explícito
     // documenta la expectativa y protege ante cambios futuros.
-    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+    throw new AppError("Curso no encontrado", 404, "NOT_FOUND")
   }
   if (group.status !== "active") {
-    throw new AppError("Solo se puede editar un grupo activo", 409, "CONFLICT")
+    throw new AppError("Solo se puede editar un curso activo", 409, "CONFLICT")
   }
 
   const updated = await prisma.group.update({
@@ -353,7 +353,7 @@ async function finalizeGroup({ groupId, role, teacherUserId, automatic = false }
     })
     if (group.status !== "active") {
       // Re-chequeo bajo lock: otra finalizacion pudo ganar la carrera.
-      throw new AppError("Solo se puede finalizar un grupo activo", 409, "CONFLICT")
+      throw new AppError("Solo se puede finalizar un curso activo", 409, "CONFLICT")
     }
 
     const summary = await finalizationService.computeGroupSummary(group, tx)
@@ -428,7 +428,7 @@ async function archiveGroup(args) {
   const { groupId, role, teacherUserId, tx } = args
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
   if (group.status === "archived") {
-    throw new AppError("El grupo ya está archivado", 409, "CONFLICT")
+    throw new AppError("El curso ya está archivado", 409, "CONFLICT")
   }
 
   if (group.status === "finished") {
@@ -476,7 +476,7 @@ async function archiveGroup(args) {
 async function unarchiveGroup({ groupId, role, teacherUserId }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   if (group.status !== "archived") {
-    throw new AppError("Solo se puede desarchivar un grupo archivado", 409, "CONFLICT")
+    throw new AppError("Solo se puede desarchivar un curso archivado", 409, "CONFLICT")
   }
 
   const updated = await prisma.group.update({
@@ -572,7 +572,7 @@ async function deactivateGroupEnvironment(tx, { groupId, group, teacherUserId, n
 async function deleteGroup({ groupId, role, teacherUserId }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
   if (group.status !== "archived") {
-    throw new ConflictError("Primero debes desactivar el grupo")
+    throw new ConflictError("Primero debes desactivar el curso")
   }
 
   const teacherAccount = await prisma.linuxAccount.findUnique({

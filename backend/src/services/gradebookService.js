@@ -434,7 +434,7 @@ async function getStudentPerformance({ groupId, studentId, teacherUserId, role }
   const enrollment = await prisma.enrollment.findFirst({
     where: { student_id: studentId, group_id: groupId },
   })
-  if (!enrollment) throw new NotFoundError("El estudiante no está inscrito en este grupo")
+  if (!enrollment) throw new NotFoundError("El estudiante no está inscrito en este curso")
 
   const { activities, enrollments, attemptMap, submissionMap, delTemario, topicAttemptMap } =
     await loadGroupData(groupId)

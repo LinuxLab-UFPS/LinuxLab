@@ -40,12 +40,12 @@ const closingFields = {
 const createGroupSchema = z.object({
   name: z
     .string({
-      required_error: "El nombre del grupo es requerido",
-      invalid_type_error: "El nombre del grupo es requerido",
+      required_error: "El nombre del curso es requerido",
+      invalid_type_error: "El nombre del curso es requerido",
     })
     .trim()
-    .min(1, "El nombre del grupo es requerido")
-    .max(255, "El nombre del grupo no puede superar los 255 caracteres"),
+    .min(1, "El nombre del curso es requerido")
+    .max(255, "El nombre del curso no puede superar los 255 caracteres"),
   description: z.string().trim().max(2000).optional().nullable(),
   ...closingFields,
   // Las filas se validan a mano en la matricula (por fila, sin tumbar todo el
@@ -59,12 +59,12 @@ const createGroupSchema = z.object({
 const updateGroupSchema = z.object({
   name: z
     .string({
-      required_error: "El nombre del grupo es requerido",
-      invalid_type_error: "El nombre del grupo es requerido",
+      required_error: "El nombre del curso es requerido",
+      invalid_type_error: "El nombre del curso es requerido",
     })
     .trim()
-    .min(1, "El nombre del grupo es requerido")
-    .max(255, "El nombre del grupo no puede superar los 255 caracteres"),
+    .min(1, "El nombre del curso es requerido")
+    .max(255, "El nombre del curso no puede superar los 255 caracteres"),
   description: z.string().trim().max(2000).optional().nullable(),
   ...closingFields,
 })

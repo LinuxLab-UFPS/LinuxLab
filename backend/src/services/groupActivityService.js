@@ -32,7 +32,7 @@ function normalizeEvaluationType(value) {
 function rechazarSiEsDelTemario(activityId, accion) {
   if (bankSlugOf(activityId)) {
     throw new AppError(
-      `Las actividades del curso no se pueden ${accion}: son iguales en todos los grupos`,
+      `Las actividades del temario no se pueden ${accion}: son iguales en todos los cursos`,
       409,
       "CONFLICT",
     )

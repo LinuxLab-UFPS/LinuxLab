@@ -23,7 +23,7 @@ function round1(value) {
 async function finalizationSummary({ groupId, teacherUserId, role, tx = prisma }) {
   const group = await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
   if (group.status !== "active") {
-    throw new AppError("El grupo ya no está activo", 409, "CONFLICT")
+    throw new AppError("El curso ya no está activo", 409, "CONFLICT")
   }
   return computeGroupSummary(group, tx)
 }

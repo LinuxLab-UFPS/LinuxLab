@@ -59,7 +59,7 @@ async function recordGroupAttempt({ studentId, groupId, groupActivityId, score, 
     const enrollment = await tx.enrollment.findFirst({
       where: { student_id: studentId, group_id: groupId, status: "active", group: { status: "active" } },
     })
-    if (!enrollment) throw new ConflictError("No hay matrícula activa en este grupo")
+    if (!enrollment) throw new ConflictError("No hay matrícula activa en este curso")
 
     await tx.$queryRaw`SELECT id FROM "Enrollment" WHERE id = ${enrollment.id} FOR UPDATE`
 

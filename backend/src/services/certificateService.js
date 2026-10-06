@@ -259,7 +259,7 @@ async function deliverJob(payload) {
       where: { id: payload.groupId },
       include: { teacher: { include: { user: { select: { id: true, email: true, name: true } } } } },
     })
-    if (!group) throw new NotFoundError("Grupo no encontrado para el acta")
+    if (!group) throw new NotFoundError("Curso no encontrado para el acta")
     const { buffer: actaBuffer, instructorCertificate } = await buildActa(group)
     const instructorData = instructorCertificate
       ? withVerificationUrl(serializeInstructorCertificate(instructorCertificate))

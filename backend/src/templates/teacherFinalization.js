@@ -9,7 +9,7 @@ function renderTeacherFinalizationEmail({ teacherName, groupName, studentsCertif
     preheader: "Curso finalizado: acta y certificado adjuntos",
     heading: "Curso finalizado: " + (groupName || ""),
     intro:
-      `<p style="margin:0 0 10px;">Finalizaste el grupo <strong>${groupName || ""}</strong>. Se emitieron <strong>${studentsCertified}</strong> certificado(s) de <strong>${studentsTotal}</strong> estudiante(s) que cumplieron la regla de certificación.</p>` +
+      `<p style="margin:0 0 10px;">Finalizaste el curso <strong>${groupName || ""}</strong>. Se emitieron <strong>${studentsCertified}</strong> certificado(s) de <strong>${studentsTotal}</strong> estudiante(s) que cumplieron la regla de certificación.</p>` +
       `<p style="margin:0;">El <strong>acta del curso</strong> con el detalle de cada estudiante y tu <strong>certificado de instructor</strong> van adjuntos a este correo.</p>`,
     ctaText: "Verificar certificado de instructor",
     ctaHref: verificationUrl,
@@ -18,10 +18,10 @@ function renderTeacherFinalizationEmail({ teacherName, groupName, studentsCertif
     expires: false,
   })
   return {
-    subject: `Curso finalizado: ${groupName || "grupo"} — acta y certificado`,
+    subject: `Curso finalizado: ${groupName || "curso"} — acta y certificado`,
     html,
     text:
-      `Finalizaste el grupo ${groupName || ""}.\n\n` +
+      `Finalizaste el curso ${groupName || ""}.\n\n` +
       `Se emitieron ${studentsCertified} certificado(s) de ${studentsTotal} estudiante(s).\n` +
       `El acta del curso y tu certificado de instructor van adjuntos.\n\n` +
       `Verifica tu certificado en: ${verificationUrl}\n`,

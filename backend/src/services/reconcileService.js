@@ -173,7 +173,7 @@ async function reconcileGroup({ groupId }) {
     include: { teacher: { include: { user: { include: { linuxAccount: true } } } } },
   })
   if (!group) {
-    throw new AppError("Grupo no encontrado", 404, "NOT_FOUND")
+    throw new AppError("Curso no encontrado", 404, "NOT_FOUND")
   }
   if (group.status !== "active") {
     // El teardown de la finalizacion (y antes el del archivo) borro los
