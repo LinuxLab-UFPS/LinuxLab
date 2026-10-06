@@ -92,7 +92,8 @@ export function GroupFormFields({
             disabled={disabled}
           />
           <p className="text-xs text-muted-foreground">
-            Ese día el curso se finaliza y se emiten los certificados. Vacío, lo finalizas tú.
+            El curso finaliza automáticamente en esta fecha. Para finalizarlo manualmente, deje
+            este campo vacío.
           </p>
         </div>
 
