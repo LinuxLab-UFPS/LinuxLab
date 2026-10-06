@@ -152,14 +152,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                 rowSpan={2}
                 className="w-28 min-w-28 border-b border-l border-table-line bg-table-surface px-3 py-3 text-center align-middle text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">Actividades del temario</span>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p>Promedio de las actividades base, iguales en todos los cursos.</p>
-                  </TooltipContent>
-                </Tooltip>
+                Actividades del temario
               </th>
               <th
                 rowSpan={2}
