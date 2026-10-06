@@ -141,10 +141,13 @@ function FinalizePageContent() {
           <ul className="space-y-1 text-sm text-muted-foreground">
             <li>
               {preview.group.minProgress >= 100
-                ? "· Todo el temario completado (lecturas, comprobaciones y actividades)."
-                : `· Progreso del curso de ${preview.group.minProgress}% o más (lecturas, comprobaciones y actividades).`}
+                ? "· Todo el curso completado."
+                : `· Progreso del curso de ${preview.group.minProgress}% o más.`}
             </li>
-            <li>· Definitiva de actividades de 60 o más (promedio del último intento).</li>
+            <li>
+              · El progreso cuenta lecturas, comprobaciones, actividades del curso y tus
+              actividades, cada una aprobada con 60 o más.
+            </li>
           </ul>
           {preview.group.autoFinishAt && (
             <p className="mt-3 text-xs text-muted-foreground">

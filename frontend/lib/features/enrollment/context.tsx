@@ -13,7 +13,11 @@ interface EnrollmentValue {
 
 const Ctx = createContext<EnrollmentValue>({ hasEnrollment: true, loading: false, group: null })
 
-export function EnrollmentProvider({ children }: { children: React.ReactNode }) {
+/**
+ * El grupo del estudiante y las actividades de su docente. Una sola query para
+ * la matricula y para el progreso del curso, que suma esas actividades.
+ */
+export function useMyGroupOverview() {
   const { user, loading: authLoading } = useAuth()
   const enabled = !authLoading && user?.role === "student"
   const q = useQuery({
@@ -22,6 +26,12 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
     enabled,
     staleTime: 30_000,
   })
+  return { ...q, enabled }
+}
+
+export function EnrollmentProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth()
+  const { enabled, ...q } = useMyGroupOverview()
   const value: EnrollmentValue = {
     hasEnrollment: q.data ? Boolean(q.data.group) : (user?.hasEnrollment ?? true),
     loading: enabled ? q.isLoading : false,
