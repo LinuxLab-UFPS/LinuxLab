@@ -8,7 +8,6 @@ import { apiFetch } from "@/lib/api/client"
 import { notify } from "@shared/lib/toast"
 import { Input } from "@shared/components/ui/input"
 import { Label } from "@shared/components/ui/label"
-import { Textarea } from "@shared/components/ui/textarea"
 import { Button } from "@shared/components/ui/button"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -23,8 +22,6 @@ export default function SolicitudDocentePage() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [code, setCode] = useState("")
-  const [department, setDepartment] = useState("")
-  const [message, setMessage] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
 
@@ -42,8 +39,6 @@ export default function SolicitudDocentePage() {
           name: name.trim(),
           email: email.trim(),
           code: code.trim(),
-          department: department.trim() || null,
-          message: message.trim() || null,
         }),
       })
       setSent(true)
@@ -116,31 +111,6 @@ export default function SolicitudDocentePage() {
                   disabled={submitting}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Dependencia o programa (opcional)</Label>
-                <Input
-                  id="department"
-                  placeholder="Ej: Ingeniería de Sistemas"
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  className="h-11"
-                  disabled={submitting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Mensaje (opcional)</Label>
-                <Textarea
-                  id="message"
-                  rows={3}
-                  maxLength={1000}
-                  placeholder="Asignatura o curso en el que usará la plataforma"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="resize-none"
-                  disabled={submitting}
-                />
-              </div>
-
               <Button type="submit" className="h-11 w-full" disabled={submitting}>
                 {submitting ? "Enviando…" : "Enviar solicitud"}
               </Button>

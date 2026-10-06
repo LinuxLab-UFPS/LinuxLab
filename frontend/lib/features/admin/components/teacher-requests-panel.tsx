@@ -7,7 +7,6 @@ import { useTeacherRequests } from "@/lib/features/admin/hooks"
 import type { TeacherRequest } from "@/lib/features/admin/types"
 import { ConfirmDialog } from "./confirm-dialog"
 import { IconAction } from "@shared/components/icon-action"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@shared/components/ui/tooltip"
 import {
   Table,
   TableBody,
@@ -16,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@shared/components/ui/table"
-import { TablePanel } from "@shared/components/data-table"
+import { TablePanel, TablePagination } from "@shared/components/data-table"
+
+const PAGE_SIZE = 8
 
 /**
  * Solicitudes de cuenta docente pendientes, encima de la tabla de docentes.
@@ -25,8 +26,13 @@ import { TablePanel } from "@shared/components/data-table"
 export function TeacherRequestsPanel() {
   const { requests, busy, approve, reject } = useTeacherRequests()
   const [rejectTarget, setRejectTarget] = useState<TeacherRequest | null>(null)
+  const [page, setPage] = useState(1)
 
   if (requests.length === 0) return null
+
+  const totalPages = Math.max(1, Math.ceil(requests.length / PAGE_SIZE))
+  const page_ = Math.min(page, totalPages)
+  const pageRows = requests.slice((page_ - 1) * PAGE_SIZE, page_ * PAGE_SIZE)
 
   return (
     <section className="mb-10">
@@ -43,33 +49,19 @@ export function TeacherRequestsPanel() {
             <TableRow className="hover:bg-transparent">
               <TableHead>Docente</TableHead>
               <TableHead className="w-28">Código</TableHead>
-              <TableHead className="w-48">Dependencia</TableHead>
               <TableHead className="w-32">Fecha</TableHead>
               <TableHead className="w-28">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {requests.map((request) => (
+            {pageRows.map((request) => (
               <TableRow key={request.id}>
                 <TableCell>
                   <span className="block text-sm font-medium text-foreground">{request.name}</span>
                   <span className="block truncate text-xs text-muted-foreground">{request.email}</span>
-                  {request.message && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="mt-0.5 block cursor-default truncate text-xs italic text-muted-foreground">
-                          “{request.message}”
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">{request.message}</TooltipContent>
-                    </Tooltip>
-                  )}
                 </TableCell>
                 <TableCell>
                   <span className="font-mono text-sm text-muted-foreground">{request.code}</span>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {request.department ?? "—"}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {formatBogotaDate(request.createdAt)}
@@ -98,6 +90,17 @@ export function TeacherRequestsPanel() {
           </TableBody>
         </Table>
       </TablePanel>
+
+      {totalPages > 1 && (
+        <TablePagination
+          page={page_}
+          totalPages={totalPages}
+          onChange={setPage}
+          total={requests.length}
+          pageSize={PAGE_SIZE}
+          label="solicitudes"
+        />
+      )}
 
       <ConfirmDialog
         open={!!rejectTarget}

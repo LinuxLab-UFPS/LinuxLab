@@ -27,6 +27,14 @@ async function create(input) {
   if (existingUser?.teacher || existingUser?.role === "admin") {
     throw new ConflictError("Este correo ya tiene una cuenta docente. Inicie sesión con él.")
   }
+  // Una cuenta de estudiante no pide ser docente desde aqui: corta la broma de
+  // que cada estudiante llene el formulario con su propio correo. Un docente
+  // real que se registro como estudiante por error lo resuelve el admin.
+  if (existingUser?.student) {
+    throw new ConflictError(
+      "Este correo pertenece a una cuenta de estudiante. Si es docente, comuníquese con el administrador.",
+    )
+  }
   if (pending) {
     throw new ConflictError("Ya hay una solicitud en revisión con este correo.")
   }
@@ -36,8 +44,6 @@ async function create(input) {
       name: parsed.name,
       email: parsed.email,
       code: parsed.code,
-      department: parsed.department || null,
-      message: parsed.message || null,
     },
   })
   logger.info({ requestId: request.id, email: request.email }, "Teacher request created")

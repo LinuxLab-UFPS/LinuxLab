@@ -11,8 +11,6 @@ CREATE TABLE "TeacherRequest" (
     "name" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
     "code" VARCHAR(20) NOT NULL,
-    "department" VARCHAR(255),
-    "message" TEXT,
     "status" "TeacherRequestStatus" NOT NULL DEFAULT 'pending',
     "reviewed_by" UUID,
     "reviewed_at" TIMESTAMP(3),

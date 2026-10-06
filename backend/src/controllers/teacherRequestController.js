@@ -3,8 +3,8 @@ const auditService = require("../services/auditService")
 const asyncHandler = require("../utils/asyncHandler")
 
 const create = asyncHandler(async (req, res) => {
-  const { name, email, code, department, message } = req.body ?? {}
-  const request = await teacherRequestService.create({ name, email, code, department, message })
+  const { name, email, code } = req.body ?? {}
+  const request = await teacherRequestService.create({ name, email, code })
   res.status(201).json(request)
 })
 

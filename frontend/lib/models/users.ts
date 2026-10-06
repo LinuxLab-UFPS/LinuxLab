@@ -15,8 +15,6 @@ export interface TeacherRequest {
   name: string
   email: string
   code: string
-  department: string | null
-  message: string | null
   status: "pending" | "approved" | "rejected"
   createdAt: string
   reviewedAt: string | null

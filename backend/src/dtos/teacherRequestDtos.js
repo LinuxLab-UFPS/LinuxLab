@@ -21,8 +21,6 @@ const createTeacherRequestSchema = z.object({
     .trim()
     .min(1, "El código docente es requerido")
     .max(8, "El código docente no puede exceder 8 caracteres"),
-  department: z.string().trim().max(255, "La dependencia no puede superar los 255 caracteres").optional().nullable(),
-  message: z.string().trim().max(1000, "El mensaje no puede superar los 1000 caracteres").optional().nullable(),
 })
 
 function serializeTeacherRequest(request) {
@@ -31,8 +29,6 @@ function serializeTeacherRequest(request) {
     name: request.name,
     email: request.email,
     code: request.code,
-    department: request.department ?? null,
-    message: request.message ?? null,
     status: request.status,
     createdAt: request.created_at,
     reviewedAt: request.reviewed_at ?? null,

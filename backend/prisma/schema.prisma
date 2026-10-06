@@ -431,8 +431,6 @@ model TeacherRequest {
   name        String               @db.VarChar(255)
   email       String               @db.VarChar(255)
   code        String               @db.VarChar(20)
-  department  String?              @db.VarChar(255)
-  message     String?              @db.Text
   status      TeacherRequestStatus @default(pending)
   reviewed_by String?              @db.Uuid
   reviewed_at DateTime?
