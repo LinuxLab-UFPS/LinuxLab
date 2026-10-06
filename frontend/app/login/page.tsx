@@ -330,8 +330,7 @@ export default function LoginPage() {
           )}
         </p>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">Acceso para estudiantes y docentes de la UFPS</p>
-        <p className="mt-2 text-center text-xs text-muted-foreground">
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           ¿Es docente y aún no tiene cuenta?{" "}
           <Link href="/solicitud-docente" className="font-medium text-primary hover:underline">
             Solicite acceso
