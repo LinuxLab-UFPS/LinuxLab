@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import { Check, Circle, Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/lib/features/auth/context"
 import { notify } from "@shared/lib/toast"
@@ -330,6 +331,12 @@ export default function LoginPage() {
         </p>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">Acceso para estudiantes y docentes de la UFPS</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          ¿Es docente y aún no tiene cuenta?{" "}
+          <Link href="/solicitud-docente" className="font-medium text-primary hover:underline">
+            Solicite acceso
+          </Link>
+        </p>
       </div>
       <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} />
     </div>
