@@ -164,17 +164,21 @@ model LinuxAccount {
 // ════════════════════════════════════════
 
 model Group {
-  id           String      @id @default(uuid()) @db.Uuid
-  group_number Int         @unique @default(autoincrement())
-  name         String      @db.VarChar(255)
-  description  String?     @db.Text
-  teacher_id   String      @db.Uuid
-  teacher      Teacher     @relation(fields: [teacher_id], references: [user_id])
-  status       GroupStatus @default(active)
-  group_dir    String?     @db.VarChar(64)
-  invite_token String?     @db.VarChar(64)
-  created_at   DateTime    @default(now())
-  updated_at   DateTime    @updatedAt
+  id             String      @id @default(uuid()) @db.Uuid
+  group_number   Int         @unique @default(autoincrement())
+  name           String      @db.VarChar(255)
+  description    String?     @db.Text
+  teacher_id     String      @db.Uuid
+  teacher        Teacher     @relation(fields: [teacher_id], references: [user_id])
+  status         GroupStatus @default(active)
+  group_dir      String?     @db.VarChar(64)
+  invite_token   String?     @db.VarChar(64)
+  /// Instante en que el worker finaliza el curso solo; null = finalizacion manual.
+  auto_finish_at DateTime?
+  /// Progreso minimo (%) para certificar; 100 = el curso completo.
+  min_progress   Int         @default(100)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
 
   enrollments           Enrollment[]
   groupActivities       GroupActivity[]

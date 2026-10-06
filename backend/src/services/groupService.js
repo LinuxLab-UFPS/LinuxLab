@@ -56,11 +56,13 @@ async function createGroup(args) {
     return runInTransaction((tx) => createGroup({ ...args, tx }))
   }
 
-  const { name, description, students, teacherUserId, tx } = args
+  const { name, description, students, autoFinishAt, minProgress, teacherUserId, tx } = args
   const db = tx
   const parsed = parseOrThrow(createGroupSchema, {
     name,
     description,
+    autoFinishAt,
+    minProgress,
     students: Array.isArray(students) ? students : [],
   })
   await ensureTeacherRole(teacherUserId, db)
@@ -85,6 +87,8 @@ async function createGroup(args) {
       teacher_id: teacherUserId,
       group_dir: null,
       invite_token: generateInviteToken(),
+      auto_finish_at: parsed.autoFinishAt ?? null,
+      min_progress: parsed.minProgress,
     },
   })
   const groupDir = generateGroupDir(createdGroup.group_number)
@@ -144,15 +148,15 @@ async function createGroup(args) {
 }
 
 /**
- * Actualiza los datos editables de un grupo (nombre y descripcion).
+ * Actualiza los datos editables de un grupo (nombre, descripcion y ajustes de cierre).
  *
  * Solo los grupos activos son editables: un grupo finalizado o archivado es
  * un registro historico y sus datos quedan congelados tal como se cerraron.
  */
-async function updateGroup({ groupId, name, description, teacherUserId, role }) {
+async function updateGroup({ groupId, name, description, autoFinishAt, minProgress, teacherUserId, role }) {
   await accessService.ensureGroupAccess({ groupId, teacherUserId, role })
 
-  const parsed = parseOrThrow(updateGroupSchema, { name, description })
+  const parsed = parseOrThrow(updateGroupSchema, { name, description, autoFinishAt, minProgress })
 
   const group = await prisma.group.findUnique({ where: { id: groupId } })
   if (!group) {
@@ -169,6 +173,8 @@ async function updateGroup({ groupId, name, description, teacherUserId, role }) 
     data: {
       name: parsed.name,
       description: parsed.description?.trim() || null,
+      auto_finish_at: parsed.autoFinishAt ?? null,
+      min_progress: parsed.minProgress,
     },
   })
 

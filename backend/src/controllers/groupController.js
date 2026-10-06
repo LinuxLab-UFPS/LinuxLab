@@ -10,10 +10,12 @@ const asyncHandler = require("../utils/asyncHandler")
 const { sendPdf } = require("../utils/pdfResponse")
 
 const createGroup = asyncHandler(async (req, res) => {
-  const { name, description, students } = req.body
+  const { name, description, students, autoFinishAt, minProgress } = req.body
   const group = await groupService.createGroup({
     name,
     description,
+    autoFinishAt,
+    minProgress,
     students: Array.isArray(students) ? students : [],
     teacherUserId: req.user.id,
   })
@@ -29,11 +31,13 @@ const listGroups = asyncHandler(async (req, res) => {
 })
 
 const updateGroup = asyncHandler(async (req, res) => {
-  const { name, description } = req.body
+  const { name, description, autoFinishAt, minProgress } = req.body
   const group = await groupService.updateGroup({
     groupId: req.params.id,
     name,
     description,
+    autoFinishAt,
+    minProgress,
     teacherUserId: req.user.id,
     role: req.user.role,
   })
