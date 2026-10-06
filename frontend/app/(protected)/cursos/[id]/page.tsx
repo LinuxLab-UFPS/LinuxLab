@@ -350,8 +350,8 @@ function GroupDetailContent() {
       ) : tab === "actividades" ? (
         <div>
           <p className="mb-3 text-sm text-muted-foreground">
-            Las actividades del temario son las mismas en todos los cursos: no se editan ni se
-            deshabilitan. Aquí solo se pueden modificar las creadas por el docente.
+            Todos los cursos incluyen las mismas actividades base, que no se pueden editar ni
+            deshabilitar. Solo puede modificar y habilitar las actividades que haya creado.
           </p>
           {activitiesQuery.isLoading ? (
             <SkeletonScreen>
