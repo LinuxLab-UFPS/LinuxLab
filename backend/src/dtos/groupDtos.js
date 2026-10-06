@@ -21,7 +21,7 @@ const studentRowSchema = z.object({
 })
 
 // Ajustes del cierre del curso, comunes a creacion y edicion. La fecha llega
-// como instante ISO (el frontend ya la llevo al fin del dia en Bogota) y debe
+// como instante ISO (el frontend ya la llevo de hora Bogota a UTC) y debe
 // ser futura: una fecha vencida finalizaria el grupo en el siguiente ciclo.
 const closingFields = {
   autoFinishAt: z.coerce

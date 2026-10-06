@@ -5,19 +5,15 @@ import { Label } from "@shared/components/ui/label"
 import { Textarea } from "@shared/components/ui/textarea"
 import { currentBogotaInputValue, parseBogotaInput, toBogotaInputValue } from "@/lib/utils/dates"
 
-/** La fecha de cierre tal como la guarda el input ("YYYY-MM-DD", o "" sin fecha). */
+/** La fecha de cierre tal como la guarda el input ("YYYY-MM-DDTHH:mm" en hora Bogota, o "" sin fecha). */
 export function finishDateInputValue(autoFinishAt: string | null | undefined): string {
-  return autoFinishAt ? toBogotaInputValue(autoFinishAt).slice(0, 10) : ""
+  return autoFinishAt ? toBogotaInputValue(autoFinishAt) : ""
 }
 
-/**
- * Los ajustes de cierre listos para el backend. El dia elegido se cierra a las
- * 23:59 de Bogota: el docente piensa en "el curso termina el viernes", no en
- * una hora, y finalizarlo a medianoche le quitaria el viernes entero.
- */
+/** Los ajustes de cierre listos para el backend; la fecha se lee en hora Bogota. */
 export function closingPayload(finishDate: string, minProgress: string) {
   return {
-    autoFinishAt: finishDate ? parseBogotaInput(`${finishDate}T23:59`).toISOString() : null,
+    autoFinishAt: finishDate ? parseBogotaInput(finishDate).toISOString() : null,
     minProgress: Number(minProgress) || 100,
   }
 }
@@ -48,7 +44,7 @@ export function GroupFormFields({
   onMinProgressChange: (value: string) => void
   disabled?: boolean
 }) {
-  const today = currentBogotaInputValue().slice(0, 10)
+  const now = currentBogotaInputValue()
 
   return (
     <div className="space-y-5">
@@ -88,16 +84,17 @@ export function GroupFormFields({
           </Label>
           <Input
             id="finishDate"
-            type="date"
-            min={today}
+            type="datetime-local"
+            min={now}
             value={finishDate}
             onChange={(e) => onFinishDateChange(e.target.value)}
             className="border-table-line"
             disabled={disabled}
           />
           <p className="text-xs text-muted-foreground">
-            Ese día a las 23:59 el curso se finaliza solo y se emiten los certificados. Sin
-            fecha, lo finalizas tú.
+            El curso concluirá en esta fecha y se emitirán los certificados de manera
+            automática. Al dejar este campo vacío, el curso tendrá que finalizarse de manera
+            manual para emitir los certificados.
           </p>
         </div>
 
@@ -116,7 +113,7 @@ export function GroupFormFields({
             disabled={disabled}
           />
           <p className="text-xs text-muted-foreground">
-            El mismo progreso que ves en la tabla de estudiantes. 100 exige el curso completo.
+            El progreso mínimo para aprobar el curso.
           </p>
         </div>
       </div>
