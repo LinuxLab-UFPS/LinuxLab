@@ -28,7 +28,7 @@ export function GroupInviteActions({ groupId, token, onRotated }: GroupInviteAct
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
-      notify.success("Vínculo copiado al portapapeles")
+      notify.success("Vínculo de inscripción copiado")
     } catch {
       notify.error(null, "No se pudo copiar el vínculo.")
     }
@@ -51,7 +51,7 @@ export function GroupInviteActions({ groupId, token, onRotated }: GroupInviteAct
         <TooltipTrigger asChild>
           <Button type="button" variant="outline" onClick={handleCopy} disabled={!url}>
             {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-            Compartir vínculo
+            Vínculo de inscripción
           </Button>
         </TooltipTrigger>
         <TooltipContent className="max-w-xs break-all">{url || "Aún no hay vínculo"}</TooltipContent>
