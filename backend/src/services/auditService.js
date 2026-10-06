@@ -35,6 +35,8 @@ const MESSAGE_BUILDERS = {
 
   // --- Administracion ---
   teacher_registered: ({ target }) => `Registró al docente '${target}'.`,
+  teacher_request_approved: ({ target }) => `Aprobó la solicitud docente de '${target}'.`,
+  teacher_request_rejected: ({ target }) => `Rechazó la solicitud docente de '${target}'.`,
   teacher_toggled: ({ target, metadata }) =>
     `${metadata?.active ? "Activó" : "Desactivó"} al docente '${target}'.`,
 

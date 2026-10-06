@@ -17,6 +17,8 @@ const ACTION_LABELS = {
   activity_disabled: "Actividad deshabilitada",
   activity_due_extended: "Plazo extendido",
   teacher_registered: "Docente registrado",
+  teacher_request_approved: "Solicitud docente aprobada",
+  teacher_request_rejected: "Solicitud docente rechazada",
   teacher_toggled: "Estado de docente",
   group_created: "Curso creado",
   group_finished: "Curso finalizado",
@@ -48,7 +50,7 @@ const EVENT_CATEGORIES = {
     "activity_disabled",
     "activity_due_extended",
   ],
-  administracion: ["teacher_registered", "teacher_toggled"],
+  administracion: ["teacher_registered", "teacher_toggled", "teacher_request_approved", "teacher_request_rejected"],
   cursos: ["group_created", "group_archived", "group_deleted"],
   matriculas: ["student_registered", "csv_imported"],
 }

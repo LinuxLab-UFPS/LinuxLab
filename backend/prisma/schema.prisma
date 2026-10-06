@@ -87,6 +87,8 @@ enum EventType {
   activity_due_extended
   teacher_registered
   teacher_toggled
+  teacher_request_approved
+  teacher_request_rejected
   group_created
   group_finished
   group_archived
@@ -410,6 +412,35 @@ model InstructorCertificate {
   students_certified Int
   students_total     Int
   issued_at          DateTime @default(now())
+}
+
+// ════════════════════════════════════════
+// SOLICITUDES DE CUENTA DOCENTE
+// ════════════════════════════════════════
+
+enum TeacherRequestStatus {
+  pending
+  approved
+  rejected
+}
+
+/// Lo que llena un docente que pide su cuenta. Al aprobarla, el admin la
+/// convierte en un docente con el mismo registro de /admin/docentes.
+model TeacherRequest {
+  id          String               @id @default(uuid()) @db.Uuid
+  name        String               @db.VarChar(255)
+  email       String               @db.VarChar(255)
+  code        String               @db.VarChar(20)
+  department  String?              @db.VarChar(255)
+  message     String?              @db.Text
+  status      TeacherRequestStatus @default(pending)
+  reviewed_by String?              @db.Uuid
+  reviewed_at DateTime?
+  created_at  DateTime             @default(now())
+  updated_at  DateTime             @updatedAt
+
+  @@index([status, created_at])
+  @@index([email])
 }
 
 // ════════════════════════════════════════
