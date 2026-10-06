@@ -336,8 +336,11 @@ async function teacherProvisioningSummary({ teacherUserId }) {
  * 3. Destruye el entorno y cierra las matriculas (la misma limpieza del
  *    archivado): los estudiantes quedan liberados para matricularse en otro
  *    grupo y su curso se entrega por correo.
+ *
+ * `automatic` marca la finalizacion que dispara el worker al llegar la fecha
+ * de cierre del grupo; solo cambia como se lee en la bitacora.
  */
-async function finalizeGroup({ groupId, role, teacherUserId }) {
+async function finalizeGroup({ groupId, role, teacherUserId, automatic = false }) {
   return runInTransaction(async (tx) => {
     await accessService.ensureGroupAccess({ groupId, teacherUserId, role, tx })
 
@@ -390,6 +393,7 @@ async function finalizeGroup({ groupId, role, teacherUserId }) {
       target: group.name,
       metadata: {
         groupId,
+        automatic,
         certificatesIssued: certificates.length,
         eligible: summary.summary.eligibleCount,
         total: summary.summary.total,

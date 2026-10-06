@@ -41,7 +41,9 @@ const MESSAGE_BUILDERS = {
   // --- Grupos ---
   group_created: ({ target }) => `Creó el curso '${target}'.`,
   group_finished: ({ target, metadata }) =>
-    `Finalizó el curso '${target}' con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`,
+    metadata?.automatic
+      ? `El curso '${target}' se finalizó automáticamente en su fecha de cierre con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`
+      : `Finalizó el curso '${target}' con ${metadata?.certificatesIssued ?? 0} certificado(s) emitido(s).`,
   group_archived: ({ target }) => `Archivó el curso '${target}'.`,
   group_deleted: ({ target }) => `Eliminó el curso '${target}'.`,
 
