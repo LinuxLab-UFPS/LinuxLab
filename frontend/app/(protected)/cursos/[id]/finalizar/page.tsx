@@ -57,7 +57,7 @@ function FinalizePageContent() {
       notify.success("Curso finalizado", {
         description: `Se emitieron ${outcome.summary.certificatesIssued} certificado(s) y los correos están en camino.`,
       })
-      router.push(`/grupos/${id}`)
+      router.push(`/cursos/${id}`)
     },
     onError: () => {
       notify.error(null, "No se pudo finalizar el curso.")
@@ -89,7 +89,7 @@ function FinalizePageContent() {
         <p className="mb-6 text-sm text-muted-foreground">
           Solo los cursos activos se pueden finalizar, o ya pasó por ello.
         </p>
-        <Link href={`/grupos/${id}`}>
+        <Link href={`/cursos/${id}`}>
           <Button variant="outline">Volver al curso</Button>
         </Link>
       </div>
@@ -103,7 +103,7 @@ function FinalizePageContent() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <ActionButton tone="neutral" href={`/grupos/${id}`}>
+      <ActionButton tone="neutral" href={`/cursos/${id}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver al curso
       </ActionButton>
@@ -145,7 +145,7 @@ function FinalizePageContent() {
                 : `· Progreso del curso de ${preview.group.minProgress}% o más.`}
             </li>
             <li>
-              · El progreso cuenta lecturas, comprobaciones, actividades del curso y tus
+              · El progreso cuenta lecturas, comprobaciones, actividades del temario y tus
               actividades, cada una aprobada con 60 o más.
             </li>
           </ul>
@@ -232,7 +232,7 @@ function FinalizePageContent() {
       {/* Confirmación */}
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-end">
         <p className="text-xs text-muted-foreground sm:mr-auto">
-          Al finalizar se destruye el entorno Linux del grupo y los estudiantes quedan
+          Al finalizar se destruye el entorno Linux del curso y los estudiantes quedan
           liberados para matricularse en otro curso.
         </p>
         <Button

@@ -20,7 +20,7 @@ export function closingPayload(finishDate: string, minProgress: string) {
 
 /**
  * Campos del formulario de grupo (nombre, descripcion y ajustes de cierre). Lo
- * comparten la creacion (/grupos/crear) y la edicion (/grupos/[id]/editar)
+ * comparten la creacion (/cursos/crear) y la edicion (/cursos/[id]/editar)
  * para que ambas pantallas pidan exactamente lo mismo con el mismo aspecto.
  */
 export function GroupFormFields({
@@ -50,7 +50,7 @@ export function GroupFormFields({
     <div className="space-y-5">
       <div className="space-y-2">
         <Label htmlFor="groupName" className="text-muted-foreground">
-          Nombre del grupo
+          Nombre del curso
         </Label>
         <Input
           id="groupName"
@@ -71,7 +71,7 @@ export function GroupFormFields({
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           rows={4}
-          placeholder="Breve descripción del grupo…"
+          placeholder="Breve descripción del curso…"
           className="resize-none border-table-line"
           disabled={disabled}
         />

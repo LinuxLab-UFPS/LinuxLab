@@ -44,7 +44,7 @@ function ActivityDetail({
   const topic = getTopic(activity.topicNumber)
   const hasEntregas = submissions.length > 0 || manualSubmissions.length > 0
   const studentDetailHref = (studentId: string) =>
-    `/grupos/${groupId}/actividades/${activity.id}/estudiantes/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
+    `/cursos/${groupId}/actividades/${activity.id}/estudiantes/${studentId}${backTab === "calificaciones" ? "?from=calificaciones" : ""}`
   const manualRows = manualSubmissions.map((sub) => ({
     studentId: sub.studentId,
     studentName: sub.studentName,
@@ -69,7 +69,7 @@ function ActivityDetail({
   }))
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <BackButton fallback={`/grupos/${groupId}?tab=${backTab}`} />
+      <BackButton fallback={`/cursos/${groupId}?tab=${backTab}`} />
 
       <div className="grid gap-6 mt-9 lg:grid-cols-[1fr_1.2fr]">
         {/* Columna izquierda: detalle completo */}
@@ -92,7 +92,7 @@ function ActivityDetail({
                 currentDueDate={activity.dueDate ?? null}
               />
             ) : (
-              <ActionButton tone="primary" href={`/grupos/${groupId}/actividades/crear?edit=${activity.id}`}>
+              <ActionButton tone="primary" href={`/cursos/${groupId}/actividades/crear?edit=${activity.id}`}>
                 Editar
               </ActionButton>
             )}
@@ -210,7 +210,7 @@ export default async function ActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           Esta actividad no existe o no pertenece al curso.
         </p>
-        <BackButton fallback={`/grupos/${id}?tab=${backTab}`} label="Volver al curso" />
+        <BackButton fallback={`/cursos/${id}?tab=${backTab}`} label="Volver al curso" />
       </div>
     )
   }

@@ -24,7 +24,7 @@ export function TeacherDashboard() {
       <div className="mb-8">
         <TituloDeSeccion prefijo="Bienvenido, ">{user?.name ?? "Docente"}</TituloDeSeccion>
         <p className="mt-4 max-w-xl text-muted-foreground">
-          Gestiona tus grupos, revisa el progreso de tus estudiantes y sus actividades.
+          Gestiona tus cursos, revisa el progreso de tus estudiantes y sus actividades.
         </p>
       </div>
 

@@ -19,9 +19,9 @@ function NoGroupCard({ email }: { email?: string | null }) {
       <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-xl bg-amber-500/10">
         <Users className="h-8 w-8 text-amber-600" />
       </div>
-      <h1 className="text-2xl font-bold text-foreground">Aún no estás en ningún grupo</h1>
+      <h1 className="text-2xl font-bold text-foreground">Aún no estás en ningún curso</h1>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        Tu cuenta está activa, pero todavía no perteneces a ningún grupo de laboratorio. Cuando tu docente te matricule, aquí verás tus contenidos, actividades y calificaciones.
+        Tu cuenta está activa, pero todavía no perteneces a ningún curso. Cuando tu docente te matricule, aquí verás tus contenidos, actividades y calificaciones.
       </p>
       {email ? <p className="mt-3 text-xs text-muted-foreground">{email}</p> : null}
       <p className="mt-4 text-xs text-muted-foreground">Si crees que es un error, contacta a tu docente o al administrador.</p>

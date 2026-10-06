@@ -16,8 +16,8 @@ export default async function StudentActivityDetailPage({
   const sp = await searchParams
   const backHref =
     sp.from === "calificaciones"
-      ? `/grupos/${id}/actividades/${activityId}?from=calificaciones`
-      : `/grupos/${id}/actividades/${activityId}`
+      ? `/cursos/${id}/actividades/${activityId}?from=calificaciones`
+      : `/cursos/${id}/actividades/${activityId}`
 
   if (user.role === "student" && user.id !== studentId) {
     return (
@@ -41,7 +41,7 @@ export default async function StudentActivityDetailPage({
         <p className="mb-6 text-sm text-muted-foreground">
           No se encontró la entrega de este estudiante.
         </p>
-        <BackButton fallback={`/grupos/${id}/actividades/${activityId}`} label="Volver a la actividad" />
+        <BackButton fallback={`/cursos/${id}/actividades/${activityId}`} label="Volver a la actividad" />
       </div>
     )
   }

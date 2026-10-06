@@ -204,7 +204,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Link
-                          href={`/grupos/${groupId}/actividades/${a.id}?from=calificaciones`}
+                          href={`/cursos/${groupId}/actividades/${a.id}?from=calificaciones`}
                           className="block w-full px-1 py-2 text-center text-[11px] font-semibold leading-tight text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
                         >
                           <span className="line-clamp-2 break-words normal-case">{a.title}</span>
@@ -288,7 +288,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>
-                        Actividades fijas del curso: {topicActivities.done[student.id] ?? 0}/
+                        Actividades del temario: {topicActivities.done[student.id] ?? 0}/
                         {topicActivities.total} aprobadas
                       </p>
                     </TooltipContent>

@@ -48,9 +48,9 @@ function EditGroupContent() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <ShieldAlert className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Grupo no encontrado</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          Puede que el grupo ya no exista o que no tengas acceso a él.
+          Puede que el curso ya no exista o que no tengas acceso a él.
         </p>
         <Link href="/inicio">
           <Button variant="outline">Volver al listado</Button>
@@ -72,7 +72,7 @@ function EditGroupContent() {
           Solo los cursos activos permiten cambiar su nombre y descripción: un curso
           finalizado o archivado conserva sus datos tal como se cerró.
         </p>
-        <Link href={`/grupos/${id}`}>
+        <Link href={`/cursos/${id}`}>
           <Button variant="outline">Volver al curso</Button>
         </Link>
       </div>
@@ -99,19 +99,19 @@ function EditGroupForm({ group }: { group: Group }) {
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.groups })
       queryClient.invalidateQueries({ queryKey: queryKeys.group(group.id) })
-      notify.success("Grupo actualizado", {
+      notify.success("Curso actualizado", {
         description: "Los cambios ya son visibles para tus estudiantes.",
       })
-      router.push(`/grupos/${updated.id}`)
+      router.push(`/cursos/${updated.id}`)
     },
     onError: (err) => {
-      notify.error(err, "No se pudo guardar la información del grupo.")
+      notify.error(err, "No se pudo guardar la información del curso.")
     },
   })
 
   const handleSave = () => {
     if (!name.trim()) {
-      notify.error(null, "El nombre del grupo es requerido.")
+      notify.error(null, "El nombre del curso es requerido.")
       return
     }
     const progressValue = Number(minProgress)
@@ -124,7 +124,7 @@ function EditGroupForm({ group }: { group: Group }) {
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <ActionButton tone="neutral" href={`/grupos/${group.id}`}>
+      <ActionButton tone="neutral" href={`/cursos/${group.id}`}>
         <ArrowLeft className="h-4 w-4" />
         Volver al curso
       </ActionButton>
@@ -133,10 +133,10 @@ function EditGroupForm({ group }: { group: Group }) {
         <div className="min-w-0">
           <h1 className="flex items-center gap-3 text-2xl font-semibold text-foreground">
             <Pencil className="h-6 w-6 text-primary" />
-            Editar grupo
+            Editar curso
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-            Actualiza el nombre y la descripción con la que tus estudiantes ven el grupo, y cuándo y cómo se cierra el curso.
+            Actualiza el nombre y la descripción con la que tus estudiantes ven el curso, y cuándo y cómo se cierra.
           </p>
 
           <div className="mt-8">

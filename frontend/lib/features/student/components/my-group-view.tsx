@@ -19,8 +19,8 @@ export function MyGroupView({ grades }: { grades: MyGrades }) {
       {!group ? (
         <EmptyState
           icon={Users}
-          title="Sin grupo de laboratorio"
-          description="No estás inscrito en ningún grupo activo. Cuando un docente te matricule, aquí verás tu grupo."
+          title="Sin curso activo"
+          description="No estás inscrito en ningún curso activo. Cuando un docente te matricule, aquí verás tu curso."
         />
       ) : (
         <>

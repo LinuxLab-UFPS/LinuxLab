@@ -112,10 +112,10 @@ export function SiteHeader({
           />
 
           <Link
-            href="/estudiante/grupo"
+            href="/estudiante/curso"
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              pathname.startsWith("/estudiante/grupo")
+              pathname.startsWith("/estudiante/curso")
                 ? NAV_ACTIVE
                 : NAV_IDLE,
             )}
@@ -133,7 +133,7 @@ export function SiteHeader({
               { href: "/terminal", label: "Terminal", icon: SquareTerminal, activo: pathname === "/terminal" },
               { href: "/actividades", label: "Actividades", icon: Target, activo: pathname.startsWith("/actividades") },
               { href: "/simuladores", label: "Simuladores", icon: MonitorPlay, activo: pathname.startsWith("/simuladores") },
-              { href: "/estudiante/grupo", label: "Rendimiento", icon: BarChart3, activo: pathname.startsWith("/estudiante/grupo") },
+              { href: "/estudiante/curso", label: "Rendimiento", icon: BarChart3, activo: pathname.startsWith("/estudiante/curso") },
             ]}
           />
           {/* Search opens the modal palette. */}

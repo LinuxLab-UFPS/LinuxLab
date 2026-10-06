@@ -27,7 +27,7 @@ const IDLE = "text-white/60 hover:bg-primary/15 hover:text-primary"
 const ACTIVO = "bg-primary/15 text-primary"
 
 const NAV = [
-  { label: "Grupos", href: "/inicio", icon: BookOpen },
+  { label: "Cursos", href: "/inicio", icon: BookOpen },
   { label: "Contenidos", href: "/curso?tema=bienvenida&sub=roadmap", icon: Map },
   { label: "Terminal", href: "/terminal", icon: TerminalSquare },
 ]

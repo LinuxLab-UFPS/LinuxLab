@@ -133,7 +133,7 @@ export function GraficaNotas({
           <Line
             type="monotone"
             dataKey="grupo"
-            name="Promedio del grupo"
+            name="Promedio del curso"
             stroke="var(--muted-foreground)"
             strokeWidth={2}
             strokeDasharray="4 4"

@@ -77,7 +77,7 @@ function GroupDetailContent() {
     setExporting(true)
     try {
       await downloadExcel({
-        fileName: `calificaciones-${slugify(group?.name ?? "grupo")}.xlsx`,
+        fileName: `calificaciones-${slugify(group?.name ?? "curso")}.xlsx`,
         sheets: [buildGradebookSheet(gradebookQuery.data)],
       })
       notify.success("Excel generado", {
@@ -103,7 +103,7 @@ function GroupDetailContent() {
          aparecia con el nombre y el correo vacios hasta el siguiente refresco. */
       if (!outcome.enrolled) {
         setAdding(false)
-        notify.info("Ese estudiante ya estaba en el grupo")
+        notify.info("Ese estudiante ya estaba en el curso")
         return
       }
       queryClient.setQueryData(queryKeys.groupStudents(id), (prev: EnrollmentStudent[] = []) => [
@@ -146,12 +146,12 @@ function GroupDetailContent() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/60">
           <BookOpen className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h2 className="mb-1 text-base font-medium text-foreground">Grupo no encontrado</h2>
+        <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Este grupo no existe o aun no tiene datos."}
+          {error instanceof Error ? error.message : "Este curso no existe o aun no tiene datos."}
         </p>
         <Link href="/inicio">
-          <Button variant="outline">Volver a Grupos</Button>
+          <Button variant="outline">Volver a Cursos</Button>
         </Link>
       </div>
     )
@@ -184,7 +184,7 @@ function GroupDetailContent() {
           {group.status === "active" && (
             <ActionButton
               tone="neutral"
-              href={`/grupos/${id}/editar`}
+              href={`/cursos/${id}/editar`}
               className="ml-auto border border-table-line"
             >
               <Pencil className="h-4 w-4" />
@@ -212,7 +212,7 @@ function GroupDetailContent() {
           value={tab}
           onChange={(v) => {
             setTab(v as Tab)
-            router.push(`/grupos/${id}?tab=${v}`, { scroll: false })
+            router.push(`/cursos/${id}?tab=${v}`, { scroll: false })
           }}
           tabs={[
             {
@@ -255,12 +255,12 @@ function GroupDetailContent() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
         <h2 className="text-base font-semibold text-foreground">
           {tab === "estudiantes"
-            ? `Estudiantes del grupo (${group.studentCount})`
+            ? `Estudiantes del curso (${group.studentCount})`
             : tab === "actividades"
-              ? `Actividades del grupo (${group.activityCount})`
+              ? `Actividades del curso (${group.activityCount})`
               : tab === "bitacora"
-                ? "Bitácora del grupo"
-                : "Calificaciones del grupo"}
+                ? "Bitácora del curso"
+                : "Calificaciones del curso"}
         </h2>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -290,7 +290,7 @@ function GroupDetailContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="bank">Del curso</SelectItem>
+                  <SelectItem value="bank">Del temario</SelectItem>
                   <SelectItem value="teacher">Creadas por mí</SelectItem>
                 </SelectContent>
               </Select>
@@ -305,7 +305,7 @@ function GroupDetailContent() {
                 Agregar estudiante
               </ActionButton>
             ) : tab === "actividades" ? (
-              <ActionButton tone="primary" href={`/grupos/${id}/actividades/crear`}>
+              <ActionButton tone="primary" href={`/cursos/${id}/actividades/crear`}>
                 <Plus className="h-4 w-4" />
                 Agregar actividad
               </ActionButton>
@@ -350,8 +350,8 @@ function GroupDetailContent() {
       ) : tab === "actividades" ? (
         <div>
           <p className="mb-3 text-sm text-muted-foreground">
-            Las actividades del curso vienen con el temario y son las mismas en todos los
-            grupos: no se editan ni se deshabilitan. Aquí solo puedes modificar las que crees tú.
+            Las actividades del temario son las mismas en todos los cursos: no se editan ni se
+            deshabilitan. Aquí solo puedes modificar las que crees tú.
           </p>
           {activitiesQuery.isLoading ? (
             <SkeletonScreen>

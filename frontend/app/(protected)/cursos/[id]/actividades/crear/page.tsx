@@ -145,7 +145,7 @@ function NewActivityPage() {
       setPublishing(false)
       if (updated.ok) {
         refreshed()
-        router.push(`/grupos/${groupId}/actividades/${editId}`)
+        router.push(`/cursos/${groupId}/actividades/${editId}`)
       }
     } else {
       const created = await notifyPromise(createActivity(groupId, input), {
@@ -156,7 +156,7 @@ function NewActivityPage() {
       setPublishing(false)
       if (created.ok) {
         refreshed()
-        router.push(`/grupos/${groupId}`)
+        router.push(`/cursos/${groupId}`)
       }
     }
   }
@@ -178,7 +178,7 @@ function NewActivityPage() {
     <div className="mx-auto max-w-3xl px-6 py-8">
       <ActionButton
         tone="neutral"
-        href={editing ? `/grupos/${groupId}/actividades/${editId}` : `/grupos/${groupId}?tab=actividades`}
+        href={editing ? `/cursos/${groupId}/actividades/${editId}` : `/cursos/${groupId}?tab=actividades`}
       >
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -257,7 +257,7 @@ function NewActivityPage() {
             Anterior
           </ActionButton>
         )}
-        <ActionButton tone="neutral" href={`/grupos/${groupId}`} className="sm:ml-auto">
+        <ActionButton tone="neutral" href={`/cursos/${groupId}`} className="sm:ml-auto">
           Cancelar
         </ActionButton>
         {step < 2 ? (
