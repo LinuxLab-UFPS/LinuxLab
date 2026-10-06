@@ -142,7 +142,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                 colSpan={orderedActivities.length}
                 className="border-b border-r border-table-line bg-table-surface px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                Actividades del docente
+                Tus actividades
               </th>
               {/* Las del temario, en una sola columna. No son catorce columnas
                   porque esta tabla ya crece a lo ancho con cada actividad que
@@ -157,11 +157,7 @@ export function GradebookTable({ gradebook, groupId, students, onStudentClick }:
                     <span className="cursor-default">Actividades del temario</span>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
-                    <p>
-                      Promedio de las actividades del temario, que son las mismas en todos
-                      los cursos. Cuentan para la definitiva junto con las actividades del
-                      docente.
-                    </p>
+                    <p>Promedio de las actividades base, iguales en todos los cursos.</p>
                   </TooltipContent>
                 </Tooltip>
               </th>
