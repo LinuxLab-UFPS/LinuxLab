@@ -291,7 +291,7 @@ function GroupDetailContent() {
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="bank">Del temario</SelectItem>
-                  <SelectItem value="teacher">Creadas por mí</SelectItem>
+                  <SelectItem value="teacher">Tus actividades</SelectItem>
                 </SelectContent>
               </Select>
             </>
