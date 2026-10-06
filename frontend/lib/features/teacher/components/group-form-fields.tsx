@@ -92,7 +92,7 @@ export function GroupFormFields({
             disabled={disabled}
           />
           <p className="text-xs text-muted-foreground">
-            El curso finaliza automáticamente en esta fecha. Para finalizarlo manualmente, deje
+            El curso finalizará automáticamente en esta fecha. Para finalizarlo manualmente, deje
             este campo vacío.
           </p>
         </div>
