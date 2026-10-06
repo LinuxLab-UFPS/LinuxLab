@@ -94,7 +94,7 @@ export function GroupActivities({
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead>Titulo</TableHead>
+              <TableHead>Título</TableHead>
               <TableHead className="w-44">Directorio de trabajo</TableHead>
               <TableHead className="w-40">Tema</TableHead>
               <TableHead className="w-40">Evaluación</TableHead>

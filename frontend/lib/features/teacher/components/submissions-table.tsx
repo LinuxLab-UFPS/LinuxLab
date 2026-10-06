@@ -28,7 +28,7 @@ interface SubmissionsTableProps {
 export function SubmissionsTable({
   variant,
   rows,
-  emptyMessage = "Aun no hay entregas registradas.",
+  emptyMessage = "Aún no hay entregas registradas.",
 }: SubmissionsTableProps) {
   const centerHeader = variant === "manual" ? "Estado" : "Intentos"
 

@@ -148,7 +148,7 @@ function GroupDetailContent() {
         </div>
         <h2 className="mb-1 text-base font-medium text-foreground">Curso no encontrado</h2>
         <p className="mb-6 text-sm text-muted-foreground">
-          {error instanceof Error ? error.message : "Este curso no existe o aun no tiene datos."}
+          {error instanceof Error ? error.message : "Este curso no existe o aún no tiene datos."}
         </p>
         <Link href="/inicio">
           <Button variant="outline">Volver a Cursos</Button>

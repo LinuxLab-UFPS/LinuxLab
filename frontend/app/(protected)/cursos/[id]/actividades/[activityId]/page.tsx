@@ -105,7 +105,7 @@ function ActivityDetail({
               <StatementDialog title={activity.title} statement={statement} />
             </DetailRow>
             <DetailRow label="Modalidad">
-              {activity.evaluationType === "manual" ? "Revision manual" : "Autoevaluacion"}
+              {activity.evaluationType === "manual" ? "Revisión manual" : "Autoevaluación"}
             </DetailRow>
             <DetailRow label="Tipo de actividad">
               {activity.activityType === "quiz" ? "Quiz" : "Taller"}
@@ -113,7 +113,7 @@ function ActivityDetail({
             <DetailRow label="Dificultad">
               {activity.difficulty ? DIFFICULTY_LABEL[activity.difficulty] : "—"}
             </DetailRow>
-            <DetailRow label="Puntuacion">{activity.maxScore} pts</DetailRow>
+            <DetailRow label="Puntuación">{activity.maxScore} pts</DetailRow>
             <DetailRow label="Fecha de cierre">
               {activity.dueDate ? formatBogotaDateTime(activity.dueDate) : "Sin fecha"}
             </DetailRow>
