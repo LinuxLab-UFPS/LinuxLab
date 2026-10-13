@@ -24,8 +24,10 @@
 		# recomienda la propia auditoria; se sube cuando lleve tiempo estable.
 		Strict-Transport-Security "max-age=86400"
 
-		# El laboratorio no se embebe en ningun sitio.
-		X-Frame-Options "DENY"
+		# El laboratorio no se embebe en ningun sitio ajeno. `SAMEORIGIN` y no
+		# `DENY` porque los simuladores son paginas propias que se muestran
+		# dentro de un iframe; con `DENY` el navegador se niega a cargarlos.
+		X-Frame-Options "SAMEORIGIN"
 
 		# Nada de adivinar el tipo de un recurso por su contenido.
 		X-Content-Type-Options "nosniff"
@@ -45,7 +47,7 @@
 		# Solo informa, todavia no bloquea. Next inyecta scripts y estilos en
 		# linea para hidratar, de modo que una politica estricta sin nonces
 		# tumba la aplicacion. Se observa que reporta antes de imponerla.
-		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
 
 		# El servidor no anuncia con que esta hecho.
 		-Server
