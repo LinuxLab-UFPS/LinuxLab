@@ -291,8 +291,9 @@ aplicación en el servidor de la universidad.
 1. Genera `frontend/.env.local` y la configuración del backend con los secrets del
    repositorio.
 2. Instala la clave SSH de despliegue.
-3. Ejecuta [deploy/update.sh](deploy/update.sh), que construye las tres imágenes,
-   las empaqueta y las transfiere al servidor.
+3. Ejecuta [deploy/update.sh](deploy/update.sh), que construye las tres imágenes
+  propias, prepara la imagen de SeaweedFS, las empaqueta y las transfiere al
+  servidor.
 4. En el servidor, [deploy/update-server.sh](deploy/update-server.sh) carga las
    imágenes, recrea los contenedores conservando los volúmenes, espera a que el
    backend responda y carga las semillas.
@@ -301,6 +302,7 @@ aplicación en el servidor de la universidad.
 
 - `HOST`, `SSH_PORT`, `PORT_0`, `PORT_1` y `DEPLOY_SSH_KEY`
 - `DB_PASSWORD`, `DATABASE_URL` y `JWT_SECRET`
+- `S3_ACCESS_KEY_ID` y `S3_SECRET_ACCESS_KEY`
 - `FRONTEND_URL`, `FIREBASE_*`, `EMAIL_FROM_*` y `SMTP_*`
 - `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_FIREBASE_*` y `NEXT_PUBLIC_VIDEO_BASE_URL`
 

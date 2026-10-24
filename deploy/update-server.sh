@@ -23,7 +23,7 @@ PROJECT="linuxlab"
 COMPOSE="-p $PROJECT -f $REPO/deploy/compose.podman.yml"
 INTERNAL_NET="linuxlab_internal"
 LAB_NET="linuxlab_lab"
-IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno)
+IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs)
 
 SKIP_LOAD=false
 SKIP_SEEDS=false
@@ -81,7 +81,9 @@ command -v podman-compose >/dev/null 2>&1 || die "podman-compose no esta instala
 # Red de seguridad: un env incompleto/roto no debe llegar al down/up.
 BACKEND_ENV="$REPO/backend/.env"
 [ -f "$BACKEND_ENV" ] || die "No existe $BACKEND_ENV. Sin el env del backend no se aplica nada (crealo desde deploy/backend.env.example)."
-for key in DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL; do
+for key in DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL \
+  S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY \
+  AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
   grep -qE "^$key=.+" "$BACKEND_ENV" || die "backend/.env sin la clave requerida: $key (corrige el archivo o usa update.sh --backend-env)."
 done
 log "backend/.env OK (claves requeridas presentes)."
@@ -98,7 +100,7 @@ else
   esac
 fi
 
-# ---- 2. Verificar los 3 tags -----------------------------------------------
+# ---- 2. Verificar las imagenes ---------------------------------------------
 for img in "${IMAGES[@]}"; do
   if podman image exists "$img:latest"; then
     log "Imagen $img:latest OK"

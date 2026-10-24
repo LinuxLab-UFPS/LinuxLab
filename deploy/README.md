@@ -9,7 +9,8 @@ y se cargan con `podman load`. El servidor nunca compila.
 > **Solo para la primera instalación.** Una vez levantado, cada cambio se
 > aplica con un solo script (ver la sección siguiente).
 
-Siempre se envía el **paquete completo** de las 3 imágenes, y el servidor hace
+Siempre se envía el **paquete completo** de las 4 imágenes (tres propias y
+SeaweedFS), y el servidor hace
 `down`/`up` para aplicar: baja lo existente (los volúmenes persisten) y recrea
 todo con las imágenes recién cargadas.
 
@@ -40,7 +41,8 @@ comando** desde la máquina de desarrollo:
 bash deploy/update.sh
 ```
 
-Ese script hace todo vía SSH (construye y empaqueta las imágenes, las
+Ese script hace todo vía SSH (construye las imágenes propias, prepara
+SeaweedFS y empaqueta todas, las
 transfiere, hace `git pull` en el servidor y aplica `down`/`up`) **sin sembrar,
 sin crear admin y sin tocar la configuración**. Lee la configuración de
 `deploy/.deploy.env` (gitignoreado: host, puertos, `DB_PASSWORD`); cualquier
@@ -82,13 +84,29 @@ seguridad: un env roto jamás se aplica). **Restricciones**:
 genera `frontend/.env.local` y `backend.env` desde los secrets, instala la
 deploy key y ejecuta `deploy/update.sh --key ~/.ssh/deploy_key --backend-env backend.env`.
 
-Secretos/variables a crear en **Settings → Secrets and variables → Actions**:
+Secretos a crear en el entorno **`deploy`**, desde
+**Settings → Secrets and variables → Actions → Secrets**. El workflow actual
+lee todos estos valores mediante `secrets.*`:
 
-- **Variables**: `HOST` (usuario@servidor), `SSH_PORT`, `PORT_0`, `PORT_1`.
-- **Secrets**: `DEPLOY_SSH_KEY` (clave privada del servidor), `DB_PASSWORD`,
-  `DATABASE_URL`, `JWT_SECRET`, `FIREBASE_*` (6, del `backend/.env` del
-  servidor, la private key sin comillas), `NEXT_PUBLIC_BACKEND_URL`,
-  `NEXT_PUBLIC_VIDEO_BASE_URL` (opcional) y los 8 `NEXT_PUBLIC_FIREBASE_*`.
+- **Conexión al servidor:** `HOST`, `SSH_PORT`, `DEPLOY_SSH_KEY`, `PORT_0`,
+  `PORT_1`.
+- **Base y sesión:** `DB_PASSWORD`, `DATABASE_URL`, `JWT_SECRET`.
+- **Firebase backend:** `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY_ID`,
+  `FIREBASE_PRIVATE_KEY` (sin modificar sus saltos de línea),
+  `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID`,
+  `FIREBASE_CLIENT_CERT_URL`, `FIREBASE_STORAGE_BUCKET`.
+- **SeaweedFS S3:** `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
+- **Frontend:** `FRONTEND_URL`, `NEXT_PUBLIC_BACKEND_URL`,
+  `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`,
+  `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`,
+  `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`,
+  `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`.
+- **Correo:** `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME`, `SMTP_HOST`,
+  `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`.
+- **Opcional:** `NEXT_PUBLIC_VIDEO_BASE_URL`.
+
+No se requieren secretos `MINIO_*`, `AIStor`, `QUAY_*` ni credenciales de
+registro privado.
 - Los valores se copian una sola vez: `ssh usuario@servidor "cat ~/LinuxLab/backend/.env"`
   (backend) y el `frontend/.env.local` local (frontend).
 - La deploy key puede ser el PEM personal o un par dedicado solo para CI
@@ -137,11 +155,12 @@ Secretos/variables a crear en **Settings → Secrets and variables → Actions**
 | Servicio | Límite |
 |---|---|
 | `entorno` | 448 MB |
-| `backend` | 192 MB |
-| `postgres` | 192 MB |
+| `backend` | 160 MB |
+| `postgres` | 160 MB |
 | `frontend` | 96 MB |
-| `proxy` | 64 MB |
-| **Total** | **992 MB** (margen ~32 MB para el host) |
+| `proxy` | 32 MB |
+| `seaweedfs` | 64 MB |
+| **Total** | **960 MB** (margen ~64 MB para el host) |
 
 ## Operación diaria
 

@@ -3,7 +3,8 @@
 # LinuxLab - actualizar el despliegue en un solo paso.
 #
 # Corre en la maquina de desarrollo (y despues en GitHub Actions): construye
-# las imagenes, las empaqueta, las transfiere al servidor y aplica el cambio
+# las imagenes propias, descarga las imagenes de MinIO, las empaqueta, las
+# transfiere al servidor y aplica el cambio
 # (down/up) SIN sembrar ni crear admin. No toca la configuracion del servidor
 # salvo que se pase --backend-env.
 #
@@ -29,7 +30,11 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$REPO/deploy/.deploy.env"
 TARBALL="$REPO/imagenes.tar.gz"
-REQUIRED_BACKEND_KEYS=(DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL)
+REQUIRED_BACKEND_KEYS=(
+  DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL
+  S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY
+  AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
+)
 
 HOST="${HOST:-}"
 SSH_PORT="${SSH_PORT:-22}"
@@ -151,9 +156,10 @@ log "Construyendo imagenes (frontend, backend, entorno)..."
 run_local "docker build -q -t linuxlab-frontend -f $REPO/frontend/Dockerfile $REPO/frontend" && log "  OK: linuxlab-frontend"
 run_local "docker build -q -t linuxlab-backend  -f $REPO/backend/Dockerfile  $REPO/backend"   && log "  OK: linuxlab-backend"
 run_local "docker build -q -t linuxlab-entorno  -f $REPO/entorno/Dockerfile  $REPO/entorno"   && log "  OK: linuxlab-entorno"
+run_local "docker pull chrislusf/seaweedfs:latest" && log "  OK: chrislusf/seaweedfs:latest"
 
 log "Empaquetando imagenes -> $TARBALL"
-run_local "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > '$TARBALL'"
+run_local "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs:latest | gzip > '$TARBALL'"
 log "  Paquete listo ($(ls -lh "$TARBALL" | awk '{print $5}'))."
 
 # ---- 4. Transferir ----------------------------------------------------------

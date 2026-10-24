@@ -50,6 +50,11 @@ imagenes.tar.gz
 # Configuracion local del despliegue (credenciales del servidor)
 deploy/.deploy.env
 
+# Licencia privada de MinIO AIStor
+deploy/secrets/*
+!deploy/secrets/.gitkeep
+*.license
+
 # Claves privadas (nunca al repo)
 *.pem
 *_rsa

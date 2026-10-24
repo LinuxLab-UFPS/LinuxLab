@@ -3,8 +3,8 @@
 # LinuxLab - construir y empaquetar las imagenes (en la maquina de desarrollo).
 #
 # El servidor NUNCA compila (no tiene RAM para npm ci + next build): aqui se
-# construyen las 3 imagenes y se empaquetan en imagenes.tar.gz, listas para
-# `podman load` en el servidor.
+# construyen las 3 imagenes propias, se descarga SeaweedFS y todo
+# se empaqueta en imagenes.tar.gz, listo para `podman load` en el servidor.
 #
 # Uso:
 #   bash deploy/build-local.sh                        # build + empaquetar local
@@ -82,10 +82,14 @@ run "docker build -q -t linuxlab-frontend -f $REPO/frontend/Dockerfile $REPO/fro
 run "docker build -q -t linuxlab-backend  -f $REPO/backend/Dockerfile  $REPO/backend"   && log "  OK: linuxlab-backend"
 run "docker build -q -t linuxlab-entorno  -f $REPO/entorno/Dockerfile  $REPO/entorno"   && log "  OK: linuxlab-entorno"
 
+# ---- Imagenes de MinIO -----------------------------------------------------
+log "Descargando imagenes de MinIO..."
+run "docker pull chrislusf/seaweedfs:latest" && log "  OK: chrislusf/seaweedfs:latest"
+
 # ---- Empaquetar ------------------------------------------------------------
 TARBALL="$REPO/imagenes.tar.gz"
 log "Empaquetando imagenes -> $TARBALL"
-run "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > '$TARBALL'"
+run "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs:latest | gzip > '$TARBALL'"
 log "  Paquete listo ($(ls -lh "$TARBALL" | awk '{print $5}'))."
 
 # ---- Transferir (opcional) -------------------------------------------------

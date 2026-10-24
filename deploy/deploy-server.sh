@@ -26,7 +26,7 @@ PROJECT="linuxlab"
 COMPOSE="-p $PROJECT -f $REPO/deploy/compose.podman.yml"
 INTERNAL_NET="linuxlab_internal"
 LAB_NET="linuxlab_lab"
-IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno)
+IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs)
 
 ADMIN_EMAIL=""
 ADMIN_NAME=""
@@ -84,6 +84,12 @@ if [ ! -f "$BACKEND_ENV" ]; then
   run "sed -i 's|^JWT_SECRET=.*|JWT_SECRET=$JWT|' $BACKEND_ENV"
 fi
 
+for key in DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL \
+  S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY \
+  AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  grep -qE "^$key=.+" "$BACKEND_ENV" || die "backend/.env sin la clave requerida: $key"
+done
+
 if grep -qE "^FIREBASE_PROJECT_ID=(\s*)$|^FIREBASE_CLIENT_EMAIL=(\s*)$" "$BACKEND_ENV"; then
   warn "backend/.env tiene Firebase vacio; sin credenciales el login no funcionara."
   if ! $DRY_RUN; then
@@ -108,7 +114,7 @@ else
   esac
 fi
 
-# ---- 3. Verificar los 3 tags -----------------------------------------------
+# ---- 3. Verificar las imagenes ---------------------------------------------
 for img in "${IMAGES[@]}"; do
   if podman image exists "$img:latest"; then
     log "Imagen $img:latest OK"
