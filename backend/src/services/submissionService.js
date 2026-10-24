@@ -91,10 +91,32 @@ async function createSubmission(studentUserId, groupActivityId) {
   )
   const zipBuffer = Buffer.from(zipB64, "base64")
 
-  await storage.putObject(zipPath, zipBuffer, "application/zip", {
-    studentid: studentUserId,
-    groupactivityid: groupActivityId,
-  })
+  try {
+    await storage.putObject(zipPath, zipBuffer, "application/zip", {
+      studentid: studentUserId,
+      groupactivityid: groupActivityId,
+    })
+    logger.info({
+      storageProvider: "seaweedfs",
+      storageBucket: process.env.S3_BUCKET || "manual-submissions",
+      storagePath: zipPath,
+      bytes: zipBuffer.length,
+      submissionId,
+      groupActivityId,
+      studentUserId,
+    }, "Submission archive stored")
+  } catch (error) {
+    logger.error({
+      storageProvider: "seaweedfs",
+      storagePath: zipPath,
+      bytes: zipBuffer.length,
+      submissionId,
+      groupActivityId,
+      studentUserId,
+      err: error,
+    }, "Submission archive storage failed")
+    throw error
+  }
 
   await sshClient.execCommand(`rm ${remoteTmp}`)
 
