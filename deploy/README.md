@@ -84,14 +84,29 @@ seguridad: un env roto jamás se aplica). **Restricciones**:
 genera `frontend/.env.local` y `backend.env` desde los secrets, instala la
 deploy key y ejecuta `deploy/update.sh --key ~/.ssh/deploy_key --backend-env backend.env`.
 
-Secretos/variables a crear en **Settings → Secrets and variables → Actions**:
+Secretos a crear en el entorno **`deploy`**, desde
+**Settings → Secrets and variables → Actions → Secrets**. El workflow actual
+lee todos estos valores mediante `secrets.*`:
 
-- **Variables**: `HOST` (usuario@servidor), `SSH_PORT`, `PORT_0`, `PORT_1`.
-- **Secrets**: `DEPLOY_SSH_KEY` (clave privada del servidor), `DB_PASSWORD`,
-  `DATABASE_URL`, `JWT_SECRET`, `FIREBASE_*` (6, del `backend/.env` del
-  servidor, la private key sin comillas), `S3_ACCESS_KEY_ID`,
-  `S3_SECRET_ACCESS_KEY`, `NEXT_PUBLIC_BACKEND_URL`,
-  `NEXT_PUBLIC_VIDEO_BASE_URL` (opcional) y los 8 `NEXT_PUBLIC_FIREBASE_*`.
+- **Conexión al servidor:** `HOST`, `SSH_PORT`, `DEPLOY_SSH_KEY`, `PORT_0`,
+  `PORT_1`.
+- **Base y sesión:** `DB_PASSWORD`, `DATABASE_URL`, `JWT_SECRET`.
+- **Firebase backend:** `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY_ID`,
+  `FIREBASE_PRIVATE_KEY` (sin modificar sus saltos de línea),
+  `FIREBASE_CLIENT_EMAIL`, `FIREBASE_CLIENT_ID`,
+  `FIREBASE_CLIENT_CERT_URL`, `FIREBASE_STORAGE_BUCKET`.
+- **SeaweedFS S3:** `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`.
+- **Frontend:** `FRONTEND_URL`, `NEXT_PUBLIC_BACKEND_URL`,
+  `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`,
+  `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`,
+  `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`,
+  `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID`.
+- **Correo:** `EMAIL_FROM_ADDRESS`, `EMAIL_FROM_NAME`, `SMTP_HOST`,
+  `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`.
+- **Opcional:** `NEXT_PUBLIC_VIDEO_BASE_URL`.
+
+No se requieren secretos `MINIO_*`, `AIStor`, `QUAY_*` ni credenciales de
+registro privado.
 - Los valores se copian una sola vez: `ssh usuario@servidor "cat ~/LinuxLab/backend/.env"`
   (backend) y el `frontend/.env.local` local (frontend).
 - La deploy key puede ser el PEM personal o un par dedicado solo para CI
