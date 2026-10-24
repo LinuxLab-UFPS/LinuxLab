@@ -41,8 +41,11 @@ const downloadFile = asyncHandler(async (req, res) => {
 })
 
 const downloadSubmission = asyncHandler(async (req, res) => {
-  const url = await submissionService.getDownloadUrl(req.params.id, req.user.id, req.user.role)
-  res.redirect(url)
+  const buffer = await submissionService.getDownloadBuffer(req.params.id, req.user.id, req.user.role)
+  res.setHeader("Content-Type", "application/zip")
+  res.setHeader("Content-Disposition", `attachment; filename="submission-${req.params.id}.zip"`)
+  res.setHeader("Content-Length", buffer.length)
+  res.send(buffer)
 })
 
 const gradeSubmission = asyncHandler(async (req, res) => {

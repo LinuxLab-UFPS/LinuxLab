@@ -5,7 +5,7 @@ const { AppError, NotFoundError, AuthorizationError, ConflictError } = require("
 const accessService = require("./accessService")
 const linuxAccountService = require("./linuxAccountService")
 const sshClient = require("./sshService")
-const bucket = require("../config/firebase-storage")
+const storage = require("../config/object-storage")
 const { audit } = require("./auditService")
 
 async function getEnrollmentId(studentId, groupId) {
@@ -91,9 +91,9 @@ async function createSubmission(studentUserId, groupActivityId) {
   )
   const zipBuffer = Buffer.from(zipB64, "base64")
 
-  await bucket.file(zipPath).save(zipBuffer, {
-    contentType: "application/zip",
-    metadata: { customMetadata: { studentId: studentUserId, groupActivityId } },
+  await storage.putObject(zipPath, zipBuffer, "application/zip", {
+    studentid: studentUserId,
+    groupactivityid: groupActivityId,
   })
 
   await sshClient.execCommand(`rm ${remoteTmp}`)
@@ -214,7 +214,7 @@ async function getFileContent(submissionId, filePath, userId, role) {
 
   const storagePath = submission.manualDetail?.evidence?.storagePath
   if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
-  const [buffer] = await bucket.file(storagePath).download()
+  const buffer = await storage.getObject(storagePath)
 
   if (storagePath.endsWith(".zip")) {
     return readFromZip(buffer, filePath)
@@ -306,7 +306,7 @@ async function getFileBuffer(submissionId, filePath, userId, role) {
 
   const storagePath = submission.manualDetail?.evidence?.storagePath
   if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
-  const [buffer] = await bucket.file(storagePath).download()
+  const buffer = await storage.getObject(storagePath)
 
   if (storagePath.endsWith(".zip")) {
     return extractFileFromZip(buffer, filePath)
@@ -383,7 +383,7 @@ function extractFileFromTarGz(buffer, filePath) {
   })
 }
 
-async function getDownloadUrl(submissionId, userId, role) {
+async function getDownloadBuffer(submissionId, userId, role) {
   const submission = await prisma.groupSubmission.findUnique({
     where: { id: submissionId },
     select: {
@@ -407,12 +407,7 @@ async function getDownloadUrl(submissionId, userId, role) {
 
   const storagePath = submission.manualDetail?.evidence?.storagePath
   if (!storagePath) throw new AppError("La entrega no tiene archivos", 404, "NOT_FOUND")
-  const [url] = await bucket.file(storagePath).getSignedUrl({
-    action: "read",
-    expires: Date.now() + 60 * 60 * 1000,
-  })
-
-  return url
+  return storage.getObject(storagePath)
 }
 
 async function gradeSubmission(submissionId, teacherUserId, score, feedback) {
@@ -486,6 +481,6 @@ module.exports = {
   getSubmission,
   getFileContent,
   getFileBuffer,
-  getDownloadUrl,
+  getDownloadBuffer,
   gradeSubmission,
 }

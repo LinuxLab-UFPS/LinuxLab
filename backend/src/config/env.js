@@ -35,6 +35,13 @@ const config = Object.freeze({
   firebase: Object.freeze({
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   }),
+  storage: Object.freeze({
+    endpoint: process.env.S3_ENDPOINT || "http://seaweedfs:8333",
+    region: process.env.S3_REGION || "us-east-1",
+    bucket: process.env.S3_BUCKET || "manual-submissions",
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || "linuxlab-storage",
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || "change-this-storage-secret",
+  }),
   ssh: Object.freeze({
     host: process.env.SSH_HOST || "entorno",
     port: Number.parseInt(process.env.SSH_PORT || "22", 10),

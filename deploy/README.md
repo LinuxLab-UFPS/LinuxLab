@@ -9,7 +9,8 @@ y se cargan con `podman load`. El servidor nunca compila.
 > **Solo para la primera instalación.** Una vez levantado, cada cambio se
 > aplica con un solo script (ver la sección siguiente).
 
-Siempre se envía el **paquete completo** de las 3 imágenes, y el servidor hace
+Siempre se envía el **paquete completo** de las 4 imágenes (tres propias y
+SeaweedFS), y el servidor hace
 `down`/`up` para aplicar: baja lo existente (los volúmenes persisten) y recrea
 todo con las imágenes recién cargadas.
 
@@ -40,7 +41,8 @@ comando** desde la máquina de desarrollo:
 bash deploy/update.sh
 ```
 
-Ese script hace todo vía SSH (construye y empaqueta las imágenes, las
+Ese script hace todo vía SSH (construye las imágenes propias, prepara
+SeaweedFS y empaqueta todas, las
 transfiere, hace `git pull` en el servidor y aplica `down`/`up`) **sin sembrar,
 sin crear admin y sin tocar la configuración**. Lee la configuración de
 `deploy/.deploy.env` (gitignoreado: host, puertos, `DB_PASSWORD`); cualquier
@@ -87,7 +89,8 @@ Secretos/variables a crear en **Settings → Secrets and variables → Actions**
 - **Variables**: `HOST` (usuario@servidor), `SSH_PORT`, `PORT_0`, `PORT_1`.
 - **Secrets**: `DEPLOY_SSH_KEY` (clave privada del servidor), `DB_PASSWORD`,
   `DATABASE_URL`, `JWT_SECRET`, `FIREBASE_*` (6, del `backend/.env` del
-  servidor, la private key sin comillas), `NEXT_PUBLIC_BACKEND_URL`,
+  servidor, la private key sin comillas), `S3_ACCESS_KEY_ID`,
+  `S3_SECRET_ACCESS_KEY`, `NEXT_PUBLIC_BACKEND_URL`,
   `NEXT_PUBLIC_VIDEO_BASE_URL` (opcional) y los 8 `NEXT_PUBLIC_FIREBASE_*`.
 - Los valores se copian una sola vez: `ssh usuario@servidor "cat ~/LinuxLab/backend/.env"`
   (backend) y el `frontend/.env.local` local (frontend).

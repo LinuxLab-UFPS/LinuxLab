@@ -26,7 +26,7 @@ PROJECT="linuxlab"
 COMPOSE="-p $PROJECT -f $REPO/deploy/compose.podman.yml"
 INTERNAL_NET="linuxlab_internal"
 LAB_NET="linuxlab_lab"
-IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno)
+IMAGES=(linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs)
 
 ADMIN_EMAIL=""
 ADMIN_NAME=""
@@ -108,7 +108,7 @@ else
   esac
 fi
 
-# ---- 3. Verificar los 3 tags -----------------------------------------------
+# ---- 3. Verificar las imagenes ---------------------------------------------
 for img in "${IMAGES[@]}"; do
   if podman image exists "$img:latest"; then
     log "Imagen $img:latest OK"

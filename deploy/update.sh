@@ -3,7 +3,8 @@
 # LinuxLab - actualizar el despliegue en un solo paso.
 #
 # Corre en la maquina de desarrollo (y despues en GitHub Actions): construye
-# las imagenes, las empaqueta, las transfiere al servidor y aplica el cambio
+# las imagenes propias, descarga las imagenes de MinIO, las empaqueta, las
+# transfiere al servidor y aplica el cambio
 # (down/up) SIN sembrar ni crear admin. No toca la configuracion del servidor
 # salvo que se pase --backend-env.
 #
@@ -151,9 +152,10 @@ log "Construyendo imagenes (frontend, backend, entorno)..."
 run_local "docker build -q -t linuxlab-frontend -f $REPO/frontend/Dockerfile $REPO/frontend" && log "  OK: linuxlab-frontend"
 run_local "docker build -q -t linuxlab-backend  -f $REPO/backend/Dockerfile  $REPO/backend"   && log "  OK: linuxlab-backend"
 run_local "docker build -q -t linuxlab-entorno  -f $REPO/entorno/Dockerfile  $REPO/entorno"   && log "  OK: linuxlab-entorno"
+run_local "docker pull chrislusf/seaweedfs:latest" && log "  OK: chrislusf/seaweedfs:latest"
 
 log "Empaquetando imagenes -> $TARBALL"
-run_local "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno | gzip > '$TARBALL'"
+run_local "docker save linuxlab-frontend linuxlab-backend linuxlab-entorno chrislusf/seaweedfs:latest | gzip > '$TARBALL'"
 log "  Paquete listo ($(ls -lh "$TARBALL" | awk '{print $5}'))."
 
 # ---- 4. Transferir ----------------------------------------------------------
