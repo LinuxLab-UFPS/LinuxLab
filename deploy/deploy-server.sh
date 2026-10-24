@@ -84,6 +84,12 @@ if [ ! -f "$BACKEND_ENV" ]; then
   run "sed -i 's|^JWT_SECRET=.*|JWT_SECRET=$JWT|' $BACKEND_ENV"
 fi
 
+for key in DATABASE_URL JWT_SECRET FIREBASE_PROJECT_ID FIREBASE_PRIVATE_KEY FIREBASE_CLIENT_EMAIL \
+  S3_ENDPOINT S3_BUCKET S3_ACCESS_KEY_ID S3_SECRET_ACCESS_KEY \
+  AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+  grep -qE "^$key=.+" "$BACKEND_ENV" || die "backend/.env sin la clave requerida: $key"
+done
+
 if grep -qE "^FIREBASE_PROJECT_ID=(\s*)$|^FIREBASE_CLIENT_EMAIL=(\s*)$" "$BACKEND_ENV"; then
   warn "backend/.env tiene Firebase vacio; sin credenciales el login no funcionara."
   if ! $DRY_RUN; then
