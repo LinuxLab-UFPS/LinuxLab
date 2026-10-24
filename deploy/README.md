@@ -156,11 +156,11 @@ registro privado.
 |---|---|
 | `entorno` | 448 MB |
 | `backend` | 160 MB |
-| `postgres` | 160 MB |
+| `postgres` | 128 MB |
 | `frontend` | 96 MB |
 | `proxy` | 32 MB |
-| `seaweedfs` | 64 MB |
-| **Total** | **960 MB** (margen ~64 MB para el host) |
+| `seaweedfs` | 128 MB |
+| **Total** | **992 MB** (margen ~32 MB para el host) |
 
 ## Operación diaria
 
