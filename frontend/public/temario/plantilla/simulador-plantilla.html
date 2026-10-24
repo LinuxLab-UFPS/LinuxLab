@@ -1,0 +1,229 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de ejemplo · LinuxLab</title>
+<!--
+  Plantilla para un simulador nuevo.
+
+  Se copia a frontend/public/temario/tema-XX/simulador-<nombre>.html y se
+  registra en frontend/shared/lib/content/simulators.ts. Lo que cambia de un
+  simulador a otro esta marcado con PERSONALIZAR. La barra superior, la
+  portada, la pantalla final, el tema claro y el aviso de carga los ponen los
+  archivos de /temario/comun, y no hace falta tocarlos.
+-->
+<link rel="stylesheet" href="/temario/comun/barra.css">
+<link rel="stylesheet" href="/temario/comun/claro.css">
+<link rel="stylesheet" href="/temario/comun/movil.css">
+<link rel="stylesheet" href="/temario/comun/entrada.css">
+<script src="/temario/comun/barra.js"></script>
+<script src="/temario/comun/consola.js"></script>
+<style>
+/* La paleta de todos los simuladores. barra.css y claro.css leen estas
+   variables, asi que los nombres no se cambian. */
+:root {
+  --bg:     #0D1117;
+  --surf:   #161B22;
+  --surf2:  #1C2128;
+  --border: #21262D;
+  --red:    #FF0030;
+  --green:  #2ECC71;
+  --blue:   #58A6FF;
+  --purple: #A371F7;
+  --orange: #E8803A;
+  --gold:   #FFC400;
+  --text:   #C9D1D9;
+  --bright: #F0F6FC;
+  --muted:  #6B8399;
+  --dim:    #21262D;
+  --mono:'SF Mono','Fira Mono','Cascadia Mono',Consolas,'Courier New',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;background:var(--bg);overflow:hidden}
+/* La escala de 1.3 es la de los seis simuladores. movil.css la anula por
+   debajo de 1280 px de ancho. */
+body{
+  display:flex;flex-direction:column;
+  color:var(--text);font-family:var(--mono);overflow:hidden;
+  width:calc(100vw / 1.3);height:calc(100vh / 1.3);
+  transform:scale(1.3);transform-origin:0 0;
+  background:var(--bg);position:relative;
+}
+
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:22px;padding:24px;min-height:0}
+.term-col{display:flex;flex-direction:column;gap:10px;width:520px;flex-shrink:0}
+.win{background:var(--surf);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.win-bar{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);border-bottom:1px solid var(--border)}
+.win-dot{width:11px;height:11px;border-radius:50%}
+.console{background:#12161d;padding:12px 14px;height:300px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;overflow-y:auto}
+.prompt{display:flex;align-items:center;gap:7px;font-size:13px}
+.ps1{color:var(--green);font-weight:700;flex-shrink:0}
+.linea{white-space:pre-wrap;color:var(--text)}
+.linea.cmd{color:var(--bright)}
+.linea.ok{color:var(--green-tinta)}
+.linea.error{color:var(--red-tinta)}
+
+.card{background:var(--surf);border:1px solid var(--border);border-radius:8px;padding:12px 14px;width:240px}
+.card h4{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);margin-bottom:8px;font-weight:700}
+.card p{font-size:12px;line-height:1.7;color:var(--text)}
+</style>
+
+<!-- La barra la arma barra.js dentro de este div. -->
+<div class="hdr"></div>
+
+<div class="stage">
+  <div class="term-col">
+    <!-- zona-oscura deja la terminal oscura tambien en el tema claro. -->
+    <div class="win zona-oscura">
+      <div class="win-bar">
+        <span class="win-dot" style="background:#FF5F56"></span>
+        <span class="win-dot" style="background:#FFBD2E"></span>
+        <span class="win-dot" style="background:#27C93F"></span>
+      </div>
+      <div class="console" id="console">
+        <div class="prompt" id="prompt">
+          <span class="ps1">$</span>
+          <input class="typed" id="typed" type="text" autocomplete="off"
+                 autocapitalize="none" autocorrect="off" spellcheck="false"
+                 aria-label="Escribe un comando">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h4>Pista</h4>
+    <p id="pista">&nbsp;</p>
+  </div>
+</div>
+
+<div class="sim-fin" id="fin" hidden>
+  <div class="fin-box">
+    <div class="fin-titulo">Resultado</div>
+    <div class="fin-frase">Retos completados</div>
+    <div class="fin-btns">
+      <button class="fin-btn primario" id="otra-vez">Jugar de nuevo</button>
+      <button class="fin-btn" id="salir">Salir</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERSONALIZAR: el titulo y la descripcion de la portada. -->
+<div class="sim-portada" id="portada">
+  <button class="sim-play" id="play"><span class="tri">&#9654;</span></button>
+  <h2>Simulador de ejemplo</h2>
+  <p>Resuelve cada objetivo escribiendo el comando correcto en la terminal.</p>
+</div>
+
+<script>
+/* PERSONALIZAR: los retos. Cada uno tiene el objetivo que se muestra en la
+   barra, una pista, la prueba que decide si el comando lo resuelve y la salida
+   que imprime la terminal al acertar. */
+const RETOS = [
+  {
+    objetivo: "Muestra el directorio en el que estás",
+    pista: "El comando se llama print working directory.",
+    resuelve: (cmd) => cmd === "pwd",
+    salida: "/home/estudiante",
+  },
+  {
+    objetivo: "Lista el contenido del directorio",
+    pista: "Dos letras, de list.",
+    resuelve: (cmd) => /^ls(\s+-[a-z]+)?$/.test(cmd),
+    salida: "documentos  imagenes  notas.txt",
+  },
+  {
+    objetivo: "Muestra el contenido de notas.txt",
+    pista: "cat seguido del nombre del archivo.",
+    resuelve: (cmd) => cmd === "cat notas.txt",
+    salida: "Repasar el tema 3 antes del jueves.",
+  },
+];
+
+const $ = (id) => document.getElementById(id);
+
+const barra = Barra.montar({
+  titulo: "Simulador de ejemplo",            // PERSONALIZAR
+  ayuda: [
+    { clave: "Enter", tono: "verde", texto: "Ejecuta el comando escrito." },
+    { clave: "&uarr;", texto: "Recupera el comando anterior." },
+  ],
+  tema: true,
+  onReiniciar: () => volverAlInicio(),
+});
+
+let reto = 0, jugando = false;
+
+function imprimir(texto, clase) {
+  const linea = document.createElement("div");
+  linea.className = "linea " + (clase || "");
+  linea.textContent = texto;
+  $("console").insertBefore(linea, $("prompt"));
+  $("console").scrollTop = $("console").scrollHeight;
+}
+
+function limpiarConsola() {
+  document.querySelectorAll("#console .linea").forEach((l) => l.remove());
+}
+
+function mostrarReto() {
+  barra.objetivo(RETOS[reto].objetivo, reto);
+  $("pista").textContent = RETOS[reto].pista;
+}
+
+function enviar(linea) {
+  const cmd = linea.trim().replace(/\s+/g, " ");
+  imprimir("$ " + linea, "cmd");
+  if (!cmd) return;
+
+  if (!RETOS[reto].resuelve(cmd)) {
+    imprimir("Ese comando no resuelve el objetivo. Revisa la pista.", "error");
+    return;
+  }
+  imprimir(RETOS[reto].salida, "ok");
+  reto++;
+  if (reto < RETOS.length) mostrarReto();
+  else terminar();
+}
+
+function empezar() {
+  reto = 0; jugando = true;
+  limpiarConsola();
+  barra.jugando(true);
+  $("portada").classList.add("hide");
+  $("fin").hidden = true;
+  mostrarReto();
+  consola.enfocar();
+}
+
+function terminar() {
+  jugando = false;
+  $("fin").hidden = false;
+}
+
+function volverAlInicio() {
+  jugando = false;
+  barra.jugando(false);
+  $("fin").hidden = true;
+  $("portada").classList.remove("hide");
+}
+
+const consola = Consola.montar({
+  campo: "typed",
+  historial: Barra.historial(),
+  ocupado: () => !jugando,
+  ejecutar: enviar,
+});
+
+/* Con la portada puesta, Enter o espacio arrancan la partida. El Enter que
+   resuelve el ultimo reto ya lo atendio la consola, y no debe arrancar otra. */
+document.addEventListener("keydown", (e) => {
+  if (jugando || e.defaultPrevented) return;
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); empezar(); }
+});
+
+$("play").addEventListener("click", empezar);
+$("otra-vez").addEventListener("click", empezar);
+$("salir").addEventListener("click", Barra.salir);
+
+barra.jugando(false);
+</script>
