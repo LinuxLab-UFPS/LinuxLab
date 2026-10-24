@@ -65,7 +65,7 @@ services:
     image: postgres:16-alpine
     container_name: linuxlab-postgres
     networks: [internal]
-    mem_limit: 192m
+    mem_limit: 160m
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
@@ -81,6 +81,10 @@ services:
     container_name: linuxlab-seaweedfs
     command: server -dir=/data -s3 -ip.bind=0.0.0.0 -s3.port=8333 -s3.autoCreateBucket=true
     networks: [internal]
+    mem_limit: 64m
+    cpus: 0.25
+    cpu_shares: 256
+    pids_limit: 128
     env_file: ../backend/.env
     volumes:
       - seaweedfs_data:/data
@@ -121,8 +125,8 @@ services:
     container_name: linuxlab-backend
     # internal (postgres) + lab (SSH al entorno) + external (proxy/Caddy).
     networks: [internal, lab, external]
-    # El +64 del entorno se financia recortando el backend a 192 (pesa ~100).
-    mem_limit: 192m
+    # El margen para SeaweedFS se obtiene recortando el backend a 160 (pesa ~100).
+    mem_limit: 160m
     cpu_shares: 1024
     # Loopback y no 0.0.0.0: el proxy lo alcanza por la red de contenedores y
     # deploy-server.sh sigue pudiendo consultar /api/health, pero desde fuera
@@ -173,7 +177,7 @@ services:
     image: docker.io/library/caddy:2-alpine
     container_name: linuxlab-proxy
     networks: [external]
-    mem_limit: 64m
+    mem_limit: 32m
     cpu_shares: 256
     ports:
       - "${PORT_0:-3001}:3000"

@@ -140,11 +140,12 @@ Secretos/variables a crear en **Settings → Secrets and variables → Actions**
 | Servicio | Límite |
 |---|---|
 | `entorno` | 448 MB |
-| `backend` | 192 MB |
-| `postgres` | 192 MB |
+| `backend` | 160 MB |
+| `postgres` | 160 MB |
 | `frontend` | 96 MB |
-| `proxy` | 64 MB |
-| **Total** | **992 MB** (margen ~32 MB para el host) |
+| `proxy` | 32 MB |
+| `seaweedfs` | 64 MB |
+| **Total** | **960 MB** (margen ~64 MB para el host) |
 
 ## Operación diaria
 
