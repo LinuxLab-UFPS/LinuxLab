@@ -65,7 +65,7 @@ services:
     image: postgres:16-alpine
     container_name: linuxlab-postgres
     networks: [internal]
-    mem_limit: 160m
+    mem_limit: 128m
     environment:
       POSTGRES_USER: linuxlab
       POSTGRES_PASSWORD: ${DB_PASSWORD:-linuxlab}
@@ -81,7 +81,7 @@ services:
     container_name: linuxlab-seaweedfs
     command: server -dir=/data -s3 -ip.bind=0.0.0.0 -s3.port=8333 -s3.autoCreateBucket=true
     networks: [internal]
-    mem_limit: 64m
+    mem_limit: 128m
     cpus: 0.25
     cpu_shares: 256
     pids_limit: 128
