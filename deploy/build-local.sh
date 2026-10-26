@@ -82,8 +82,8 @@ run "docker build -q -t linuxlab-frontend -f $REPO/frontend/Dockerfile $REPO/fro
 run "docker build -q -t linuxlab-backend  -f $REPO/backend/Dockerfile  $REPO/backend"   && log "  OK: linuxlab-backend"
 run "docker build -q -t linuxlab-entorno  -f $REPO/entorno/Dockerfile  $REPO/entorno"   && log "  OK: linuxlab-entorno"
 
-# ---- Imagenes de MinIO -----------------------------------------------------
-log "Descargando imagenes de MinIO..."
+# ---- Imagen de SeaweedFS --------------------------------------------------
+log "Descargando la imagen de SeaweedFS..."
 run "docker pull chrislusf/seaweedfs:latest" && log "  OK: chrislusf/seaweedfs:latest"
 
 # ---- Empaquetar ------------------------------------------------------------
