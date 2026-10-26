@@ -3,7 +3,7 @@
 # LinuxLab - actualizar el despliegue en un solo paso.
 #
 # Corre en la maquina de desarrollo (y despues en GitHub Actions): construye
-# las imagenes propias, descarga las imagenes de MinIO, las empaqueta, las
+# las imagenes propias, descarga la imagen de SeaweedFS, las empaqueta, las
 # transfiere al servidor y aplica el cambio
 # (down/up) SIN sembrar ni crear admin. No toca la configuracion del servidor
 # salvo que se pase --backend-env.
