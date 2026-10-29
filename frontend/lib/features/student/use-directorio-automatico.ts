@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useCwd, useProgramaAPantallaCompleta } from "@/lib/features/student/use-cwd"
-import { lessonActivityQuery } from "@/lib/features/student/use-activity-check"
+import { activitySandboxQuery, lessonActivityQuery } from "@/lib/features/student/use-activity-check"
 import { HOME, confirmarDirectorio, irA } from "@/lib/features/student/directorio-terminal"
 
 /**
@@ -45,6 +45,18 @@ export function useDirectorioAutomatico({
     enabled: activo && Boolean(slug) && !workdirDeGrupo,
   })
 
+  /* Los archivos de partida van antes que el `cd`. La orden de entrar lleva un
+     `mkdir -p`, y si llegaba antes que la preparacion el directorio quedaba
+     vacio. Aqui no se entra hasta que la preparacion termina, bien o mal. Si
+     falla se entra igual, para no dejar la terminal en el home, y el panel
+     avisa del error. */
+  const conArchivos = activo && Boolean(slug) && !workdirDeGrupo && Boolean(data?.hasSetup)
+  const sandbox = useQuery({
+    ...activitySandboxQuery(slug ?? "", Boolean(data?.hasSetup)),
+    enabled: conArchivos,
+  })
+  const preparando = conArchivos && sandbox.isPending
+
   /* Con `vi` o `top` abiertos lo que se manda no se ejecuta: se teclea dentro
      del programa. Se espera a que cierre. */
   const aPantallaCompleta = useProgramaAPantallaCompleta()
@@ -53,7 +65,7 @@ export function useDirectorioAutomatico({
   /* `universidad-facultades` no declara directorio: monta su arbol en el home a
      proposito, asi que ahi el home es el destino correcto. */
   const workdir = workdirDeGrupo ?? (slug ? (data?.workdir ?? null) : null)
-  const esperandoDatos = activo && Boolean(slug) && !workdirDeGrupo && !data
+  const esperandoDatos = (activo && Boolean(slug) && !workdirDeGrupo && !data) || preparando
 
   const destino: string | null =
     !activo || esperandoDatos ? null : workdir ? `~/actividades/${workdir}` : HOME

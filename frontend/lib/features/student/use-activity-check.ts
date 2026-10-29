@@ -26,23 +26,39 @@ export const lessonActivityKey = (slug: string) => ["lesson-activity", slug] as 
 export function lessonActivityQuery(slug: string) {
   return {
     queryKey: lessonActivityKey(slug),
-    queryFn: async () => {
-      const data = await apiFetch<LessonActivity>(`/api/activities/${slug}`)
-      // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
-      // si ya existían, así que volver a entrar no borra lo que llevaba.
-      // El fallo se avisa: callado, el estudiante encontraba el directorio
-      // vacío y creía que la actividad era así.
-      if (data.hasSetup) {
-        apiFetch(`/api/activities/${slug}/reset`, {
-          method: "POST",
-          body: JSON.stringify({ force: false }),
-        }).catch((err) =>
-          notify.error(err, "No se pudieron preparar los archivos. Usa «Reiniciar archivos»."),
-        )
-      }
-      return data
-    },
+    queryFn: () => apiFetch<LessonActivity>(`/api/activities/${slug}`),
     enabled: Boolean(slug),
+  }
+}
+
+export const activitySandboxKey = (slug: string) => ["activity-sandbox", slug] as const
+
+/**
+ * Los archivos de partida de la actividad, preparados al abrirla.
+ *
+ * Va en su propia consulta, y no dentro de la de la actividad, por dos razones.
+ * La primera es el orden. La terminal entra en el directorio con `mkdir -p` y
+ * antes lo hacia a la vez que esta preparacion. Si el `mkdir` ganaba, el
+ * directorio quedaba vacio. Ahora `useDirectorioAutomatico` espera a esta
+ * consulta antes de mandar la terminal, asi que la preparacion siempre va
+ * primero. La segunda es que el panel no tiene por que esperar. El enunciado se
+ * pinta en cuanto llega la actividad y solo el `cd` aguarda a los archivos.
+ *
+ * Sin `force` no toca un directorio con trabajo, asi que volver a entrar no
+ * borra nada. Y no caduca, porque repetirla en cada visita solo cargaria el
+ * servidor. Si el estudiante necesita rehacerla, para eso esta el boton.
+ */
+export function activitySandboxQuery(slug: string, hasSetup: boolean) {
+  return {
+    queryKey: activitySandboxKey(slug),
+    queryFn: () =>
+      apiFetch<{ root: string; creados: number; yaEstaba: boolean }>(
+        `/api/activities/${slug}/reset`,
+        { method: "POST", body: JSON.stringify({ force: false }) },
+      ),
+    enabled: Boolean(slug) && hasSetup,
+    staleTime: Infinity,
+    retry: 1,
   }
 }
 
@@ -58,6 +74,11 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
   const queryKey = lessonActivityKey(slug)
 
   const activityQuery = useQuery(lessonActivityQuery(slug))
+  // El panel tambien la pide por si se abre sin la terminal. Es la misma clave
+  // que usa `useDirectorioAutomatico`, asi que la peticion sale una sola vez.
+  const sandboxQuery = useQuery(
+    activitySandboxQuery(slug, Boolean(activityQuery.data?.hasSetup)),
+  )
 
   const checkMutation = useMutation({
     mutationFn: () =>
@@ -96,11 +117,14 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
 
   const resetMutation = useMutation({
     mutationFn: () =>
-      apiFetch(`/api/activities/${slug}/reset`, {
+      apiFetch<{ root: string; creados: number; yaEstaba: boolean }>(`/api/activities/${slug}/reset`, {
         method: "POST",
         body: JSON.stringify({ force: true }),
       }),
-    onSuccess: () => {
+    onSuccess: (preparado) => {
+      // Los archivos ya estan: si la preparacion al abrir habia fallado, la
+      // consulta deja de figurar con error.
+      queryClient.setQueryData(activitySandboxKey(slug), preparado)
       const workdir = queryClient.getQueryData<LessonActivity>(queryKey)?.workdir
       queryClient.setQueryData<LessonActivity>(queryKey, (prev) =>
         prev ? { ...prev, lastAttempt: null } : prev,
@@ -128,6 +152,14 @@ export function useActivityCheck(slug: string, tipo: TipoDeReto = "actividad") {
       notify.error(activityQuery.error, "No se pudo cargar la actividad.")
     }
   }, [activityQuery.isError, activityQuery.error])
+
+  // Callado, el estudiante encontraba el directorio vacio y creia que la
+  // actividad era asi.
+  useEffect(() => {
+    if (sandboxQuery.isError) {
+      notify.error(sandboxQuery.error, "No se pudieron preparar los archivos. Usa «Reiniciar archivos».")
+    }
+  }, [sandboxQuery.isError, sandboxQuery.error])
 
   useEffect(() => {
     if (checkMutation.isError) {
