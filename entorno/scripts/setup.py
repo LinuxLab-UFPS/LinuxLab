@@ -197,12 +197,18 @@ def solo_una_actividad(raiz):
 def construye(spec):
     raiz = os.path.join(home(), BASE, valida_slug(spec.get("slug", "")))
 
-    # Sin `force`, un directorio que ya existe se deja intacta. Abrir la actividad
+    # Sin `force`, un directorio con contenido se deja intacto. Abrir la actividad
     # no puede borrar el trabajo a medias de quien vuelve a ella.
+    #
+    # Uno vacio si se llena. El panel teclea `mkdir -p` en la terminal al mismo
+    # tiempo que pide este script, y si el `mkdir` llegaba primero el directorio
+    # ya existia, se daba por preparado y el estudiante se quedaba sin archivos
+    # para siempre. Vacio no hay trabajo que proteger.
     if os.path.exists(raiz):
-        if not spec.get("force"):
+        if spec.get("force"):
+            shutil.rmtree(solo_una_actividad(raiz))
+        elif not (os.path.isdir(raiz) and not os.listdir(raiz)):
             return {"ok": True, "root": raiz, "creados": 0, "yaEstaba": True}
-        shutil.rmtree(solo_una_actividad(raiz))
     os.makedirs(raiz, mode=0o700, exist_ok=True)
 
     archivos = list(spec.get("files") or []) + reparte(spec)

@@ -30,11 +30,15 @@ export function lessonActivityQuery(slug: string) {
       const data = await apiFetch<LessonActivity>(`/api/activities/${slug}`)
       // Abrir la actividad deja los archivos listos. Sin `force` no toca nada
       // si ya existían, así que volver a entrar no borra lo que llevaba.
+      // El fallo se avisa: callado, el estudiante encontraba el directorio
+      // vacío y creía que la actividad era así.
       if (data.hasSetup) {
         apiFetch(`/api/activities/${slug}/reset`, {
           method: "POST",
           body: JSON.stringify({ force: false }),
-        }).catch(() => {})
+        }).catch((err) =>
+          notify.error(err, "No se pudieron preparar los archivos. Usa «Reiniciar archivos»."),
+        )
       }
       return data
     },

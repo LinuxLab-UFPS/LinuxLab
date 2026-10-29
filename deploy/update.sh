@@ -197,7 +197,7 @@ else
 fi
 
 # ---- 6. Aplicar -------------------------------------------------------------
-log "Aplicando la actualizacion en el servidor (down/up, sin seeds ni admin)..."
+log "Aplicando la actualizacion en el servidor (down/up y seeds, sin admin)..."
 run_remote "export DB_PASSWORD='$DB_PASSWORD' PORT_0='$PORT_0' PORT_1='$PORT_1'; bash ~/LinuxLab/deploy/update-server.sh"
 
 # ---- 7. Verificacion --------------------------------------------------------
