@@ -15,7 +15,7 @@ const recordView = asyncHandler(async (req, res) => {
      cero sin que hubiera nada que arreglar del lado del estudiante. */
   const [subtopic, enrollments] = await Promise.all([
     prisma.subtopic.findFirst({
-      where: { slug: subtopicId },
+      where: { slug: subtopicId, topic: { slug: topicSlug } },
       include: { topic: { select: { slug: true } } },
     }),
     prisma.enrollment.findMany({
@@ -26,10 +26,6 @@ const recordView = asyncHandler(async (req, res) => {
   ])
   if (!subtopic) {
     res.status(404).json({ error: "Subtema no encontrado", code: "NOT_FOUND" })
-    return
-  }
-  if (subtopic.topic.slug !== topicSlug) {
-    res.status(404).json({ error: "Subtema no encontrado en este tema", code: "NOT_FOUND" })
     return
   }
   if (enrollments.length === 0) {
