@@ -6,7 +6,7 @@ const asyncHandler = require("../utils/asyncHandler")
 
 const recordView = asyncHandler(async (req, res) => {
   const { topicSlug, subtopicId } = req.params
-
+        
   /* Todas las matriculas activas, no solo la primera.
      El temario es el mismo para todos los grupos, asi que leer una leccion es
      avance en cualquier curso donde el estudiante este inscrito. Antes se
