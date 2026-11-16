@@ -49,6 +49,8 @@ imagenes.tar.gz
 
 # Configuracion local del despliegue (credenciales del servidor)
 deploy/.deploy.env
+# Lo genera deploy/stack.sh en el servidor a partir de backend/.env.
+deploy/frontend.env
 
 # Licencia privada de MinIO AIStor
 deploy/secrets/*

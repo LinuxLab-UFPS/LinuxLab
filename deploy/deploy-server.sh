@@ -3,8 +3,8 @@
 # LinuxLab - desplegar en el servidor (Podman rootless).
 #
 # Carga las imagenes empaquetadas por build-local.sh, baja lo existente y
-# levanta el stack completo, espera la salud, siembra el temario y crea el
-# admin. El servidor nunca compila: las imagenes vienen construidas de fuera.
+# levanta el stack por etapas (ver deploy/stack.sh), espera la salud, siembra
+# el temario y crea el admin. El servidor nunca compila: las imagenes vienen construidas de fuera.
 #
 # Uso:
 #   bash deploy/deploy-server.sh                                # todo
@@ -64,6 +64,18 @@ run() {
     echo -e "\033[1;31m[deploy-server]\033[0m Fallo el paso: $*\n\n$out" >&2
     exit 1
   }
+}
+
+# Como `run`, pero devuelve el codigo en vez de abortar, para los pasos que el
+# despliegue puede sobrevivir. Lo usa deploy/stack.sh.
+intentar() {
+  if $DRY_RUN; then log "DRY-RUN: $*"; return 0; fi
+  local out
+  if out="$(eval "$*" 2>&1)"; then
+    return 0
+  fi
+  echo "$out" >&2
+  return 1
 }
 
 # ---- 0. Pre-checks ---------------------------------------------------------
@@ -135,24 +147,14 @@ for net in "$INTERNAL_NET" "$LAB_NET"; do
   fi
 done
 
-# ---- 5. Bajar lo existente -------------------------------------------------
-# down antes de up: recrea el conjunto completo con las imagenes recien
-# cargadas y evita el bloqueo de dependencias de podman-compose (--requires).
-# Los volumenes (pgdata, homes, claves) persisten; migrate e init son
-# idempotentes en cada up.
-log "Bajando el stack existente (los volumenes persisten)..."
-run "podman-compose $COMPOSE down"
+# ---- 5. Bajar y levantar por etapas ---------------------------------------
+# El orden y el porque estan en deploy/stack.sh, compartido con update-server.sh.
+# shellcheck source=deploy/stack.sh
+source "$REPO/deploy/stack.sh"
+levantar_stack
 
-# ---- 6. Up -----------------------------------------------------------------
-log "Levantando el stack..."
-run "podman-compose $COMPOSE up -d"
-
-# Techo de procesos del entorno: podman-compose 1.0.6 puede ignorar la clave
-# pids_limit del compose; este update la aplica sobre el contenedor ya creado.
-if ! $DRY_RUN; then
-  podman update --pids-limit 512 linuxlab-entorno >/dev/null 2>&1 \
-    || warn "No se pudo aplicar pids_limit a linuxlab-entorno (el techo de procesos queda en los ulimits)."
-fi
+# ---- 6. Arranque automatico tras un reinicio del servidor --------------------
+asegurar_arranque_automatico
 
 # ---- 7. Espera de salud ----------------------------------------------------
 if ! $DRY_RUN; then
@@ -173,6 +175,8 @@ fi
 # ---- 8. Seeds --------------------------------------------------------------
 if $SKIP_SEEDS; then
   log "Omitiendo seeds (--skip-seeds)."
+elif [ "$MIGRADO" -ne 1 ]; then
+  warn "Las migraciones no terminaron bien; se omiten las seeds."
 else
   # Semillas en un CONTENEDOR de una pasada (upserts, idempotente): no se
   # corre con `podman exec` sobre el backend porque comparten cgroup y el

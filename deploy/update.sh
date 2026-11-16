@@ -171,7 +171,7 @@ run_local "scp -q $SCP_OPTS -P $SSH_PORT '$TARBALL' '$HOST:~/imagenes.tar.gz'"
 # Los archivos criticos del deploy se transfieren tambien: asi el servidor no
 # depende de que su repo este al dia (p. ej. antes del primer push).
 log "Enviando los archivos de despliegue al servidor..."
-for f in deploy/update-server.sh deploy/compose.podman.yml deploy/Caddyfile scripts/docker/init-env.sh; do
+for f in deploy/update-server.sh deploy/stack.sh deploy/compose.podman.yml deploy/Caddyfile scripts/docker/init-env.sh; do
   run_local "scp -q $SCP_OPTS -P $SSH_PORT '$REPO/$f' '$HOST:~/LinuxLab/$f'"
 done
 

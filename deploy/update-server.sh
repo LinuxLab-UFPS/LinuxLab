@@ -2,9 +2,10 @@
 #
 # LinuxLab - actualizar el stack en el servidor (Podman rootless).
 #
-# Solo actualiza: carga el paquete de imagenes, baja lo existente y levanta el
-# stack completo con las imagenes nuevas. No siembra, no crea admin y no toca
-# la configuracion (backend/.env y volumenes persisten tal como estan).
+# Carga el paquete de imagenes, baja lo existente y levanta el stack por
+# etapas con las imagenes nuevas (ver deploy/stack.sh), y siembra el temario.
+# No crea admin. backend/.env y los volumenes persisten tal como estan; de
+# backend/.env se genera deploy/frontend.env con lo unico que usa el frontend.
 #
 # Uso:
 #   bash deploy/update-server.sh                                # desde el repo
@@ -121,24 +122,14 @@ for net in "$INTERNAL_NET" "$LAB_NET"; do
   fi
 done
 
-# ---- 4. Bajar lo existente -------------------------------------------------
-# down antes de up: recrea el conjunto completo con las imagenes recien
-# cargadas y evita el bloqueo de dependencias de podman-compose (--requires).
-# Los volumenes (pgdata, homes, claves) persisten; migrate e init son
-# idempotentes en cada up.
-log "Bajando el stack existente (los volumenes persisten)..."
-run "podman-compose $COMPOSE down"
+# ---- 4. Bajar y levantar por etapas ---------------------------------------
+# El orden y el porque estan en deploy/stack.sh, compartido con deploy-server.sh.
+# shellcheck source=deploy/stack.sh
+source "$REPO/deploy/stack.sh"
+levantar_stack
 
-# ---- 5. Up -----------------------------------------------------------------
-log "Levantando el stack..."
-run "podman-compose $COMPOSE up -d"
-
-# Techo de procesos del entorno: podman-compose 1.0.6 puede ignorar la clave
-# pids_limit del compose; este update la aplica sobre el contenedor ya creado.
-if ! $DRY_RUN; then
-  intentar "podman update --pids-limit 512 linuxlab-entorno" \
-    || warn "No se pudo aplicar pids_limit a linuxlab-entorno (el techo de procesos queda en los ulimits)."
-fi
+# ---- 5. Arranque automatico tras un reinicio del servidor --------------------
+asegurar_arranque_automatico
 
 # ---- 6. Espera de salud ----------------------------------------------------
 if ! $DRY_RUN; then
@@ -168,22 +159,9 @@ fi
 if $SKIP_SEEDS; then
   log "Omitiendo seeds (--skip-seeds)."
 else
-  # Que el backend responda NO significa que la base tenga el esquema:
-  # /api/health es una sonda de vida y no la consulta. Con una base vacia,
-  # `migrate` tarda mas y las semillas llegaban antes que las tablas.
-  # Aqui se espera al contenedor de migraciones, que es de una sola pasada.
-  log "Esperando a que 'migrate' termine..."
-  migrado=0
-  for _ in $(seq 1 60); do
-    estado="$(podman inspect -f '{{.State.Status}}:{{.State.ExitCode}}' linuxlab-migrate 2>/dev/null || echo 'ausente:')"
-    case "$estado" in
-      exited:0) migrado=1; break ;;
-      exited:*) warn "migrate termino con error ($estado); se omiten las seeds"; break ;;
-    esac
-    sleep 5
-  done
-
-  if [ "$migrado" -ne 1 ]; then
+  # Que el backend responda NO significa que la base tenga el esquema.
+  # `levantar_stack` ya espero a migrate y dejo el resultado en MIGRADO.
+  if [ "$MIGRADO" -ne 1 ]; then
     warn "No se pudo confirmar que las migraciones terminaran; se omiten las seeds."
   else
   # Se delega en `backend/prisma/seed.js`, que es el indice que se mantiene
