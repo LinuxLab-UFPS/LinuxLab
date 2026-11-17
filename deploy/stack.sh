@@ -45,10 +45,47 @@ esperar_una_pasada() {
   return 1
 }
 
+# Retira los contenedores del proyecto que el compose ya no declara, como el
+# linuxlab-frontend-old que quedo tras el OOM de noviembre. Un contenedor asi
+# rompe el despliegue entero por dos lados. Si depende de otros (`--requires`),
+# Podman no deja borrar esos otros, asi que el `down` no los quita y el `up`
+# choca con sus nombres. Y si trae la configuracion vieja, podman-compose ve una
+# huella distinta y en cada `up` intenta recrear el stack. En el despliegue de
+# noviembre eso dejo el backend, el frontend y el proxy sin levantar.
+#
+# Antes de borrarlo se guarda entero: su contenido como imagen
+# (`<nombre>-respaldo`) y su configuracion en ~/linuxlab-respaldos. Si hiciera
+# falta, se puede volver a crear desde ahi.
+retirar_huerfanos() {
+  local compose="$REPO/deploy/compose.podman.yml" esperados candidatos nombre marca destino
+  esperados="$(awk '$1 == "container_name:" { print $2 }' "$compose")"
+  candidatos="$(
+    {
+      podman ps -a --filter "label=io.podman.compose.project=$PROJECT" --format '{{.Names}}'
+      podman ps -a --filter "name=^$PROJECT-" --format '{{.Names}}'
+    } 2>/dev/null | sort -u
+  )"
+  marca="$(date +%Y%m%d-%H%M%S)"
+  destino="${RESPALDOS_DIR:-$HOME/linuxlab-respaldos}"
+  for nombre in $candidatos; do
+    if printf '%s\n' "$esperados" | grep -qxF "$nombre"; then continue; fi
+    warn "Contenedor $nombre fuera del compose: se respalda y se retira."
+    if $DRY_RUN; then log "DRY-RUN: respaldar y borrar $nombre"; continue; fi
+    mkdir -p "$destino"
+    podman inspect "$nombre" > "$destino/$nombre-$marca.json" \
+      || die "No se pudo guardar la configuracion de $nombre; no se borra nada."
+    run "podman commit $nombre $nombre-respaldo:$marca"
+    run "podman rm -f $nombre"
+    log "  $nombre respaldado (imagen $nombre-respaldo:$marca y $destino/$nombre-$marca.json) y retirado."
+  done
+}
+
 # Baja el stack y lo vuelve a levantar por etapas. Deja MIGRADO=1 si las
 # migraciones terminaron bien, que es lo que mira el paso de las semillas.
 levantar_stack() {
   MIGRADO=0
+
+  retirar_huerfanos
 
   log "Bajando el stack existente (los volumenes persisten)..."
   run "podman-compose $COMPOSE down"
