@@ -20,6 +20,7 @@ type StudentCertificate = {
   topicsCompleted: number
   topicsTotal: number
   definitive: number | null
+  courseHours: number
   issuedAt: string
 }
 
@@ -29,6 +30,7 @@ type InstructorCertificate = {
   groupName: string
   groupNumber: number
   courseStartedAt: string
+  courseHours: number
   issuedAt: string
 }
 
@@ -84,7 +86,7 @@ export function CertificateFound({
 
         <dl className="mt-6 grid grid-cols-1 gap-5 border-t border-border pt-6 sm:grid-cols-2">
           <Field label="Curso" value={certificate.groupName} />
-          <Field label="Curso" value={`N° ${certificate.groupNumber}`} />
+          <Field label="N° de curso" value={`N° ${certificate.groupNumber}`} />
           {student ? <Field label="Docente" value={student.teacherName} /> : null}
           {student ? (
             <Field label="Temas completados" value={`${student.topicsCompleted}/${student.topicsTotal}`} />
@@ -92,8 +94,9 @@ export function CertificateFound({
           {student ? (
             <Field label="Definitiva" value={student.definitive == null ? "—" : String(student.definitive)} />
           ) : null}
-          <Field label="Inicio del curso" value={formatDate(certificate.courseStartedAt)} />
-          <Field label="Emitido" value={formatDate(certificate.issuedAt)} />
+          <Field label="Inicio" value={formatDate(certificate.courseStartedAt)} />
+          <Field label="Finalización" value={formatDate(certificate.issuedAt)} />
+          <Field label="Intensidad" value={`${certificate.courseHours} horas`} />
         </dl>
 
         <div className="mt-6 border-t border-border pt-6">

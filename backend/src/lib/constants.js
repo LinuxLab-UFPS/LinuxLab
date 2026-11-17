@@ -11,4 +11,10 @@ const PRIORITIES = Object.freeze({
   STUDENT: 1,
 })
 
-module.exports = { EMAIL_REGEX, PRIORITIES }
+/**
+ * Intensidad del curso que figura en los certificados. Es la misma para todos
+ * los cursos porque todos siguen el mismo temario.
+ */
+const COURSE_HOURS = 80
+
+module.exports = { EMAIL_REGEX, PRIORITIES, COURSE_HOURS }

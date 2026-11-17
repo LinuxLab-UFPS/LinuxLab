@@ -16,6 +16,8 @@
 const fs = require("fs")
 const path = require("path")
 const PDFDocument = require("pdfkit")
+const QRCode = require("qrcode")
+const { COURSE_HOURS } = require("./constants")
 
 // Las mismas fuentes que usa la plataforma, embebidas en el PDF. Viven junto
 // al logo de los correos, que ya viaja en la imagen.
@@ -160,149 +162,132 @@ function drawBrand(doc, x, y, subtitle) {
 }
 
 /**
- * Parrafo con tramos: cada uno es `{ text, italic }`. Se compone palabra a
- * palabra midiendo con `widthOfString`, en vez de encadenar con `continued`,
- * porque la cursiva se sintetiza con una transformacion de matriz y eso
- * desincroniza el cursor interno de pdfkit: los tramos se pisan.
- *
- * Onest no trae cursiva. La del nombre del curso se obtiene inclinando el
- * texto 12 grados, que es la "oblicua falsa" que aplicaria un visor, y ahorra
- * cargar otra familia entera para una sola frase.
- */
-function drawRuns(doc, runs, x, y, width, { size = 13, lineHeight = 22 } = {}) {
-  const SKEW = Math.tan((12 * Math.PI) / 180)
-  let cursorX = x
-  let cursorY = y
-
-  const draw = (word, italic) => {
-    if (!italic) {
-      doc.text(word, cursorX, cursorY, { lineBreak: false })
-      return
-    }
-    doc.save()
-    // El eje Y del PDF crece hacia abajo, asi que para que la cursiva se
-    // incline a la derecha el termino de la matriz va negativo. La traslacion
-    // compensa el desplazamiento que la propia inclinacion introduce, tomando
-    // como pivote la linea base del renglon.
-    const baseline = cursorY + size
-    doc.transform(1, 0, -SKEW, 1, SKEW * baseline, 0)
-    doc.text(word, cursorX, cursorY, { lineBreak: false })
-    doc.restore()
-  }
-
-  // Los tramos se concatenan y luego se parten en palabras: asi el espacio
-  // entre el final de un tramo y el principio del siguiente no depende de que
-  // uno lo lleve pegado.
-  const pieces = splitPieces(runs)
-
-  setFont(doc, "regular", size, INK)
-  for (const { word, italic, tail } of pieces) {
-    // El espacio va como avance del cursor y no dentro del texto: pdfkit
-    // recorta los espacios de los extremos al pintar, asi que uno pegado a la
-    // palabra se perderia.
-    const spaceWidth = cursorX > x ? doc.widthOfString(" ") : 0
-    const wordWidth = doc.widthOfString(word)
-    if (cursorX + spaceWidth + wordWidth > x + width) {
-      cursorX = x
-      cursorY += lineHeight
-    } else {
-      cursorX += spaceWidth
-    }
-    draw(word, italic)
-    cursorX += wordWidth
-    if (tail) {
-      draw(tail, false)
-      cursorX += doc.widthOfString(tail)
-    }
-  }
-}
-
-/**
- * Un tramo que empieza por signo de puntuacion se pega al anterior: sin esto
- * la coma que sigue al nombre del curso viajaria como palabra suelta y saldria
- * separada por un espacio.
- */
-function splitPieces(runs) {
-  const pieces = []
-  for (const run of runs) {
-    const words = run.text.split(/\s+/).filter((w) => w.length > 0)
-    words.forEach((word, i) => {
-      const glue = i === 0 && !run.text.startsWith(" ") && /^[,.;:)»]/.test(word)
-      if (glue && pieces.length > 0) {
-        pieces[pieces.length - 1].tail = word
-        return
-      }
-      pieces.push({ word, italic: Boolean(run.italic), tail: "" })
-    })
-  }
-  return pieces
-}
-
-/**
  * Tira de datos del certificado: etiqueta pequena en versalitas sobre el valor.
- * Sirve para dos o tres celdas; `accent` pinta el valor en rojo.
+ * `accent` pinta el valor en rojo. Las celdas van centradas porque el
+ * certificado entero va centrado.
  */
 function drawStatStrip(doc, x, y, width, cells) {
   rule(doc, x, y, x + width, 0.4)
+  rule(doc, x, y + 58, x + width, 0.4)
   const cellWidth = width / cells.length
   cells.forEach((cell, i) => {
     const cx = x + i * cellWidth
-    setFont(doc, "semibold", 8, MUTED)
-    doc.text(cell.label.toUpperCase(), cx, y + 14, { width: cellWidth - 16, characterSpacing: 0.8 })
-    setFont(doc, "semibold", 16, cell.accent ? RED : INK)
-    doc.text(cell.value, cx, y + 28, { width: cellWidth - 16, lineBreak: false, ellipsis: true })
+    setFont(doc, "semibold", 7.5, MUTED)
+    doc.text(cell.label.toUpperCase(), cx, y + 13, { width: cellWidth, align: "center", characterSpacing: 0.8 })
+    setFont(doc, "semibold", 15, cell.accent ? RED : INK)
+    doc.text(truncate(doc, cell.value, cellWidth - 12), cx, y + 28, { width: cellWidth, align: "center", lineBreak: false })
   })
 }
 
 /**
+ * Codigo QR dibujado modulo a modulo con rectangulos. Se dibuja en vez de
+ * incrustar una imagen porque asi es vectorial: se imprime nitido a cualquier
+ * tamano. Todo el cuadro es ademas un enlace, para quien abre el PDF en
+ * pantalla en vez de escanearlo.
+ */
+function drawQr(doc, url, x, y, size) {
+  const qr = QRCode.create(url, { errorCorrectionLevel: "M" })
+  const count = qr.modules.size
+  const cell = size / count
+  doc.save()
+  doc.rect(x - 4, y - 4, size + 8, size + 8).fill("#FFFFFF")
+  doc.fillColor(INK)
+  for (let row = 0; row < count; row++) {
+    for (let col = 0; col < count; col++) {
+      // Un poco mas ancho que la celda: sin solape, los visores dejan lineas
+      // blancas finas entre modulos vecinos.
+      if (qr.modules.get(row, col)) doc.rect(x + col * cell, y + row * cell, cell + 0.2, cell + 0.2)
+    }
+  }
+  doc.fill()
+  doc.restore()
+  doc.link(x, y, size, size, url)
+}
+
+/**
+ * Bloque de firma: una linea para firmar y debajo quien firma, en que calidad
+ * y por que institucion. Va en el pie izquierdo, como en los certificados de
+ * la Cisco Networking Academy que usa la universidad.
+ */
+function drawSigner(doc, x, y, width, { name, role, institution }) {
+  rule(doc, x, y, x + width, 0.6, MUTED)
+  setFont(doc, "semibold", 10.5, INK)
+  doc.text(truncate(doc, name, width), x, y + 8, { lineBreak: false })
+  setFont(doc, "regular", 9.5, MUTED)
+  doc.text(role, x, y + 23, { lineBreak: false })
+  doc.text(institution, x, y + 37, { width })
+}
+
+const INSTITUTION = "Universidad Francisco de Paula Santander - Cúcuta"
+
+/**
  * El esqueleto que comparten los dos certificados. Tenerlo en un solo sitio es
  * lo que hace que sean la misma familia y no dos ficheros que se separan.
+ *
+ * La composicion sigue la de los certificados de la Cisco Networking Academy
+ * que la universidad ya entrega: todo centrado, el nombre y el curso como lo
+ * mas grande de la hoja, y en el pie la firma a la izquierda, el QR de
+ * verificacion al centro y el codigo a la derecha.
  */
-async function renderCertificate({ title, name, subline, body, cells, code, issuedAt }) {
+async function renderCertificate({ title, name, lead, course, detail, cells, signer, code, verificationUrl }) {
   const width = 841.89
   const height = 595.28
   const margin = 64
   const right = width - margin
+  const inner = right - margin
   const doc = newDocument({ layout: "landscape", title: `${title} — ${name}` })
 
-  drawBrand(doc, margin, 52, "Laboratorio Virtual de Linux")
-  rule(doc, margin, 100, right)
+  // Marco fino, apenas un filete gris: delimita la hoja impresa sin competir
+  // con el contenido.
+  doc.save()
+  doc.lineWidth(0.8).strokeColor(HAIR).rect(24, 24, width - 48, height - 48).stroke()
+  doc.restore()
 
-  setFont(doc, "semibold", 18, MUTED)
-  doc.text(title, margin, 146, { width: right - margin })
+  drawBrand(doc, margin, 46, "Laboratorio Virtual de Linux")
+  setFont(doc, "semibold", 9, MUTED)
+  doc.text(title.toUpperCase(), margin, 54, { width: inner, align: "right", characterSpacing: 1.2 })
+  rule(doc, margin, 90, right)
 
-  setFont(doc, "regular", 11, MUTED)
-  doc.text("Se certifica que", margin, 182, { width: right - margin })
+  setFont(doc, "regular", 13, MUTED)
+  doc.text("Este certificado se otorga a", margin, 118, { width: inner, align: "center" })
 
   // El nombre es lo mas grande de la hoja, y va en tinta: el rojo aqui le
   // quitaria fuerza en vez de darsela.
-  setFont(doc, "bold", 38, INK)
-  doc.text(name, margin, 204, { width: right - margin, lineBreak: false, ellipsis: true })
+  setFont(doc, "bold", 34, INK)
+  doc.text(truncate(doc, name, inner), margin, 140, { width: inner, align: "center", lineBreak: false })
 
-  let y = 252
-  if (subline) {
-    setFont(doc, "mono", 10.5, MUTED)
-    doc.text(subline, margin, y, { width: right - margin, lineBreak: false })
-    y += 22
-  }
+  setFont(doc, "regular", 13, MUTED)
+  doc.text(lead, margin, 196, { width: inner, align: "center" })
 
-  drawRuns(doc, body, margin, y + 14, 560)
+  setFont(doc, "semibold", 22, RED)
+  doc.text(truncate(doc, course, inner), margin, 218, { width: inner, align: "center", lineBreak: false })
 
-  // La tira va anclada: un nombre de curso largo empuja el parrafo, pero el
-  // bloque de datos no se mueve de su sitio. Se ancla a la altura del pie y no
-  // a la del parrafo para que las dos variantes del certificado —con y sin
-  // subtitulo, con parrafos de distinto alto— caigan en la misma retícula.
-  drawStatStrip(doc, margin, 386, right - margin, cells)
+  setFont(doc, "regular", 11.5, MUTED)
+  doc.text(detail, margin + 70, 256, { width: inner - 140, align: "center", lineGap: 3 })
 
-  const footerY = height - 76
-  rule(doc, margin, footerY - 16, right, 0.4)
+  drawStatStrip(doc, margin, 320, inner, cells)
+
+  // Pie: firma a la izquierda, QR al centro y verificacion a la derecha.
+  const footY = 430
+  drawSigner(doc, margin, footY + 30, 230, signer)
+
+  const qrSize = 84
+  const qrX = (width - qrSize) / 2
+  drawQr(doc, verificationUrl, qrX, footY, qrSize)
+  setFont(doc, "regular", 7.5, MUTED)
+  doc.text("Escanea para verificar", qrX - 30, footY + qrSize + 8, { width: qrSize + 60, align: "center" })
+
+  const colW = 250
+  const colX = right - colW
   setFont(doc, "regular", 8, MUTED)
-  doc.text("Código de verificación", margin, footerY)
+  doc.text("Código de verificación", colX, footY + 30, { width: colW, align: "right" })
   setFont(doc, "mono", 11, INK)
-  doc.text(code, margin, footerY + 13, { lineBreak: false })
-
-  setFont(doc, "regular", 8.5, MUTED)
-  doc.text("LinuxLab UFPS", right - 220, footerY + 13, { width: 220, align: "right" })
+  doc.text(code, colX, footY + 43, { width: colW, align: "right", lineBreak: false })
+  setFont(doc, "regular", 8, MUTED)
+  doc.text("Verifícalo en", colX, footY + 64, { width: colW, align: "right" })
+  setFont(doc, "mono", 7.5, RED)
+  const shown = truncate(doc, verificationUrl.replace(/^https?:\/\//, ""), colW)
+  doc.text(shown, colX, footY + 76, { width: colW, align: "right", lineBreak: false, link: verificationUrl })
 
   return toBuffer(doc)
 }
@@ -315,52 +300,48 @@ async function renderStudentCertificate(cert) {
   return renderCertificate({
     title: "Certificado de finalización",
     name: cert.holderName,
-    subline: null,
-    body: [
-      { text: "completó satisfactoriamente el curso " },
-      { text: cert.groupName, italic: true },
-      {
-        text:
-          `, dirigido por el docente ${cert.teacherName}, entre el ` +
-          `${formatDate(cert.courseStartedAt)} y el ${formatDate(cert.issuedAt)}.`,
-      },
-    ],
+    lead: "por completar con éxito el curso",
+    course: cert.groupName,
+    detail:
+      `ofrecido por la ${INSTITUTION} a través de la plataforma LinuxLab, ` +
+      `con una intensidad de ${COURSE_HOURS} horas.`,
     cells: [
+      { label: "Inicio", value: formatShort(cert.courseStartedAt) },
+      { label: "Finalización", value: formatShort(cert.issuedAt) },
+      { label: "Intensidad", value: `${COURSE_HOURS} horas` },
       { label: "Temas completados", value: `${cert.topicsCompleted}/${cert.topicsTotal}` },
       { label: "Definitiva", value: cert.definitive == null ? "—" : String(cert.definitive), accent: true },
-      { label: "Emitido", value: formatShort(cert.issuedAt) },
     ],
+    signer: { name: cert.teacherName, role: "Instructor", institution: INSTITUTION },
     code: cert.code,
-    issuedAt: cert.issuedAt,
+    verificationUrl: cert.verificationUrl,
   })
 }
 
 /**
  * Certificado del docente por dirigir el curso. Es su credencial, asi que
  * habla de su trabajo: cuantos de sus estudiantes se certificaron es una
- * metrica del grupo y no pinta nada en un documento personal.
+ * metrica del grupo y no pinta nada en un documento personal. La firma es la
+ * de la plataforma, porque el instructor no puede firmarse a si mismo.
  */
 async function renderInstructorCertificate(cert) {
   return renderCertificate({
     title: "Certificado de instructor",
     name: cert.holderName,
-    subline: null,
-    body: [
-      { text: "dirigió el curso " },
-      { text: cert.groupName, italic: true },
-      {
-        text:
-          ` en la plataforma LinuxLab, desde el ${formatDate(cert.courseStartedAt)} ` +
-          `hasta el ${formatDate(cert.issuedAt)}.`,
-      },
-    ],
+    lead: "por dirigir el curso",
+    course: cert.groupName,
+    detail:
+      `en la plataforma LinuxLab de la ${INSTITUTION}, ` +
+      `con una intensidad de ${COURSE_HOURS} horas.`,
     cells: [
       { label: "Curso", value: `N° ${cert.groupNumber}` },
       { label: "Inicio", value: formatShort(cert.courseStartedAt) },
-      { label: "Finalizado", value: formatShort(cert.issuedAt), accent: true },
+      { label: "Finalización", value: formatShort(cert.issuedAt), accent: true },
+      { label: "Intensidad", value: `${COURSE_HOURS} horas` },
     ],
+    signer: { name: "LinuxLab UFPS", role: "Laboratorio Virtual de Linux", institution: INSTITUTION },
     code: cert.code,
-    issuedAt: cert.issuedAt,
+    verificationUrl: cert.verificationUrl,
   })
 }
 

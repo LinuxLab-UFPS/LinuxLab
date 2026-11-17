@@ -3,6 +3,7 @@ const prisma = require("../../prisma/client")
 const config = require("../config/env")
 const logger = require("../lib/logger")
 const { NotFoundError } = require("../lib/errors")
+const { COURSE_HOURS } = require("../lib/constants")
 const accessService = require("./accessService")
 const emailService = require("./emailService")
 const { computeGroupSummary } = require("./finalizationService")
@@ -34,6 +35,7 @@ function serializeCertificate(certificate, studentId) {
     topicsCompleted: certificate.topics_completed,
     topicsTotal: certificate.topics_total,
     definitive: certificate.definitive,
+    courseHours: COURSE_HOURS,
     issuedAt: certificate.issued_at.toISOString(),
   }
 }
@@ -48,6 +50,7 @@ function serializeInstructorCertificate(certificate) {
     courseStartedAt: certificate.course_started_at.toISOString(),
     studentsCertified: certificate.students_certified,
     studentsTotal: certificate.students_total,
+    courseHours: COURSE_HOURS,
     issuedAt: certificate.issued_at.toISOString(),
   }
 }
