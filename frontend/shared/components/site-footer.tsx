@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 /**
  * El pie del sitio: quien hizo esto y quien lo dirigio.
  *
@@ -127,6 +129,16 @@ export function SiteFooter() {
           <div className="border-t border-white/10 pt-10">
             <Columna titulo="Dirección" gente={DIRECCION} />
           </div>
+        </div>
+        {/* Para quien recibe un certificado de un estudiante y quiere
+            comprobarlo: no necesita cuenta. */}
+        <div className="mt-10 border-t border-white/10 pt-6">
+          <Link
+            href="/verificar"
+            className="text-sm text-white/60 underline-offset-4 transition-colors hover:text-primary hover:underline"
+          >
+            Verificar un certificado
+          </Link>
         </div>
       </div>
     </footer>
